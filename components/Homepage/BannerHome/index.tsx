@@ -1,6 +1,6 @@
 export default function BannerHome() {
   return (
-    <section
+    <section id="home"
       className="relative min-h-[420px] md:min-h-[516px] flex items-center overflow-hidden bg-cover bg-center"
       style={{ backgroundImage: "url('/images/banner.png')" }} // Inline background image
     >

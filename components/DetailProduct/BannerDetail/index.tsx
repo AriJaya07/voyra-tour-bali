@@ -8,7 +8,7 @@ export default function BannerDetail() {
                 <Container>
                     <div className="">
                         <p className="text-[14px] leading-normal text-black flex gap-3 items-center">
-                            <span><BackArrowIcon className="w-[25px] h-[35px]" /></span>   
+                            <a href="/" target="_self" className=""><BackArrowIcon className="w-[25px] h-[35px]" /></a>   
                             Beranda  &gt; Liburan  &gt; GWK Bali
                         </p>
                     </div>
