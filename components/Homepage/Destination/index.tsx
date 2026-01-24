@@ -89,8 +89,8 @@ export default function Destination() {
         </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {visibleDestinations.map((item, index) => (
-            <a href={`/detail/${index}`} key={item.src} target="_self">
+          {visibleDestinations.map((item) => (
+            <a href={`/detail`} key={item.src} target="_self">
                 <img
                   src={item.src}
                   alt={item.alt}
