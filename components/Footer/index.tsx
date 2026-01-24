@@ -1,12 +1,12 @@
-import FooterIcon from "../../public/Icon/FooterIcon";
-import VoryaIcon from "../../public/Icon/VoyraIcon";
-import FacebookIcon from "../../public/sosmed/FacebookIcon";
-import InstagramIcon from "../../public/sosmed/InstagramIcon";
-import PartnerIcon from "../../public/sosmed/PartnerIcon";
-import TelegramIcon from "../../public/sosmed/TelegramIcon";
-import TiktokIcon from "../../public/sosmed/TiktokIcon";
-import TwitterIcon from "../../public/sosmed/TwitterIcon";
-import YoutubeIcon from "../../public/sosmed/YoutubeIcon";
+import FooterIcon from "../assets/Icon/FooterIcon";
+import VoryaIcon from "../assets/Icon/VoyraIcon";
+import FacebookIcon from "../assets/sosmed/FacebookIcon";
+import InstagramIcon from "../assets/sosmed/InstagramIcon";
+import PartnerIcon from "../assets/sosmed/PartnerIcon";
+import TelegramIcon from "../assets/sosmed/TelegramIcon";
+import TiktokIcon from "../assets/sosmed/TiktokIcon";
+import TwitterIcon from "../assets/sosmed/TwitterIcon";
+import YoutubeIcon from "../assets/sosmed/YoutubeIcon";
 
 export default function Footer() {
     return (

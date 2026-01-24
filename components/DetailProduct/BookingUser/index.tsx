@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import WhatappIcon from '../../../public/sosmed/WhatappIcon'
+import WhatappIcon from '../../assets/sosmed/WhatappIcon'
 import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
 
