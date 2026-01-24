@@ -4,7 +4,7 @@ import BannerDetail from "../../components/DetailProduct/BannerDetail";
 import BookingUser from "../../components/DetailProduct/BookingUser";
 import ExcpectDetail from "../../components/DetailProduct/ExpectDetail";
 
-export default function DetailPage() {
+export default function Detail() {
     return (
         <div className="">
             <BannerDetail />
