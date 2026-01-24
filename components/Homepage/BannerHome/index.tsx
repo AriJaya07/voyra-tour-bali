@@ -1,17 +1,9 @@
-import Image from "next/image"
-
 export default function BannerHome() {
   return (
-    <section className="relative min-h-[420px] md:min-h-[516px] flex items-center overflow-hidden">
-      {/* Background image */}
-      <Image
-        src="/images/banner.png"
-        alt="Banner Bali"
-        fill
-        priority
-        className="object-cover -z-10"
-      />
-
+    <section
+      className="relative min-h-[420px] md:min-h-[516px] flex items-center overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: "url('/images/banner.png')" }} // Inline background image
+    >
       {/* Overlay (optional, improves text readability) */}
       <div className="absolute inset-0 bg-black/30 -z-10" />
 
@@ -40,5 +32,5 @@ export default function BannerHome() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import BurgerIcon from "@/public/Icon/BurgerIcon"
-import VoryaIcon from "@/public/Icon/VoyraIcon"
+import BurgerIcon from "../../public/Icon/BurgerIcon"
+import VoryaIcon from "../../public/Icon/VoyraIcon"
 
 const NAV_ITEMS = [
   "Halaman Utama",

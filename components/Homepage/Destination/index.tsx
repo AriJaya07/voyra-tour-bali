@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import DotsIcon from "@/public/Icon/DotsIcon"
+import DotsIcon from "../../../public/Icon/DotsIcon"
 
 const MENU_ITEMS = [
   "Beranda",

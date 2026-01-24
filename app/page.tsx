@@ -1,7 +1,7 @@
-import Container from "@/components/Container";
-import BannerHome from "@/components/Homepage/BannerHome";
-import Destionation from "@/components/Homepage/Destination";
-import TrendingActivity from "@/components/Homepage/TrendingActivity";
+import Container from "../components/Container";
+import BannerHome from "../components/Homepage/BannerHome";
+import Destionation from "../components/Homepage/Destination";
+import TrendingActivity from "../components/Homepage/TrendingActivity";
 
 export default function Home() {
   return (

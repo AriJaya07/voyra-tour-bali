@@ -1,5 +1,5 @@
-import Container from "@/components/Container"
-import BackArrowIcon from "@/public/detail/BackArrowIcon"
+import Container from "../../../components/Container"
+import BackArrowIcon from "../../../public/detail/BackArrowIcon"
 
 export default function BannerDetail() {
     return (
