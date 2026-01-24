@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import DotsIcon from "@/public/Icon/DotsIcon"
 
 const MENU_ITEMS = [
@@ -54,9 +54,12 @@ function MenuItem({
 
 export default function Destination() {
   const [activeTab, setActiveTab] = useState("Liburan")
-  const [visibleDestinations, setVisibleDestinations] = useState(
-    shuffleArray(DESTINATIONS)
-  )
+  const [visibleDestinations, setVisibleDestinations] = useState(DESTINATIONS)
+
+  useEffect(() => {
+    // Shuffle the destinations after the component mounts
+    setVisibleDestinations(shuffleArray(DESTINATIONS))
+  }, []) // Empty dependency array ensures this only runs once after the component mounts
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab)
@@ -86,13 +89,14 @@ export default function Destination() {
         </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {visibleDestinations.map((item) => (
-            <img
-              key={item.src}
-              src={item.src}
-              alt={item.alt}
-              className="w-full h-[220px] h-auto object-cover rounded-md"
-            />
+          {visibleDestinations.map((item, index) => (
+            <a href={`/detail/${index}`} key={item.src} target="_self">
+                <img
+                  src={item.src}
+                  alt={item.alt}
+                  className="w-full h-[220px] h-auto object-cover rounded-md"
+                />
+            </a>
           ))}
         </div>
       </div>

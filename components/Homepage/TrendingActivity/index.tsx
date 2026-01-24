@@ -7,7 +7,7 @@ const TABS = ["Beach", "Tour", "Museum"]
 const ACTIVITY_IMAGES = [
   "/images/activity/melasti.png",
   "/images/activity/lovina.png",
-  "/images/activity/tanah-lot.png",
+  "/images/activity/tanahLot.png",
   "/images/activity/pandawa.png",
 ]
 
