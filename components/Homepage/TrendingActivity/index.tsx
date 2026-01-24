@@ -27,7 +27,7 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`h-[55px] w-[160px] rounded-full text-lg font-bold transition cursor-pointer
+      className={`md:h-[55px] h-[40px] md:w-[160px] w-[100px] rounded-full md:text-lg text-md font-bold transition cursor-pointer
         ${
           isActive
             ? "bg-[#0071CE] text-white"
