@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,  // Enable React Strict Mode (recommended)
-  // Remove swcMinify since it's not needed anymore
+  output: 'export',  // This enables static export
+  reactStrictMode: true,
+  images: {
+    unoptimized: true,  // Required for static export
+  },
 };
 
 export default nextConfig;
