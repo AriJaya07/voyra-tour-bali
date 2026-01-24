@@ -67,7 +67,7 @@ export default function Destination() {
   }
 
   return (
-    <section className="pt-10 md:pt-[72px] px-4 md:px-0">
+    <section id="destinasi" className="pt-10 md:pt-[72px] px-4 md:px-0">
       {/* Menu */}
       <div className="flex gap-6 md:gap-[72px] pb-5 overflow-x-auto scrollbar-hide">
         {MENU_ITEMS.map((item) => (

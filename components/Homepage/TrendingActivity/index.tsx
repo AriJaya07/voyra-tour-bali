@@ -50,14 +50,14 @@ export default function TrendingActivity() {
   }
 
   return (
-    <section className="pt-20 px-4">
+    <section id="paket" className="pt-20 px-4">
       {/* Title */}
-      <h2 className="text-3xl md:text-4xl font-bold text-black">
+      <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black">
         Trending Activity
       </h2>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-3 pt-7 pb-9">
+      <div className="flex flex-wrap gap-3 pt-7 pb-9 justify-center sm:justify-start">
         {TABS.map((tab) => (
           <TabButton
             key={tab}
@@ -69,14 +69,15 @@ export default function TrendingActivity() {
       </div>
 
       {/* Images */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-        {images.map((src) => (
-          <img
-            key={src}
-            src={src}
-            alt="Activity"
-            className="w-full rounded-lg object-cover"
-          />
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+        {images.map((src, index) => (
+          <a href="/detail" target="_self" key={index}>
+            <img
+              src={src}
+              alt="Activity"
+              className="w-full rounded-lg object-cover transition-transform transform hover:scale-105"
+            />
+          </a>
         ))}
       </div>
 

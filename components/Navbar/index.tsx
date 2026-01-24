@@ -5,10 +5,10 @@ import BurgerIcon from "../assets/Icon/BurgerIcon"
 import VoryaIcon from "../assets/Icon/VoyraIcon"
 
 const NAV_ITEMS = [
-  "Halaman Utama",
-  "Destinasi",
-  "Paket Travel",
-  "Tentang Kami",
+  { label: "Halaman Utama", id: "home" },
+  { label: "Destinasi", id: "destinasi" },
+  { label: "Paket Travel", id: "paket" },
+  { label: "Tentang Kami", id: "tentang" },
 ]
 
 export default function Navbar() {
@@ -32,12 +32,17 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             {NAV_ITEMS.map((item) => (
-              <p
-                key={item}
-                className="cursor-pointer text-sm font-medium text-gray-700 hover:text-blue-600 transition"
+              <a
+                href={`/#${item.id}`} // Linking to section by ID
+                key={item.label}
+                className=""
               >
-                {item}
-              </p>
+                <p
+                  className="cursor-pointer text-sm font-medium text-gray-700 hover:text-blue-600 transition"
+                >
+                  {item.label}
+                </p>
+              </a>
             ))}
 
             <input
@@ -98,13 +103,18 @@ export default function Navbar() {
         {/* Menu Items */}
         <div className="flex flex-col px-5 py-6 gap-5">
           {NAV_ITEMS.map((item) => (
-            <p
-              key={item}
-              onClick={() => setIsOpen(false)}
-              className="text-base font-medium text-gray-700 hover:text-blue-600 transition cursor-pointer"
+            <a
+              href={`/#${item.id}`} // Linking to section by ID
+              key={item.label}
+              className=""
             >
-              {item}
-            </p>
+              <p
+                onClick={() => setIsOpen(false)}
+                className="text-base font-medium text-gray-700 hover:text-blue-600 transition cursor-pointer"
+              >
+                {item.label}
+              </p>
+            </a>
           ))}
 
           {/* Divider */}

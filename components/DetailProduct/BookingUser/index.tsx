@@ -54,16 +54,6 @@ export default function BookingUser() {
                             onChange={handleDateChange as any}
                             value={date}
                             className="sm:w-full w-[90%]"
-                            // Format the date in a consistent manner (e.g., using `toLocaleDateString`)
-                            tileContent={({ date, view }) => {
-                                if (view === 'month') {
-                                    return (
-                                        <abbr aria-label={date.toLocaleDateString('id-ID')}>
-                                            {date.getDate()}
-                                        </abbr>
-                                    )
-                                }
-                            }}
                         />
                     </div>
 
@@ -74,16 +64,16 @@ export default function BookingUser() {
                             <div className="flex flex-row justify-between items-center">
                                 <p className="text-[#A8A8A8] text-[14px] font-normal leading-[24px]">Person</p>
                                 <div className="flex flex-row gap-3 items-center">
-                                    <button onClick={decrementQuantity} className="text-[#A8A8A8] text-[14px] font-normal leading-[24px]">-</button>
+                                    <button onClick={decrementQuantity} className="text-[#A8A8A8] text-[14px] font-normal leading-[24px] cursor-pointer">-</button>
                                     <p className="text-[#A8A8A8] text-[14px] font-normal leading-[24px]">{quantity}</p>
-                                    <button onClick={incrementQuantity} className="text-[#A8A8A8] text-[14px] font-normal leading-[24px]">+</button>
+                                    <button onClick={incrementQuantity} className="text-[#A8A8A8] text-[14px] font-normal leading-[24px] cursor-pointer">+</button>
                                 </div>
                             </div>
                         </div>
                         <div className="border bg-[#EEEEEE] rounded-[13px] flex flex-col gap-3 p-[16px]">
                             <div className="">
                             <p className="font-bold text-[16px] leading-[24px] font-medium">
-                                Rp. {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(quantity * 780000)}
+                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(quantity * 780000)}
                             </p>
                             </div>
                             <div className=''>
