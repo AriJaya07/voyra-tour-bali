@@ -1,30 +1,42 @@
+"use client";
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { categoryService, CategoryPayload } from "../service/category.service";
 
 export function useCategories() {
   const queryClient = useQueryClient();
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["categories"] });
 
-  const { data, isLoading } = useQuery({
+  const { data = [], isLoading, isError } = useQuery({
     queryKey: ["categories"],
-    queryFn: async () => {
-      const res = await axios.get("/api/categories");
-      return res.data;
-    },
+    queryFn: categoryService.getAll,
   });
 
-  const createCategory = useMutation({
-    mutationFn: async (category: any) => {
-      const res = await axios.post("/api/categories", category);
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-    },
+  const createMutation = useMutation({
+    mutationFn: categoryService.create,
+    onSuccess: invalidate,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<CategoryPayload> }) =>
+      categoryService.update(id, payload),
+    onSuccess: invalidate,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: categoryService.delete,
+    onSuccess: invalidate,
   });
 
   return {
     data,
     isLoading,
-    createCategory,
+    isError,
+    createCategory: createMutation.mutate,
+    updateCategory: updateMutation.mutate,
+    deleteCategory: deleteMutation.mutate,
+    creating: createMutation.isPending,
+    updating: updateMutation.isPending,
+    deleting: deleteMutation.isPending,
   };
 }
