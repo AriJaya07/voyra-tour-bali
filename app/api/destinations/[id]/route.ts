@@ -1,38 +1,47 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+// GET /api/destinations/:id
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
+
   const data = await prisma.destination.findUnique({
-    where: { id: params.id },
+    where: { id: Number(id) },
   });
 
   return NextResponse.json(data);
 }
 
+// PUT /api/destinations/:id
 export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
-  const body = await req.json();
+  const { id } = await context.params;
+  const body = await request.json();
 
   const updated = await prisma.destination.update({
-    where: { id: params.id },
+    where: { id: Number(id) },
     data: body,
   });
 
   return NextResponse.json(updated);
 }
 
+// DELETE /api/destinations/:id
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
+
   await prisma.destination.delete({
-    where: { id: params.id },
+    where: { id: Number(id) },
   });
 
   return NextResponse.json({ message: "Deleted successfully" });
 }
+

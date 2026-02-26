@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
+import { useTheme } from "@/components/Dashboard/ThemeProvider";
 
 const NAV_ITEMS = [
   {
@@ -96,6 +98,8 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: session } = useSession();
+  const { theme, toggleTheme } = useTheme();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
@@ -141,6 +145,9 @@ export default function Sidebar() {
           isActive={isActive}
           collapsed={false}
           onClose={() => setMobileOpen(false)}
+          session={session}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
       </aside>
 
@@ -155,6 +162,9 @@ export default function Sidebar() {
           isActive={isActive}
           collapsed={collapsed}
           onToggleCollapse={() => setCollapsed((p) => !p)}
+          session={session}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
       </aside>
 
@@ -173,12 +183,18 @@ function SidebarContent({
   collapsed,
   onClose,
   onToggleCollapse,
+  session,
+  theme,
+  onToggleTheme,
 }: {
   pathname: string;
   isActive: (href: string, exact?: boolean) => boolean;
   collapsed: boolean;
   onClose?: () => void;
   onToggleCollapse?: () => void;
+  session: any;
+  theme: "dark" | "light";
+  onToggleTheme: () => void;
 }) {
   return (
     <div className="flex flex-col h-full">
@@ -277,6 +293,41 @@ function SidebarContent({
         })}
       </nav>
 
+      {/* Theme Toggle */}
+      <div className="px-3 mt-2">
+        <button
+          onClick={onToggleTheme}
+          title={collapsed ? (theme === "dark" ? "Light mode" : "Dark mode") : undefined}
+          className={`flex items-center gap-3 w-full rounded-xl px-3 py-2.5 transition-all text-slate-400 hover:text-white hover:bg-slate-700/50 group relative ${
+            collapsed ? "justify-center" : ""
+          }`}
+        >
+          <span className="flex-shrink-0">
+            {theme === "dark" ? (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+          </span>
+          {!collapsed && (
+            <span className="text-sm font-medium">
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            </span>
+          )}
+          {collapsed && (
+            <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity border border-slate-700/60 shadow-xl z-50">
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Divider */}
       <div className="mx-4 border-t border-slate-700/60 my-2" />
 
@@ -327,6 +378,37 @@ function SidebarContent({
           </div>
         )}
       </nav>
+
+      {!collapsed && (
+        <div className="mt-3">
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700/40 mb-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-xs font-bold">
+                {session?.user?.name?.charAt(0) ?? "A"}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-white text-xs font-semibold truncate">
+                {session?.user?.name ?? "Admin"}
+              </p>
+              <p className="text-slate-500 text-xs truncate">
+                {session?.user?.email ?? ""}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all text-sm font-medium"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Keluar
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }

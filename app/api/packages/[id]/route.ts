@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/packages/:id
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   try {
     const pkg = await prisma.package.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: {
         category: { select: { id: true, name: true, slug: true } },
         destination: { select: { id: true, title: true } },
@@ -21,13 +22,14 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
 }
 
 // PATCH /api/packages/:id
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   try {
     const body = await req.json();
     const { title, description, price, categoryId, destinationId } = body;
 
     const pkg = await prisma.package.update({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       data: {
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
@@ -49,9 +51,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 // DELETE /api/packages/:id
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   try {
-    await prisma.package.delete({ where: { id: Number(params.id) } });
+    await prisma.package.delete({ where: { id: Number(id) } });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to delete package" }, { status: 500 });

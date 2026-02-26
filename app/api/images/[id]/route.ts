@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 import cloudinary from "@/utils/common/cloudinary";
 
 // PATCH /api/images/[id] — update relasi destinasi atau package
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   try {
     const body = await req.json();
     const { destinationId, packageId } = body;
 
     const image = await prisma.image.update({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       data: {
         destinationId: destinationId !== undefined ? (destinationId ? Number(destinationId) : null) : undefined,
         packageId: packageId !== undefined ? (packageId ? Number(packageId) : null) : undefined,
@@ -27,10 +28,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 // DELETE /api/images/[id] — hapus dari Cloudinary + DB
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   try {
     const image = await prisma.image.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
     });
 
     if (!image) {
@@ -46,7 +48,7 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
     await cloudinary.uploader.destroy(publicId);
 
     // Hapus dari DB
-    await prisma.image.delete({ where: { id: Number(params.id) } });
+    await prisma.image.delete({ where: { id: Number(id) } });
 
     return NextResponse.json({ success: true });
   } catch {

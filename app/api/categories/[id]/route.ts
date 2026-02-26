@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/categories/:id
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   try {
     const category = await prisma.category.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: {
         destinations: true,
         packages: true,
@@ -20,14 +21,15 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
 }
 
 // PATCH /api/categories/:id
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   try {
     const body = await req.json();
     const { name, slug, description } = body;
 
     if (slug) {
       const existing = await prisma.category.findFirst({
-        where: { slug, NOT: { id: Number(params.id) } },
+        where: { slug, NOT: { id: Number(id) } },
       });
       if (existing) {
         return NextResponse.json({ error: "Slug already taken" }, { status: 409 });
@@ -35,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     const category = await prisma.category.update({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       data: {
         ...(name && { name }),
         ...(slug && { slug }),
@@ -50,9 +52,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 // DELETE /api/categories/:id
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   try {
-    await prisma.category.delete({ where: { id: Number(params.id) } });
+    await prisma.category.delete({ where: { id: Number(id) } });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to delete category" }, { status: 500 });
