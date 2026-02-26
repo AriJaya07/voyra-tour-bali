@@ -13,13 +13,25 @@ export async function GET() {
 export async function POST(req: Request) {
   const { title, description, price, categoryId } = await req.json();
 
-  const destination = await prisma.destination.create({
-    data: {
-      title,
-      description,
-      price,
-      categoryId,
-    },
-  });
-  return NextResponse.json(destination);
+  if (!title || !description || !price || !categoryId) {
+    return NextResponse.json(
+      { error: "All fields are required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const destination = await prisma.destination.create({
+      data: {
+        title,
+        description,
+        price,
+        categoryId,
+      },
+    });
+    return NextResponse.json(destination);
+  } catch (error) {
+    console.error("Error creating destination:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }

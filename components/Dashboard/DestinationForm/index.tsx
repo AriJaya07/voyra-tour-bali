@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 interface DestinationFormData {
   title: string;
   description: string;
-  price: string;
-  categoryId: string;
+  price: number;
+  categoryId: number;
 }
 
 interface DestinationFormProps {
@@ -32,8 +32,8 @@ export default function DestinationForm({
   const [formData, setFormData] = useState<DestinationFormData>({
     title: "",
     description: "",
-    price: "",
-    categoryId: "",
+    price: 0,
+    categoryId: 0,
   });
   const [errors, setErrors] = useState<Partial<DestinationFormData>>({});
 
@@ -42,18 +42,18 @@ export default function DestinationForm({
       setFormData({
         title: initialData.title,
         description: initialData.description,
-        price: String(initialData.price),
-        categoryId: String(initialData.categoryId),
+        price: typeof initialData.price === "string" ? parseFloat(initialData.price) : initialData.price,
+        categoryId: typeof initialData.categoryId === "string" ? parseInt(initialData.categoryId, 10) : initialData.categoryId,
       });
     }
   }, [initialData]);
 
   const validate = (): boolean => {
-    const newErrors: Partial<DestinationFormData> = {};
+    const newErrors: Partial<DestinationFormData> | any = {};
     if (!formData.title.trim()) newErrors.title = "Title is required";
     if (!formData.description.trim()) newErrors.description = "Description is required";
-    if (!formData.price || Number(formData.price) <= 0) newErrors.price = "Price must be greater than 0";
-    if (!formData.categoryId) newErrors.categoryId = "Category ID is required";
+    if (formData.price <= 0) newErrors.price = "Price must be greater than 0";
+    if (formData.categoryId <= 0) newErrors.categoryId = "Category ID must be valid";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -61,14 +61,27 @@ export default function DestinationForm({
   const handleChange =
     (field: keyof DestinationFormData) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+      const value = e.target.value;
+      setFormData((prev) => ({
+        ...prev,
+        [field]: field === "price" ? parseFloat(value) : field === "categoryId" ? parseInt(value, 10) : value,
+      }));
       if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
     };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Ensure price and categoryId are valid numbers
+    const payload: DestinationFormData = {
+      title: formData.title,
+      description: formData.description,
+      price: formData.price,
+      categoryId: formData.categoryId,
+    };
+
     if (!validate()) return;
-    onSubmit(formData);
+    onSubmit(payload);
   };
 
   return (
@@ -180,7 +193,7 @@ function Field({
   children,
 }: {
   label: string;
-  error?: string;
+  error?: any;
   required?: boolean;
   children: React.ReactNode;
 }) {
