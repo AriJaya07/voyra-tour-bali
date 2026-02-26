@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id          Int          @id @default(autoincrement())
+  name        String
+  slug        String       @unique
+  description String?
+
+  destinations Destination[]
+  packages     Package[]   // ✅ ADD THIS
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Destination {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String
+  price       Float?
+
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id])
+
+  images      Image[]    // ✅ ADD THIS
+  packages    Package[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Package {
+  id            Int        @id @default(autoincrement())
+  title         String
+  description   String
+  price         Float
+
+  categoryId    Int?
+  category      Category? @relation(fields: [categoryId], references: [id])
+
+  destinationId Int?
+  destination   Destination? @relation(fields: [destinationId], references: [id])
+
+  images        Image[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Image {
+  id            Int        @id @default(autoincrement())
+  url           String
+
+  destinationId Int?
+  destination   Destination? @relation(fields: [destinationId], references: [id])
+
+  packageId     Int?
+  package       Package? @relation(fields: [packageId], references: [id])
+
+  createdAt     DateTime @default(now())
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
