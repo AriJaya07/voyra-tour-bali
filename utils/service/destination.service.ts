@@ -1,5 +1,13 @@
 import axios from "axios";
 
+export interface Destination {
+  id: string;
+  title: string;
+  description: string;
+  price: number | string;
+  categoryId: string | number;
+}
+
 export const destinationService = {
   getAll: async () => {
     const { data } = await axios.get("/api/destinations");

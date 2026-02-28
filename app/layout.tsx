@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
 import ReactQueryProvider from "./ReactQueryProvider";
-import SessionProviderWrapper from "@/components/SessionProviderWrapper";
+import SessionProviderWrapper from "@/components/Wrapper/SessionProviderWrapper";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
+import LayoutWrapper from "@/components/Wrapper/LayoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,19 +31,17 @@ export default async function RootLayout({
   
   return (
     <html lang="en">
-      <SessionProviderWrapper session={session}>
-        <ReactQueryProvider>
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-          >
-            <Navbar />
-            <div className="pt-[60px]">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <SessionProviderWrapper session={session}>
+          <ReactQueryProvider>
+            <LayoutWrapper>
               {children}
-            </div>
-            <Footer />
-          </body>
-        </ReactQueryProvider>
-      </SessionProviderWrapper>
+            </LayoutWrapper>
+          </ReactQueryProvider>
+        </SessionProviderWrapper>
+      </body>
     </html>
   );
 }

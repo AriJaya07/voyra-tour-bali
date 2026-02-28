@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Category } from "@/utils/service/category.service";
+import CloseIcon from "@/components/assets/dashboard/CloseIcon";
+import SpinnerIcon from "@/components/assets/dashboard/SpinnerIcon";
+import { Field, inputClass } from "@/components/common/InputForm";
 
 interface FormData {
   name: string;
@@ -70,7 +73,7 @@ export default function CategoryForm({ mode, initialData, onSubmit, onCancel, is
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-      {/* Gradient Header */}
+      
       <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-5 flex items-center justify-between">
         <div>
           <p className="text-emerald-100 text-xs font-semibold uppercase tracking-widest mb-0.5">
@@ -81,14 +84,12 @@ export default function CategoryForm({ mode, initialData, onSubmit, onCancel, is
           </h2>
         </div>
         <button onClick={onCancel} className="text-white/60 hover:text-white transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <CloseIcon />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
-        {/* Name */}
+        
         <div>
           <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
             Name <span className="text-red-400">*</span>
@@ -104,8 +105,15 @@ export default function CategoryForm({ mode, initialData, onSubmit, onCancel, is
           />
           {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
         </div>
+        {/* <Field label="Name" error={errors.name} required>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={handleNameChange}
+            className={inputClass(!!errors.name)}
+          />
+        </Field> */}
 
-        {/* Slug */}
         <div>
           <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
             Slug <span className="text-red-400">*</span>
@@ -143,27 +151,16 @@ export default function CategoryForm({ mode, initialData, onSubmit, onCancel, is
           />
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-1">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 text-sm font-medium transition-colors"
-          >
-            Cancel
-          </button>
+        <div className="flex justify-end pt-2">
           <button
             type="submit"
             disabled={isLoading}
-            className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-60 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+            className="py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-60 transition-colors text-sm font-medium flex items-center justify-center gap-2 w-[150px]"
           >
             {isLoading && (
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+              <SpinnerIcon />
             )}
-            {mode === "create" ? "Create Category" : "Save Changes"}
+            {mode === "create" ? "Create" : "Save"}
           </button>
         </div>
       </form>

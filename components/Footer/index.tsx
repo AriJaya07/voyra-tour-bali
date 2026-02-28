@@ -10,7 +10,7 @@ import YoutubeIcon from "../assets/sosmed/YoutubeIcon";
 
 export default function Footer() {
     return (
-      <footer id="tentang" className="pt-20">
+      <footer id="tentang">
         {/* Top Accent */}
         <div className="h-[10px] bg-[#F06400]" />
   

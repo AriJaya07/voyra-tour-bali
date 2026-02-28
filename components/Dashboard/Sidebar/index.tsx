@@ -198,8 +198,24 @@ function SidebarContent({
 }) {
   return (
     <div className="flex flex-col h-full">
+      <div className={`flex ${collapsed ? "justify-center" : "justify-end"} pt-3`}>
+        {onToggleCollapse && !collapsed && (
+            <button onClick={onToggleCollapse} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-700/60 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+          {onToggleCollapse && collapsed && (
+            <button onClick={onToggleCollapse} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-700/60 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+      </div>
       {/* Logo */}
-      <div className={`flex items-center justify-between px-4 py-5 border-b border-slate-700/60 ${collapsed ? "px-3 justify-center" : ""}`}>
+      <div className={`flex items-center justify-between pb-5 px-4 border-b border-slate-700/60 ${collapsed ? "px-3 justify-center" : ""}`}>
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-900/40">
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -223,20 +239,7 @@ function SidebarContent({
             </svg>
           </button>
         )}
-        {onToggleCollapse && !collapsed && (
-          <button onClick={onToggleCollapse} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-700/60 transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-            </svg>
-          </button>
-        )}
-        {onToggleCollapse && collapsed && (
-          <button onClick={onToggleCollapse} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-700/60 transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-            </svg>
-          </button>
-        )}
+        
       </div>
 
       {/* Nav label */}
@@ -247,7 +250,7 @@ function SidebarContent({
       )}
 
       {/* Main nav */}
-      <nav className="flex-1 overflow-y-auto px-3 space-y-1 pt-2">
+      <nav className="flex-1 overflow-hidden px-3 space-y-1 pt-2">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href, item.exact);
           const accent = item.color ? ACCENT[item.color] : "";
@@ -356,19 +359,6 @@ function SidebarContent({
             </Link>
           );
         })}
-
-        {/* User card */}
-        {!collapsed && (
-          <div className="mt-3 flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700/40">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-xs font-bold">A</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-white text-xs font-semibold truncate">Admin</p>
-              <p className="text-slate-500 text-xs truncate">admin@travel.com</p>
-            </div>
-          </div>
-        )}
 
         {collapsed && (
           <div className="flex justify-center mt-2">

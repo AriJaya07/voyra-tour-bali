@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Package } from "@/utils/service/package.service";
 import { useCategories } from "@/utils/hooks/useCategories";
 import { useDestinations } from "@/utils/hooks/useDestinations";
+import SpinnerIcon from "@/components/assets/dashboard/SpinnerIcon";
 
 interface FormData {
   title: string;
@@ -150,18 +151,16 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 pt-1">
-          <button type="button" onClick={onCancel} className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 text-sm font-medium transition-colors">
-            Cancel
-          </button>
-          <button type="submit" disabled={isLoading} className="flex-1 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-60 transition-colors text-sm font-medium flex items-center justify-center gap-2">
+        <div className="flex justify-end pt-2">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-60 transition-colors text-sm font-medium flex items-center justify-center gap-2 w-[150px]"
+          >
             {isLoading && (
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+              <SpinnerIcon />
             )}
-            {mode === "create" ? "Create Package" : "Save Changes"}
+            {mode === "create" ? "Create" : "Save"}
           </button>
         </div>
       </form>

@@ -52,7 +52,7 @@ export interface DashboardStats {
   
   export const dashboardService = {
     getStats: async (): Promise<DashboardStats> => {
-      const res = await fetch("/api/dashboard/stats");
+      const res = await fetch("/api/stats");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load stats");
       return data;
