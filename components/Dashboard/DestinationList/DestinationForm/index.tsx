@@ -143,6 +143,7 @@ export default function DestinationForm({
           <input
             type="text"
             value={formData.title}
+            placeholder="Title..." 
             onChange={handleChange("title")}
             className={inputClass(!!errors.title)}
           />
@@ -152,6 +153,7 @@ export default function DestinationForm({
           <textarea
             rows={3}
             value={formData.description}
+            placeholder="Description..." 
             onChange={handleChange("description")}
             className={`${inputClass(!!errors.description)} resize-none`}
           />
@@ -163,6 +165,7 @@ export default function DestinationForm({
               type="number"
               min="0"
               step="0.01"
+              placeholder="price..." 
               value={formData.price}
               onChange={handleChange("price")}
               className={inputClass(!!errors.price)}

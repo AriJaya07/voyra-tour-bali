@@ -5,6 +5,7 @@ import { Package } from "@/utils/service/package.service";
 import { useCategories } from "@/utils/hooks/useCategories";
 import { useDestinations } from "@/utils/hooks/useDestinations";
 import SpinnerIcon from "@/components/assets/dashboard/SpinnerIcon";
+import { Field, inputClass } from "@/components/common/InputForm";
 
 interface FormData {
   title: string;
@@ -47,7 +48,7 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
     }
   }, [initialData]);
 
-  const set = (field: keyof FormData) => (
+  const handleChange = (field: keyof FormData) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setFormData((p) => ({ ...p, [field]: e.target.value }));
@@ -94,60 +95,69 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
-        {/* Title */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-            Title <span className="text-red-400">*</span>
-          </label>
-          <input type="text" placeholder="e.g. 7-Day Bali Explorer" value={formData.title} onChange={set("title")} className={inputCls(errors.title)} />
-          {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
-        </div>
+        <Field label="Title" error={errors.title} required>
+          <input
+            type="text" 
+            placeholder="e.g. 7-Day Bali Explorer" 
+            value={formData.title} 
+            onChange={handleChange("title")}
+            className={inputClass(!!errors.title)}
+          />
+        </Field>
 
-        {/* Description */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-            Description <span className="text-red-400">*</span>
-          </label>
-          <textarea placeholder="Describe what's included in this package..." value={formData.description} onChange={set("description")} rows={3} className={`${inputCls(errors.description)} resize-none`} />
-          {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
-        </div>
 
-        {/* Price */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-            Price (USD) <span className="text-red-400">*</span>
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">$</span>
-            <input type="number" placeholder="0.00" min="0" step="0.01" value={formData.price} onChange={set("price")} className={`${inputCls(errors.price)} pl-7`} />
-          </div>
-          {errors.price && <p className="text-xs text-red-500 mt-1">{errors.price}</p>}
-        </div>
+        <Field label="Description" error={errors.description} required>
+           <textarea 
+            placeholder="Describe what's included in this package..." 
+            value={formData.description} 
+            onChange={handleChange("description")} 
+            rows={3}
+            className={inputClass(!!errors.description)}
+          />
+        </Field>
+
+
+        <Field label="Price (USD)" error={errors.price} required>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.price}
+              onChange={handleChange("price")}
+              className={inputClass(!!errors.price)}
+            />
+          </Field>
 
         {/* Category + Destination */}
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-              Category <span className="text-slate-300 font-normal normal-case">(optional)</span>
-            </label>
-            <select value={formData.categoryId} onChange={set("categoryId")} className={inputCls()}>
-              <option value="">— None —</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+          <Field label="Category" error={errors.categoryId} required>
+            <select
+              value={formData.categoryId}
+              onChange={handleChange("categoryId")}
+              className={inputClass(!!errors.categoryId)}
+            >
+              <option value={0}>— Select Category —</option>
+              {categories.map((c: any) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-              Destination <span className="text-slate-300 font-normal normal-case">(optional)</span>
-            </label>
-            <select value={formData.destinationId} onChange={set("destinationId")} className={inputCls()}>
-              <option value="">— None —</option>
-              {destinations.map((d: any) => (
-                <option key={d.id} value={d.id}>{d.title}</option>
+          </Field>
+          <Field label="Destination" error={errors.destinationId} required>
+            <select
+              value={formData.destinationId}
+              onChange={handleChange("destinationId")}
+              className={inputClass(!!errors.destinationId)}
+            >
+              <option value={0}>— Select Destination —</option>
+              {destinations.map((c: any) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
               ))}
             </select>
-          </div>
+          </Field>
         </div>
 
         {/* Actions */}

@@ -89,67 +89,35 @@ export default function CategoryForm({ mode, initialData, onSubmit, onCancel, is
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
-        
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-            Name <span className="text-red-400">*</span>
-          </label>
+        <Field label="Name" error={errors.name} required>
           <input
             type="text"
             placeholder="e.g. Adventure Tours"
             value={formData.name}
             onChange={handleNameChange}
-            className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-colors ${
-              errors.name ? "border-red-300 bg-red-50" : "border-slate-200"
-            }`}
-          />
-          {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
-        </div>
-        {/* <Field label="Name" error={errors.name} required>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={handleNameChange}
             className={inputClass(!!errors.name)}
           />
-        </Field> */}
+        </Field>
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-            Slug <span className="text-red-400">*</span>
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-mono">/</span>
-            <input
-              type="text"
-              placeholder="adventure-tours"
-              value={formData.slug}
-              onChange={handleSlugChange}
-              className={`w-full pl-6 pr-3 py-2.5 border rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-colors ${
-                errors.slug ? "border-red-300 bg-red-50" : "border-slate-200"
-              }`}
-            />
-          </div>
-          {errors.slug ? (
-            <p className="text-xs text-red-500 mt-1">{errors.slug}</p>
-          ) : (
-            <p className="text-xs text-slate-400 mt-1">Auto-generated from name. Only a–z, 0–9, hyphens.</p>
-          )}
-        </div>
+        <Field label="Slug" error={errors.slug} required>
+          <input
+            type="text"
+            placeholder="e.g. Adventure Tours"
+            value={formData.slug}
+            onChange={handleSlugChange}
+            className={inputClass(!!errors.slug)}
+          />
+        </Field>
 
-        {/* Description */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-            Description <span className="text-slate-300 font-normal normal-case">(optional)</span>
-          </label>
+        <Field label="Description" error={errors.description} required>
           <textarea
             placeholder="Brief description of this category..."
             value={formData.description}
             onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
             rows={3}
-            className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-colors resize-none"
+            className={inputClass(!!errors.description)}
           />
-        </div>
+        </Field>
 
         <div className="flex justify-end pt-2">
           <button
