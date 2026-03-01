@@ -8,63 +8,106 @@ datasource db {
 }
 
 model Category {
-  id          Int          @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
-  slug        String       @unique
+  slug        String  @unique
   description String?
 
   destinations Destination[]
-  packages     Package[]   // ✅ ADD THIS
+  packages     Package[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Destination {
-  id          Int        @id @default(autoincrement())
+  id          Int    @id @default(autoincrement())
   title       String
   description String
   price       Float?
 
-  categoryId  Int?
-  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id])
 
-  images      Image[]    // ✅ ADD THIS
-  packages    Package[]
+  images   Image[]
+  packages Package[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  contents  Content[]
+  locations Location[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Package {
-  id            Int        @id @default(autoincrement())
-  title         String
-  description   String
-  price         Float
+  id          Int    @id @default(autoincrement())
+  title       String
+  description String
+  price       Float
 
-  categoryId    Int?
-  category      Category? @relation(fields: [categoryId], references: [id])
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id])
 
   destinationId Int?
   destination   Destination? @relation(fields: [destinationId], references: [id])
 
-  images        Image[]
+  images Image[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Image {
-  id            Int        @id @default(autoincrement())
-  url           String
+  id  Int    @id @default(autoincrement())
+  url String
 
   destinationId Int?
   destination   Destination? @relation(fields: [destinationId], references: [id])
 
-  packageId     Int?
-  package       Package? @relation(fields: [packageId], references: [id])
+  packageId Int?
+  package   Package? @relation(fields: [packageId], references: [id])
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+model Content {
+  id Int @id @default(autoincrement())
+
+  title       String
+  subTitle    String?
+  description String
+
+  image1 String?
+  image2 String?
+  image3 String?
+  image4 String?
+  image5 String?
+
+  imageMain String?
+
+  dateAvailable DateTime
+  isAvailable   Boolean  @default(true)
+
+  destinationId Int
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Location {
+  id Int @id @default(autoincrement())
+
+  title       String
+  image       String?
+  hrefLink    String?
+  description String?
+
+  destinationId Int
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {

@@ -54,6 +54,30 @@ const NAV_ITEMS = [
     color: "violet",
   },
   {
+    label: "Locations",
+    href: "/dashboard/locations",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    color: "sky",
+  },
+  {
+    label: "Contents",
+    href: "/dashboard/contents",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+    color: "orange",
+  },
+  {
     label: "Images",
     href: "/dashboard/images",
     icon: (
@@ -85,6 +109,8 @@ const ACCENT: Record<string, string> = {
   blue: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   violet: "bg-violet-500/15 text-violet-400 border-violet-500/30",
   rose: "bg-rose-500/15 text-rose-400 border-rose-500/30",
+  sky: "bg-sky-500/15 text-sky-400 border-sky-500/30",
+  orange: "bg-orange-500/15 text-orange-400 border-orange-500/30",
 };
 
 const ACTIVE_DOT: Record<string, string> = {
@@ -92,6 +118,8 @@ const ACTIVE_DOT: Record<string, string> = {
   blue: "bg-blue-400",
   violet: "bg-violet-400",
   rose: "bg-rose-400",
+  sky: "bg-sky-400",
+  orange: "bg-orange-400",
 };
 
 export default function Sidebar() {
