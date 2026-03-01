@@ -49,7 +49,7 @@ export default function DashboardThemeProvider({
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <div className="dashboard-theme" data-theme={theme}>
+      <div className="dashboard-theme lg:mt-0 mt-15" data-theme={theme}>
         {children}
       </div>
     </ThemeContext.Provider>
