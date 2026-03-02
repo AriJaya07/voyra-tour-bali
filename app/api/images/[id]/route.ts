@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import cloudinary from "@/utils/common/cloudinary";
+import { deleteImageFromS3 } from "@/utils/common/s3";
 
 // PATCH /api/images/[id] — update relasi destinasi atau package
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -39,13 +39,10 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       return NextResponse.json({ error: "Image not found" }, { status: 404 });
     }
 
-    // Ekstrak public_id dari URL Cloudinary untuk delete
-    const urlParts = image.url.split("/");
-    const folderAndFile = urlParts.slice(-2).join("/");
-    const publicId = folderAndFile.replace(/\.[^/.]+$/, ""); // hapus ekstensi
-
-    // Hapus dari Cloudinary
-    await cloudinary.uploader.destroy(publicId);
+    // Hapus file di S3 berdasarkan key yang tersimpan
+    if (image.key) {
+      await deleteImageFromS3(image.key);
+    }
 
     // Hapus dari DB
     await prisma.image.delete({ where: { id: Number(id) } });

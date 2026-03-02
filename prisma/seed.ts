@@ -8,12 +8,16 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: "admin@travel.com" },
-    update: {},
+    update: {
+      password: hashed,
+      name: "Admin",
+      role: "ADMIN", 
+    },
     create: {
       email: "admin@travel.com",
       password: hashed,
       name: "Admin",
-      role: "admin",
+      role: "ADMIN",
     },
   });
 
@@ -21,5 +25,10 @@ async function main() {
 }
 
 main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

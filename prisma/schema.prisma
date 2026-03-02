@@ -8,9 +8,9 @@ datasource db {
 }
 
 model Category {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
-  slug        String  @unique
+  slug        String   @unique
   description String?
 
   destinations Destination[]
@@ -21,53 +21,41 @@ model Category {
 }
 
 model Destination {
-  id          Int    @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   title       String
+  slug        String?  @unique   // 👈 TEMPORARY OPTIONAL
   description String
   price       Float?
 
   categoryId Int?
-  category   Category? @relation(fields: [categoryId], references: [id])
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  images   Image[]
-  packages Package[]
-
-  contents  Content[]
-  locations Location[]
+  images     Image[]
+  packages   Package[]
+  contents   Content[]
+  locations  Location[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Package {
-  id          Int    @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   title       String
+  slug        String?  @unique   // 👈 TEMPORARY OPTIONAL
   description String
   price       Float
 
   categoryId Int?
-  category   Category? @relation(fields: [categoryId], references: [id])
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   destinationId Int?
-  destination   Destination? @relation(fields: [destinationId], references: [id])
+  destination   Destination? @relation(fields: [destinationId], references: [id], onDelete: SetNull)
 
   images Image[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model Image {
-  id  Int    @id @default(autoincrement())
-  url String
-
-  destinationId Int?
-  destination   Destination? @relation(fields: [destinationId], references: [id])
-
-  packageId Int?
-  package   Package? @relation(fields: [packageId], references: [id])
-
-  createdAt DateTime @default(now())
 }
 
 model Content {
@@ -77,19 +65,13 @@ model Content {
   subTitle    String?
   description String
 
-  image1 String?
-  image2 String?
-  image3 String?
-  image4 String?
-  image5 String?
-
-  imageMain String?
-
   dateAvailable DateTime
   isAvailable   Boolean  @default(true)
 
   destinationId Int
   destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  images Image[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -99,15 +81,39 @@ model Location {
   id Int @id @default(autoincrement())
 
   title       String
-  image       String?
-  hrefLink    String?
   description String?
+  hrefLink    String?
 
   destinationId Int
   destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
 
+  images Image[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Image {
+  id        Int     @id @default(autoincrement())
+  url       String
+  key       String
+  altText   String?
+  isMain    Boolean @default(false)
+  order     Int?
+
+  destinationId Int?
+  destination   Destination? @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  packageId Int?
+  package   Package? @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  contentId Int?
+  content   Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  locationId Int?
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 model User {
@@ -115,7 +121,13 @@ model User {
   email     String   @unique
   password  String
   name      String?
-  role      String   @default("admin")
+  role      UserRole @default(ADMIN)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
 }
