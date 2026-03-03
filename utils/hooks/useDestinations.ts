@@ -31,7 +31,7 @@ export function useDestinations() {
       id,
       payload,
     }: {
-      id: string;
+      id: number | string;
       payload: any;
     }) => destinationService.update(id, payload),
     onSuccess: () => {

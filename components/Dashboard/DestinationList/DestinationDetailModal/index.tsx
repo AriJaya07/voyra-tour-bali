@@ -5,7 +5,7 @@ export function DestinationDetailModal({
     onClose,
     onEdit,
   }: {
-    destination: { id: string; title: string; description: string; price: number | string; categoryId: string | number };
+    destination: { id: number; title: string; description: string; price: number | string; categoryId: string | number };
     onClose: () => void;
     onEdit: () => void;
   }) {

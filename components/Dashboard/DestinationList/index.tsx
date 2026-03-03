@@ -5,7 +5,7 @@ import DestinationTable from "@/components/Dashboard/DestinationList/Destination
 import Sidebar from "@/components/Dashboard/Sidebar";
 import { useDestinations } from "@/utils/hooks/useDestinations";
 import { ModalMode } from "@/components/common/InputForm";
-import { Destination } from "@/utils/service/destination.service";
+import { Destination, DestinationFormData } from "@/utils/service/destination.service";
 import PlusIcon from "@/components/assets/dashboard/PlusIcon";
 import { DestinationDetailModal } from "@/components/Dashboard/DestinationList/DestinationDetailModal";
 
@@ -44,11 +44,11 @@ export default function DestinationList() {
       setSelectedDestination(null);
     };
   
-    const handleCreate = (data: Omit<Destination, "id">) => {
+    const handleCreate = (data: DestinationFormData) => {
       createDestination(data, { onSuccess: closeModal });
     };
   
-    const handleUpdate = (data: Omit<Destination, "id">) => {
+    const handleUpdate = (data: DestinationFormData) => {
       if (!selectedDestination) return;
       updateDestination({ id: selectedDestination.id, payload: data }, { onSuccess: closeModal });
     };
