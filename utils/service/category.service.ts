@@ -5,6 +5,7 @@ export interface Category {
   name: string;
   slug: string;
   description?: string | null;
+  image?: string | null;
   createdAt: string;
   updatedAt: string;
   _count?: { destinations: number; packages: number };
@@ -14,6 +15,7 @@ export interface CategoryPayload {
   name: string;
   slug: string;
   description?: string;
+  image?: string;
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {

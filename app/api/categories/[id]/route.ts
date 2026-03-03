@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   const { id } = await context.params;
   try {
     const body = await req.json();
-    const { name, slug, description } = body;
+    const { name, slug, description, image } = body;
 
     if (slug) {
       const existing = await prisma.category.findFirst({
@@ -42,6 +42,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
         ...(name && { name }),
         ...(slug && { slug }),
         description: description ?? undefined,
+        image: image ?? undefined,
       },
     });
 

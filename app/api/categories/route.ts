@@ -22,7 +22,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, slug, description } = body;
+    const { name, slug, description, image } = body;
 
     if (!name || !slug) {
       return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
@@ -33,9 +33,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
     }
 
-    const category = await prisma.category.create({
-      data: { name, slug, description: description || null },
-    });
+    const data: any = {
+      name,
+      slug,
+      description: description || null,
+      image: image || null,
+    };
+
+    const category = await prisma.category.create({ data });
 
     return NextResponse.json(category, { status: 201 });
   } catch (error) {
