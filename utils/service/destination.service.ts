@@ -1,15 +1,42 @@
-import axios from "axios";
+import api from "@/lib/axios"; // adjust path if needed
+
+export interface DestinationImage {
+  id?: number;
+  url: string;
+  key: string;
+  altText?: string;
+  isMain: boolean;
+  order: number;
+}
 
 export interface Destination {
   id: number;
   title: string;
   description: string;
-  price: number | string;
+  price: number;
   categoryId: number;
   slug?: string;
-  images: any[];
-  contents: any[];
-  locations: any[];
+  category?: { id: number; name: string; slug: string } | null;
+  images: DestinationImage[];
+  contents: Array<{
+    id: number;
+    title: string;
+    subTitle?: string | null;
+    description: string;
+    dateAvailable: string;
+    isAvailable: boolean;
+    images: DestinationImage[];
+  }>;
+  locations: Array<{
+    id: number;
+    title: string;
+    description?: string | null;
+    hrefLink?: string | null;
+    images: DestinationImage[];
+  }>;
+  _count?: { images: number };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DestinationFormData {
@@ -58,24 +85,43 @@ export interface DestinationFormData {
   }>;
 }
 
+const BASE = "/destinations";
+
 export const destinationService = {
-  getAll: async () => {
-    const { data } = await axios.get("/api/destinations");
+  getAll: async (): Promise<Destination[]> => {
+    const { data } = await api.get<Destination[]>(BASE);
     return data;
   },
 
-  create: async (payload: DestinationFormData) => {
-    const { data } = await axios.post("/api/destinations", payload);
+  getOne: async (id: number | string): Promise<Destination> => {
+    const { data } = await api.get<Destination>(`${BASE}/${id}`);
     return data;
   },
 
-  update: async (id: number | string, payload: DestinationFormData) => {
-    const { data } = await axios.put(`/api/destinations/${id}`, payload);
+  create: async (
+    payload: DestinationFormData
+  ): Promise<Destination> => {
+    const { data } = await api.post<Destination>(BASE, payload);
     return data;
   },
 
-  delete: async (id: number | string) => {
-    const { data } = await axios.delete(`/api/destinations/${id}`);
+  update: async (
+    id: number | string,
+    payload: DestinationFormData
+  ): Promise<Destination> => {
+    const { data } = await api.put<Destination>(
+      `${BASE}/${id}`,
+      payload
+    );
+    return data;
+  },
+
+  delete: async (
+    id: number | string
+  ): Promise<{ success: boolean }> => {
+    const { data } = await api.delete<{ success: boolean }>(
+      `${BASE}/${id}`
+    );
     return data;
   },
 };

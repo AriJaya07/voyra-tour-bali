@@ -6,16 +6,16 @@ export default function ContentViewModal({
   }: {
     content: Content; onClose: () => void; onEdit: () => void;
   }) {
-    const images = [content.image1, content.image2, content.image3, content.image4, content.image5].filter(Boolean) as string[];
+    const mainImage = content.images.find((img) => img.isMain) ?? content.images[0];
     const fmtDate = (s: string) =>
       new Date(s).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
-  
+
     return (
       <div className="bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-700/50 max-h-[90vh] overflow-y-auto">
         {/* Header image or gradient */}
-        {content.imageMain ? (
+        {mainImage ? (
           <div className="relative h-52 overflow-hidden">
-            <img src={content.imageMain} alt={content.title} className="w-full h-full object-cover" />
+            <img src={mainImage.url} alt={content.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
             <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,7 +42,7 @@ export default function ContentViewModal({
             </button>
           </div>
         )}
-  
+
         <div className="p-6 space-y-5">
           {/* Meta row */}
           <div className="grid grid-cols-3 gap-3">
@@ -62,30 +62,30 @@ export default function ContentViewModal({
               </span>
             </div>
           </div>
-  
+
           {/* Description */}
           <div>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Deskripsi</p>
             <p className="text-slate-300 text-sm leading-relaxed">{content.description}</p>
           </div>
-  
+
           {/* Gallery */}
-          {images.length > 0 && (
+          {content.images.length > 0 && (
             <div>
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                Gallery ({images.length} gambar)
+                Gallery ({content.images.length} gambar)
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                {images.map((url, i) => (
-                  <div key={i} className="aspect-square rounded-xl overflow-hidden border border-slate-700">
-                    <img src={url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-200" />
+                {content.images.map((img, i) => (
+                  <div key={img.id ?? i} className="aspect-square rounded-xl overflow-hidden border border-slate-700">
+                    <img src={img.url} alt={img.altText ?? ""} className="w-full h-full object-cover hover:scale-105 transition-transform duration-200" />
                   </div>
                 ))}
               </div>
             </div>
           )}
         </div>
-  
+
         {/* Footer */}
         <div className="px-6 pb-6 flex gap-3">
           <button onClick={onClose} className="flex-1 py-2.5 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 rounded-xl text-sm font-medium transition-colors">

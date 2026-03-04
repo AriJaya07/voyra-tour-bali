@@ -1,26 +1,18 @@
 "use client";
 
 import { BarChart, CategoryBar, EmptyState, KpiCard, Spinner, ValueCard } from "@/components/Dashboard/Overview";
-import Sidebar from "@/components/Dashboard/Sidebar";
 import { useDashboardStats } from "@/utils/hooks/useDashboardStats";
+import { fmtDate } from "@/components/common/ListForm";
 import Link from "next/link";
 
 // ── Formatter helpers ─────────────────────────────────────
-const fmt = (n: number) =>
-  n.toLocaleString("id-ID", { minimumFractionDigits: 0 });
 const fmtUSD = (n: number) =>
   "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmtDate = (s: string) =>
-  new Date(s).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function DashboardOverviewPage() {
   const { data, isLoading, isError, refetch } = useDashboardStats();
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
-      <Sidebar />
-
-      <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
           {/* ── Page Header ── */}
@@ -343,7 +335,5 @@ export default function DashboardOverviewPage() {
           </div>
 
         </div>
-      </div>
-    </div>
   );
 }

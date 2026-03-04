@@ -1,3 +1,5 @@
+import api from "@/lib/axios";
+
 export interface ImageItem {
   id: number;
   url: string;
@@ -24,42 +26,48 @@ export interface UploadImagePayload {
   locationId?: string;
 }
 
-async function handleResponse<T>(res: Response): Promise<T> {
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Request failed");
-  return data;
-}
+const BASE = "/images";
 
 export const imageService = {
-  getAll: (params?: {
+
+  getAll: async (params?: {
     destinationId?: number;
     packageId?: number;
     contentId?: number;
     locationId?: number;
   }): Promise<ImageItem[]> => {
-    const query = new URLSearchParams();
-    if (params?.destinationId) query.set("destinationId", String(params.destinationId));
-    if (params?.packageId) query.set("packageId", String(params.packageId));
-    if (params?.contentId) query.set("contentId", String(params.contentId));
-    if (params?.locationId) query.set("locationId", String(params.locationId));
-    const qs = query.toString();
-    const url = qs ? `/api/images?${qs}` : "/api/images";
-    return fetch(url).then((r) => handleResponse<ImageItem[]>(r));
+    const { data } = await api.get<ImageItem[]>(BASE, {
+      params,
+    });
+
+    return data;
   },
 
-  upload: async (payload: UploadImagePayload): Promise<ImageItem> => {
+  upload: async (
+    payload: UploadImagePayload
+  ): Promise<ImageItem> => {
     const form = new FormData();
     form.append("file", payload.file);
-    if (payload.destinationId) form.append("destinationId", payload.destinationId);
-    if (payload.packageId) form.append("packageId", payload.packageId);
-    if (payload.contentId) form.append("contentId", payload.contentId);
-    if (payload.locationId) form.append("locationId", payload.locationId);
 
-    const res = await fetch("/api/images", { method: "POST", body: form });
-    return handleResponse<ImageItem>(res);
+    if (payload.destinationId)
+      form.append("destinationId", payload.destinationId);
+    if (payload.packageId)
+      form.append("packageId", payload.packageId);
+    if (payload.contentId)
+      form.append("contentId", payload.contentId);
+    if (payload.locationId)
+      form.append("locationId", payload.locationId);
+
+    const { data } = await api.post<ImageItem>(BASE, form, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return data;
   },
 
-  update: (
+  update: async (
     id: number,
     payload: {
       destinationId?: number | null;
@@ -70,15 +78,22 @@ export const imageService = {
       isMain?: boolean;
       order?: number | null;
     }
-  ): Promise<ImageItem> =>
-    fetch(`/api/images/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }).then((r) => handleResponse<ImageItem>(r)),
+  ): Promise<ImageItem> => {
+    const { data } = await api.patch<ImageItem>(
+      `${BASE}/${id}`,
+      payload
+    );
 
-  delete: (id: number): Promise<{ success: boolean }> =>
-    fetch(`/api/images/${id}`, { method: "DELETE" }).then((r) =>
-      handleResponse<{ success: boolean }>(r)
-    ),
+    return data;
+  },
+
+  delete: async (
+    id: number
+  ): Promise<{ success: boolean }> => {
+    const { data } = await api.delete<{ success: boolean }>(
+      `${BASE}/${id}`
+    );
+
+    return data;
+  },
 };

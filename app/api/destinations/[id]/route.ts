@@ -30,19 +30,7 @@ export async function PUT(
   const { title, description, price, categoryId, slug, images, contents, locations } = body;
 
   try {
-    // Update destination basic info
-    const updatedDestination = await prisma.destination.update({
-      where: { id: Number(id) },
-      data: {
-        title,
-        description,
-        price: Number(price),
-        categoryId: Number(categoryId),
-        slug: slug || undefined,
-      },
-    });
-
-    // Handle images - update existing images and their associations
+    
     if (images && images.length > 0) {
       await Promise.all(
         images.map((image: any) =>

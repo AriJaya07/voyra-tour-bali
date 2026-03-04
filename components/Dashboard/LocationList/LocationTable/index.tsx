@@ -63,20 +63,13 @@ export default function LocationTable({ locations, onView, onEdit, onDelete }: P
           >
             {/* Avatar / Thumbnail */}
             <div className="flex-shrink-0">
-              {loc.image ? (
+              {loc.images?.[0]?.url ? (
                 <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-700">
                   <img
-                    src={loc.image}
+                    src={loc.images.find((img) => img.isMain)?.url || loc.images[0].url}
                     alt={loc.title}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                      e.currentTarget.parentElement!.classList.add(
-                        "bg-gradient-to-br",
-                        GRADIENTS[i % GRADIENTS.length].split(" ")[0],
-                        GRADIENTS[i % GRADIENTS.length].split(" ")[1]
-                      );
-                    }}
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
                   />
                 </div>
               ) : (

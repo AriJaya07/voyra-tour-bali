@@ -15,10 +15,10 @@ export default function LocationViewModal({
     return (
       <div className="bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-700/50">
         {/* Header with image */}
-        {location.image ? (
+        {location.images?.[0]?.url ? (
           <div className="relative h-48 overflow-hidden">
             <img
-              src={location.image}
+              src={location.images.find((img) => img.isMain)?.url || location.images[0].url}
               alt={location.title}
               className="w-full h-full object-cover"
             />

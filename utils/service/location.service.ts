@@ -1,7 +1,7 @@
-import axios from "axios";
+import api from "@/lib/axios";
 
-const BASE = "/api/locations";
 
+const BASE = "/locations";
 export interface Location {
   id: number;
   title: string;
@@ -35,13 +35,6 @@ export interface LocationPayload {
   description?: string;
   destinationId: number | string;
 }
-
-const api = axios.create({
-  baseURL: "",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
 
 function handleAxiosError(error: any): never {
   const message =
@@ -89,7 +82,7 @@ export const locationService = {
     payload: Partial<LocationPayload>
   ): Promise<Location> => {
     try {
-      const res = await api.patch<Location>(`${BASE}/${id}`, payload);
+      const res = await api.put<Location>(`${BASE}/${id}`, payload);
       return res.data;
     } catch (error) {
       handleAxiosError(error);

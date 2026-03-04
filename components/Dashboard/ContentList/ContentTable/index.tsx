@@ -55,10 +55,10 @@ export default function ContentTable({ contents, onView, onEdit, onDelete }: Pro
           >
             {/* Thumbnail / Avatar */}
             <div className="flex-shrink-0">
-              {c.imageMain ? (
+              {c.images.find((img) => img.isMain)?.url || c.images[0]?.url ? (
                 <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-700">
                   <img
-                    src={c.imageMain}
+                    src={c.images.find((img) => img.isMain)?.url || c.images[0]?.url}
                     alt={c.title}
                     className="w-full h-full object-cover"
                     onError={(e) => { e.currentTarget.style.display = "none"; }}
@@ -100,19 +100,19 @@ export default function ContentTable({ contents, onView, onEdit, onDelete }: Pro
 
             {/* Image count */}
             <div className="flex items-center gap-1">
-              {[c.image1, c.image2, c.image3, c.image4, c.image5]
-                .filter(Boolean)
-                .slice(0, 3)
-                .map((url, idx) => (
-                  <div key={idx} className="w-6 h-6 rounded-md overflow-hidden border border-slate-700">
-                    <img src={url!} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-                  </div>
-                ))}
-              {[c.image1, c.image2, c.image3, c.image4, c.image5].filter(Boolean).length > 3 && (
-                <span className="text-slate-500 text-xs">+{[c.image1, c.image2, c.image3, c.image4, c.image5].filter(Boolean).length - 3}</span>
-              )}
-              {![c.image1, c.image2, c.image3, c.image4, c.image5].some(Boolean) && (
-                <span className="text-slate-700 text-xs">—</span>
+              {c.images.length > 0 ? (
+                <>
+                  {c.images.slice(0, 3).map((img, idx) => (
+                    <div key={idx} className="w-6 h-6 rounded-md overflow-hidden border border-slate-700">
+                      <img src={img.url} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                    </div>
+                  ))}
+                  {c.images.length > 3 && (
+                    <span className="text-slate-500 text-xs">+{c.images.length - 3}</span>
+                  )}
+                </>
+              ) : (
+                <span className="text-slate-700 text-xs">&mdash;</span>
               )}
             </div>
 

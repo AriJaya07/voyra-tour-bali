@@ -5,82 +5,12 @@ import { Field, inputClass } from "@/components/common/InputForm";
 import { useCategories } from "@/utils/hooks/useCategories";
 import { useImages } from "@/utils/hooks/useImages";
 import { useState, useEffect, useRef } from "react";
-import { imageService, ImageItem } from "@/utils/service/image.service";
 import moment from "moment";
-
-interface DestinationFormData {
-  title: string;
-  description: string;
-  price: string;
-  categoryId: number;
-  slug?: string;
-  images: Array<{
-    id?: number;
-    url: string;
-    key: string;
-    altText?: string;
-    isMain: boolean;
-    order: number;
-  }>;
-  contents: Array<{
-    id?: number;
-    title: string;
-    subTitle?: string;
-    description: string;
-    dateAvailable: string;
-    isAvailable: boolean;
-    images: Array<{
-      id?: number;
-      url: string;
-      key: string;
-      altText?: string;
-      isMain: boolean;
-      order: number;
-    }>;
-  }>;
-  locations: Array<{
-    id?: number;
-    title: string;
-    description?: string;
-    hrefLink?: string;
-    images: Array<{
-      id?: number;
-      url: string;
-      key: string;
-      altText?: string;
-      isMain: boolean;
-      order: number;
-    }>;
-  }>;
-}
+import { Destination, DestinationFormData } from "@/utils/service/destination.service";
 
 interface DestinationFormProps {
   mode: "create" | "edit";
-  initialData?: {
-    id: number;
-    title: string;
-    description: string;
-    price: number | string;
-    categoryId: string | number;
-    slug?: string;
-    images: ImageItem[];
-    contents: Array<{
-      id: number;
-      title: string;
-      subTitle?: string;
-      description: string;
-      dateAvailable: string;
-      isAvailable: boolean;
-      images: ImageItem[];
-    }>;
-    locations: Array<{
-      id: number;
-      title: string;
-      description?: string;
-      hrefLink?: string;
-      images: ImageItem[];
-    }>;
-  };
+  initialData?: Destination;
   onSubmit: (data: DestinationFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -341,7 +271,7 @@ export default function DestinationForm({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate className="p-6 space-y-6 max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <form onSubmit={handleSubmit} noValidate className="p-6 space-y-6">
         {/* Basic Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Title" error={errors.title} required>

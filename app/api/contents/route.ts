@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
         : undefined,
       include: {
         destination: { select: { id: true, title: true } },
-        images: true, // ✅ include images relation
+        images: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -35,12 +35,7 @@ export async function POST(req: NextRequest) {
       title,
       subTitle,
       description,
-      image1,
-      image2,
-      image3,
-      image4,
-      image5,
-      imageMain,
+      images,
       dateAvailable,
       isAvailable,
       destinationId,
@@ -77,27 +72,21 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
 
-    // ✅ Collect images into array and map to Image create input
-    const imageArray =
-      [
-        imageMain,
-        image1,
-        image2,
-        image3,
-        image4,
-        image5,
-      ]
-        .filter(Boolean)
-        .map((url: string, index: number) => {
-          const trimmed = url.trim();
-          return {
-            url: trimmed,
-            // Use URL as key fallback so Prisma `key` requirement is satisfied.
-            // You can later migrate this to real storage keys (e.g. S3) if needed.
-            key: trimmed,
-            isMain: index === 0,
-          };
-        });
+    if (images && images.length > 0) {
+      await Promise.all(
+        images.map((image: any, index: number) =>
+          prisma.image.update({
+            where: { id: Number(image.id) },
+            data: {
+              destinationId: destination.id,
+              altText: image.altText || null,
+              isMain: image.isMain || false,
+              order: image.order || index,
+            },
+          })
+        )
+      );
+    }
 
     const content = await prisma.content.create({
       data: {
@@ -108,9 +97,8 @@ export async function POST(req: NextRequest) {
         isAvailable: isAvailable ?? true,
         destinationId: Number(destinationId),
 
-        // ✅ Proper relation create
         images: {
-          create: imageArray,
+          create: images,
         },
       },
       include: {

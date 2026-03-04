@@ -1,4 +1,6 @@
-const BASE = "/api/categories";
+import api from "@/lib/axios"; // adjust path if needed
+
+const BASE = "/categories";
 
 export interface Category {
   id: number;
@@ -18,35 +20,34 @@ export interface CategoryPayload {
   image?: string;
 }
 
-async function handleResponse<T>(res: Response): Promise<T> {
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Request failed");
-  return data;
-}
-
 export const categoryService = {
-  getAll: (): Promise<Category[]> =>
-    fetch(BASE).then((r) => handleResponse<Category[]>(r)),
+  getAll: async (): Promise<Category[]> => {
+    const { data } = await api.get<Category[]>(BASE);
+    return data;
+  },
 
-  getOne: (id: number): Promise<Category> =>
-    fetch(`${BASE}/${id}`).then((r) => handleResponse<Category>(r)),
+  getOne: async (id: number): Promise<Category> => {
+    const { data } = await api.get<Category>(`${BASE}/${id}`);
+    return data;
+  },
 
-  create: (payload: CategoryPayload): Promise<Category> =>
-    fetch(BASE, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }).then((r) => handleResponse<Category>(r)),
+  create: async (payload: CategoryPayload): Promise<Category> => {
+    const { data } = await api.post<Category>(BASE, payload);
+    return data;
+  },
 
-  update: (id: number, payload: Partial<CategoryPayload>): Promise<Category> =>
-    fetch(`${BASE}/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }).then((r) => handleResponse<Category>(r)),
+  update: async (
+    id: number,
+    payload: Partial<CategoryPayload>
+  ): Promise<Category> => {
+    const { data } = await api.put<Category>(`${BASE}/${id}`, payload);
+    return data;
+  },
 
-  delete: (id: number): Promise<{ success: boolean }> =>
-    fetch(`${BASE}/${id}`, { method: "DELETE" }).then((r) =>
-      handleResponse<{ success: boolean }>(r)
-    ),
+  delete: async (id: number): Promise<{ success: boolean }> => {
+    const { data } = await api.delete<{ success: boolean }>(
+      `${BASE}/${id}`
+    );
+    return data;
+  },
 };

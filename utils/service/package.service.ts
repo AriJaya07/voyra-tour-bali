@@ -102,7 +102,7 @@ export const packageService = {
     id: number,
     payload: Partial<PackagePayload>
   ): Promise<Package> {
-    const { data } = await api.patch<Package>(
+    const { data } = await api.put<Package>(
       `${BASE}/${id}`,
       normalizePayload(payload)
     );

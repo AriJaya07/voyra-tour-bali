@@ -12,7 +12,7 @@ interface DestinationTableProps {
   destinations: Destination[];
   onView: (destination: Destination) => void;
   onEdit: (destination: Destination) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: number) => void;
 }
 
 export default function DestinationTable({

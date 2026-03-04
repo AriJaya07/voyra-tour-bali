@@ -20,8 +20,8 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
   }
 }
 
-// PATCH /api/categories/:id
-export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+// PUT /api/categories/:id
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   try {
     const body = await req.json();

@@ -3,7 +3,7 @@
 import { useDestinations } from "@/utils/hooks/useDestinations";
 
 export default function DestinationsPage() {
-  const { data, isLoading: loading, createDestination, deleteDestination } =
+  const { data, isLoading: loading, deleteDestination } =
     useDestinations();
 
   if (loading) return <p>Loading...</p>;
@@ -12,21 +12,10 @@ export default function DestinationsPage() {
     <div>
       <h1>Destinations</h1>
 
-      <button
-        onClick={() =>
-          createDestination({
-            name: "New Beach",
-            location: "Indonesia",
-            description: "Amazing place",
-          })
-        }
-      >
-        Add Destination
-      </button>
-
-      {data.map((item: any) => (
+      {data.map((item) => (
         <div key={item.id}>
-          <h2>{item.name}</h2>
+          <h2>{item.title}</h2>
+          <p>{item.description}</p>
           <button onClick={() => deleteDestination(item.id)}>
             Delete
           </button>

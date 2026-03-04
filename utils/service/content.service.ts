@@ -6,12 +6,14 @@ export interface Content {
   title: string;
   subTitle: string | null;
   description: string;
-  image1: string | null;
-  image2: string | null;
-  image3: string | null;
-  image4: string | null;
-  image5: string | null;
-  imageMain: string | null;
+  images: Array<{
+    id?: number;
+    url: string;
+    key: string;
+    altText?: string;
+    isMain: boolean;
+    order: number;
+  }>;
   dateAvailable: string;
   isAvailable: boolean;
   destinationId: number;
@@ -24,12 +26,14 @@ export interface ContentPayload {
   title: string;
   subTitle?: string;
   description: string;
-  image1?: string;
-  image2?: string;
-  image3?: string;
-  image4?: string;
-  image5?: string;
-  imageMain?: string;
+  images: Array<{
+    id?: number;
+    url: string;
+    key: string;
+    altText?: string;
+    isMain: boolean;
+    order: number;
+  }>;
   dateAvailable: string;
   isAvailable?: boolean;
   destinationId: number | string;
@@ -48,7 +52,7 @@ export const contentService = {
     api.post("/contents", payload).then((r) => r.data),
 
   update: (id: number, payload: Partial<ContentPayload>): Promise<Content> =>
-    api.patch(`/contents/${id}`, payload).then((r) => r.data),
+    api.put(`/contents/${id}`, payload).then((r) => r.data),
 
   delete: (id: number): Promise<{ success: boolean }> =>
     api.delete(`/contents/${id}`).then((r) => r.data),

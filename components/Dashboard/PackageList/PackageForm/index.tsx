@@ -176,7 +176,7 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate className="p-6 space-y-6 max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <form onSubmit={handleSubmit} noValidate className="p-6 space-y-6">
         <Field label="Title" error={errors.title} required>
           <input
             type="text" 

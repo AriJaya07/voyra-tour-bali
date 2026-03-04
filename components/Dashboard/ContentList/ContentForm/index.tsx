@@ -3,17 +3,20 @@
 import { useState, useEffect } from "react";
 import { Content } from "@/utils/service/content.service";
 import { useDestinations } from "@/utils/hooks/useDestinations";
+import { useImages } from "@/utils/hooks/useImages";
 
 interface FormData {
   title: string;
   subTitle: string;
   description: string;
-  image1: string;
-  image2: string;
-  image3: string;
-  image4: string;
-  image5: string;
-  imageMain: string;
+  images: Array<{
+    id?: number;
+    url: string;
+    key: string;
+    altText?: string;
+    isMain: boolean;
+    order: number;
+  }>;
   dateAvailable: string;
   isAvailable: boolean;
   destinationId: string;
@@ -40,11 +43,11 @@ export default function ContentForm({
   mode, initialData, preselectedDestinationId, onSubmit, onCancel, isLoading,
 }: Props) {
   const { data: destinations } = useDestinations();
+  const { uploadImageAsync } = useImages();
 
   const empty: FormData = {
     title: "", subTitle: "", description: "",
-    image1: "", image2: "", image3: "", image4: "", image5: "",
-    imageMain: "",
+    images: [],
     dateAvailable: new Date().toISOString().split("T")[0],
     isAvailable: true,
     destinationId: preselectedDestinationId ? String(preselectedDestinationId) : "",
@@ -59,12 +62,7 @@ export default function ContentForm({
         title: initialData.title,
         subTitle: initialData.subTitle ?? "",
         description: initialData.description,
-        image1: initialData.image1 ?? "",
-        image2: initialData.image2 ?? "",
-        image3: initialData.image3 ?? "",
-        image4: initialData.image4 ?? "",
-        image5: initialData.image5 ?? "",
-        imageMain: initialData.imageMain ?? "",
+        images: [],
         dateAvailable: initialData.dateAvailable.split("T")[0],
         isAvailable: initialData.isAvailable,
         destinationId: String(initialData.destinationId),
@@ -99,14 +97,67 @@ export default function ContentForm({
     onSubmit(formData);
   };
 
-  const imageFields = [
-    { key: "imageMain" as const, label: "Image Utama" },
-    { key: "image1" as const, label: "Image 1" },
-    { key: "image2" as const, label: "Image 2" },
-    { key: "image3" as const, label: "Image 3" },
-    { key: "image4" as const, label: "Image 4" },
-    { key: "image5" as const, label: "Image 5" },
-  ];
+  const handleImageUpload = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (!fileArray.length) return;
+
+    const newImages = [...formData.images];
+    
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      
+      // Add temporary image entry
+      newImages.push({
+        url: URL.createObjectURL(file),
+        key: "",
+        altText: "",
+        isMain: newImages.length === 0,
+        order: newImages.length,
+      });
+      
+      setFormData(prev => ({ ...prev, images: newImages }));
+
+      try {
+        const result = await uploadImageAsync({ file });
+        
+        // Update the image with the actual data
+        const updatedImages = [...newImages];
+        const imageIndex = updatedImages.length - fileArray.length + i;
+        updatedImages[imageIndex] = {
+          ...updatedImages[imageIndex],
+          id: Number(result.id),
+          url: result.url,
+          key: result.key,
+        };
+        
+        setFormData(prev => ({ ...prev, images: updatedImages }));
+      } catch (error) {
+        console.error("Failed to upload image:", error);
+        // Remove the failed image
+        newImages.pop();
+        setFormData(prev => ({ ...prev, images: newImages }));
+      }
+    }
+  };
+
+  const handleImageDelete = (index: number) => {
+    const updatedImages = formData.images.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, images: updatedImages }));
+  };
+
+  const handleImageAltTextChange = (index: number, altText: string) => {
+    const updatedImages = [...formData.images];
+    updatedImages[index] = { ...updatedImages[index], altText };
+    setFormData(prev => ({ ...prev, images: updatedImages }));
+  };
+
+  const handleSetMainImage = (index: number) => {
+    const updatedImages = formData.images.map((img, i) => ({
+      ...img,
+      isMain: i === index,
+    }));
+    setFormData(prev => ({ ...prev, images: updatedImages }));
+  };
 
   return (
     <div className="bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-700/50">
@@ -239,37 +290,44 @@ export default function ContentForm({
         </div>
 
         {/* Images */}
-        <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-            Images <span className="text-slate-600 font-normal normal-case">(URL opsional)</span>
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {imageFields.map(({ key, label }) => (
-              <div key={key}>
-                <label className="block text-xs text-slate-500 mb-1">{label}</label>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="https://..."
-                    value={formData[key] as string}
-                    onChange={set(key)}
-                    className={`${inputCls()} flex-1 text-xs`}
-                  />
-                  {(formData[key] as string) && (
-                    <div className="w-9 h-9 rounded-lg overflow-hidden border border-slate-700 flex-shrink-0">
-                      <img
-                        src={formData[key] as string}
-                        alt=""
-                        className="w-full h-full object-cover"
-                        onError={(e) => (e.currentTarget.style.display = "none")}
-                      />
-                    </div>
-                  )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {formData.images.map((image, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={image.url}
+                  alt={`Image ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-lg border-2 border-slate-200"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSetMainImage(index)}
+                      className={`px-2 py-1 text-xs rounded ${
+                        image.isMain ? 'bg-green-500 text-white' : 'bg-white text-slate-800'
+                      }`}
+                    >
+                      {image.isMain ? 'Main' : 'Set Main'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleImageDelete(index)}
+                      className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
+                <input
+                  type="text"
+                  placeholder="Alt text"
+                  value={image.altText || ""}
+                  onChange={(e) => handleImageAltTextChange(index, e.target.value)}
+                  className="mt-2 w-full text-xs border border-slate-300 rounded px-2 py-1"
+                />
               </div>
             ))}
           </div>
-        </div>
 
         {/* Actions */}
         <div className="flex gap-3 pt-2 sticky bottom-0 bg-slate-900 pb-1">

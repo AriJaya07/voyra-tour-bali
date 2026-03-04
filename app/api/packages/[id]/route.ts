@@ -4,11 +4,12 @@ import { prisma } from "@/lib/prisma";
 // GET /api/packages/:id
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const pkg = await prisma.package.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: {
         category: { select: { id: true, name: true, slug: true } },
         destination: { select: { id: true, title: true } },
@@ -44,8 +45,8 @@ export async function GET(
   }
 }
 
-// PATCH /api/packages/:id
-export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+// PUT /api/packages/:id
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
 
   try {
