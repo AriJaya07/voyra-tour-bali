@@ -1,4 +1,7 @@
-const BASE = "/api/packages";
+import api from "@/lib/axios";
+
+const BASE = "/packages";
+
 
 export interface PackageCategory {
   id: number;
@@ -14,13 +17,21 @@ export interface PackageDestination {
 export interface Package {
   id: number;
   title: string;
+  slug: string;
   description: string;
   price: number;
   categoryId: number | null;
   destinationId: number | null;
   category: PackageCategory | null;
   destination: PackageDestination | null;
-  images?: { id: number; url: string }[];
+  images: Array<{
+    id?: number;
+    url: string;
+    key: string;
+    altText?: string;
+    isMain: boolean;
+    order: number;
+  }>;
   _count?: { images: number };
   createdAt: string;
   updatedAt: string;
@@ -28,41 +39,81 @@ export interface Package {
 
 export interface PackagePayload {
   title: string;
+  slug: string;
   description: string;
   price: number | string;
   categoryId?: number | string | null;
   destinationId?: number | string | null;
+  images: Array<{
+    id?: number;
+    url: string;
+    key: string;
+    altText?: string;
+    isMain: boolean;
+    order: number;
+  }>;
 }
 
-async function handleResponse<T>(res: Response): Promise<T> {
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Request failed");
-  return data;
+function normalizePayload(
+  payload: PackagePayload | Partial<PackagePayload>
+) {
+  return {
+    ...payload,
+    price:
+      payload.price !== undefined
+        ? Number(payload.price)
+        : undefined,
+    categoryId:
+      payload.categoryId !== undefined && payload.categoryId !== null
+        ? Number(payload.categoryId)
+        : null,
+    destinationId:
+      payload.destinationId !== undefined &&
+      payload.destinationId !== null
+        ? Number(payload.destinationId)
+        : null,
+  };
 }
 
 export const packageService = {
-  getAll: (): Promise<Package[]> =>
-    fetch(BASE).then((r) => handleResponse<Package[]>(r)),
+  /* Get All */
+  async getAll(): Promise<Package[]> {
+    const { data } = await api.get<Package[]>(BASE);
+    return data;
+  },
 
-  getOne: (id: number): Promise<Package> =>
-    fetch(`${BASE}/${id}`).then((r) => handleResponse<Package>(r)),
+  /* Get One */
+  async getOne(id: number): Promise<Package> {
+    const { data } = await api.get<Package>(`${BASE}/${id}`);
+    return data;
+  },
 
-  create: (payload: PackagePayload): Promise<Package> =>
-    fetch(BASE, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }).then((r) => handleResponse<Package>(r)),
+  /* Create */
+  async create(payload: PackagePayload): Promise<Package> {
+    const { data } = await api.post<Package>(
+      BASE,
+      normalizePayload(payload)
+    );
+    return data;
+  },
 
-  update: (id: number, payload: Partial<PackagePayload>): Promise<Package> =>
-    fetch(`${BASE}/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }).then((r) => handleResponse<Package>(r)),
+  /* Update */
+  async update(
+    id: number,
+    payload: Partial<PackagePayload>
+  ): Promise<Package> {
+    const { data } = await api.patch<Package>(
+      `${BASE}/${id}`,
+      normalizePayload(payload)
+    );
+    return data;
+  },
 
-  delete: (id: number): Promise<{ success: boolean }> =>
-    fetch(`${BASE}/${id}`, { method: "DELETE" }).then((r) =>
-      handleResponse<{ success: boolean }>(r)
-    ),
+  /* Delete */
+  async delete(id: number): Promise<{ success: boolean }> {
+    const { data } = await api.delete<{ success: boolean }>(
+      `${BASE}/${id}`
+    );
+    return data;
+  },
 };

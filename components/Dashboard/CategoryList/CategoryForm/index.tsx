@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Category } from "@/utils/service/category.service";
 import CloseIcon from "@/components/assets/dashboard/CloseIcon";
 import SpinnerIcon from "@/components/assets/dashboard/SpinnerIcon";
-import { Field, inputClass } from "@/components/common/InputForm";
+import { Field, inputClass, slugify } from "@/components/common/InputForm";
 import { useImages } from "@/utils/hooks/useImages";
 
 interface FormData {
@@ -20,10 +20,6 @@ interface Props {
   onSubmit: (data: FormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
-}
-
-function slugify(str: string) {
-  return str.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
 
 export default function CategoryForm({ mode, initialData, onSubmit, onCancel, isLoading }: Props) {
