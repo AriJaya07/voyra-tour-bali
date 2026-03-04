@@ -55,7 +55,7 @@ export default function LocationList() {
     };
   
     // Stats
-    const withImage = locations.filter((l) => l.image).length;
+    const withImage = locations.filter((l) => l.images).length;
     const withLink = locations.filter((l) => l.hrefLink).length;
     const uniqueDests = new Set(locations.map((l) => l.destinationId)).size;
   
