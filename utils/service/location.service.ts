@@ -5,7 +5,14 @@ const BASE = "/api/locations";
 export interface Location {
   id: number;
   title: string;
-  image: string | null;
+  images: Array<{
+    id?: number;
+    url: string;
+    key: string;
+    altText?: string;
+    isMain: boolean;
+    order: number;
+  }>;
   hrefLink: string | null;
   description: string | null;
   destinationId: number;
@@ -16,7 +23,14 @@ export interface Location {
 
 export interface LocationPayload {
   title: string;
-  image?: string;
+  images: Array<{
+    id?: number;
+    url: string;
+    key: string;
+    altText?: string;
+    isMain: boolean;
+    order: number;
+  }>;
   hrefLink?: string;
   description?: string;
   destinationId: number | string;
@@ -45,7 +59,6 @@ export const locationService = {
       const res = await api.get<Location[]>(BASE, {
         params: destinationId ? { destinationId } : {},
       });
-      console.log(res, "PPPPOX");
 
       return res.data;
     } catch (error) {
