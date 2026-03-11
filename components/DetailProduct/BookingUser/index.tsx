@@ -5,11 +5,16 @@ import WhatappIcon from '../../assets/sosmed/WhatappIcon'
 import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
 
-export default function BookingUser() {
+interface BookingUserProps {
+    price: number;
+    title: string;
+}
+
+export default function BookingUser({ price, title }: BookingUserProps) {
     const [date, setDate] = useState<Date | null>(null)  // Initial state is null
     const [quantity, setQuantity] = useState(1)
     const [isModalOpen, setIsModalOpen] = useState(false)  // Modal visibility state
-    const [message, setMessage] = useState('I would like to book the entrance ticket to GWK Cultural Park for {quantity} person(s) on {date}.')  // Pre-filled template message
+    const [message, setMessage] = useState(`I would like to book the entrance ticket to ${title} for {quantity} person(s) on {date}.`)  // Pre-filled template message
 
     // Set the date after the component mounts (client-side)
     useEffect(() => {
@@ -40,7 +45,7 @@ export default function BookingUser() {
         <div className="border border-[#E6E6E6] rounded-[16px] p-[25px] mt-[88px]">
             <div className="flex flex-col">
                 <div className="flex flex-row justify-between">
-                    <p className="text-[16px] font-bold leading-[24px] text-black">GWK Cultural Park · Entrance Ticket</p>
+                    <p className="text-[16px] font-bold leading-[24px] text-black">{title} · Booking</p>
                     {/* Icon can go here */}
                 </div>
                 <div className="pt-[100px] pb-[20px]">
@@ -73,7 +78,7 @@ export default function BookingUser() {
                         <div className="border bg-[#EEEEEE] rounded-[13px] flex flex-col gap-3 p-[16px]">
                             <div className="">
                             <p className="font-bold text-[16px] leading-[24px] font-medium">
-                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(quantity * 780000)}
+                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(quantity * price)}
                             </p>
                             </div>
                             <div className=''>
@@ -126,3 +131,4 @@ export default function BookingUser() {
         </div>
     )
 }
+
