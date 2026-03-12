@@ -30,20 +30,32 @@ export async function PUT(
   const { title, description, price, categoryId, slug, images, contents, locations } = body;
 
   try {
-    
+    await prisma.destination.update({
+      where: { id: Number(id) },
+      data: {
+        title,
+        description,
+        price: Number(price),
+        categoryId: Number(categoryId),
+        slug: slug || null,
+      },
+    });
+
     if (images && images.length > 0) {
       await Promise.all(
-        images.map((image: any) =>
-          prisma.image.update({
-            where: { id: Number(image.id) },
-            data: {
-              destinationId: Number(id),
-              altText: image.altText || null,
-              isMain: image.isMain || false,
-              order: image.order || 0,
-            },
-          })
-        )
+        images
+          .filter((image: any) => image.id) // Only update images that have an ID
+          .map((image: any) =>
+            prisma.image.update({
+              where: { id: Number(image.id) },
+              data: {
+                destinationId: Number(id),
+                altText: image.altText || null,
+                isMain: image.isMain || false,
+                order: image.order || 0,
+              },
+            })
+          )
       );
     }
 
