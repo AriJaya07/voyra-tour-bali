@@ -53,7 +53,6 @@ export async function uploadImageToS3({
       Key: key,
       Body: buffer,
       ContentType: contentType,
-      ACL: "public-read",
     })
   );
 

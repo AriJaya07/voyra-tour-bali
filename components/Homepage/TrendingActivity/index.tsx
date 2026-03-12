@@ -1,15 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { Category, Destination as PrismaDestination, Image as PrismaImage } from "@prisma/client"
 
-const TABS = ["Beach", "Tour", "Museum"]
+type DestinationWithImages = PrismaDestination & { images: PrismaImage[] };
 
-const ACTIVITY_IMAGES = [
-  "/images/activity/melasti.png",
-  "/images/activity/lovina.png",
-  "/images/activity/tanahLot.png",
-  "/images/activity/pandawa.png",
-]
+interface TrendingActivityProps {
+  categories: Category[];
+  destinations: DestinationWithImages[];
+}
 
 function shuffle<T>(array: T[]) {
   return [...array].sort(() => Math.random() - 0.5)
@@ -27,7 +26,7 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`md:h-[55px] h-[40px] md:w-[160px] w-[100px] rounded-full md:text-lg text-md font-bold transition cursor-pointer
+      className={`md:h-[55px] h-[40px] px-6 rounded-full md:text-lg text-md font-bold transition cursor-pointer
         ${
           isActive
             ? "bg-[#0071CE] text-white"
@@ -40,17 +39,32 @@ function TabButton({
   )
 }
 
-export default function TrendingActivity() {
-  const [activeTab, setActiveTab] = useState("Beach")
-  const [images, setImages] = useState(shuffle(ACTIVITY_IMAGES))
+export default function TrendingActivity({ categories, destinations }: TrendingActivityProps) {
+  const defaultCategory = categories.length > 0 ? categories[0].name : "Liburan"
+  const [activeTab, setActiveTab] = useState(defaultCategory)
+  
+  // We'll store visible destinations here
+  const [visibleDestinations, setVisibleDestinations] = useState<DestinationWithImages[]>([])
+
+  useEffect(() => {
+    // Note: this logic is similar to Destination component. We can filter destinations by active categories.
+    // If the DB has separated "Packages" or "Trending Activities", we could fetch those instead.
+    const activeCategoryObj = categories.find(c => c.name === activeTab)
+    const activeCatId = activeCategoryObj ? activeCategoryObj.id : null
+
+    // For variety, let's show destinations from the selected category, but maybe shuffled/limited
+    const filtered = destinations.filter(d => d.categoryId === activeCatId)
+    
+    // Set up to 5 shuffled items for the trending section
+    setVisibleDestinations(shuffle(filtered).slice(0, 5))
+  }, [categories, destinations, activeTab])
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab)
-    setImages(shuffle(ACTIVITY_IMAGES))
   }
 
   return (
-    <section id="paket" className="pt-20 px-4">
+    <section id="paket" className="pt-20 px-4 mb-20">
       {/* Title */}
       <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black">
         Trending Activity
@@ -58,28 +72,35 @@ export default function TrendingActivity() {
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-3 pt-7 pb-9 justify-center sm:justify-start">
-        {TABS.map((tab) => (
+        {categories.map((tab) => (
           <TabButton
-            key={tab}
-            label={tab}
-            isActive={activeTab === tab}
-            onClick={() => handleTabClick(tab)}
+            key={tab.id}
+            label={tab.name}
+            isActive={activeTab === tab.name}
+            onClick={() => handleTabClick(tab.name)}
           />
         ))}
       </div>
 
       {/* Images */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-        {images.map((src, index) => (
-          <a href="/detail" target="_self" key={index}>
-            <img
-              src={src}
-              alt="Activity"
-              className="w-full rounded-lg object-cover transition-transform transform hover:scale-105"
-            />
-          </a>
-        ))}
-      </div>
+      {visibleDestinations.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          {visibleDestinations.map((dest) => {
+            const mainImage = dest.images.find(img => img.isMain)?.url || dest.images[0]?.url || "/images/activity/melasti.png"
+            return (
+              <a href={`/detail/${dest.slug}`} target="_self" key={dest.id}>
+                <img
+                  src={mainImage}
+                  alt={dest.title}
+                  className="w-full h-[220px] rounded-lg object-cover transition-transform transform hover:scale-105"
+                />
+              </a>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="text-gray-500 py-10">No trending activities found for this category.</div>
+      )}
 
       {/* See all */}
       <div className="pt-5 pb-7 flex justify-center">
@@ -99,3 +120,4 @@ export default function TrendingActivity() {
     </section>
   )
 }
+
