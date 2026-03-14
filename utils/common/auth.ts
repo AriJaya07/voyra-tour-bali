@@ -37,12 +37,13 @@ export const authOptions: NextAuthOptions = {
             return null; // ❗ return null instead of throw
           }
 
-          // ✅ Always return plain object
+          // ✅ Always return plain object (include image for profile display)
           return {
             id: user.id.toString(),
             email: user.email,
             name: user.name ?? "",
             role: user.role,
+            image: user.image ?? undefined,
           };
         } catch (error) {
           console.error("Authorize error:", error);
@@ -62,6 +63,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        token.image = (user as any).image;
       }
       return token;
     },
@@ -70,6 +72,17 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         (session.user as any).role = token.role;
+        (session.user as any).image = token.image;
+        // Fetch latest image from DB (in case user updated profile)
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: parseInt(token.id as string) },
+            select: { image: true },
+          });
+          if (user?.image) (session.user as any).image = user.image;
+        } catch {
+          // Keep token image on error
+        }
       }
       return session;
     },

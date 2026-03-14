@@ -6,20 +6,32 @@ export default function LoginDash() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { data: session, status } = useSession();
-    const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+    // callbackUrl is only used for non-login pages (e.g. booking redirects)
+    const callbackUrl = searchParams.get("callbackUrl") || null;
   
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
+    // Helper: get redirect url based on role — only ADMIN can access dashboard
+    const getRedirectUrl = (role: string | undefined) => {
+      // Honor callbackUrl for non-dashboard (e.g. booking redirect)
+      if (callbackUrl && !callbackUrl.startsWith("/dashboard")) return callbackUrl;
+      // Only ADMIN goes to dashboard; USER/EDITOR → homepage
+      if (role === "ADMIN") return "/dashboard";
+      return "/";
+    };
   
-    // Jika sudah login, redirect ke dashboard
+    // If already authenticated, redirect based on role
     useEffect(() => {
-      if (status === "authenticated") {
-        router.replace(callbackUrl);
+      if (status === "authenticated" && session?.user) {
+        const role = (session.user as any)?.role;
+        router.replace(getRedirectUrl(role));
       }
-    }, [status, router, callbackUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status]);
   
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -34,25 +46,25 @@ export default function LoginDash() {
         email: email.toLowerCase().trim(),
         password,
         redirect: false,
-        callbackUrl,
       });
   
       setIsLoading(false);
   
       if (result?.error) {
         setError(
-          result.error === "Email tidak ditemukan"
-            ? "Email tidak terdaftar"
-            : result.error === "Password salah"
-            ? "Password yang kamu masukkan salah"
-            : result.error === "CredentialsSignin"
+          result.error === "CredentialsSignin"
             ? "Email atau password salah"
             : "Login gagal. Coba lagi."
         );
         return;
       }
-  
-      router.replace(result?.url || callbackUrl);
+
+      // After successful signIn, session updates asynchronously.
+      // We fetch the session to know the role and redirect.
+      const { getSession } = await import("next-auth/react");
+      const freshSession = await getSession();
+      const role = (freshSession?.user as any)?.role;
+      router.replace(getRedirectUrl(role));
     };
   
     // Loading state saat cek session
@@ -233,8 +245,13 @@ export default function LoginDash() {
           </div>
   
           <p className="text-center text-slate-700 text-xs mt-6">
-            © {new Date().getFullYear()} TravelAdmin · Akses terbatas untuk admin
+            © {new Date().getFullYear()} Voyra Tour Bali
           </p>
+          <div className="text-center mt-3">
+             <a href={`/register?callbackUrl=${encodeURIComponent(callbackUrl || '')}`} className="text-violet-400 hover:text-violet-300 text-sm font-medium transition-colors">
+               Belum punya akun? Daftar disini
+             </a>
+          </div>
         </div>
       </div>
     );
