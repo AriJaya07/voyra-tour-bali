@@ -2,12 +2,22 @@
 
 import { useState, useEffect } from "react"
 import { Category, Destination as PrismaDestination, Image as PrismaImage } from "@prisma/client"
+import axios from "axios"
 
 type DestinationWithImages = PrismaDestination & { images: PrismaImage[] };
 
 interface TrendingActivityProps {
   categories: Category[];
-  destinations: DestinationWithImages[];
+  // keeping destinations prop for backward compatibility in parent component, though we will fetch Viator data
+  destinations?: DestinationWithImages[]; 
+}
+
+interface ViatorProduct {
+  productCode: string;
+  title: string;
+  description: string;
+  pricing: { summary: { fromPrice: number } };
+  images: { variants: { url: string }[] }[];
 }
 
 function shuffle<T>(array: T[]) {
@@ -39,13 +49,16 @@ function TabButton({
   )
 }
 
-export default function TrendingActivity({ categories, destinations }: TrendingActivityProps) {
+export default function TrendingActivity({ categories }: TrendingActivityProps) {
   const defaultCategory = categories.length > 0 ? categories[0].name : "Liburan"
   const [activeTab, setActiveTab] = useState(defaultCategory)
   
   // Store a shuffled subset of categories to make this section unique
   const [randomCategories, setRandomCategories] = useState<Category[]>([])
-  const [visibleDestinations, setVisibleDestinations] = useState<DestinationWithImages[]>([])
+  
+  // Local state for Viator Products
+  const [products, setProducts] = useState<ViatorProduct[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
@@ -59,27 +72,47 @@ export default function TrendingActivity({ categories, destinations }: TrendingA
     }
   }, [categories, randomCategories.length, activeTab])
 
+  // Fetch Viator API products whenever the active tab changes
   useEffect(() => {
-    // Note: this logic is similar to Destination component. We can filter destinations by active categories.
-    // If the DB has separated "Packages" or "Trending Activities", we could fetch those instead.
-    const activeCategoryObj = categories.find(c => c.name === activeTab)
-    const activeCatId = activeCategoryObj ? activeCategoryObj.id : null
+    const fetchViatorProducts = async () => {
+      setIsLoading(true);
+      try {
+        const activeCategoryObj = categories.find(c => c.name === activeTab)
+        const categoryId = activeCategoryObj ? activeCategoryObj.id : null
 
-    // For variety, let's show destinations from the selected category, but maybe shuffled/limited
-    const filtered = destinations.filter(d => d.categoryId === activeCatId)
-    
-    // Set ALL shuffled items for the trending section to support the Show More
-    setVisibleDestinations(shuffle(filtered))
-    setShowAll(false)
-  }, [categories, destinations, activeTab])
+        // Fetch using our Next.js proxy route
+        const response = await axios.get('/api/viator', {
+          params: {
+            action: 'products',
+            categoryId: categoryId
+          }
+        });
+
+        // Store fetched products
+        if (response.data && response.data.data) {
+          setProducts(shuffle(response.data.data)); // Shuffling visual mock data
+        } else {
+          setProducts([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch Viator products:", error);
+        setProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchViatorProducts();
+    setShowAll(false);
+  }, [activeTab, categories])
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab)
   }
 
   // Determine which destinations to display based on the showAll state (max 5 initially)
-  const displayedDestinations = showAll ? visibleDestinations : visibleDestinations.slice(0, 5)
-  const hasMore = visibleDestinations.length > 5
+  const displayedProducts = showAll ? products : products.slice(0, 5)
+  const hasMore = products.length > 5
 
   return (
     <section id="paket" className="pt-20 px-4 mb-20">
@@ -102,17 +135,24 @@ export default function TrendingActivity({ categories, destinations }: TrendingA
 
       {/* Images container with min-height to prevent layout shift */}
       <div className="min-h-[220px]">
-        {displayedDestinations.length > 0 ? (
+        {isLoading ? (
+          <div className="w-full h-[220px] rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50/50">
+            <p className="text-gray-500 font-medium animate-pulse text-center px-4">
+              Loading latest activities for &quot;<span className="font-bold text-gray-700">{activeTab}</span>&quot;...
+            </p>
+          </div>
+        ) : displayedProducts.length > 0 ? (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-              {displayedDestinations.map((dest) => {
-                const mainImage = dest.images.find(img => img.isMain)?.url || dest.images[0]?.url || "/images/activity/melasti.png"
+              {displayedProducts.map((prod) => {
+                const mainImage = prod.images?.[0]?.variants?.[0]?.url || "/images/activity/melasti.png"
                 return (
-                  <a href={`/detail/${dest.slug}`} target="_self" key={dest.id}>
+                  <a href={`/detail/${prod.productCode}`} target="_self" key={prod.productCode}>
                     <img
                       src={mainImage}
-                      alt={dest.title}
+                      alt={prod.title}
                       className="w-full h-[220px] rounded-lg object-cover transition-transform transform hover:scale-105"
+                      title={prod.title}
                     />
                   </a>
                 )
@@ -151,4 +191,3 @@ export default function TrendingActivity({ categories, destinations }: TrendingA
     </section>
   )
 }
-

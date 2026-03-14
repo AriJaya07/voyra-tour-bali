@@ -125,14 +125,42 @@ model User {
   email    String    @unique
   password String
   name     String?
-  role     UserRole  @default(ADMIN)
+  role     UserRole  @default(USER)
   image    String?
+  phone    String?
+
+  bookings Booking[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model Booking {
+  id          Int         @id @default(autoincrement())
+  bookingRef  String
+  productCode String
+  productTitle String
+  totalPrice  Float
+  travelDate  DateTime
+  pax         Int         @default(1)
+  status      BookingStatus @default(PENDING)
+
+  userId Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
 enum UserRole {
   ADMIN
   EDITOR
+  USER
 }
