@@ -157,7 +157,7 @@ export default function ProfilePage() {
   const avatarUrl = profile?.image || (session?.user as { image?: string })?.image || "/images/people.png";
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-16 px-4">
+    <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-900 mb-8">My Profile</h1>
 

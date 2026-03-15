@@ -1,3 +1,16 @@
+"use client";
+
+import Link from "next/link";
+
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
+  if (el) {
+    const offset = 64; // navbar height
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: "smooth" });
+  }
+}
+
 export default function BannerHome() {
   return (
     <section
@@ -19,19 +32,20 @@ export default function BannerHome() {
         </div>
 
         <div className="mt-8 flex flex-col sm:flex-row gap-4 sm:gap-6">
-          <a href="/#tentang" target="_slef" className="cursor-pointer">
-            <button className="h-12 w-full sm:w-auto px-6 border border-white rounded-lg text-white font-semibold hover:bg-white/10 transition">
-              Learn More
-            </button>
-          </a>
-          <a href="/#destinasi" target="_slef" className="cursor-pointer">
-            <button className="h-12 w-full sm:w-auto px-6 bg-[#02B1BE] rounded-lg text-white font-semibold hover:bg-[#0299a5] transition">
-              Start Your Journey
-            </button>
-          </a>
+          <Link
+            href="/about"
+            className="h-12 w-full sm:w-auto px-6 border border-white rounded-lg text-white font-semibold hover:bg-white/10 transition inline-flex items-center justify-center"
+          >
+            Learn More
+          </Link>
+          <button
+            onClick={() => scrollToSection("destinasi")}
+            className="h-12 w-full sm:w-auto px-6 bg-[#02B1BE] rounded-lg text-white font-semibold hover:bg-[#0299a5] transition cursor-pointer"
+          >
+            Start Your Journey
+          </button>
         </div>
       </div>
     </section>
-
   );
 }
