@@ -82,10 +82,10 @@ export default function LocationForm({
 
   const validate = () => {
     const e: Partial<FormData> = {};
-    if (!formData.title.trim()) e.title = "Title wajib diisi";
-    if (!formData.destinationId) e.destinationId = "Destinasi wajib dipilih";
+    if (!formData.title.trim()) e.title = "Title is required";
+    if (!formData.destinationId) e.destinationId = "Destination is required";
     if (formData.hrefLink && !/^https?:\/\//i.test(formData.hrefLink)) {
-      e.hrefLink = "Link harus dimulai dengan http:// atau https://";
+      e.hrefLink = "Link must start with http:// or https://";
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -171,7 +171,7 @@ export default function LocationForm({
             className="text-xl font-bold text-white"
             style={{ fontFamily: "'Syne', sans-serif" }}
           >
-            {mode === "create" ? "Tambah Lokasi" : "Edit Lokasi"}
+            {mode === "create" ? "Add Location" : "Edit Location"}
           </h2>
         </div>
         <button
@@ -227,7 +227,7 @@ export default function LocationForm({
 
         <Field label="Description" error={errors.description} required>
           <textarea
-            placeholder="Deskripsi singkat tentang lokasi ini..."
+            placeholder="Brief description about this location..."
             value={formData.description}
             onChange={handleChange("description")}
             className={inputClass(!!errors.description)}
@@ -308,7 +308,7 @@ export default function LocationForm({
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             )}
-            {mode === "create" ? "Tambah Lokasi" : "Simpan Perubahan"}
+            {mode === "create" ? "Add Location" : "Save Changes"}
           </button>
         </div>
       </form>

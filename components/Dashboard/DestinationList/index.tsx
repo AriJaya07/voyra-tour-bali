@@ -62,7 +62,7 @@ export default function DestinationList() {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
         <DashboardPageHeader
-          section="Manajemen"
+          section="Management"
           title="Destinations"
           subtitle={`${destinations?.length ?? 0} total destinations`}
           buttonLabel="Add Destination"

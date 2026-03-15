@@ -1,12 +1,15 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import WhatappIcon from '../../assets/sosmed/WhatappIcon'
 import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useViatorBooking } from '@/utils/hooks/useViator'
+import { formatPrice } from '@/utils/formatPrice'
+import { useCurrency } from '@/utils/hooks/useCurrency'
+import CurrencySwitch from '@/components/common/CurrencySwitch'
 
 // ── Config ─────────────────────────────────────────────────────────────
 const WA_NUMBER = "6281234567890"
@@ -15,12 +18,8 @@ const WA_NUMBER = "6281234567890"
 interface BookingUserProps {
     price: number;
     title: string;
-    productCode?: string; // We'll add this to support Viator booking
+    productCode?: string;
 }
-
-// ── Formatters ──────────────────────────────────────────────────────────
-const fmtIDR = (n: number) =>
-    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
 
 const fmtDate = (d: Date) =>
     d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -29,14 +28,12 @@ const fmtDate = (d: Date) =>
 export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }: BookingUserProps) {
     const { data: session } = useSession()
     const router = useRouter()
-    
+    const { currency } = useCurrency()
+
     const [date, setDate] = useState<Date | null>(null)
     const [quantity, setQuantity] = useState(1)
-    
-    // Viator booking state
-    const [isBooking, setIsBooking] = useState(false);
-    const [bookingSuccess, setBookingSuccess] = useState<string | null>(null);
-    const [bookingError, setBookingError] = useState<string | null>(null);
+
+    const bookingMutation = useViatorBooking()
 
     // Initialise date client-side to avoid SSR hydration mismatch
     useEffect(() => { setDate(new Date()) }, [])
@@ -47,58 +44,44 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
     const buildWaUrl = () => {
         const selectedDate = date ? fmtDate(date) : "—"
         const lines = [
-            `Halo Voyra Bali! 👋`,
-            `Saya ingin memesan tiket wisata berikut:`,
+            `Hello Voyra Bali!`,
+            `I would like to book the following tour ticket:`,
             ``,
-            `🏝 *Destinasi:* ${title}`,
-            `📅 *Tanggal:* ${selectedDate}`,
-            `👤 *Jumlah:* ${quantity} orang`,
-            `💰 *Total Harga:* ${fmtIDR(total)}`,
+            `Destination: ${title}`,
+            `Date: ${selectedDate}`,
+            `Guests: ${quantity} person(s)`,
+            `Total Price: ${formatPrice(total, currency)}`,
             ``,
-            `Mohon konfirmasinya, terima kasih! 🙏`,
+            `Please confirm, thank you!`,
         ]
         return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`
     }
 
-    // Direct API Booking using our Viator Proxy Route
     const handleViatorBooking = async () => {
-      // REQUIRE LOGIN
       if (!session) {
         const currentUrl = typeof window !== "undefined" ? window.location.pathname : "/";
         router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
         return;
       }
 
-      if (!date) {
-        setBookingError("Harap pilih tanggal terlebih dahulu.");
-        return;
-      }
-      
-      setIsBooking(true);
-      setBookingError(null);
-      setBookingSuccess(null);
+      if (!date) return;
 
-      try {
-        const response = await axios.post('/api/viator?action=book', {
-          productCode,
-          productTitle: title,
-          travelDate: date.toISOString().split('T')[0],
-          pax: quantity,
-          totalPrice: total
-        });
-        
-        if (response.data.status === 'SUCCESS' || response.data.bookingRef) {
-          setBookingSuccess(`Booking berhasil! Ref: ${response.data.bookingRef || response.data.orderId}`);
-        } else {
-          setBookingError("Gagal melakukan booking. Silakan coba lagi.");
-        }
-      } catch (err: any) {
-        console.error("Booking error", err);
-        setBookingError(err.response?.data?.details || "Terjadi kesalahan sistem saat mencoba booking.");
-      } finally {
-        setIsBooking(false);
-      }
+      bookingMutation.mutate({
+        productCode,
+        productTitle: title,
+        travelDate: date.toISOString().split('T')[0],
+        pax: quantity,
+        totalPrice: total,
+      });
     };
+
+    const bookingSuccess = bookingMutation.isSuccess
+      ? `Booking successful! Ref: ${bookingMutation.data?.bookingRef || bookingMutation.data?.orderId}`
+      : null;
+
+    const bookingError = bookingMutation.isError
+      ? bookingMutation.error?.message || "A system error occurred while processing your booking."
+      : null;
 
     return (
         <div className="border border-[#E6E6E6] rounded-[16px] p-6 my-[88px] shadow-sm">
@@ -106,20 +89,22 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
             {/* ── Header ── */}
             <div className="flex items-center justify-between mb-2">
                 <p className="text-[16px] font-bold text-black truncate">{title} · Booking</p>
-                <span className="text-xs bg-green-100 text-green-700 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
-                    ✅ Tersedia
-                </span>
+                <div className="flex items-center gap-2">
+                    <CurrencySwitch size="sm" />
+                    <span className="text-xs bg-green-100 text-green-700 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
+                        Available
+                    </span>
+                </div>
             </div>
 
             <p className="text-gray-400 text-sm mb-6">
-                Pilih tanggal &amp; jumlah orang untuk memesan tiket wisata ini.
+                Select a date &amp; number of guests to book this tour.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6">
 
                 {/* ── Calendar ── */}
                 <div className="sm:w-1/2 flex justify-center">
-                    {/* Scoped calendar style overrides */}
                     <style>{`
                         .booking-calendar { width: 100%; border: none !important; font-family: inherit; }
                         .booking-calendar .react-calendar__tile--active { background: #0071CE !important; color: white !important; border-radius: 8px; }
@@ -142,14 +127,14 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
 
                     {/* Quantity Selector */}
                     <div className="border border-[#E6E6E6] rounded-xl p-4">
-                        <p className="text-sm font-semibold text-gray-700 mb-3">Jumlah Orang</p>
+                        <p className="text-sm font-semibold text-gray-700 mb-3">Number of Guests</p>
                         <div className="flex items-center justify-between">
-                            <span className="text-gray-500 text-sm">Dewasa</span>
+                            <span className="text-gray-500 text-sm">Adult</span>
                             <div className="flex items-center gap-4">
                                 <button
                                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                                     className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition cursor-pointer"
-                                    aria-label="Kurangi"
+                                    aria-label="Decrease"
                                 >
                                     −
                                 </button>
@@ -159,7 +144,7 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
                                 <button
                                     onClick={() => setQuantity(q => q + 1)}
                                     className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition cursor-pointer"
-                                    aria-label="Tambah"
+                                    aria-label="Increase"
                                 >
                                     +
                                 </button>
@@ -169,7 +154,7 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
 
                     {/* Selected Date Display */}
                     <div className="border border-[#E6E6E6] rounded-xl p-4">
-                        <p className="text-sm font-semibold text-gray-700 mb-1">Tanggal Dipilih</p>
+                        <p className="text-sm font-semibold text-gray-700 mb-1">Selected Date</p>
                         <p className="text-sm text-gray-500">
                             {date ? fmtDate(date) : "—"}
                         </p>
@@ -179,14 +164,13 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
                     <div className="bg-[#F8F8F8] rounded-xl p-4 flex flex-col gap-3">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-sm text-gray-500">
-                                {fmtIDR(price)} × {quantity}
+                                {formatPrice(price, currency)} × {quantity}
                             </span>
                             <span className="text-base font-black text-gray-900">
-                                {fmtIDR(total)}
+                                {formatPrice(total, currency)}
                             </span>
                         </div>
 
-                        {/* Status Messages for Viator Booking */}
                         {bookingSuccess && (
                           <div className="p-3 bg-green-100 text-green-800 text-sm rounded-lg border border-green-200 font-medium">
                             {bookingSuccess}
@@ -198,26 +182,24 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
                           </div>
                         )}
 
-                        {/* Viator Direct API Booking Button */}
                         <button
                             onClick={handleViatorBooking}
-                            disabled={isBooking || !date}
+                            disabled={bookingMutation.isPending || !date}
                             className={`w-full h-[48px] flex items-center justify-center gap-2.5 rounded-xl transition-all shadow-md text-white font-bold text-sm ${
-                              isBooking || !date 
-                                ? 'bg-gray-400 cursor-not-allowed' 
-                                : 'bg-[#0071CE] hover:bg-[#005ba6] active:bg-[#004780] cursor-pointer'
+                              bookingMutation.isPending || !date
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 cursor-pointer'
                             }`}
                         >
-                            {isBooking ? 'Memproses...' : 'Booking Langsung'}
+                            {bookingMutation.isPending ? 'Processing...' : 'Book Now'}
                         </button>
 
                         <div className="flex items-center gap-2">
                           <div className="h-px bg-gray-300 flex-1"></div>
-                          <span className="text-xs text-gray-400 font-medium uppercase">Atau</span>
+                          <span className="text-xs text-gray-400 font-medium uppercase">Or</span>
                           <div className="h-px bg-gray-300 flex-1"></div>
                         </div>
 
-                        {/* WhatsApp button */}
                         <a
                             href={buildWaUrl()}
                             target="_blank"
@@ -225,7 +207,7 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
                             className="w-full h-[48px] bg-[#25D366] hover:bg-[#1ebe5d] active:bg-[#17a852] flex items-center justify-center gap-2.5 rounded-xl transition-all shadow-md"
                         >
                             <WhatappIcon />
-                            <span className="text-white font-bold text-sm">Tanya via WhatsApp</span>
+                            <span className="text-white font-bold text-sm">Ask via WhatsApp</span>
                         </a>
                     </div>
 

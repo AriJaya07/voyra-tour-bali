@@ -21,7 +21,7 @@ function PasswordVisibilityToggle({
   onToggle: () => void;
 }) {
   return (
-    <button type="button" onClick={onToggle} className={toggleBtnClass} aria-label={visible ? "Sembunyikan password" : "Tampilkan password"}>
+    <button type="button" onClick={onToggle} className={toggleBtnClass} aria-label={visible ? "Hide password" : "Show password"}>
       {visible ? <EyesShowIcon className={iconClass} /> : <EyesCloseIcon className={iconClass} />}
     </button>
   );
@@ -49,19 +49,19 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
     setError("");
 
     if (!name.trim()) {
-      setError("Nama lengkap wajib diisi");
+      setError("Full name is required");
       return;
     }
     if (!email.trim()) {
-      setError("Email wajib diisi");
+      setError("Email is required");
       return;
     }
     if (password.length < 6) {
-      setError("Password minimal 6 karakter");
+      setError("Password must be at least 6 characters");
       return;
     }
     if (password !== confirmPassword) {
-      setError("Password tidak cocok");
+      setError("Passwords do not match");
       return;
     }
 
@@ -81,7 +81,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Gagal mendaftar");
+        throw new Error(data.message || "Registration failed");
       }
 
       const result = await signIn("credentials", {
@@ -97,7 +97,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
 
       router.replace(callbackUrl.startsWith("/dashboard") ? "/" : callbackUrl);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan sistem");
+      setError(err instanceof Error ? err.message : "A system error occurred");
     } finally {
       setIsLoading(false);
     }

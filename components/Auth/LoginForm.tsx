@@ -34,11 +34,11 @@ export default function LoginForm({ callbackUrl, onRedirect, showDemo }: LoginFo
     setError("");
 
     if (!email.trim()) {
-      setError("Email wajib diisi");
+      setError("Email is required");
       return;
     }
     if (!password) {
-      setError("Password wajib diisi");
+      setError("Password is required");
       return;
     }
 
@@ -55,8 +55,8 @@ export default function LoginForm({ callbackUrl, onRedirect, showDemo }: LoginFo
     if (result?.error) {
       setError(
         result.error === "CredentialsSignin"
-          ? "Email atau password salah"
-          : "Login gagal. Coba lagi."
+          ? "Incorrect email or password"
+          : "Login failed. Please try again."
       );
       return;
     }
@@ -136,11 +136,11 @@ export default function LoginForm({ callbackUrl, onRedirect, showDemo }: LoginFo
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Sedang masuk...
+              Signing in...
             </>
           ) : (
             <>
-              Masuk ke Dashboard
+              Sign In
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
@@ -162,7 +162,7 @@ export default function LoginForm({ callbackUrl, onRedirect, showDemo }: LoginFo
               }}
               className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors text-xs font-medium"
             >
-              Isi otomatis
+              Auto-fill
             </button>
           </div>
           <p className="text-xs text-slate-400 mt-1">Password: <span className="text-slate-300 font-mono">admin123</span></p>

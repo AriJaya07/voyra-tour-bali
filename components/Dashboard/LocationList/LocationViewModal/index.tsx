@@ -25,7 +25,7 @@ export default function LocationViewModal({
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
             <div className="absolute bottom-4 left-6 right-12">
               <p className="text-sky-400 text-xs font-bold uppercase tracking-widest mb-1">
-                Lokasi
+                Location
               </p>
               <h2
                 className="text-xl font-bold text-white"
@@ -47,7 +47,7 @@ export default function LocationViewModal({
           <div className="bg-gradient-to-r from-sky-600 to-cyan-600 px-6 py-5 flex items-center justify-between">
             <div>
               <p className="text-sky-200 text-xs font-semibold uppercase tracking-widest mb-0.5">
-                Lokasi
+                Location
               </p>
               <h2
                 className="text-xl font-bold text-white"
@@ -77,7 +77,7 @@ export default function LocationViewModal({
             </div>
             <div>
               <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
-                Destinasi
+                Destination
               </p>
               <p className="text-blue-400 text-sm font-semibold">
                 {location.destination.title}
@@ -89,7 +89,7 @@ export default function LocationViewModal({
           {location.description && (
             <div>
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                Deskripsi
+                Description
               </p>
               <p className="text-slate-300 text-sm leading-relaxed">
                 {location.description}
@@ -127,7 +127,7 @@ export default function LocationViewModal({
             </div>
             <div className="bg-slate-800/40 rounded-xl p-3">
               <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">
-                Dibuat
+                Created
               </p>
               <p className="text-slate-300 text-sm">{fmtDate(location.createdAt)}</p>
             </div>
@@ -140,13 +140,13 @@ export default function LocationViewModal({
             onClick={onClose}
             className="flex-1 py-2.5 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 rounded-xl text-sm font-medium transition-colors"
           >
-            Tutup
+            Close
           </button>
           <button
             onClick={onEdit}
             className="flex-1 py-2.5 bg-sky-600 text-white rounded-xl hover:bg-sky-500 text-sm font-semibold transition-colors"
           >
-            Edit Lokasi
+            Edit Location
           </button>
         </div>
       </div>

@@ -5,9 +5,7 @@ import { useDashboardStats } from "@/utils/hooks/useDashboardStats";
 import { fmtDate } from "@/components/common/ListForm";
 import Link from "next/link";
 
-// ── Formatter helpers ─────────────────────────────────────
-const fmtUSD = (n: number) =>
-  "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+import { formatPrice } from "@/utils/formatPrice";
 
 export default function DashboardOverviewPage() {
   const { data, isLoading, isError, refetch } = useDashboardStats();
@@ -23,7 +21,7 @@ export default function DashboardOverviewPage() {
                 Overview
               </h1>
               <p className="text-slate-500 text-sm mt-1">
-                {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
               </p>
             </div>
             <button
@@ -39,29 +37,29 @@ export default function DashboardOverviewPage() {
 
           {isError && (
             <div className="bg-red-950/50 border border-red-800/50 text-red-400 rounded-2xl px-5 py-4 text-sm">
-              ⚠️ Gagal memuat data. Coba refresh halaman.
+              Failed to load data. Please try refreshing the page.
             </div>
           )}
 
           {/* ── KPI Cards ── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard
-              label="Total Kategori"
+              label="Total Categories"
               value={data?.counts.categories}
               isLoading={isLoading}
               icon="🏷️"
               color="from-emerald-600 to-teal-700"
               href="/dashboard/categories"
-              sub="Kelola kategori"
+              sub="Manage categories"
             />
             <KpiCard
-              label="Total Destinasi"
+              label="Total Destinations"
               value={data?.counts.destinations}
               isLoading={isLoading}
               icon="📍"
               color="from-blue-600 to-sky-700"
               href="/dashboard/destinations"
-              sub="Kelola destinasi"
+              sub="Manage destinations"
             />
             <KpiCard
               label="Total Packages"
@@ -70,39 +68,39 @@ export default function DashboardOverviewPage() {
               icon="📦"
               color="from-violet-600 to-indigo-700"
               href="/dashboard/groups"
-              sub="Kelola packages"
+              sub="Manage packages"
             />
             <KpiCard
-              label="Total Gambar"
+              label="Total Images"
               value={data?.counts.images}
               isLoading={isLoading}
               icon="🖼️"
               color="from-rose-600 to-pink-700"
               href="/dashboard/images"
-              sub="Kelola gambar"
+              sub="Manage images"
             />
           </div>
 
           {/* ── Value Cards ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <ValueCard
-              label="Total Nilai Packages"
-              value={isLoading ? null : fmtUSD(data?.values.totalPackageValue ?? 0)}
-              sub={isLoading ? "..." : `Rata-rata: ${fmtUSD(data?.values.avgPackagePrice ?? 0)}`}
+              label="Total Package Value"
+              value={isLoading ? null : formatPrice(data?.values.totalPackageValue ?? 0)}
+              sub={isLoading ? "..." : `Average: ${formatPrice(data?.values.avgPackagePrice ?? 0)}`}
               isLoading={isLoading}
               accent="violet"
             />
             <ValueCard
-              label="Package Termahal"
-              value={isLoading ? null : fmtUSD(data?.values.maxPackagePrice ?? 0)}
-              sub={isLoading ? "..." : `Termurah: ${fmtUSD(data?.values.minPackagePrice ?? 0)}`}
+              label="Most Expensive Package"
+              value={isLoading ? null : formatPrice(data?.values.maxPackagePrice ?? 0)}
+              sub={isLoading ? "..." : `Cheapest: ${formatPrice(data?.values.minPackagePrice ?? 0)}`}
               isLoading={isLoading}
               accent="amber"
             />
             <ValueCard
-              label="Total Nilai Destinasi"
-              value={isLoading ? null : fmtUSD(data?.values.totalDestinationValue ?? 0)}
-              sub={isLoading ? "..." : `Rata-rata: ${fmtUSD(data?.values.avgDestinationPrice ?? 0)}`}
+              label="Total Destination Value"
+              value={isLoading ? null : formatPrice(data?.values.totalDestinationValue ?? 0)}
+              sub={isLoading ? "..." : `Average: ${formatPrice(data?.values.avgDestinationPrice ?? 0)}`}
               isLoading={isLoading}
               accent="blue"
             />
@@ -114,15 +112,15 @@ export default function DashboardOverviewPage() {
             <div className="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-white font-bold text-base">Pertumbuhan Bulanan</h2>
-                  <p className="text-slate-500 text-xs mt-0.5">6 bulan terakhir</p>
+                  <h2 className="text-white font-bold text-base">Monthly Growth</h2>
+                  <p className="text-slate-500 text-xs mt-0.5">Last 6 months</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1.5 text-xs text-slate-400">
                     <span className="w-2.5 h-2.5 rounded-full bg-violet-500 inline-block" /> Packages
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block" /> Destinasi
+                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block" /> Destinations
                   </div>
                 </div>
               </div>
@@ -141,14 +139,14 @@ export default function DashboardOverviewPage() {
 
             {/* Category breakdown */}
             <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6">
-              <h2 className="text-white font-bold text-base mb-1">Per Kategori</h2>
-              <p className="text-slate-500 text-xs mb-5">Packages & destinasi</p>
+              <h2 className="text-white font-bold text-base mb-1">By Category</h2>
+              <p className="text-slate-500 text-xs mb-5">Packages & destinations</p>
               {isLoading ? (
                 <div className="h-48 flex items-center justify-center">
                   <Spinner color="emerald" />
                 </div>
               ) : data?.categoryBreakdown.length === 0 ? (
-                <EmptyState label="Belum ada kategori" />
+                <EmptyState label="No categories yet" />
               ) : (
                 <div className="space-y-3">
                   {(data?.categoryBreakdown ?? []).map((cat, i) => (
@@ -165,11 +163,11 @@ export default function DashboardOverviewPage() {
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
                 <div>
-                  <h2 className="text-white font-bold text-base">Destinasi Terbaru</h2>
-                  <p className="text-slate-500 text-xs">5 destinasi terakhir ditambah</p>
+                  <h2 className="text-white font-bold text-base">Recent Destinations</h2>
+                  <p className="text-slate-500 text-xs">Last 5 destinations added</p>
                 </div>
                 <Link href="/dashboard/destinations" className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                  Lihat semua →
+                  View all →
                 </Link>
               </div>
               {isLoading ? (
@@ -177,7 +175,7 @@ export default function DashboardOverviewPage() {
                   <Spinner color="blue" />
                 </div>
               ) : data?.recentDestinations.length === 0 ? (
-                <div className="px-6 py-8"><EmptyState label="Belum ada destinasi" /></div>
+                <div className="px-6 py-8"><EmptyState label="No destinations yet" /></div>
               ) : (
                 <div className="divide-y divide-slate-800">
                   {data?.recentDestinations.map((d) => (
@@ -188,11 +186,11 @@ export default function DashboardOverviewPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-semibold truncate">{d.title}</p>
                         <p className="text-slate-500 text-xs">
-                          {d.category?.name ?? "No category"} · {d._count.images} gambar
+                          {d.category?.name ?? "No category"} · {d._count.images} images
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-white text-sm font-bold">{d.price ? fmtUSD(d.price) : "—"}</p>
+                        <p className="text-white text-sm font-bold">{d.price ? formatPrice(d.price) : "—"}</p>
                         <p className="text-slate-600 text-xs">{fmtDate(d.createdAt)}</p>
                       </div>
                     </div>
@@ -205,11 +203,11 @@ export default function DashboardOverviewPage() {
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
                 <div>
-                  <h2 className="text-white font-bold text-base">Packages Terbaru</h2>
-                  <p className="text-slate-500 text-xs">5 packages terakhir ditambah</p>
+                  <h2 className="text-white font-bold text-base">Recent Packages</h2>
+                  <p className="text-slate-500 text-xs">Last 5 packages added</p>
                 </div>
                 <Link href="/dashboard/groups" className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                  Lihat semua →
+                  View all →
                 </Link>
               </div>
               {isLoading ? (
@@ -217,7 +215,7 @@ export default function DashboardOverviewPage() {
                   <Spinner color="violet" />
                 </div>
               ) : data?.recentPackages.length === 0 ? (
-                <div className="px-6 py-8"><EmptyState label="Belum ada package" /></div>
+                <div className="px-6 py-8"><EmptyState label="No packages yet" /></div>
               ) : (
                 <div className="divide-y divide-slate-800">
                   {data?.recentPackages.map((p) => (
@@ -232,7 +230,7 @@ export default function DashboardOverviewPage() {
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-white text-sm font-bold">{fmtUSD(p.price)}</p>
+                        <p className="text-white text-sm font-bold">{formatPrice(p.price)}</p>
                         <p className="text-slate-600 text-xs">{fmtDate(p.createdAt)}</p>
                       </div>
                     </div>
@@ -247,22 +245,22 @@ export default function DashboardOverviewPage() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
               <div>
                 <h2 className="text-white font-bold text-base">Top Packages by Price</h2>
-                <p className="text-slate-500 text-xs">5 package dengan harga tertinggi</p>
+                <p className="text-slate-500 text-xs">Top 5 highest-priced packages</p>
               </div>
               <Link href="/dashboard/groups" className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                Lihat semua →
+                View all →
               </Link>
             </div>
             {isLoading ? (
               <div className="h-40 flex items-center justify-center"><Spinner color="amber" /></div>
             ) : data?.topPackages.length === 0 ? (
-              <div className="px-6 py-8"><EmptyState label="Belum ada package" /></div>
+              <div className="px-6 py-8"><EmptyState label="No packages yet" /></div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-slate-800">
-                      {["Rank", "Package", "Kategori", "Destinasi", "Harga"].map((h) => (
+                      {["Rank", "Package", "Category", "Destination", "Price"].map((h) => (
                         <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                           {h}
                         </th>
@@ -300,7 +298,7 @@ export default function DashboardOverviewPage() {
                           ) : <span className="text-slate-600 text-xs">—</span>}
                         </td>
                         <td className="px-6 py-3.5">
-                          <span className="text-white font-bold text-sm">{fmtUSD(pkg.price)}</span>
+                          <span className="text-white font-bold text-sm">{formatPrice(pkg.price)}</span>
                         </td>
                       </tr>
                     ))}
@@ -315,10 +313,10 @@ export default function DashboardOverviewPage() {
             <p className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-3">Quick Actions</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label: "Tambah Kategori", href: "/dashboard/categories", icon: "🏷️", color: "emerald" },
-                { label: "Tambah Destinasi", href: "/dashboard/destinations", icon: "📍", color: "blue" },
-                { label: "Tambah Package", href: "/dashboard/groups", icon: "📦", color: "violet" },
-                { label: "Upload Gambar", href: "/dashboard/images", icon: "🖼️", color: "rose" },
+                { label: "Add Category", href: "/dashboard/categories", icon: "🏷️", color: "emerald" },
+                { label: "Add Destination", href: "/dashboard/destinations", icon: "📍", color: "blue" },
+                { label: "Add Package", href: "/dashboard/groups", icon: "📦", color: "violet" },
+                { label: "Upload Image", href: "/dashboard/images", icon: "🖼️", color: "rose" },
               ].map((item) => (
                 <Link
                   key={item.href}

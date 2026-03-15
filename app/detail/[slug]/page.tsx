@@ -11,8 +11,9 @@ import LocationSection from "@/components/DetailProduct/LocationSection";
 import PackagesSection from "@/components/DetailProduct/PackagesSection";
 
 // ── SEO Metadata ────────────────────────────────────────────────────────
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-    const destination = await prisma.destination.findFirst({ where: { slug: params.slug } });
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await params;
+    const destination = await prisma.destination.findFirst({ where: { slug } });
     if (!destination) {
         return { title: "Destination Not Found | Voyra Turism" };
     }
@@ -27,8 +28,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 // ── Page ────────────────────────────────────────────────────────────────
-export default async function Detail({ params }: { params: { slug: string } }) {
-    const slug = params.slug;
+export default async function Detail({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
 
     // Fetch destination + all related tables in one query
     const destination = await prisma.destination.findFirst({

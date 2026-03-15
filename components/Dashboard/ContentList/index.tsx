@@ -43,7 +43,7 @@ export default function ContentList() {
       updateContent({ id: selected.id, payload: data }, { onSuccess: closeModal });
     };
     const handleDelete = (id: number) => {
-      if (confirm("Hapus content ini? Data tidak bisa dikembalikan."))
+      if (confirm("Delete this content? This action cannot be undone."))
         deleteContent(id);
     };
 
@@ -53,18 +53,18 @@ export default function ContentList() {
 
     const stats = [
       { label: "Total Content", value: contents.length, color: "orange" as const },
-      { label: "Tersedia", value: totalAvailable, color: "emerald" as const },
-      { label: "Nonaktif", value: contents.length - totalAvailable, color: "sky" as const },
+      { label: "Available", value: totalAvailable, color: "emerald" as const },
+      { label: "Inactive", value: contents.length - totalAvailable, color: "sky" as const },
       { label: "Total Images", value: totalImages, color: "amber" as const },
     ];
 
     return (
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
         <DashboardPageHeader
-          section="Manajemen"
+          section="Management"
           title="Contents"
           subtitle={`${contents.length} total content`}
-          buttonLabel="Tambah Content"
+          buttonLabel="Add Content"
           onButtonClick={openCreate}
           accent="orange"
         />
@@ -80,7 +80,7 @@ export default function ContentList() {
             onChange={(e) => setFilterDestId(e.target.value)}
             className="px-3 py-2 bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
           >
-            <option value="">Semua Destinasi</option>
+            <option value="">All Destinations</option>
             {(destinations as Destination[]).map((d) => (
               <option key={d.id} value={d.id}>{d.title}</option>
             ))}
@@ -97,7 +97,7 @@ export default function ContentList() {
                     : "text-slate-500 hover:text-slate-300"
                 }`}
               >
-                {f === "all" ? "Semua" : f === "available" ? "Tersedia" : "Nonaktif"}
+                {f === "all" ? "All" : f === "available" ? "Available" : "Inactive"}
               </button>
             ))}
           </div>
@@ -112,10 +112,10 @@ export default function ContentList() {
           )}
         </div>
 
-        {isError && <ErrorBanner message="Gagal memuat contents. Coba refresh." />}
+        {isError && <ErrorBanner message="Failed to load contents. Please refresh." />}
 
         {isLoading ? (
-          <LoadingState message="Memuat contents..." accent="orange" />
+          <LoadingState message="Loading contents..." accent="orange" />
         ) : (
           <ContentTable
             contents={filtered}

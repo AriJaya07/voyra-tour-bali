@@ -16,7 +16,7 @@ export default function LocationSection({ locations }: LocationSectionProps) {
       {/* Section Header */}
       <div className="flex flex-row gap-3 items-center mb-8">
         <hr className="h-10 bg-[#02ACBE] w-[5px] border-0 rounded-full" />
-        <p className="text-[24px] font-bold leading-[28px] text-black sm:text-[28px]">Lokasi</p>
+        <p className="text-[24px] font-bold leading-[28px] text-black sm:text-[28px]">Locations</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -69,7 +69,7 @@ export default function LocationSection({ locations }: LocationSectionProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    Buka di Maps
+                    Open in Maps
                   </a>
                 )}
               </div>

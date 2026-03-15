@@ -9,6 +9,7 @@ import DashboardPageHeader from "@/components/Dashboard/common/DashboardPageHead
 import DashboardModal from "@/components/Dashboard/common/DashboardModal";
 import StatsGrid from "@/components/Dashboard/common/StatsGrid";
 import { LoadingState, ErrorBanner } from "@/components/Dashboard/common/LoadingState";
+import { formatPrice } from "@/utils/formatPrice";
 
 export default function PackageList() {
   const [modalMode, setModalMode] = useState<ModalMode>(null);
@@ -47,7 +48,7 @@ export default function PackageList() {
     { label: "Total Packages", value: packages.length, color: "violet" as const },
     {
       label: "Total Value",
-      value: `$${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 0 })}`,
+      value: formatPrice(totalRevenue),
       color: "emerald" as const,
     },
     { label: "With Category", value: withCategory, color: "blue" as const },
@@ -57,7 +58,7 @@ export default function PackageList() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
       <DashboardPageHeader
-        section="Manajemen"
+        section="Management"
         title="Packages"
         subtitle={`${packages.length} total package${packages.length !== 1 ? "s" : ""}`}
         buttonLabel="Add Package"

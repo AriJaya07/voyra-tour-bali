@@ -10,7 +10,7 @@ interface Props {
 }
 
 const fmtDate = (s: string) =>
-  new Date(s).toLocaleDateString("id-ID", {
+  new Date(s).toLocaleDateString("en-US", {
     day: "2-digit", month: "short", year: "numeric",
   });
 
@@ -31,8 +31,8 @@ export default function ContentTable({ contents, onView, onEdit, onDelete }: Pro
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
-        <p className="text-slate-400 font-semibold">Belum ada content</p>
-        <p className="text-slate-600 text-sm mt-1">Klik "Tambah Content" untuk memulai</p>
+        <p className="text-slate-400 font-semibold">No content yet</p>
+        <p className="text-slate-600 text-sm mt-1">Click "Add Content" to get started</p>
       </div>
     );
   }
@@ -41,7 +41,7 @@ export default function ContentTable({ contents, onView, onEdit, onDelete }: Pro
     <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
       {/* Head */}
       <div className="grid grid-cols-[auto_2fr_1.5fr_1fr_1fr_1fr_auto] gap-3 px-5 py-3 bg-slate-800/60 border-b border-slate-800">
-        {["", "Content", "Destinasi", "Tanggal", "Status", "Images", "Aksi"].map((h) => (
+        {["", "Content", "Destination", "Date", "Status", "Images", "Actions"].map((h) => (
           <p key={h} className="text-xs font-bold text-slate-500 uppercase tracking-wider">{h}</p>
         ))}
       </div>
@@ -95,7 +95,7 @@ export default function ContentTable({ contents, onView, onEdit, onDelete }: Pro
                 : "bg-slate-700/50 text-slate-500 border border-slate-700"
             }`}>
               <span className={`w-1.5 h-1.5 rounded-full ${c.isAvailable ? "bg-emerald-400" : "bg-slate-500"}`} />
-              {c.isAvailable ? "Tersedia" : "Nonaktif"}
+              {c.isAvailable ? "Available" : "Inactive"}
             </span>
 
             {/* Image count */}
@@ -118,13 +118,13 @@ export default function ContentTable({ contents, onView, onEdit, onDelete }: Pro
 
             {/* Actions */}
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <IconBtn onClick={() => onView(c)} title="Lihat" cls="text-slate-500 hover:bg-slate-700 hover:text-white">
+              <IconBtn onClick={() => onView(c)} title="View" cls="text-slate-500 hover:bg-slate-700 hover:text-white">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </IconBtn>
               <IconBtn onClick={() => onEdit(c)} title="Edit" cls="text-orange-500 hover:bg-orange-500/15">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </IconBtn>
-              <IconBtn onClick={() => onDelete(c.id)} title="Hapus" cls="text-red-400 hover:bg-red-500/15">
+              <IconBtn onClick={() => onDelete(c.id)} title="Delete" cls="text-red-400 hover:bg-red-500/15">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </IconBtn>
             </div>
@@ -135,7 +135,7 @@ export default function ContentTable({ contents, onView, onEdit, onDelete }: Pro
       {/* Footer */}
       <div className="px-5 py-3 bg-slate-800/30 border-t border-slate-800">
         <p className="text-xs text-slate-600">
-          Menampilkan <span className="font-semibold text-slate-400">{contents.length}</span> content
+          Showing <span className="font-semibold text-slate-400">{contents.length}</span> content{contents.length !== 1 ? "s" : ""}
         </p>
       </div>
     </div>

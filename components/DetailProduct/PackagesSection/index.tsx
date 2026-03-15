@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Package, Category, Destination, Image as PrismaImage } from "@prisma/client"
-import axios from "axios"
+import { Package, Category, Image as PrismaImage } from "@prisma/client"
+import NextImage from "next/image"
 import WhatappIcon from "../../assets/sosmed/WhatappIcon"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useViatorBooking } from "@/utils/hooks/useViator"
+import { formatPrice } from "@/utils/formatPrice"
 
 // Types
 type PackageWithRelations = Package & {
@@ -20,19 +22,16 @@ interface PackagesSectionProps {
 
 const WA_NUMBER = "6281234567890"
 
-const fmtIDR = (n: number) =>
-  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n)
-
 function buildWaUrl(pkgTitle: string, destTitle: string, price: number) {
   const lines = [
-    `Halo Voyra Bali! 👋`,
-    `Saya tertarik dengan paket berikut:`,
+    `Hello Voyra Bali!`,
+    `I'm interested in the following package:`,
     ``,
-    `📦 *Paket:* ${pkgTitle}`,
-    `🏝 *Destinasi:* ${destTitle}`,
-    `💰 *Harga:* ${fmtIDR(price)}`,
+    `Package: ${pkgTitle}`,
+    `Destination: ${destTitle}`,
+    `Price: ${formatPrice(price)}`,
     ``,
-    `Mohon informasi lebih lanjut, terima kasih! 🙏`,
+    `Please provide more details, thank you!`,
   ]
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`
 }
@@ -40,41 +39,39 @@ function buildWaUrl(pkgTitle: string, destTitle: string, price: number) {
 export default function PackagesSection({ packages, destinationTitle }: PackagesSectionProps) {
   const { data: session } = useSession();
   const router = useRouter();
-  const [loadingPkgId, setLoadingPkgId] = useState<number | null>(null)
-  
+  const [bookingPkgId, setBookingPkgId] = useState<number | null>(null)
+  const bookingMutation = useViatorBooking()
+
   if (!packages || packages.length === 0) return null
 
   const handleFastBooking = async (pkg: PackageWithRelations) => {
-    // REQUIRE LOGIN
     if (!session) {
       const currentUrl = typeof window !== "undefined" ? window.location.pathname : "/";
       router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
       return;
     }
 
-    setLoadingPkgId(pkg.id)
+    setBookingPkgId(pkg.id)
 
-    try {
-      // We pass the package details to the mock viator proxy route
-      const response = await axios.post('/api/viator?action=book', {
+    bookingMutation.mutate(
+      {
         productCode: `VTR-PKG-${pkg.id}`,
         productTitle: pkg.title,
         travelDate: new Date().toISOString().split('T')[0],
         pax: 1,
-        totalPrice: pkg.price
-      });
-      
-      if (response.data.status === 'SUCCESS' || response.data.bookingRef) {
-        alert(`Booking Berhasil! Ref: ${response.data.bookingRef || response.data.orderId}\n\nSilahkan cek dashboard anda.`);
-      } else {
-        alert("Gagal melakukan booking. Silahkan coba lagi.");
+        totalPrice: pkg.price,
+      },
+      {
+        onSuccess: (data) => {
+          alert(`Booking Successful! Ref: ${data.bookingRef || data.orderId}\n\nPlease check your dashboard.`);
+          setBookingPkgId(null);
+        },
+        onError: (err) => {
+          alert(err.message || "A system error occurred while processing your booking.");
+          setBookingPkgId(null);
+        },
       }
-    } catch (err: any) {
-      console.error("Booking fast package error", err);
-      alert(err.response?.data?.details || "Terjadi kesalahan sistem saat mencoba booking.");
-    } finally {
-      setLoadingPkgId(null)
-    }
+    );
   }
 
   return (
@@ -83,8 +80,8 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
       <div className="flex flex-row gap-3 items-center mb-8">
         <hr className="h-10 bg-[#02ACBE] w-[5px] border-0 rounded-full" />
         <div>
-          <p className="text-[24px] font-bold leading-[28px] text-black sm:text-[28px]">Paket Wisata</p>
-          <p className="text-sm text-gray-400 mt-0.5">Pilih paket yang sesuai dengan kebutuhan Anda</p>
+          <p className="text-[24px] font-bold leading-[28px] text-black sm:text-[28px]">Tour Packages</p>
+          <p className="text-sm text-gray-400 mt-0.5">Choose the package that suits your needs</p>
         </div>
       </div>
 
@@ -95,7 +92,7 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
             pkg.images[0]?.url ||
             null
 
-          const isBookingThis = loadingPkgId === pkg.id;
+          const isBookingThis = bookingPkgId === pkg.id;
 
           return (
             <div
@@ -104,11 +101,13 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
             >
               {/* Image */}
               {mainImage ? (
-                <div className="h-[200px] overflow-hidden">
-                  <img
+                <div className="relative h-[200px] overflow-hidden">
+                  <NextImage
                     src={mainImage}
                     alt={pkg.title}
-                    className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform hover:scale-105 duration-500"
                   />
                 </div>
               ) : (
@@ -119,7 +118,6 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
 
               {/* Body */}
               <div className="p-5 flex flex-col gap-3 flex-1">
-                {/* Category Badge */}
                 {pkg.category && (
                   <span className="inline-flex w-fit items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                     {pkg.category.name}
@@ -134,20 +132,19 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
 
                 {/* Price */}
                 <div className="pt-2 mt-auto border-t border-gray-100">
-                  <p className="text-xs text-gray-400">Mulai dari</p>
-                  <p className="text-lg font-black text-gray-900 mb-4">{fmtIDR(pkg.price)}</p>
+                  <p className="text-xs text-gray-400">Starting from</p>
+                  <p className="text-lg font-black text-gray-900 mb-4">{formatPrice(pkg.price)}</p>
 
-                  {/* CTAs Stacked vertically to fit both easily */}
                   <div className="flex flex-col gap-2">
                     <button
                       onClick={() => handleFastBooking(pkg)}
-                      disabled={loadingPkgId !== null}
+                      disabled={bookingPkgId !== null}
                       className={`flex justify-center items-center py-2.5 text-white text-sm font-bold rounded-xl transition-colors shadow-sm w-full cursor-pointer
-                        ${loadingPkgId !== null ? 'bg-gray-400' : 'bg-[#0071CE] hover:bg-[#005ba6] active:bg-[#004780]'}`}
+                        ${bookingPkgId !== null ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}`}
                     >
-                      {isBookingThis ? 'Memproses...' : 'Beli Langsung (Viator)'}
+                      {isBookingThis ? 'Processing...' : 'Book Now (Viator)'}
                     </button>
-                    
+
                     <a
                       href={buildWaUrl(pkg.title, destinationTitle, pkg.price)}
                       target="_blank"
@@ -155,7 +152,7 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
                       className="flex justify-center items-center gap-2 py-2.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white text-sm font-bold rounded-xl transition-colors shadow-sm w-full"
                     >
                       <WhatappIcon />
-                      Tanya WhatsApp
+                      Ask via WhatsApp
                     </a>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 import CloseIcon from "@/components/assets/dashboard/CloseIcon";
+import { formatPrice } from "@/utils/formatPrice";
 
 export function DestinationDetailModal({
     destination,
@@ -32,7 +33,7 @@ export function DestinationDetailModal({
             <div className="bg-slate-50 rounded-xl p-4">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Price</p>
               <p className="text-lg font-bold text-slate-900">
-                ${Number(destination.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                {formatPrice(Number(destination.price))}
               </p>
             </div>
             <div className="bg-slate-50 rounded-xl p-4">

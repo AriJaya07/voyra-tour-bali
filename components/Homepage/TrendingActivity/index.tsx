@@ -1,30 +1,25 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Category, Destination as PrismaDestination, Image as PrismaImage } from "@prisma/client"
-import axios from "axios"
-
-type DestinationWithImages = PrismaDestination & { images: PrismaImage[] };
+import { useState, useMemo, memo, useEffect } from "react"
+import { Category } from "@prisma/client"
+import Image from "next/image"
+import { useViatorProducts, ViatorProduct } from "@/utils/hooks/useViator"
 
 interface TrendingActivityProps {
   categories: Category[];
-  // keeping destinations prop for backward compatibility in parent component, though we will fetch Viator data
-  destinations?: DestinationWithImages[]; 
 }
 
-interface ViatorProduct {
-  productCode: string;
-  title: string;
-  description: string;
-  pricing: { summary: { fromPrice: number } };
-  images: { variants: { url: string }[] }[];
+/** Fisher-Yates shuffle */
+function shuffle<T>(array: T[]): T[] {
+  const arr = [...array]
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
 }
 
-function shuffle<T>(array: T[]) {
-  return [...array].sort(() => Math.random() - 0.5)
-}
-
-function TabButton({
+const TabButton = memo(function TabButton({
   label,
   isActive,
   onClick,
@@ -55,98 +50,77 @@ function TabButton({
       {label}
     </button>
   )
-}
+})
 
 export default function TrendingActivity({ categories }: TrendingActivityProps) {
-  const defaultCategory = categories.length > 0 ? categories[0].name : "Liburan"
-  const [activeTab, setActiveTab] = useState(defaultCategory)
-  
-  // Store a shuffled subset of categories to make this section unique
-  const [randomCategories, setRandomCategories] = useState<Category[]>([])
-  
-  // Local state for Viator Products
-  const [products, setProducts] = useState<ViatorProduct[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const defaultTab = categories[0]?.name ?? "Liburan"
+  const [activeTab, setActiveTab] = useState(defaultTab)
   const [showAll, setShowAll] = useState(false)
 
+  // Use unshuffled categories for SSR, then shuffle on client to avoid hydration mismatch
+  const [randomCategories, setRandomCategories] = useState<Category[]>(() =>
+    categories.slice(0, 6)
+  )
+
   useEffect(() => {
-    // Pick 6 random categories on mount
-    if (categories.length > 0 && randomCategories.length === 0) {
-      const shuffled = shuffle(categories).slice(0, 6)
-      setRandomCategories(shuffled)
-      if (!shuffled.find(c => c.name === activeTab)) {
-        setActiveTab(shuffled[0].name)
-      }
+    const shuffled = shuffle(categories).slice(0, 6)
+    setRandomCategories(shuffled)
+    setActiveTab(shuffled[0]?.name ?? defaultTab)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const activeCategoryId = useMemo(() => {
+    const cat = categories.find(c => c.name === activeTab)
+    return cat?.id ?? null
+  }, [categories, activeTab])
+
+  const { data: rawProducts, isLoading, isError } = useViatorProducts(activeCategoryId)
+
+  // Shuffle products once when data arrives (stable per tab)
+  const [shuffledProducts, setShuffledProducts] = useState<ViatorProduct[]>([])
+  useEffect(() => {
+    if (rawProducts) {
+      setShuffledProducts(shuffle(rawProducts))
+      setShowAll(false)
     }
-  }, [categories, randomCategories.length, activeTab])
+  }, [rawProducts])
 
-  // Fetch Viator API products whenever the active tab changes
-  useEffect(() => {
-    const fetchViatorProducts = async () => {
-      setIsLoading(true);
-      try {
-        const activeCategoryObj = categories.find(c => c.name === activeTab)
-        const categoryId = activeCategoryObj ? activeCategoryObj.id : null
-
-        // Fetch using our Next.js proxy route
-        const response = await axios.get('/api/viator', {
-          params: {
-            action: 'products',
-            categoryId: categoryId
-          }
-        });
-
-        // Store fetched products
-        if (response.data && response.data.data) {
-          setProducts(shuffle(response.data.data)); // Shuffling visual mock data
-        } else {
-          setProducts([]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch Viator products:", error);
-        setProducts([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchViatorProducts();
-    setShowAll(false);
-  }, [activeTab, categories])
-
-  const handleTabClick = (tab: string) => {
-    setActiveTab(tab)
-  }
-
-  // Determine which destinations to display based on the showAll state (max 5 initially)
-  const displayedProducts = showAll ? products : products.slice(0, 5)
-  const hasMore = products.length > 5
+  const displayedProducts = useMemo(
+    () => (showAll ? shuffledProducts : shuffledProducts.slice(0, 5)),
+    [showAll, shuffledProducts]
+  )
+  const hasMore = shuffledProducts.length > 5
 
   return (
     <section id="paket" className="pt-20 px-4 mb-20">
-      {/* Title */}
       <h2 className="text-2xl sm:text-3xl font-bold text-black text-center sm:text-left">
         Trending Activity
       </h2>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-3 pt-7 pb-9 justify-center sm:justify-start">
+      <div className="flex w-full gap-2 py-5 overflow-x-auto scrollbar-hide">
         {randomCategories.map((tab) => (
           <TabButton
             key={tab.id}
             label={tab.name}
             isActive={activeTab === tab.name}
-            onClick={() => handleTabClick(tab.name)}
+            onClick={() => setActiveTab(tab.name)}
           />
         ))}
       </div>
 
-      {/* Images container with min-height to prevent layout shift */}
+      {/* Products */}
       <div className="min-h-[220px]">
         {isLoading ? (
           <div className="w-full h-[220px] rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50/50">
             <p className="text-gray-500 font-medium animate-pulse text-center px-4">
               Loading latest activities for &quot;<span className="font-bold text-gray-700">{activeTab}</span>&quot;...
+            </p>
+          </div>
+        ) : isError ? (
+          <div className="w-full h-[220px] rounded-lg border-2 border-dashed border-red-200 flex items-center justify-center bg-red-50/50">
+            <p className="text-red-500 font-medium text-center px-4">
+              Failed to load activities. Please try again later.
             </p>
           </div>
         ) : displayedProducts.length > 0 ? (
@@ -156,23 +130,26 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
                 const mainImage = prod.images?.[0]?.variants?.[0]?.url || "/images/activity/melasti.png"
                 return (
                   <a href={`/detail/${prod.productCode}`} target="_self" key={prod.productCode}>
-                    <img
-                      src={mainImage}
-                      alt={prod.title}
-                      className="w-full h-[220px] rounded-lg object-cover transition-transform transform hover:scale-105"
-                      title={prod.title}
-                    />
+                    <div className="relative w-full h-[220px] rounded-lg overflow-hidden">
+                      <Image
+                        src={mainImage}
+                        alt={prod.title}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                        className="object-cover transition-transform transform hover:scale-105"
+                        title={prod.title}
+                      />
+                    </div>
                   </a>
                 )
               })}
             </div>
-            
-            {/* Show More Button */}
+
             {hasMore && (
               <div className="pt-8 pb-4 flex justify-center">
                 <button
                   onClick={() => setShowAll(!showAll)}
-                  className="px-8 py-2.5 bg-white border-2 border-[#229ED9] text-[#229ED9] font-bold rounded-full hover:bg-[#229ED9] hover:text-white transition-all shadow-sm"
+                  className="px-8 py-2.5 bg-white border-2 border-blue-500 text-blue-500 font-bold rounded-full hover:bg-blue-500 hover:text-white transition-all shadow-sm"
                 >
                   {showAll ? "Show Less" : "See All Activity"}
                 </button>
@@ -190,9 +167,11 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
 
       {/* Banner */}
       <div className="flex justify-center mt-12">
-        <img
+        <Image
           src="/images/iklan/tolak-angin.png"
           alt="Advertisement"
+          width={700}
+          height={200}
           className="w-full max-w-[700px]"
         />
       </div>

@@ -1,7 +1,7 @@
 import api from "@/lib/axios";
 
-
 const BASE = "/locations";
+
 export interface Location {
   id: number;
   title: string;
@@ -36,67 +36,34 @@ export interface LocationPayload {
   destinationId: number | string;
 }
 
-function handleAxiosError(error: any): never {
-  const message =
-    error?.response?.data?.error ||
-    error?.response?.data?.message ||
-    error.message ||
-    "Request failed";
-
-  throw new Error(message);
-}
-
 export const locationService = {
   getAll: async (destinationId?: number): Promise<Location[]> => {
-    try {
-      const res = await api.get<Location[]>(BASE, {
-        params: destinationId ? { destinationId } : {},
-      });
-
-      return res.data;
-    } catch (error) {
-      handleAxiosError(error);
-    }
+    const { data } = await api.get<Location[]>(BASE, {
+      params: destinationId ? { destinationId } : {},
+    });
+    return data;
   },
 
   getOne: async (id: number): Promise<Location> => {
-    try {
-      const res = await api.get<Location>(`${BASE}/${id}`);
-      return res.data;
-    } catch (error) {
-      handleAxiosError(error);
-    }
+    const { data } = await api.get<Location>(`${BASE}/${id}`);
+    return data;
   },
 
   create: async (payload: LocationPayload): Promise<Location> => {
-    try {
-      const res = await api.post<Location>(BASE, payload);
-      return res.data;
-    } catch (error) {
-      handleAxiosError(error);
-    }
+    const { data } = await api.post<Location>(BASE, payload);
+    return data;
   },
 
   update: async (
     id: number,
     payload: Partial<LocationPayload>
   ): Promise<Location> => {
-    try {
-      const res = await api.put<Location>(`${BASE}/${id}`, payload);
-      return res.data;
-    } catch (error) {
-      handleAxiosError(error);
-    }
+    const { data } = await api.put<Location>(`${BASE}/${id}`, payload);
+    return data;
   },
 
   delete: async (id: number): Promise<{ success: boolean }> => {
-    try {
-      const res = await api.delete<{ success: boolean }>(
-        `${BASE}/${id}`
-      );
-      return res.data;
-    } catch (error) {
-      handleAxiosError(error);
-    }
+    const { data } = await api.delete<{ success: boolean }>(`${BASE}/${id}`);
+    return data;
   },
 };

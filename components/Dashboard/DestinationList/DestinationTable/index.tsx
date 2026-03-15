@@ -1,11 +1,12 @@
 "use client";
 
-import EyesIcon from "@/components/assets/dashboard/EyesIcon";
 import LocationIcon from "@/components/assets/dashboard/LocationIcon";
 import PencilIcon from "@/components/assets/dashboard/PencilIcon";
 import TrashIcon from "@/components/assets/dashboard/TrashIcon";
+import EyesShowIcon from "@/components/assets/login/EyesShowIcon";
 import { ActionButton } from "@/components/common/InputForm";
 import { Destination } from "@/utils/service/destination.service";
+import { formatPrice } from "@/utils/formatPrice";
 
 
 interface DestinationTableProps {
@@ -63,7 +64,7 @@ export default function DestinationTable({
             <p className="text-slate-500 text-sm truncate">{dest.description}</p>
 
             <span className="text-sm font-semibold text-slate-800">
-              ${Number(dest.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              {formatPrice(Number(dest.price))}
             </span>
 
             <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium w-fit">
@@ -76,7 +77,7 @@ export default function DestinationTable({
                 title="View"
                 color="text-slate-500 hover:bg-slate-100"
                 icon={
-                  <EyesIcon />
+                  <EyesShowIcon />
                 }
               />
               <ActionButton

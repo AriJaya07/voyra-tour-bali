@@ -8,7 +8,7 @@ export default function ContentViewModal({
   }) {
     const mainImage = content.images.find((img) => img.isMain) ?? content.images[0];
     const fmtDate = (s: string) =>
-      new Date(s).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+      new Date(s).toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric" });
 
     return (
       <div className="bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-700/50 max-h-[90vh] overflow-y-auto">
@@ -47,25 +47,25 @@ export default function ContentViewModal({
           {/* Meta row */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Destinasi</p>
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Destination</p>
               <p className="text-blue-400 text-sm font-semibold truncate">{content.destination.title}</p>
             </div>
             <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Tanggal</p>
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Date</p>
               <p className="text-slate-300 text-xs">{fmtDate(content.dateAvailable)}</p>
             </div>
             <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
               <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Status</p>
               <span className={`inline-flex items-center gap-1 text-xs font-semibold ${content.isAvailable ? "text-emerald-400" : "text-slate-500"}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${content.isAvailable ? "bg-emerald-400" : "bg-slate-500"}`} />
-                {content.isAvailable ? "Tersedia" : "Nonaktif"}
+                {content.isAvailable ? "Available" : "Inactive"}
               </span>
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Deskripsi</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</p>
             <p className="text-slate-300 text-sm leading-relaxed">{content.description}</p>
           </div>
 
@@ -73,7 +73,7 @@ export default function ContentViewModal({
           {content.images.length > 0 && (
             <div>
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                Gallery ({content.images.length} gambar)
+                Gallery ({content.images.length} image{content.images.length !== 1 ? "s" : ""})
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {content.images.map((img, i) => (
@@ -89,7 +89,7 @@ export default function ContentViewModal({
         {/* Footer */}
         <div className="px-6 pb-6 flex gap-3">
           <button onClick={onClose} className="flex-1 py-2.5 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 rounded-xl text-sm font-medium transition-colors">
-            Tutup
+            Close
           </button>
           <button onClick={onEdit} className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl hover:bg-orange-500 text-sm font-semibold transition-colors">
             Edit Content
