@@ -11,24 +11,42 @@ import LocationSection from "@/components/DetailProduct/LocationSection";
 import PackagesSection from "@/components/DetailProduct/PackagesSection";
 
 // ── SEO Metadata ────────────────────────────────────────────────────────
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-    const destination = await prisma.destination.findFirst({ where: { slug: params.slug } });
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await params;
+    const destination = await prisma.destination.findFirst({
+        where: { slug },
+        include: { images: { where: { isMain: true }, take: 1 } },
+    });
     if (!destination) {
-        return { title: "Destination Not Found | Voyra Turism" };
+        return { title: "Destination Not Found" };
     }
+
+    const description = destination.description.substring(0, 160);
+    const mainImage = destination.images[0]?.url;
+
     return {
-        title: `${destination.title} Tickets & Booking | Voyra Turism`,
-        description: destination.description.substring(0, 160) + "...",
+        title: `${destination.title} — Tickets & Booking`,
+        description,
         openGraph: {
-            title: `${destination.title} | Voyra Turism`,
-            description: destination.description.substring(0, 160),
-        }
+            title: `${destination.title} — Voyra Bali Tour`,
+            description,
+            type: "article",
+            ...(mainImage && {
+                images: [{ url: mainImage, width: 1200, height: 630, alt: destination.title }],
+            }),
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: `${destination.title} — Voyra Bali Tour`,
+            description,
+            ...(mainImage && { images: [mainImage] }),
+        },
     };
 }
 
 // ── Page ────────────────────────────────────────────────────────────────
-export default async function Detail({ params }: { params: { slug: string } }) {
-    const slug = params.slug;
+export default async function Detail({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
 
     // Fetch destination + all related tables in one query
     const destination = await prisma.destination.findFirst({

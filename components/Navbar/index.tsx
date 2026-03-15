@@ -1,24 +1,32 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession, signOut } from "next-auth/react"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 import BurgerIcon from "../assets/Icon/BurgerIcon"
 import VoryaIcon from "../assets/Icon/VoyraIcon"
 import SearchModal from "./SearchModal"
+import SearchIcon from "../assets/Icon/SearchIcon"
 
 const NAV_ITEMS = [
-  { label: "Halaman Utama", id: "home" },
-  { label: "Destinasi", id: "destinasi" },
-  { label: "Paket Travel", id: "paket" },
-  { label: "Tentang Kami", id: "tentang" },
+  { label: "Home", id: "home" },
+  { label: "Destinations", id: "destinasi" },
+  { label: "Travel Packages", id: "paket" },
+  { label: "About Us", id: "tentang", href: "/about" },
 ]
+
+const NAVBAR_HEIGHT = 64
 
 export default function Navbar() {
   const { data: session } = useSession()
+  const pathname = usePathname()
+  const isHomePage = pathname === "/"
   const [isOpen, setIsOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [activeSection, setActiveSection] = useState("home")
+  const [scrolled, setScrolled] = useState(false)
   const userImage = (session?.user as any)?.image || "/images/people.png"
   const userRole = (session?.user as any)?.role as string | undefined
 
@@ -27,10 +35,57 @@ export default function Navbar() {
     document.body.style.overflow = isOpen ? "hidden" : "auto"
   }, [isOpen])
 
+  // Track scroll position for active section + navbar style
+  useEffect(() => {
+    if (!isHomePage) return
+
+    const sectionIds = NAV_ITEMS.map((item) => item.id)
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+
+      // Find which section is currently in view
+      let current = "home"
+      for (const id of sectionIds) {
+        const el = document.getElementById(id)
+        if (el) {
+          const top = el.getBoundingClientRect().top
+          if (top <= NAVBAR_HEIGHT + 80) {
+            current = id
+          }
+        }
+      }
+      setActiveSection(current)
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [isHomePage])
+
+  // Smooth scroll to section
+  const scrollToSection = useCallback(
+    (e: React.MouseEvent, id: string) => {
+      if (!isHomePage) return // Let normal navigation happen on other pages
+
+      e.preventDefault()
+      const el = document.getElementById(id)
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_HEIGHT
+        window.scrollTo({ top, behavior: "smooth" })
+      }
+    },
+    [isHomePage]
+  )
+
   return (
     <>
       {/* NAVBAR */}
-      <header className="w-full border-b border-gray-200 bg-white fixed top-0 z-40">
+      <header className={`w-full fixed top-0 z-40 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm"
+          : "bg-white border-b border-gray-200"
+      }`}>
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <a href="/" target="_self">
@@ -39,19 +94,57 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            {NAV_ITEMS.map((item) => (
-              <a
-                href={`/#${item.id}`} // Linking to section by ID
-                key={item.label}
-                className=""
-              >
-                <p
-                  className="cursor-pointer text-sm font-medium text-gray-700 hover:text-blue-600 transition"
+            {NAV_ITEMS.map((item) => {
+              const hasPage = "href" in item && item.href
+              const isActive = hasPage
+                ? pathname === item.href
+                : isHomePage && activeSection === item.id
+
+              return hasPage ? (
+                <Link
+                  href={item.href!}
+                  key={item.label}
+                  className="relative pb-1 group"
                 >
-                  {item.label}
-                </p>
-              </a>
-            ))}
+                  <span
+                    className={`cursor-pointer text-sm font-medium transition-colors duration-200 ${
+                      isActive
+                        ? "text-[#0071CE] font-semibold"
+                        : "text-gray-700 group-hover:text-[#0071CE]"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                  <span
+                    className={`absolute bottom-0 left-0 right-0 h-[2px] bg-[#0071CE] rounded-full transition-all duration-300 ${
+                      isActive ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
+                    }`}
+                  />
+                </Link>
+              ) : (
+                <a
+                  href={`/#${item.id}`}
+                  key={item.label}
+                  onClick={(e) => scrollToSection(e, item.id)}
+                  className="relative pb-1 group"
+                >
+                  <span
+                    className={`cursor-pointer text-sm font-medium transition-colors duration-200 ${
+                      isActive
+                        ? "text-[#0071CE] font-semibold"
+                        : "text-gray-700 group-hover:text-[#0071CE]"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                  <span
+                    className={`absolute bottom-0 left-0 right-0 h-[2px] bg-[#0071CE] rounded-full transition-all duration-300 ${
+                      isActive ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
+                    }`}
+                  />
+                </a>
+              )
+            })}
 
             {/* Search Icon Button */}
             <button
@@ -59,9 +152,7 @@ export default function Navbar() {
               aria-label="Search"
               className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-500 hover:text-[#0071CE] cursor-pointer"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <SearchIcon />
             </button>
 
             {session ? (
@@ -126,7 +217,7 @@ export default function Navbar() {
                           <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
-                          Lengkapi Profil
+                          My Profile
                         </a>
                         <a
                           href="/"
@@ -136,7 +227,7 @@ export default function Navbar() {
                           <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                           </svg>
-                          Beranda
+                          Home
                         </a>
 
                         <div className="border-t border-gray-100 mt-1 pt-1">
@@ -147,7 +238,7 @@ export default function Navbar() {
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
-                            Keluar
+                            Sign Out
                           </button>
                         </div>
                       </div>
@@ -158,10 +249,10 @@ export default function Navbar() {
             ) : (
               <div className="flex items-center gap-4">
                 <Link href="/login" className="text-sm font-bold text-gray-700 hover:text-[#0071CE] transition">
-                  Masuk
+                  Sign In
                 </Link>
                 <Link href="/register" className="px-5 py-2.5 bg-[#0071CE] hover:bg-[#005ba6] text-white text-sm font-bold rounded-full transition shadow-sm">
-                  Daftar
+                  Sign Up
                 </Link>
               </div>
             )}
@@ -211,20 +302,43 @@ export default function Navbar() {
 
         {/* Menu Items */}
         <div className="flex flex-col px-5 py-6 gap-5">
-          {NAV_ITEMS.map((item) => (
-            <a
-              href={`/#${item.id}`} // Linking to section by ID
-              key={item.label}
-              className=""
-            >
-              <p
+          {NAV_ITEMS.map((item) => {
+            const hasPage = "href" in item && item.href
+            const isActive = hasPage
+              ? pathname === item.href
+              : isHomePage && activeSection === item.id
+
+            const cls = `flex items-center gap-3 px-3 py-2 rounded-xl transition-all cursor-pointer ${
+              isActive
+                ? "bg-blue-50 text-[#0071CE] font-semibold"
+                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+            }`
+
+            return hasPage ? (
+              <Link
+                href={item.href!}
+                key={item.label}
                 onClick={() => setIsOpen(false)}
-                className="text-base font-medium text-gray-700 hover:text-blue-600 transition cursor-pointer"
+                className={cls}
               >
-                {item.label}
-              </p>
-            </a>
-          ))}
+                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#0071CE]" />}
+                <span className="text-base font-medium">{item.label}</span>
+              </Link>
+            ) : (
+              <a
+                href={`/#${item.id}`}
+                key={item.label}
+                onClick={(e) => {
+                  setIsOpen(false)
+                  scrollToSection(e, item.id)
+                }}
+                className={cls}
+              >
+                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#0071CE]" />}
+                <span className="text-base font-medium">{item.label}</span>
+              </a>
+            )
+          })}
 
           {/* Divider */}
           <hr />
@@ -238,7 +352,7 @@ export default function Navbar() {
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            Cari destinasi...
+            Search destinations...
           </button>
 
           {/* Profile */}
@@ -261,22 +375,22 @@ export default function Navbar() {
                   onClick={() => setIsOpen(false)}
                   className="w-full text-left px-4 py-3 text-sm font-medium text-[#0071CE] hover:bg-blue-50 rounded-xl transition"
                 >
-                  Lengkapi Profil
+                  My Profile
                 </Link>
                 <button
                   onClick={() => signOut()}
                   className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 bg-red-50 rounded-xl mt-1"
                 >
-                  Keluar Akun
+                  Sign Out
                 </button>
               </>
             ) : (
               <div className="flex flex-col gap-3">
                 <Link onClick={() => setIsOpen(false)} href="/login" className="w-full text-center px-4 py-3 text-sm font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-xl transition">
-                  Masuk via Email
+                  Sign In with Email
                 </Link>
                 <Link onClick={() => setIsOpen(false)} href="/register" className="w-full text-center px-4 py-3 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-xl transition shadow-sm">
-                  Buat Akun Baru
+                  Create Account
                 </Link>
               </div>
             )}

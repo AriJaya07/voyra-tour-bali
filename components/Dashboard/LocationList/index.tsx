@@ -54,7 +54,7 @@ export default function LocationList() {
       updateLocation({ id: selected.id, payload: data }, { onSuccess: closeModal });
     };
     const handleDelete = (id: number) => {
-      if (confirm("Hapus lokasi ini? Data tidak bisa dikembalikan."))
+      if (confirm("Delete this location? This action cannot be undone."))
         deleteLocation(id);
     };
 
@@ -63,19 +63,19 @@ export default function LocationList() {
     const uniqueDests = new Set(locations.map((l) => l.destinationId)).size;
 
     const stats = [
-      { label: "Total Lokasi", value: locations.length, color: "sky" as const },
-      { label: "Destinasi Unik", value: uniqueDests, color: "blue" as const },
-      { label: "Punya Gambar", value: withImage, color: "orange" as const },
-      { label: "Punya Link", value: withLink, color: "emerald" as const },
+      { label: "Total Locations", value: locations.length, color: "sky" as const },
+      { label: "Unique Destinations", value: uniqueDests, color: "blue" as const },
+      { label: "With Image", value: withImage, color: "orange" as const },
+      { label: "With Link", value: withLink, color: "emerald" as const },
     ];
 
     return (
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
         <DashboardPageHeader
-          section="Manajemen"
-          title="Lokasi"
-          subtitle={`${locations.length} total lokasi`}
-          buttonLabel="Tambah Lokasi"
+          section="Management"
+          title="Locations"
+          subtitle={`${locations.length} total location${locations.length !== 1 ? "s" : ""}`}
+          buttonLabel="Add Location"
           onButtonClick={openCreate}
           accent="sky"
         />
@@ -92,7 +92,7 @@ export default function LocationList() {
             onChange={(e) => setFilterDestId(e.target.value)}
             className="px-3 py-2 bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors"
           >
-            <option value="">Semua Destinasi</option>
+            <option value="">All Destinations</option>
             {(destinations as Destination[]).map((d) => (
               <option key={d.id} value={d.id}>
                 {d.title}
@@ -109,10 +109,10 @@ export default function LocationList() {
           )}
         </div>
 
-        {isError && <ErrorBanner message="Gagal memuat lokasi. Coba refresh." />}
+        {isError && <ErrorBanner message="Failed to load locations. Please refresh." />}
 
         {isLoading ? (
-          <LoadingState message="Memuat lokasi..." accent="sky" />
+          <LoadingState message="Loading locations..." accent="sky" />
         ) : (
           <LocationTable
             locations={locations}

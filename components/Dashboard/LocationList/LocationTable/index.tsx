@@ -1,10 +1,10 @@
 "use client";
 
-import EyesIcon from "@/components/assets/dashboard/EyesIcon";
 import LinkPathIcon from "@/components/assets/dashboard/LinkPathIcon";
 import LocationIcon from "@/components/assets/dashboard/LocationIcon";
 import PencilIcon from "@/components/assets/dashboard/PencilIcon";
 import TrashIcon from "@/components/assets/dashboard/TrashIcon";
+import EyesShowIcon from "@/components/assets/login/EyesShowIcon";
 import { ActionButton } from "@/components/common/InputForm";
 import { Location } from "@/utils/service/location.service";
 import Link from "next/link";
@@ -32,9 +32,9 @@ export default function LocationTable({ locations, onView, onEdit, onDelete }: P
         <div className="w-14 h-14 rounded-2xl bg-sky-500/10 flex items-center justify-center mb-4">
           <LocationIcon />
         </div>
-        <p className="text-slate-400 font-semibold">Belum ada lokasi</p>
+        <p className="text-slate-400 font-semibold">No locations yet</p>
         <p className="text-slate-600 text-sm mt-1">
-          Klik "Tambah Lokasi" untuk memulai
+          Click "Add Location" to get started
         </p>
       </div>
     );
@@ -44,7 +44,7 @@ export default function LocationTable({ locations, onView, onEdit, onDelete }: P
     <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
       {/* Head */}
       <div className="grid grid-cols-[auto_2fr_1.5fr_1fr_1.5fr_auto] gap-3 px-5 py-3 bg-slate-800/60 border-b border-slate-800">
-        {["", "Lokasi", "Destinasi", "Link", "Deskripsi", "Aksi"].map((h) => (
+        {["", "Location", "Destination", "Link", "Description", "Actions"].map((h) => (
           <p
             key={h}
             className="text-xs font-bold text-slate-500 uppercase tracking-wider"
@@ -107,7 +107,7 @@ export default function LocationTable({ locations, onView, onEdit, onDelete }: P
                     className="inline-flex items-center gap-1 text-sky-400 hover:text-sky-300 text-xs font-medium transition-colors truncate max-w-[120px]"
                 >
                    <LinkPathIcon />
-                    Buka Link
+                    Open Link
                 </Link>
             ) : (
               <span className="text-slate-700 text-xs">—</span>
@@ -125,7 +125,7 @@ export default function LocationTable({ locations, onView, onEdit, onDelete }: P
                 title="View"
                 color="text-slate-500 hover:bg-slate-100"
                 icon={
-                  <EyesIcon />
+                  <EyesShowIcon />
                 }
               />
               <ActionButton
@@ -152,9 +152,9 @@ export default function LocationTable({ locations, onView, onEdit, onDelete }: P
       {/* Footer */}
       <div className="px-5 py-3 bg-slate-800/30 border-t border-slate-800">
         <p className="text-xs text-slate-600">
-          Menampilkan{" "}
+          Showing{" "}
           <span className="font-semibold text-slate-400">{locations.length}</span>{" "}
-          lokasi
+          location{locations.length !== 1 ? "s" : ""}
         </p>
       </div>
     </div>

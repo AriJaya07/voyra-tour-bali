@@ -1,10 +1,11 @@
 "use client";
 
-import EyesIcon from "@/components/assets/dashboard/EyesIcon";
 import PencilIcon from "@/components/assets/dashboard/PencilIcon";
 import TrashIcon from "@/components/assets/dashboard/TrashIcon";
+import EyesShowIcon from "@/components/assets/login/EyesShowIcon";
 import { ActionButton } from "@/components/common/InputForm";
 import { Package } from "@/utils/service/package.service";
+import { formatPrice } from "@/utils/formatPrice";
 
 interface Props {
   packages: Package[];
@@ -66,7 +67,7 @@ export default function PackageTable({ packages, onView, onEdit, onDelete }: Pro
             <p className="text-slate-500 text-sm truncate">{pkg.description}</p>
 
             <span className="text-sm font-bold text-slate-800">
-              ${Number(pkg.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              {formatPrice(Number(pkg.price))}
             </span>
 
             {pkg.category ? (
@@ -93,7 +94,7 @@ export default function PackageTable({ packages, onView, onEdit, onDelete }: Pro
                 title="View"
                 color="text-slate-500 hover:bg-slate-100"
                 icon={
-                  <EyesIcon />
+                  <EyesShowIcon />
                 }
               />
               <ActionButton

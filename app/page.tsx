@@ -18,7 +18,7 @@ export default async function Home() {
       <hr className="bg-[#02ACBE] h-[13px]" />
       <Container className="">
         <Destionation categories={categories} destinations={destinations} />
-        <TrendingActivity categories={categories} destinations={destinations} />
+        <TrendingActivity categories={categories} />
       </Container>
     </div>
   );

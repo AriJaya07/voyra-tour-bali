@@ -1,9 +1,9 @@
 "use client";
 
-import EyesIcon from "@/components/assets/dashboard/EyesIcon";
 import PencilIcon from "@/components/assets/dashboard/PencilIcon";
 import TagIcon from "@/components/assets/dashboard/TagIcon";
 import TrashIcon from "@/components/assets/dashboard/TrashIcon";
+import EyesShowIcon from "@/components/assets/login/EyesShowIcon";
 import { ActionButton } from "@/components/common/InputForm";
 import { Category } from "@/utils/service/category.service";
 
@@ -91,7 +91,7 @@ export default function CategoryTable({ categories, onView, onEdit, onDelete }: 
                 title="View"
                 color="text-slate-500 hover:bg-slate-100"
                 icon={
-                  <EyesIcon />
+                  <EyesShowIcon />
                 }
               />
               <ActionButton

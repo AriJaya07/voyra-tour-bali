@@ -83,10 +83,10 @@ export default function ContentForm({
 
   const validate = () => {
     const e: Partial<Record<keyof FormData, string>> = {};
-    if (!formData.title.trim()) e.title = "Title wajib diisi";
-    if (!formData.description.trim()) e.description = "Description wajib diisi";
-    if (!formData.destinationId) e.destinationId = "Destinasi wajib dipilih";
-    if (!formData.dateAvailable) e.dateAvailable = "Tanggal wajib diisi";
+    if (!formData.title.trim()) e.title = "Title is required";
+    if (!formData.description.trim()) e.description = "Description is required";
+    if (!formData.destinationId) e.destinationId = "Destination is required";
+    if (!formData.dateAvailable) e.dateAvailable = "Date is required";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -168,7 +168,7 @@ export default function ContentForm({
             {mode === "create" ? "New Entry" : "Editing"}
           </p>
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
-            {mode === "create" ? "Tambah Content" : "Edit Content"}
+            {mode === "create" ? "Add Content" : "Edit Content"}
           </h2>
         </div>
         <button onClick={onCancel} className="text-white/60 hover:text-white transition-colors">
@@ -183,7 +183,7 @@ export default function ContentForm({
         {/* Destination */}
         <div>
           <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-            Destinasi <span className="text-red-400">*</span>
+            Destination <span className="text-red-400">*</span>
           </label>
           <select
             value={formData.destinationId}
@@ -191,7 +191,7 @@ export default function ContentForm({
             disabled={!!preselectedDestinationId}
             className={inputCls(!!errors.destinationId)}
           >
-            <option value="">— Pilih Destinasi —</option>
+            <option value="">— Select Destination —</option>
             {(destinations as any[]).map((d) => (
               <option key={d.id} value={d.id}>{d.title}</option>
             ))}
@@ -207,7 +207,7 @@ export default function ContentForm({
             </label>
             <input
               type="text"
-              placeholder="Judul konten"
+              placeholder="Content title"
               value={formData.title}
               onChange={set("title")}
               className={inputCls(!!errors.title)}
@@ -216,11 +216,11 @@ export default function ContentForm({
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-              Sub Title <span className="text-slate-600 font-normal normal-case">(opsional)</span>
+              Sub Title <span className="text-slate-600 font-normal normal-case">(optional)</span>
             </label>
             <input
               type="text"
-              placeholder="Sub judul konten"
+              placeholder="Content subtitle"
               value={formData.subTitle}
               onChange={set("subTitle")}
               className={inputCls()}
@@ -234,7 +234,7 @@ export default function ContentForm({
             Description <span className="text-red-400">*</span>
           </label>
           <textarea
-            placeholder="Deskripsi lengkap konten..."
+            placeholder="Full content description..."
             value={formData.description}
             onChange={set("description")}
             rows={4}
@@ -247,7 +247,7 @@ export default function ContentForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-              Tanggal Tersedia <span className="text-red-400">*</span>
+              Date Available <span className="text-red-400">*</span>
             </label>
             <input
               type="date"
@@ -282,7 +282,7 @@ export default function ContentForm({
                   />
                 </div>
                 <span className={`text-sm font-medium ${formData.isAvailable ? "text-orange-400" : "text-slate-500"}`}>
-                  {formData.isAvailable ? "Tersedia" : "Tidak Tersedia"}
+                  {formData.isAvailable ? "Available" : "Unavailable"}
                 </span>
               </label>
             </div>
@@ -336,7 +336,7 @@ export default function ContentForm({
             onClick={onCancel}
             className="flex-1 py-2.5 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 rounded-xl text-sm font-medium transition-colors"
           >
-            Batal
+            Cancel
           </button>
           <button
             type="submit"
@@ -349,7 +349,7 @@ export default function ContentForm({
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             )}
-            {mode === "create" ? "Tambah Content" : "Simpan Perubahan"}
+            {mode === "create" ? "Add Content" : "Save Changes"}
           </button>
         </div>
       </form>

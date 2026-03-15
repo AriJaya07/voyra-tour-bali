@@ -10,7 +10,7 @@ interface ContentsSectionProps {
 
 function AvailabilityBadge({ isAvailable, dateAvailable }: { isAvailable: boolean; dateAvailable: Date | string }) {
   const date = new Date(dateAvailable)
-  const formatted = date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+  const formatted = date.toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })
 
   return (
     <span
@@ -21,7 +21,7 @@ function AvailabilityBadge({ isAvailable, dateAvailable }: { isAvailable: boolea
       }`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? "bg-green-500" : "bg-gray-400"}`} />
-      {isAvailable ? `Tersedia · ${formatted}` : `Tidak tersedia`}
+      {isAvailable ? `Available · ${formatted}` : `Unavailable`}
     </span>
   )
 }
@@ -34,7 +34,7 @@ export default function ContentsSection({ contents }: ContentsSectionProps) {
       {/* Section Header */}
       <div className="flex flex-row gap-3 items-center mb-8">
         <hr className="h-10 bg-[#02ACBE] w-[5px] border-0 rounded-full" />
-        <p className="text-[24px] font-bold leading-[28px] text-black sm:text-[28px]">Konten &amp; Highlight</p>
+        <p className="text-[24px] font-bold leading-[28px] text-black sm:text-[28px]">Content &amp; Highlights</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

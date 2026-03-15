@@ -1,5 +1,5 @@
 export const fmtDate = (s: string) =>
-    new Date(s).toLocaleDateString("id-ID", {
+    new Date(s).toLocaleDateString("en-US", {
       day: "2-digit",
       month: "short",
       year: "numeric",

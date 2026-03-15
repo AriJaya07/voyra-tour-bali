@@ -4,7 +4,6 @@ import { useDestinations } from "@/utils/hooks/useDestinations";
 import { usePackages } from "@/utils/hooks/usePackages";
 import { ImageItem } from "@/utils/service/image.service";
 import { ActionButton } from "@/components/common/InputForm";
-import EyesIcon from "@/components/assets/dashboard/EyesIcon";
 import PencilIcon from "@/components/assets/dashboard/PencilIcon";
 import TrashIcon from "@/components/assets/dashboard/TrashIcon";
 import LinkImageModal from "@/components/Dashboard/ImageUploadList/LinkImageModal";
@@ -13,6 +12,7 @@ import Lightbox from "@/components/Dashboard/ImageUploadList/Lightbox";
 import { FilterType, fmtDate, ViewMode } from "@/components/common/ListForm";
 import DashboardPageHeader from "@/components/Dashboard/common/DashboardPageHeader";
 import { ErrorBanner } from "@/components/Dashboard/common/LoadingState";
+import EyesShowIcon from "@/components/assets/login/EyesShowIcon";
 
 export default function ImageUploadList() {
   const [filter, setFilter] = useState<FilterType>("all");
@@ -87,7 +87,7 @@ export default function ImageUploadList() {
   );
 
   const handleDelete = (id: number) => {
-    if (confirm("Hapus gambar ini? Tidak bisa dikembalikan.")) {
+    if (confirm("Delete this image? This action cannot be undone.")) {
       deleteImage(id);
       if (lightboxImage?.id === id) setLightboxImage(null);
     }
@@ -106,7 +106,7 @@ export default function ImageUploadList() {
             Image Manager
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            {images.length} total · {totalLinked} tertaut · {totalUnlinked} bebas
+            {images.length} total · {totalLinked} linked · {totalUnlinked} unlinked
           </p>
         </div>
         <button
@@ -116,7 +116,7 @@ export default function ImageUploadList() {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
           </svg>
-          Upload Gambar
+          Upload Image
         </button>
         <input
           ref={fileInputRef}
@@ -131,10 +131,10 @@ export default function ImageUploadList() {
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total Gambar", value: images.length, color: "bg-rose-500/10 border-rose-500/20 text-rose-300" },
-          { label: "Destinasi", value: images.filter((i) => i.destinationId).length, color: "bg-blue-500/10 border-blue-500/20 text-blue-300" },
+          { label: "Total Images", value: images.length, color: "bg-rose-500/10 border-rose-500/20 text-rose-300" },
+          { label: "Destinations", value: images.filter((i) => i.destinationId).length, color: "bg-blue-500/10 border-blue-500/20 text-blue-300" },
           { label: "Package", value: images.filter((i) => i.packageId).length, color: "bg-violet-500/10 border-violet-500/20 text-violet-300" },
-          { label: "Tidak Tertaut", value: totalUnlinked, color: "bg-amber-500/10 border-amber-500/20 text-amber-300" },
+          { label: "Unlinked", value: totalUnlinked, color: "bg-amber-500/10 border-amber-500/20 text-amber-300" },
         ].map((s) => (
           <div key={s.label} className={`rounded-2xl border px-4 py-3 ${s.color.split(" ").slice(0, 2).join(" ")}`}>
             <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-0.5">{s.label}</p>
@@ -165,9 +165,9 @@ export default function ImageUploadList() {
           </div>
           <div>
             <p className={`font-semibold text-sm transition-colors ${isDragOver ? "text-rose-300" : "text-slate-400"}`}>
-              {isDragOver ? "Lepas untuk upload" : "Drag & drop gambar di sini"}
+              {isDragOver ? "Release to upload" : "Drag & drop images here"}
             </p>
-            <p className="text-slate-600 text-xs mt-1">atau klik untuk pilih · JPEG, PNG, WEBP, GIF · Max 5MB per file</p>
+            <p className="text-slate-600 text-xs mt-1">or click to select · JPEG, PNG, WEBP, GIF · Max 5MB per file</p>
           </div>
         </div>
       </div>
@@ -221,10 +221,10 @@ export default function ImageUploadList() {
                   : "text-slate-500 hover:text-slate-300"
               }`}
             >
-              {f === "all" ? `Semua (${images.length})`
-                : f === "destinations" ? `Destinasi (${images.filter((i) => i.destinationId).length})`
-                : f === "packages" ? `Package (${images.filter((i) => i.packageId).length})`
-                : `Bebas (${totalUnlinked})`}
+              {f === "all" ? `All (${images.length})`
+                : f === "destinations" ? `Destinations (${images.filter((i) => i.destinationId).length})`
+                : f === "packages" ? `Packages (${images.filter((i) => i.packageId).length})`
+                : `Unlinked (${totalUnlinked})`}
             </button>
           ))}
         </div>
@@ -249,7 +249,7 @@ export default function ImageUploadList() {
         </div>
       </div>
 
-      {isError && <ErrorBanner message="Gagal memuat gambar. Coba refresh." />}
+      {isError && <ErrorBanner message="Failed to load images. Please refresh." />}
 
       {/* Content */}
       {isLoading ? (
@@ -265,8 +265,8 @@ export default function ImageUploadList() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <p className="text-slate-500 font-semibold">Belum ada gambar</p>
-          <p className="text-slate-600 text-sm mt-1">Upload gambar untuk mulai</p>
+          <p className="text-slate-500 font-semibold">No images yet</p>
+          <p className="text-slate-600 text-sm mt-1">Upload an image to get started</p>
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -283,7 +283,7 @@ export default function ImageUploadList() {
       ) : (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
           <div className="grid grid-cols-[80px_1fr_1fr_1fr_auto] gap-4 px-5 py-3 bg-slate-800/50 border-b border-slate-800">
-            {["Preview", "ID & Tanggal", "Destinasi", "Package", "Aksi"].map((h) => (
+            {["Preview", "ID & Date", "Destination", "Package", "Actions"].map((h) => (
               <p key={h} className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</p>
             ))}
           </div>
@@ -319,7 +319,7 @@ export default function ImageUploadList() {
                     onClick={() => setLightboxImage(img)}
                     title="View"
                     color="text-slate-500 hover:bg-slate-700"
-                    icon={<EyesIcon />}
+                    icon={<EyesShowIcon />}
                   />
                   <ActionButton
                     onClick={() => setLinkModalImage(img)}

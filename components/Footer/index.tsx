@@ -74,8 +74,8 @@ export default function Footer() {
   
               {/* Footer links */}
               <p className="text-sm leading-relaxed max-w-[700px]">
-                Tentang Kami | Karir | Syarat & Ketentuan | Media | Kebijakan &
-                Privasi | Hubungi Kami | Tanggapan | FAQ
+                About Us | Careers | Terms &amp; Conditions | Media | Privacy
+                Policy | Contact Us | Feedback | FAQ
               </p>
   
               <p className="text-xs opacity-80">
