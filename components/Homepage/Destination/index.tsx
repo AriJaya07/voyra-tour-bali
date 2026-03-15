@@ -114,8 +114,8 @@ export default function Destination({ categories, destinations }: DestinationPro
       <hr className="border-[#C0C0C0]" />
 
       {/* Content */}
-      <div className="pt-10 md:pt-[77px]">
-        <h1 className="pb-6 text-2xl sm:text-3xl font-bold text-[#434343]">
+      <div className="pt-5">
+        <h1 className="pb-3 text-2xl sm:text-3xl font-bold text-[#434343]">
           {activeTab}
         </h1>
 

@@ -6,7 +6,7 @@ import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useViatorBooking } from '@/utils/hooks/useViator'
+import { useCreatePayment } from '@/utils/hooks/usePayment'
 import { formatPrice } from '@/utils/formatPrice'
 import { useCurrency } from '@/utils/hooks/useCurrency'
 import CurrencySwitch from '@/components/common/CurrencySwitch'
@@ -33,7 +33,7 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
     const [date, setDate] = useState<Date | null>(null)
     const [quantity, setQuantity] = useState(1)
 
-    const bookingMutation = useViatorBooking()
+    const paymentMutation = useCreatePayment()
 
     // Initialise date client-side to avoid SSR hydration mismatch
     useEffect(() => { setDate(new Date()) }, [])
@@ -57,7 +57,7 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
         return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`
     }
 
-    const handleViatorBooking = async () => {
+    const handleBooking = async () => {
       if (!session) {
         const currentUrl = typeof window !== "undefined" ? window.location.pathname : "/";
         router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
@@ -66,21 +66,25 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
 
       if (!date) return;
 
-      bookingMutation.mutate({
-        productCode,
-        productTitle: title,
-        travelDate: date.toISOString().split('T')[0],
-        pax: quantity,
-        totalPrice: total,
-      });
+      paymentMutation.mutate(
+        {
+          productCode,
+          productTitle: title,
+          travelDate: date.toISOString().split('T')[0],
+          pax: quantity,
+          totalPrice: total,
+        },
+        {
+          onSuccess: (data) => {
+            // Redirect to Midtrans payment page
+            window.location.href = data.redirectUrl;
+          },
+        }
+      );
     };
 
-    const bookingSuccess = bookingMutation.isSuccess
-      ? `Booking successful! Ref: ${bookingMutation.data?.bookingRef || bookingMutation.data?.orderId}`
-      : null;
-
-    const bookingError = bookingMutation.isError
-      ? bookingMutation.error?.message || "A system error occurred while processing your booking."
+    const paymentError = paymentMutation.isError
+      ? paymentMutation.error?.message || "A system error occurred while processing your booking."
       : null;
 
     return (
@@ -171,27 +175,22 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
                             </span>
                         </div>
 
-                        {bookingSuccess && (
-                          <div className="p-3 bg-green-100 text-green-800 text-sm rounded-lg border border-green-200 font-medium">
-                            {bookingSuccess}
-                          </div>
-                        )}
-                        {bookingError && (
+                        {paymentError && (
                           <div className="p-3 bg-red-100 text-red-800 text-sm rounded-lg border border-red-200 font-medium">
-                            {bookingError}
+                            {paymentError}
                           </div>
                         )}
 
                         <button
-                            onClick={handleViatorBooking}
-                            disabled={bookingMutation.isPending || !date}
+                            onClick={handleBooking}
+                            disabled={paymentMutation.isPending || !date}
                             className={`w-full h-[48px] flex items-center justify-center gap-2.5 rounded-xl transition-all shadow-md text-white font-bold text-sm ${
-                              bookingMutation.isPending || !date
+                              paymentMutation.isPending || !date
                                 ? 'bg-gray-400 cursor-not-allowed'
                                 : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 cursor-pointer'
                             }`}
                         >
-                            {bookingMutation.isPending ? 'Processing...' : 'Book Now'}
+                            {paymentMutation.isPending ? 'Redirecting to payment...' : 'Book & Pay Now'}
                         </button>
 
                         <div className="flex items-center gap-2">

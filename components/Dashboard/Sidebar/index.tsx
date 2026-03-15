@@ -67,6 +67,17 @@ const NAV_ITEMS = [
     color: "sky",
   },
   {
+    label: "Bookings",
+    href: "/dashboard/bookings",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg>
+    ),
+    color: "amber",
+  },
+  {
     label: "Contents",
     href: "/dashboard/contents",
     icon: (
@@ -111,6 +122,7 @@ const ACCENT: Record<string, string> = {
   rose: "bg-rose-500/15 text-rose-400 border-rose-500/30",
   sky: "bg-sky-500/15 text-sky-400 border-sky-500/30",
   orange: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+  amber: "bg-amber-500/15 text-amber-400 border-amber-500/30",
 };
 
 const ACTIVE_DOT: Record<string, string> = {
@@ -120,6 +132,7 @@ const ACTIVE_DOT: Record<string, string> = {
   rose: "bg-rose-400",
   sky: "bg-sky-400",
   orange: "bg-orange-400",
+  amber: "bg-amber-400",
 };
 
 export default function Sidebar() {
@@ -422,7 +435,7 @@ function SidebarContent({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            Keluar
+            Sign Out
           </button>
         </div>
       )}

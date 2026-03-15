@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import Image from "next/image"
 import { useSearchDestinations } from "@/utils/hooks/useSearchDestinations"
 import { formatPrice } from "@/utils/formatPrice"
+import CloseIcon from "../assets/dashboard/CloseIcon"
+import SearchIcon from "../assets/Icon/SearchIcon"
 
 // ── Types ──────────────────────────────────────────────────────────
 interface SearchModalProps {
@@ -82,9 +84,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         >
           {/* Search Input */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-            <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <SearchIcon />
 
             <input
               ref={inputRef}
@@ -109,9 +109,9 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
             <button
               onClick={onClose}
-              className="ml-2 px-2.5 py-1 text-xs font-bold text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition cursor-pointer hidden sm:inline-flex items-center"
+              className="ml-2 px-2.5 py-1 text-xs font-bold text-gray-500 transition cursor-pointer hidden sm:inline-flex items-center"
             >
-              ESC
+              <CloseIcon />
             </button>
           </div>
 

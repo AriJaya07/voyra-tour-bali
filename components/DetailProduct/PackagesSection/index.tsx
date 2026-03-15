@@ -6,7 +6,7 @@ import NextImage from "next/image"
 import WhatappIcon from "../../assets/sosmed/WhatappIcon"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useViatorBooking } from "@/utils/hooks/useViator"
+import { useCreatePayment } from "@/utils/hooks/usePayment"
 import { formatPrice } from "@/utils/formatPrice"
 
 // Types
@@ -40,7 +40,7 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
   const { data: session } = useSession();
   const router = useRouter();
   const [bookingPkgId, setBookingPkgId] = useState<number | null>(null)
-  const bookingMutation = useViatorBooking()
+  const paymentMutation = useCreatePayment()
 
   if (!packages || packages.length === 0) return null
 
@@ -53,7 +53,7 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
 
     setBookingPkgId(pkg.id)
 
-    bookingMutation.mutate(
+    paymentMutation.mutate(
       {
         productCode: `VTR-PKG-${pkg.id}`,
         productTitle: pkg.title,
@@ -63,11 +63,11 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
       },
       {
         onSuccess: (data) => {
-          alert(`Booking Successful! Ref: ${data.bookingRef || data.orderId}\n\nPlease check your dashboard.`);
-          setBookingPkgId(null);
+          // Redirect to Midtrans payment page
+          window.location.href = data.redirectUrl;
         },
-        onError: (err) => {
-          alert(err.message || "A system error occurred while processing your booking.");
+        onError: () => {
+          alert("A system error occurred while processing your booking.");
           setBookingPkgId(null);
         },
       }
@@ -142,7 +142,7 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
                       className={`flex justify-center items-center py-2.5 text-white text-sm font-bold rounded-xl transition-colors shadow-sm w-full cursor-pointer
                         ${bookingPkgId !== null ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}`}
                     >
-                      {isBookingThis ? 'Processing...' : 'Book Now (Viator)'}
+                      {isBookingThis ? 'Redirecting to payment...' : 'Book & Pay Now'}
                     </button>
 
                     <a

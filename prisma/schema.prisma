@@ -145,6 +145,10 @@ model Booking {
   pax         Int         @default(1)
   status      BookingStatus @default(PENDING)
 
+  paymentId   String?     @unique
+  snapToken   String?
+  paidAt      DateTime?
+
   userId Int
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
