@@ -101,7 +101,7 @@ export default function BookingUser({ price, title, productCode = 'VTR-BALI-1' }
     };
 
     return (
-        <div className="border border-[#E6E6E6] rounded-[16px] p-6 mt-[88px] shadow-sm">
+        <div className="border border-[#E6E6E6] rounded-[16px] p-6 my-[88px] shadow-sm">
 
             {/* ── Header ── */}
             <div className="flex items-center justify-between mb-2">

@@ -36,11 +36,19 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`md:h-[55px] h-[40px] px-6 rounded-full md:text-lg text-md font-bold transition cursor-pointer
+      className={`
+        md:h-[48px] h-[40px]
+        px-6
+        rounded-full
+        text-sm md:text-base
+        font-semibold
+        transition-all duration-200
+        cursor-pointer
+        whitespace-nowrap
         ${
           isActive
-            ? "bg-[#0071CE] text-white"
-            : "bg-transparent text-black border border-gray-300"
+            ? "bg-blue-50 text-blue-600 shadow-md"
+            : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900"
         }
       `}
     >
@@ -117,7 +125,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
   return (
     <section id="paket" className="pt-20 px-4 mb-20">
       {/* Title */}
-      <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black text-center sm:text-left">
+      <h2 className="text-2xl sm:text-3xl font-bold text-black text-center sm:text-left">
         Trending Activity
       </h2>
 

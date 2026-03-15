@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Category, Destination as PrismaDestination, Image as PrismaImage } from "@prisma/client"
 import DotsIcon from "../../assets/Icon/DotsIcon"
+import Image from "next/image";
 
 type DestinationWithImages = PrismaDestination & { images: PrismaImage[] };
 
@@ -21,23 +22,41 @@ function MenuItem({
   label,
   isActive,
   onClick,
+  icon,
 }: {
   label: string
   isActive: boolean
+  icon: any
   onClick: () => void
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1 whitespace-nowrap transition-colors cursor-pointer"
+      className={`flex flex-1 min-w-[120px] items-center justify-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 whitespace-nowrap
+      ${
+        isActive
+          ? "bg-blue-50 text-blue-600"
+          : "text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+      }`}
     >
-      <DotsIcon className="md:w-[42px] w-[20px] h-[35px] h-[20px]" isActive={isActive} />
+      {icon ? (
+        <Image
+          src={icon}
+          alt={label}
+          width={20}
+          height={20}
+          className={`w-[20px] h-[20px] transition-opacity ${
+            isActive ? "opacity-100" : "opacity-60"
+          }`}
+        />
+      ) : (
+        <DotsIcon
+          className="w-[20px] h-[20px]"
+          isActive={isActive}
+        />
+      )}
 
-      <span
-        className={`text-base sm:text-lg md:text-2xl font-bold ${
-          isActive ? "text-blue-600" : "text-[#979797]"
-        }`}
-      >
+      <span className="text-sm md:text-base font-semibold">
         {label}
       </span>
     </button>
@@ -77,12 +96,13 @@ export default function Destination({ categories, destinations }: DestinationPro
   return (
     <section id="destinasi" className="pt-10 md:pt-[72px] px-4 md:px-0">
       {/* Menu */}
-      <div className="flex gap-6 md:gap-[72px] pb-5 overflow-x-auto scrollbar-hide">
+      <div className="flex w-full gap-6 md:gap-2 pb-5 overflow-x-auto scrollbar-hide">
         {categories.map((item) => (
           <MenuItem
             key={item.id}
             label={item.name}
             isActive={activeTab === item.name}
+            icon={item.image ?? ""}
             onClick={() => handleTabClick(item.name)}
           />
         ))}
@@ -92,7 +112,7 @@ export default function Destination({ categories, destinations }: DestinationPro
 
       {/* Content */}
       <div className="pt-10 md:pt-[77px]">
-        <h1 className="pb-6 text-2xl sm:text-3xl md:text-5xl font-bold text-[#434343]">
+        <h1 className="pb-6 text-2xl sm:text-3xl font-bold text-[#434343]">
           {activeTab}
         </h1>
 
