@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         bookingRef: "",
         productCode,
         productTitle,
-        totalPrice: Number(totalPrice),
+        totalPrice: Math.round(Number(totalPrice)),
         travelDate: new Date(travelDate),
         pax: Number(pax),
         status: "PENDING",
@@ -39,15 +39,19 @@ export async function POST(request: Request) {
     const orderId = `VOYRA-${booking.id}-${Date.now()}`;
 
     // Create Midtrans Snap transaction
+    // Midtrans IDR requires whole numbers — round per-item price and derive gross from it
+    const perItemPrice = Math.round(Number(totalPrice) / Number(pax));
+    const grossAmount = perItemPrice * Number(pax);
+
     const parameter = {
       transaction_details: {
         order_id: orderId,
-        gross_amount: Number(totalPrice),
+        gross_amount: grossAmount,
       },
       item_details: [
         {
           id: productCode,
-          price: Math.round(Number(totalPrice) / Number(pax)),
+          price: perItemPrice,
           quantity: Number(pax),
           name: productTitle.substring(0, 50),
         },
