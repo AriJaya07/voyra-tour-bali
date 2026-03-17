@@ -24,26 +24,25 @@ const VIATOR_HEADERS = {
 }
 
 // Map local category names (lowercase) → Viator tag IDs for better filtering
-// These are common Viator tag IDs for activity types
 const CATEGORY_TAG_MAP: Record<string, number[]> = {
-  'adventure':      [11903, 11938],     // Outdoor Activities, Adventure
-  'culture':        [11929, 12032],     // Cultural & Theme Tours, Historical
-  'nature':         [11903, 12029],     // Outdoor, Nature & Wildlife
-  'water sports':   [11938, 12029],     // Adventure, Nature & Wildlife
-  'food & drink':   [12071],            // Food & Drink
-  'wellness':       [12071],            // Wellness & Spas
-  'tours':          [11929],            // Cultural & Theme Tours
-  'temple':         [11929, 12032],     // Cultural, Historical
-  'beach':          [11903, 12029],     // Outdoor, Nature
-  'nightlife':      [12071],            // Nightlife
-  'shopping':       [12071],            // Shopping
-  'liburan':        [11929],            // General Tours
-  'romantis':       [11929],            // Romantic Tours
-  'keluarga':       [11929],            // Family Tours
-  'sport':          [11938],            // Adventure/Sport
-  'budaya':         [11929, 12032],     // Culture/Historical
-  'alam':           [11903, 12029],     // Nature
-  'kuliner':        [12071],            // Food
+  'adventure':      [11903, 11938],
+  'culture':        [11929, 12032],
+  'nature':         [11903, 12029],
+  'water sports':   [11938, 12029],
+  'food & drink':   [12071],
+  'wellness':       [12071],
+  'tours':          [11929],
+  'temple':         [11929, 12032],
+  'beach':          [11903, 12029],
+  'nightlife':      [12071],
+  'shopping':       [12071],
+  'liburan':        [11929],
+  'romantis':       [11929],
+  'keluarga':       [11929],
+  'sport':          [11938],
+  'budaya':         [11929, 12032],
+  'alam':           [11903, 12029],
+  'kuliner':        [12071],
 }
 
 // --------------------------------------------------
@@ -108,6 +107,9 @@ export async function GET(request: Request) {
           pagination: {
             start: 1,
             count: 30
+          },
+          sorting: {
+            sort: 'RELEVANCE'
           }
         },
         {
@@ -116,7 +118,6 @@ export async function GET(request: Request) {
         }
       )
 
-      // API returns { products: [...] }
       return NextResponse.json({
         products: response.data.products || [],
         totalCount: response.data.totalCount || 0,
@@ -164,8 +165,6 @@ export async function GET(request: Request) {
       }
 
       // Fetch full product detail + pricing in parallel
-      // GET /products/{code} has full details but no pricing
-      // POST /products/search can return pricing for a specific product
       const [detailRes, searchRes] = await Promise.all([
         axios.get(
           `${VIATOR_BASE_URL}/products/${productCode}`,
@@ -186,11 +185,10 @@ export async function GET(request: Request) {
             pagination: { start: 1, count: 5 },
           },
           { headers: VIATOR_HEADERS, timeout: 15000 }
-        ).catch(() => null), // Don't fail if search doesn't find it
+        ).catch(() => null),
       ])
 
       const detail = detailRes.data
-      // Merge pricing from search result if available
       const searchProduct = searchRes?.data?.products?.find(
         (p: any) => p.productCode === productCode
       )
@@ -353,8 +351,6 @@ export async function POST(request: Request) {
           orderId = response.data.orderId
           bookingRef = response.data.bookingRef
         } catch (viatorErr: any) {
-          // Viator API may fail (sandbox limitations, invalid payload, etc.)
-          // Fall back to local booking so the user isn't blocked
           console.warn('Viator booking API failed, saving locally:', viatorErr.response?.data || viatorErr.message)
           orderId = `ORD-${Date.now()}`
           bookingRef = `LOCAL-${Math.floor(Math.random() * 100000)}`
