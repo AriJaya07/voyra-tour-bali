@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'media-cdn.tripadvisor.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'media.tacdn.com',
       },
       {

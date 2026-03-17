@@ -13,11 +13,37 @@ const VIATOR_BASE_URL = VIATOR_API_KEY?.startsWith('sandbox')
 
 const USE_MOCK_DATA = !VIATOR_API_KEY
 
+// Bali destination ID in Viator
+const BALI_DESTINATION_ID = '684'
+
 const VIATOR_HEADERS = {
   Accept: 'application/json;version=2.0',
   'Accept-Language': 'en-US',
   'Content-Type': 'application/json',
   'exp-api-key': VIATOR_API_KEY,
+}
+
+// Map local category names (lowercase) → Viator tag IDs for better filtering
+// These are common Viator tag IDs for activity types
+const CATEGORY_TAG_MAP: Record<string, number[]> = {
+  'adventure':      [11903, 11938],     // Outdoor Activities, Adventure
+  'culture':        [11929, 12032],     // Cultural & Theme Tours, Historical
+  'nature':         [11903, 12029],     // Outdoor, Nature & Wildlife
+  'water sports':   [11938, 12029],     // Adventure, Nature & Wildlife
+  'food & drink':   [12071],            // Food & Drink
+  'wellness':       [12071],            // Wellness & Spas
+  'tours':          [11929],            // Cultural & Theme Tours
+  'temple':         [11929, 12032],     // Cultural, Historical
+  'beach':          [11903, 12029],     // Outdoor, Nature
+  'nightlife':      [12071],            // Nightlife
+  'shopping':       [12071],            // Shopping
+  'liburan':        [11929],            // General Tours
+  'romantis':       [11929],            // Romantic Tours
+  'keluarga':       [11929],            // Family Tours
+  'sport':          [11938],            // Adventure/Sport
+  'budaya':         [11929, 12032],     // Culture/Historical
+  'alam':           [11903, 12029],     // Nature
+  'kuliner':        [12071],            // Food
 }
 
 // --------------------------------------------------
@@ -30,24 +56,26 @@ export async function GET(request: Request) {
     const action = searchParams.get('action')
 
     // --------------------------------------------------
-    // 1. GET PRODUCTS
+    // 1. GET PRODUCTS (Bali only)
     // --------------------------------------------------
 
     if (action === 'products') {
       if (USE_MOCK_DATA) {
         return NextResponse.json({
-          data: [
+          products: [
             {
               productCode: 'VTR-BALI-1',
               title: 'Ubud Waterfall, Rice Terraces & Monkey Forest Private Tour',
-              description: 'Discover the best of Ubud.',
-              pricing: { summary: { fromPrice: 450000 } },
+              description: 'Discover the best of Ubud with a private guide.',
+              pricing: { summary: { fromPrice: 450000 }, currency: 'IDR' },
+              reviews: { totalReviews: 128, combinedAverageRating: 4.8 },
+              duration: { fixedDurationInMinutes: 480 },
+              flags: ['FREE_CANCELLATION'],
               images: [
                 {
+                  isCover: true,
                   variants: [
-                    {
-                      url: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1'
-                    }
+                    { height: 480, width: 720, url: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1' }
                   ]
                 }
               ]
@@ -56,26 +84,43 @@ export async function GET(request: Request) {
         })
       }
 
+      const currency = searchParams.get('currency') || 'USD'
+      const categoryName = searchParams.get('categoryName') || ''
+
+      // Build filtering — always Bali, optionally with tags
+      const filtering: Record<string, any> = {
+        destination: BALI_DESTINATION_ID,
+      }
+
+      // Map category name to Viator tags for better results per tab
+      if (categoryName) {
+        const tags = CATEGORY_TAG_MAP[categoryName.toLowerCase()]
+        if (tags && tags.length > 0) {
+          filtering.tags = tags
+        }
+      }
+
       const response = await axios.post(
         `${VIATOR_BASE_URL}/products/search`,
         {
-          filtering: {
-            destination: '8'
-          },
+          filtering,
+          currency,
           pagination: {
             start: 1,
-            count: 20
-          },
-          sorting: {
-            sort: 'RELEVANCE'
+            count: 30
           }
         },
         {
-          headers: VIATOR_HEADERS
+          headers: VIATOR_HEADERS,
+          timeout: 15000,
         }
       )
 
-      return NextResponse.json(response.data)
+      // API returns { products: [...] }
+      return NextResponse.json({
+        products: response.data.products || [],
+        totalCount: response.data.totalCount || 0,
+      })
     }
 
     // --------------------------------------------------
@@ -84,6 +129,7 @@ export async function GET(request: Request) {
 
     if (action === 'product_detail') {
       const productCode = searchParams.get('productCode')
+      const currency = searchParams.get('currency') || 'USD'
 
       if (!productCode) {
         return NextResponse.json(
@@ -96,19 +142,110 @@ export async function GET(request: Request) {
         return NextResponse.json({
           productCode,
           title: 'Bali ATV Adventure',
-          description: 'Ride through jungle trails and rice fields.',
-          pricing: { summary: { fromPrice: 650000 } }
+          description: 'Ride through jungle trails and rice fields on a thrilling ATV adventure.',
+          pricing: { summary: { fromPrice: 650000 }, currency: 'IDR' },
+          reviews: { totalReviews: 256, combinedAverageRating: 4.7 },
+          duration: { fixedDurationInMinutes: 240 },
+          flags: ['FREE_CANCELLATION'],
+          images: [
+            {
+              isCover: true,
+              variants: [
+                { height: 480, width: 720, url: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1' }
+              ]
+            }
+          ],
+          itinerary: { itineraryType: 'STANDARD' },
+          inclusions: [],
+          exclusions: [],
+          additionalInfo: [],
+          bookingConfirmationSettings: { confirmationType: 'INSTANT' },
         })
       }
 
-      const response = await axios.get(
-        `${VIATOR_BASE_URL}/products/${productCode}`,
+      // Fetch full product detail + pricing in parallel
+      // GET /products/{code} has full details but no pricing
+      // POST /products/search can return pricing for a specific product
+      const [detailRes, searchRes] = await Promise.all([
+        axios.get(
+          `${VIATOR_BASE_URL}/products/${productCode}`,
+          {
+            headers: {
+              ...VIATOR_HEADERS,
+              'Accept-Currency': currency,
+            },
+            timeout: 15000,
+          }
+        ),
+        axios.post(
+          `${VIATOR_BASE_URL}/products/search`,
+          {
+            filtering: {},
+            searchTerm: productCode,
+            currency,
+            pagination: { start: 1, count: 5 },
+          },
+          { headers: VIATOR_HEADERS, timeout: 15000 }
+        ).catch(() => null), // Don't fail if search doesn't find it
+      ])
+
+      const detail = detailRes.data
+      // Merge pricing from search result if available
+      const searchProduct = searchRes?.data?.products?.find(
+        (p: any) => p.productCode === productCode
+      )
+      if (searchProduct?.pricing) {
+        detail.pricing = searchProduct.pricing
+      }
+      if (searchProduct?.flags) {
+        detail.flags = searchProduct.flags
+      }
+      if (searchProduct?.duration) {
+        detail.duration = searchProduct.duration
+      }
+
+      return NextResponse.json(detail)
+    }
+
+    // --------------------------------------------------
+    // 3. SEARCH PRODUCTS (freetext)
+    // --------------------------------------------------
+
+    if (action === 'search') {
+      const query = searchParams.get('query') || ''
+      const currency = searchParams.get('currency') || 'USD'
+
+      if (!query.trim()) {
+        return NextResponse.json({ products: [] })
+      }
+
+      if (USE_MOCK_DATA) {
+        return NextResponse.json({ products: [] })
+      }
+
+      const response = await axios.post(
+        `${VIATOR_BASE_URL}/products/search`,
         {
-          headers: VIATOR_HEADERS
+          filtering: {
+            destination: BALI_DESTINATION_ID,
+          },
+          searchTerm: query,
+          currency,
+          pagination: {
+            start: 1,
+            count: 20
+          }
+        },
+        {
+          headers: VIATOR_HEADERS,
+          timeout: 15000,
         }
       )
 
-      return NextResponse.json(response.data)
+      return NextResponse.json({
+        products: response.data.products || [],
+        totalCount: response.data.totalCount || 0,
+      })
     }
 
     return NextResponse.json(
@@ -139,7 +276,7 @@ export async function POST(request: Request) {
     const body = await request.json()
 
     // --------------------------------------------------
-    // 3. CHECK AVAILABILITY
+    // 4. CHECK AVAILABILITY
     // --------------------------------------------------
 
     if (action === 'availability') {
@@ -162,14 +299,14 @@ export async function POST(request: Request) {
       const response = await axios.post(
         `${VIATOR_BASE_URL}/availability/schedules`,
         body,
-        { headers: VIATOR_HEADERS }
+        { headers: VIATOR_HEADERS, timeout: 15000 }
       )
 
       return NextResponse.json(response.data)
     }
 
     // --------------------------------------------------
-    // 4. CREATE BOOKING
+    // 5. CREATE BOOKING (saves to local DB for Midtrans)
     // --------------------------------------------------
 
     if (action === 'book') {
@@ -199,7 +336,7 @@ export async function POST(request: Request) {
           const response = await axios.post(
             `${VIATOR_BASE_URL}/bookings/book`,
             body,
-            { headers: VIATOR_HEADERS }
+            { headers: VIATOR_HEADERS, timeout: 30000 }
           )
 
           orderId = response.data.orderId
