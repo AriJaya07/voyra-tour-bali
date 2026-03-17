@@ -255,12 +255,23 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error('Viator API Error:', error.response?.data || error.message)
 
+    // Gracefully handle auth errors — return empty data so frontend can fall back to DB
+    const status = error.response?.status
+    if (status === 401 || status === 403) {
+      console.warn('Viator API key invalid or expired — returning empty products')
+      return NextResponse.json({
+        products: [],
+        totalCount: 0,
+        warning: 'Viator API unavailable — showing local data only',
+      })
+    }
+
     return NextResponse.json(
       {
         error: 'Failed to fetch Viator data',
         details: error.response?.data || error.message
       },
-      { status: error.response?.status || 500 }
+      { status: status || 500 }
     )
   }
 }
