@@ -109,7 +109,7 @@ export async function GET(request: Request) {
             count: 30
           },
           sorting: {
-            sort: 'RELEVANCE'
+            sort: 'DEFAULT'
           }
         },
         {
