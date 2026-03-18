@@ -2,6 +2,7 @@ export type CurrencyCode = "IDR" | "USD";
 
 // Approximate conversion rate — update as needed or fetch from an API
 const IDR_TO_USD = 0.000063;
+const USD_TO_IDR = 1 / IDR_TO_USD;
 
 const formatters: Record<CurrencyCode, Intl.NumberFormat> = {
   IDR: new Intl.NumberFormat("id-ID", {
@@ -20,16 +21,21 @@ const formatters: Record<CurrencyCode, Intl.NumberFormat> = {
 
 /**
  * Format a number as a currency string.
- * Amounts are assumed to be in IDR. When displaying as USD, the value is converted.
- *
- * @param amount   - The numeric value (in IDR)
- * @param currency - "IDR" (default) or "USD"
- *
- * @example
- *   formatPrice(150000)         // "Rp150.000"
- *   formatPrice(150000, "USD")  // "$9.45"
+ * By default assumes `amount` is already in the target `currency` (no conversion).
+ * Pass `sourceCurrency` when the amount is in a different currency and needs converting.
  */
-export function formatPrice(amount: number, currency: CurrencyCode = "IDR"): string {
-  const value = currency === "USD" ? amount * IDR_TO_USD : amount;
+export function formatPrice(
+  amount: number,
+  currency: CurrencyCode = "IDR",
+  sourceCurrency?: CurrencyCode
+): string {
+  let value = amount;
+  if (sourceCurrency && sourceCurrency !== currency) {
+    if (sourceCurrency === "IDR" && currency === "USD") {
+      value = amount * IDR_TO_USD;
+    } else if (sourceCurrency === "USD" && currency === "IDR") {
+      value = amount * USD_TO_IDR;
+    }
+  }
   return formatters[currency].format(value);
 }

@@ -8,6 +8,7 @@ import BurgerIcon from "../assets/Icon/BurgerIcon"
 import VoryaIcon from "../assets/Icon/VoyraIcon"
 import SearchModal from "./SearchModal"
 import SearchIcon from "../assets/Icon/SearchIcon"
+import { useCurrency } from "@/utils/hooks/useCurrency"
 
 const NAV_ITEMS = [
   { label: "Home", id: "home" },
@@ -27,6 +28,7 @@ export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
   const [scrolled, setScrolled] = useState(false)
+  const { currency, toggle: toggleCurrency } = useCurrency()
   const userImage = (session?.user as any)?.image || "/images/people.png"
   const userRole = (session?.user as any)?.role as string | undefined
 
@@ -88,12 +90,12 @@ export default function Navbar() {
       }`}>
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
-          <a href="/" target="_self">
-            <VoryaIcon className="h-[50px] w-auto" />
+          <a href="/" target="_self" className="flex-shrink-0">
+            <VoryaIcon className="h-[40px] sm:h-[50px] w-auto" />
           </a>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-4 xl:gap-6">
             {NAV_ITEMS.map((item) => {
               const hasPage = "href" in item && item.href
               const isActive = hasPage
@@ -153,6 +155,19 @@ export default function Navbar() {
               className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-500 hover:text-[#0071CE] cursor-pointer"
             >
               <SearchIcon />
+            </button>
+
+            {/* Currency Toggle – Desktop */}
+            <button
+              onClick={toggleCurrency}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-gray-200 hover:border-[#0071CE] transition text-xs font-medium cursor-pointer shrink-0"
+              aria-label="Toggle currency"
+            >
+              <span className={`${currency === "USD" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>USD</span>
+              <div className="relative w-7 h-3.5 rounded-full bg-gray-200">
+                <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-[#0071CE] transition-all duration-200 ${currency === "IDR" ? "left-3.5" : "left-0.5"}`} />
+              </div>
+              <span className={`${currency === "IDR" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>IDR</span>
             </button>
 
             {session ? (
@@ -258,14 +273,27 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Burger */}
-          <button
-            onClick={() => setIsOpen(true)}
-            className="md:hidden cursor-pointer"
-            aria-label="Open menu"
-          >
-            <BurgerIcon className="w-[40px] h-[40px]" />
-          </button>
+          {/* Mobile: Currency Toggle + Burger */}
+          <div className="flex lg:hidden items-center gap-2">
+            <button
+              onClick={toggleCurrency}
+              className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200 text-xs font-medium cursor-pointer"
+              aria-label="Toggle currency"
+            >
+              <span className={currency === "USD" ? "text-[#0071CE] font-bold" : "text-gray-400"}>$</span>
+              <div className="relative w-6 h-3 rounded-full bg-gray-200">
+                <div className={`absolute top-0.5 w-2 h-2 rounded-full bg-[#0071CE] transition-all duration-200 ${currency === "IDR" ? "left-3" : "left-0.5"}`} />
+              </div>
+              <span className={currency === "IDR" ? "text-[#0071CE] font-bold" : "text-gray-400"}>Rp</span>
+            </button>
+            <button
+              onClick={() => setIsOpen(true)}
+              className="cursor-pointer"
+              aria-label="Open menu"
+            >
+              <BurgerIcon className="w-[40px] h-[40px]" />
+            </button>
+          </div>
         </nav>
       </header>
 
@@ -283,7 +311,7 @@ export default function Navbar() {
       <aside
         className={`
           fixed top-0 right-0 z-50 h-full w-[80%] max-w-[320px]
-          bg-white shadow-lg
+          bg-white shadow-lg overflow-y-auto
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "translate-x-full"}
         `}
@@ -339,6 +367,26 @@ export default function Navbar() {
               </a>
             )
           })}
+
+          {/* Currency Toggle – Mobile Slide Menu */}
+          <button
+            onClick={toggleCurrency}
+            className="flex items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Currency</span>
+            </div>
+            <span className="flex items-center gap-1.5">
+              <span className={`text-xs ${currency === "USD" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>USD</span>
+              <div className="relative w-8 h-4 rounded-full bg-gray-200">
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-[#0071CE] transition-all duration-200 ${currency === "IDR" ? "left-4" : "left-0.5"}`} />
+              </div>
+              <span className={`text-xs ${currency === "IDR" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>IDR</span>
+            </span>
+          </button>
 
           {/* Divider */}
           <hr />

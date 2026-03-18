@@ -13,11 +13,36 @@ const VIATOR_BASE_URL = VIATOR_API_KEY?.startsWith('sandbox')
 
 const USE_MOCK_DATA = !VIATOR_API_KEY
 
+// Bali destination ID in Viator
+const BALI_DESTINATION_ID = '684'
+
 const VIATOR_HEADERS = {
   Accept: 'application/json;version=2.0',
   'Accept-Language': 'en-US',
   'Content-Type': 'application/json',
   'exp-api-key': VIATOR_API_KEY,
+}
+
+// Map local category names (lowercase) → Viator tag IDs for better filtering
+const CATEGORY_TAG_MAP: Record<string, number[]> = {
+  'adventure':      [11903, 11938],
+  'culture':        [11929, 12032],
+  'nature':         [11903, 12029],
+  'water sports':   [11938, 12029],
+  'food & drink':   [12071],
+  'wellness':       [12071],
+  'tours':          [11929],
+  'temple':         [11929, 12032],
+  'beach':          [11903, 12029],
+  'nightlife':      [12071],
+  'shopping':       [12071],
+  'liburan':        [11929],
+  'romantis':       [11929],
+  'keluarga':       [11929],
+  'sport':          [11938],
+  'budaya':         [11929, 12032],
+  'alam':           [11903, 12029],
+  'kuliner':        [12071],
 }
 
 // --------------------------------------------------
@@ -30,24 +55,26 @@ export async function GET(request: Request) {
     const action = searchParams.get('action')
 
     // --------------------------------------------------
-    // 1. GET PRODUCTS
+    // 1. GET PRODUCTS (Bali only)
     // --------------------------------------------------
 
     if (action === 'products') {
       if (USE_MOCK_DATA) {
         return NextResponse.json({
-          data: [
+          products: [
             {
               productCode: 'VTR-BALI-1',
               title: 'Ubud Waterfall, Rice Terraces & Monkey Forest Private Tour',
-              description: 'Discover the best of Ubud.',
-              pricing: { summary: { fromPrice: 450000 } },
+              description: 'Discover the best of Ubud with a private guide.',
+              pricing: { summary: { fromPrice: 450000 }, currency: 'IDR' },
+              reviews: { totalReviews: 128, combinedAverageRating: 4.8 },
+              duration: { fixedDurationInMinutes: 480 },
+              flags: ['FREE_CANCELLATION'],
               images: [
                 {
+                  isCover: true,
                   variants: [
-                    {
-                      url: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1'
-                    }
+                    { height: 480, width: 720, url: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1' }
                   ]
                 }
               ]
@@ -56,26 +83,45 @@ export async function GET(request: Request) {
         })
       }
 
+      const currency = searchParams.get('currency') || 'USD'
+      const categoryName = searchParams.get('categoryName') || ''
+
+      // Build filtering — always Bali, optionally with tags
+      const filtering: Record<string, any> = {
+        destination: BALI_DESTINATION_ID,
+      }
+
+      // Map category name to Viator tags for better results per tab
+      if (categoryName) {
+        const tags = CATEGORY_TAG_MAP[categoryName.toLowerCase()]
+        if (tags && tags.length > 0) {
+          filtering.tags = tags
+        }
+      }
+
       const response = await axios.post(
         `${VIATOR_BASE_URL}/products/search`,
         {
-          filtering: {
-            destination: '8'
-          },
+          filtering,
+          currency,
           pagination: {
             start: 1,
-            count: 20
+            count: 30
           },
           sorting: {
-            sort: 'RELEVANCE'
+            sort: 'DEFAULT'
           }
         },
         {
-          headers: VIATOR_HEADERS
+          headers: VIATOR_HEADERS,
+          timeout: 15000,
         }
       )
 
-      return NextResponse.json(response.data)
+      return NextResponse.json({
+        products: response.data.products || [],
+        totalCount: response.data.totalCount || 0,
+      })
     }
 
     // --------------------------------------------------
@@ -84,6 +130,7 @@ export async function GET(request: Request) {
 
     if (action === 'product_detail') {
       const productCode = searchParams.get('productCode')
+      const currency = searchParams.get('currency') || 'USD'
 
       if (!productCode) {
         return NextResponse.json(
@@ -96,19 +143,107 @@ export async function GET(request: Request) {
         return NextResponse.json({
           productCode,
           title: 'Bali ATV Adventure',
-          description: 'Ride through jungle trails and rice fields.',
-          pricing: { summary: { fromPrice: 650000 } }
+          description: 'Ride through jungle trails and rice fields on a thrilling ATV adventure.',
+          pricing: { summary: { fromPrice: 650000 }, currency: 'IDR' },
+          reviews: { totalReviews: 256, combinedAverageRating: 4.7 },
+          duration: { fixedDurationInMinutes: 240 },
+          flags: ['FREE_CANCELLATION'],
+          images: [
+            {
+              isCover: true,
+              variants: [
+                { height: 480, width: 720, url: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1' }
+              ]
+            }
+          ],
+          itinerary: { itineraryType: 'STANDARD' },
+          inclusions: [],
+          exclusions: [],
+          additionalInfo: [],
+          bookingConfirmationSettings: { confirmationType: 'INSTANT' },
         })
       }
 
-      const response = await axios.get(
-        `${VIATOR_BASE_URL}/products/${productCode}`,
+      // Fetch full product detail + pricing in parallel
+      const [detailRes, searchRes] = await Promise.all([
+        axios.get(
+          `${VIATOR_BASE_URL}/products/${productCode}`,
+          {
+            headers: {
+              ...VIATOR_HEADERS,
+              'Accept-Currency': currency,
+            },
+            timeout: 15000,
+          }
+        ),
+        axios.post(
+          `${VIATOR_BASE_URL}/products/search`,
+          {
+            filtering: {},
+            searchTerm: productCode,
+            currency,
+            pagination: { start: 1, count: 5 },
+          },
+          { headers: VIATOR_HEADERS, timeout: 15000 }
+        ).catch(() => null),
+      ])
+
+      const detail = detailRes.data
+      const searchProduct = searchRes?.data?.products?.find(
+        (p: any) => p.productCode === productCode
+      )
+      if (searchProduct?.pricing) {
+        detail.pricing = searchProduct.pricing
+      }
+      if (searchProduct?.flags) {
+        detail.flags = searchProduct.flags
+      }
+      if (searchProduct?.duration) {
+        detail.duration = searchProduct.duration
+      }
+
+      return NextResponse.json(detail)
+    }
+
+    // --------------------------------------------------
+    // 3. SEARCH PRODUCTS (freetext)
+    // --------------------------------------------------
+
+    if (action === 'search') {
+      const query = searchParams.get('query') || ''
+      const currency = searchParams.get('currency') || 'USD'
+
+      if (!query.trim()) {
+        return NextResponse.json({ products: [] })
+      }
+
+      if (USE_MOCK_DATA) {
+        return NextResponse.json({ products: [] })
+      }
+
+      const response = await axios.post(
+        `${VIATOR_BASE_URL}/products/search`,
         {
-          headers: VIATOR_HEADERS
+          filtering: {
+            destination: BALI_DESTINATION_ID,
+          },
+          searchTerm: query,
+          currency,
+          pagination: {
+            start: 1,
+            count: 20
+          }
+        },
+        {
+          headers: VIATOR_HEADERS,
+          timeout: 15000,
         }
       )
 
-      return NextResponse.json(response.data)
+      return NextResponse.json({
+        products: response.data.products || [],
+        totalCount: response.data.totalCount || 0,
+      })
     }
 
     return NextResponse.json(
@@ -118,12 +253,23 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error('Viator API Error:', error.response?.data || error.message)
 
+    // Gracefully handle auth errors — return empty data so frontend can fall back to DB
+    const status = error.response?.status
+    if (status === 401 || status === 403) {
+      console.warn('Viator API key invalid or expired — returning empty products')
+      return NextResponse.json({
+        products: [],
+        totalCount: 0,
+        warning: 'Viator API unavailable — showing local data only',
+      })
+    }
+
     return NextResponse.json(
       {
         error: 'Failed to fetch Viator data',
         details: error.response?.data || error.message
       },
-      { status: error.response?.status || 500 }
+      { status: status || 500 }
     )
   }
 }
@@ -139,7 +285,7 @@ export async function POST(request: Request) {
     const body = await request.json()
 
     // --------------------------------------------------
-    // 3. CHECK AVAILABILITY
+    // 4. CHECK AVAILABILITY
     // --------------------------------------------------
 
     if (action === 'availability') {
@@ -162,14 +308,14 @@ export async function POST(request: Request) {
       const response = await axios.post(
         `${VIATOR_BASE_URL}/availability/schedules`,
         body,
-        { headers: VIATOR_HEADERS }
+        { headers: VIATOR_HEADERS, timeout: 15000 }
       )
 
       return NextResponse.json(response.data)
     }
 
     // --------------------------------------------------
-    // 4. CREATE BOOKING
+    // 5. CREATE BOOKING (saves to local DB for Midtrans)
     // --------------------------------------------------
 
     if (action === 'book') {
@@ -199,14 +345,12 @@ export async function POST(request: Request) {
           const response = await axios.post(
             `${VIATOR_BASE_URL}/bookings/book`,
             body,
-            { headers: VIATOR_HEADERS }
+            { headers: VIATOR_HEADERS, timeout: 30000 }
           )
 
           orderId = response.data.orderId
           bookingRef = response.data.bookingRef
         } catch (viatorErr: any) {
-          // Viator API may fail (sandbox limitations, invalid payload, etc.)
-          // Fall back to local booking so the user isn't blocked
           console.warn('Viator booking API failed, saving locally:', viatorErr.response?.data || viatorErr.message)
           orderId = `ORD-${Date.now()}`
           bookingRef = `LOCAL-${Math.floor(Math.random() * 100000)}`
