@@ -8,6 +8,7 @@ import { useViatorProducts } from "@/utils/hooks/useViator"
 import { getViatorImageUrl, formatDuration } from "@/utils/hooks/useViator"
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
 import type { Category, UnifiedActivity } from "@/types/tourism"
+import { trackCategoryClick } from "@/utils/analytics"
 
 interface TrendingActivityProps {
   categories: Category[]
@@ -249,7 +250,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
             key={tab.id}
             label={tab.name}
             isActive={activeTab === tab.name}
-            onClick={() => setActiveTab(tab.name)}
+            onClick={() => { setActiveTab(tab.name); trackCategoryClick(tab.name) }}
           />
         ))}
       </div>

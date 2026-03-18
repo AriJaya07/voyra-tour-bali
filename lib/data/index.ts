@@ -1,6 +1,9 @@
 import type { Category, DestinationWithImages } from "@/types/tourism"
-import { getCategoriesFromViator, getDestinationsFromViator } from "./viator"
+import { getCategoriesFromViator, getDestinationsFromViator, getProductDetailFromViator } from "./viator"
 import { getCategoriesFromDB, getDestinationsFromDB } from "./db"
+
+// Re-export for convenience
+export { getProductDetailFromViator as getProductDetail }
 
 /**
  * Data source strategy:

@@ -16,9 +16,10 @@ import {
   extractPriceMap,
 } from '@/utils/hooks/useViator'
 import type { ViatorAgeBand, AvailabilityPaxMix } from '@/utils/hooks/useViator'
+import { trackBeginCheckout, trackPurchase } from '@/utils/analytics'
 
 // ── Config ─────────────────────────────────────────────────────────────
-const WA_NUMBER = "6281234567890"
+const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890"
 
 // ── Types ──────────────────────────────────────────────────────────────
 interface TravelerCount {
@@ -268,6 +269,8 @@ export default function BookingUser({
     return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`
   }
 
+  const isVerified = (session?.user as any)?.emailVerified === true
+
   // ── Booking handler ──────────────────────────────────────────────────
   const handleBooking = async () => {
     if (!session) {
@@ -276,6 +279,15 @@ export default function BookingUser({
       return
     }
     if (!canBook) return
+
+    // GA4: begin_checkout
+    trackBeginCheckout({
+      productCode,
+      title,
+      price: totalPrice,
+      currency: pricingCurrency,
+      travelers: totalTravelers,
+    })
 
     paymentMutation.mutate(
       {
@@ -287,6 +299,15 @@ export default function BookingUser({
       },
       {
         onSuccess: (data) => {
+          // GA4: purchase
+          trackPurchase({
+            transactionId: data.orderId || `txn-${Date.now()}`,
+            productCode,
+            title,
+            price: totalPrice,
+            currency: pricingCurrency,
+            travelers: totalTravelers,
+          })
           window.location.href = data.redirectUrl
         },
       }
@@ -434,11 +455,18 @@ export default function BookingUser({
           </div>
         )}
 
+        {/* Email verification warning */}
+        {session && !isVerified && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 font-medium text-center">
+            Please verify your email before booking. Check your inbox for the verification link.
+          </div>
+        )}
+
         <button
           onClick={handleBooking}
-          disabled={paymentMutation.isPending || !canBook}
+          disabled={paymentMutation.isPending || !canBook || (!!session && !isVerified)}
           className={`w-full h-12 flex items-center justify-center gap-2 rounded-xl transition-all shadow-md text-white font-bold text-sm ${
-            paymentMutation.isPending || !canBook
+            paymentMutation.isPending || !canBook || (!!session && !isVerified)
               ? 'bg-gray-300 cursor-not-allowed'
               : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 cursor-pointer'
           }`}
@@ -466,6 +494,28 @@ export default function BookingUser({
           <WhatappIcon />
           <span className="text-white font-bold text-sm">Ask via WhatsApp</span>
         </a>
+      </div>
+
+      {/* ── Trust indicators ── */}
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center gap-2 text-[11px] text-gray-400">
+          <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          Secure payment powered by Midtrans
+        </div>
+        <div className="flex items-center gap-2 text-[11px] text-gray-400">
+          <svg className="w-3.5 h-3.5 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Instant confirmation after payment
+        </div>
+        <div className="flex items-center gap-2 text-[11px] text-gray-400">
+          <svg className="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+          </svg>
+          Official e-ticket with QR code
+        </div>
       </div>
     </div>
   )

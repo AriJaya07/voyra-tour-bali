@@ -124,6 +124,42 @@ export async function getCategoriesFromViator(): Promise<Category[]> {
 }
 
 /**
+ * Fetches a single product detail from Viator (server-side, for SEO metadata).
+ * Returns null if not found or API unavailable.
+ */
+export async function getProductDetailFromViator(
+  productCode: string,
+  currency: string = "USD"
+): Promise<{ title: string; description: string; imageUrl: string; price: number; currency: string } | null> {
+  if (!VIATOR_API_KEY) return null
+
+  try {
+    const response = await axios.get(
+      `${VIATOR_BASE_URL}/products/${productCode}`,
+      {
+        headers: { ...VIATOR_HEADERS, "Accept-Currency": currency },
+        timeout: 10000,
+      }
+    )
+
+    const data = response.data
+    if (!data?.productCode) return null
+
+    const imageUrl = getBestImageUrl(data.images || [], 1200)
+
+    return {
+      title: data.title || productCode,
+      description: (data.description || "").substring(0, 200),
+      imageUrl,
+      price: data.pricing?.summary?.fromPrice ?? 0,
+      currency: data.pricing?.currency ?? currency,
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
  * Fetches Bali products from Viator and normalizes them as destinations.
  */
 export async function getDestinationsFromViator(

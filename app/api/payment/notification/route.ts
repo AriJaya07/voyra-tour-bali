@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import { generateTicketToken } from "@/lib/ticket";
+import { sendBookingConfirmation } from "@/lib/email";
 
 const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || "";
 
@@ -68,13 +70,13 @@ export async function POST(request: Request) {
     // Map to our status
     const newStatus = mapStatus(transaction_status, fraud_status);
     if (!newStatus) {
-      // Unknown status — acknowledge but don't update
       return NextResponse.json({ message: "Acknowledged" });
     }
 
     // Find booking by paymentId (order_id)
     const booking = await prisma.booking.findUnique({
       where: { paymentId: order_id },
+      include: { user: { select: { name: true, email: true } } },
     });
 
     if (!booking) {
@@ -91,19 +93,44 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Booking already finalized" });
     }
 
-    // Update booking status
+    // Generate ticket token when transitioning to CONFIRMED
+    const isNewConfirmation = newStatus === "CONFIRMED" && booking.status !== "CONFIRMED"
+    const ticketToken = isNewConfirmation ? generateTicketToken() : booking.ticketToken
+
+    // Update booking
     await prisma.booking.update({
       where: { paymentId: order_id },
       data: {
         status: newStatus,
-        paidAt:
-          newStatus === "CONFIRMED" ? new Date() : booking.paidAt,
+        paidAt: newStatus === "CONFIRMED" ? new Date() : booking.paidAt,
+        ticketToken,
       },
     });
 
     console.log(
       `Midtrans webhook: ${order_id} → ${newStatus} (was ${booking.status})`
     );
+
+    // Send confirmation email with ticket link (non-blocking)
+    if (isNewConfirmation && ticketToken) {
+      sendBookingConfirmation({
+        email: booking.user.email,
+        userName: booking.user.name || "",
+        bookingRef: booking.bookingRef,
+        productTitle: booking.productTitle,
+        travelDate: booking.travelDate.toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        pax: booking.pax,
+        totalPrice: `Rp ${Math.round(booking.totalPrice).toLocaleString("id-ID")}`,
+        ticketToken,
+      }).catch((err) => {
+        console.error("[Email] Failed to send booking confirmation:", err);
+      });
+    }
 
     return NextResponse.json({ message: "OK" });
   } catch (error: any) {

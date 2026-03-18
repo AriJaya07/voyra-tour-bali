@@ -44,6 +44,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name ?? "",
             role: user.role,
             image: user.image ?? undefined,
+            emailVerified: user.emailVerified,
           };
         } catch (error) {
           console.error("Authorize error:", error);
@@ -64,6 +65,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as any).role;
         token.image = (user as any).image;
+        token.emailVerified = (user as any).emailVerified;
       }
       return token;
     },
@@ -74,14 +76,16 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role;
         (session.user as any).image = token.image;
         // Fetch latest image from DB (in case user updated profile)
+        (session.user as any).emailVerified = token.emailVerified;
         try {
           const user = await prisma.user.findUnique({
             where: { id: parseInt(token.id as string) },
-            select: { image: true },
+            select: { image: true, emailVerified: true },
           });
           if (user?.image) (session.user as any).image = user.image;
+          if (user) (session.user as any).emailVerified = user.emailVerified;
         } catch {
-          // Keep token image on error
+          // Keep token values on error
         }
       }
       return session;

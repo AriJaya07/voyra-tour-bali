@@ -129,6 +129,10 @@ model User {
   image    String?
   phone    String?
 
+  emailVerified     Boolean   @default(false)
+  verificationToken String?
+  tokenExpiry       DateTime?
+
   bookings Booking[]
 
   createdAt DateTime @default(now())
@@ -148,6 +152,8 @@ model Booking {
   paymentId   String?     @unique
   snapToken   String?
   paidAt      DateTime?
+
+  ticketToken String?     @unique
 
   userId Int
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
