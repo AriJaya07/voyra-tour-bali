@@ -4,13 +4,13 @@ import { useState, useMemo, memo, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useCurrency } from "@/utils/hooks/useCurrency"
-import { useUnifiedActivities } from "@/utils/hooks/useUnifiedActivities"
+import { useViatorProducts } from "@/utils/hooks/useViator"
+import { getViatorImageUrl, formatDuration } from "@/utils/hooks/useViator"
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
-import type { Category, DestinationWithImages, UnifiedActivity } from "@/types/tourism"
+import type { Category, UnifiedActivity } from "@/types/tourism"
 
 interface TrendingActivityProps {
   categories: Category[]
-  destinations: DestinationWithImages[]
 }
 
 /** Fisher-Yates shuffle */
@@ -22,6 +22,37 @@ function shuffle<T>(array: T[]): T[] {
   }
   return arr
 }
+
+// ── Pricing helpers ─────────────────────────────────────────────────────
+
+function getDiscountPercent(price: number, before?: number): number | null {
+  if (!before || before <= price) return null
+  return Math.round(((before - price) / before) * 100)
+}
+
+/** Map a Viator product to UnifiedActivity (includes discount data) */
+function mapViatorToActivity(product: any): UnifiedActivity {
+  const fromPrice = product.pricing?.summary?.fromPrice ?? 0
+  const beforeDiscount = product.pricing?.summary?.fromPriceBeforeDiscount
+
+  return {
+    id: product.productCode,
+    source: "viator",
+    title: product.title,
+    description: product.description || "",
+    imageUrl: getViatorImageUrl(product.images, 480),
+    price: fromPrice,
+    priceBeforeDiscount: beforeDiscount && beforeDiscount > fromPrice ? beforeDiscount : undefined,
+    currency: product.pricing?.currency ?? "USD",
+    rating: product.reviews?.combinedAverageRating,
+    reviewCount: product.reviews?.totalReviews,
+    duration: formatDuration(product.duration),
+    freeCancellation: product.flags?.includes("FREE_CANCELLATION"),
+    productCode: product.productCode,
+  }
+}
+
+// ── Tab Button ──────────────────────────────────────────────────────────
 
 const TabButton = memo(function TabButton({
   label,
@@ -37,30 +68,37 @@ const TabButton = memo(function TabButton({
       onClick={onClick}
       className={`
         md:h-[48px] h-[40px]
-        px-6
+        px-5 sm:px-6
         rounded-full
-        text-sm md:text-base
+        text-xs sm:text-sm md:text-base
         font-semibold
         transition-all duration-200
         cursor-pointer
         whitespace-nowrap
+        shrink-0
+        max-w-[160px] truncate
         ${
           isActive
             ? "bg-blue-50 text-blue-600 shadow-md"
             : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900"
         }
       `}
+      title={label}
     >
       {label}
     </button>
   )
 })
 
+// ── Activity Card ───────────────────────────────────────────────────────
+
 function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: CurrencyCode }) {
-  // Build link based on data source
   const href = item.source === "viator"
     ? `/viator/${item.productCode}?price=${item.price}&cur=${item.currency}`
     : `/detail/${item.slug}`
+
+  const discountPercent = getDiscountPercent(item.price, item.priceBeforeDiscount)
+  const sourceCurrency = item.currency as CurrencyCode
 
   return (
     <Link href={href} className="group block">
@@ -74,18 +112,23 @@ function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: Cur
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
-          {item.freeCancellation && (
+
+          {/* Discount badge */}
+          {discountPercent && (
+            <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+              -{discountPercent}%
+            </span>
+          )}
+
+          {/* Free cancellation badge (shift right if discount exists) */}
+          {item.freeCancellation && !discountPercent && (
             <span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
               Free Cancellation
             </span>
           )}
-          {/* Source badge */}
-          <span className={`absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full ${
-            item.source === "viator"
-              ? "bg-blue-500 text-white"
-              : "bg-orange-500 text-white"
-          }`}>
-            {item.source === "viator" ? "Viator" : "Local"}
+
+          <span className="absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-500 text-white">
+            Viator
           </span>
         </div>
 
@@ -117,59 +160,61 @@ function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: Cur
           </div>
 
           {/* Price */}
-          {item.price > 0 && (
-            <div className="mt-auto">
-              <p className="text-xs text-gray-400">From</p>
-              <p className="text-base font-black text-gray-900">
-                {formatPrice(item.price, currency, item.currency as CurrencyCode)}
-              </p>
-            </div>
-          )}
+          <div className="mt-auto">
+            {item.price > 0 ? (
+              <>
+                <p className="text-[10px] text-gray-400 leading-tight">From</p>
+
+                {/* Original price (strikethrough) when discount exists */}
+                {item.priceBeforeDiscount && (
+                  <p className="text-[11px] text-gray-400 line-through leading-tight">
+                    {formatPrice(item.priceBeforeDiscount, currency, sourceCurrency)}
+                  </p>
+                )}
+
+                {/* Current price */}
+                <p className={`text-sm sm:text-base font-black leading-tight ${
+                  item.priceBeforeDiscount ? "text-red-600" : "text-gray-900"
+                }`}>
+                  {formatPrice(item.price, currency, sourceCurrency)}
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-gray-400 italic">Check price</p>
+            )}
+          </div>
         </div>
       </div>
     </Link>
   )
 }
 
-export default function TrendingActivity({ categories, destinations }: TrendingActivityProps) {
-  const defaultTab = categories[0]?.name ?? "Liburan"
+// ── Main Component ──────────────────────────────────────────────────────
+
+export default function TrendingActivity({ categories }: TrendingActivityProps) {
+  const displayCategories = categories.slice(0, 8)
+  const defaultTab = displayCategories[0]?.name ?? "Tours"
   const [activeTab, setActiveTab] = useState(defaultTab)
   const [showAll, setShowAll] = useState(false)
 
-  // Shuffle categories for display (client-only to avoid hydration mismatch)
-  const [randomCategories, setRandomCategories] = useState<Category[]>(() =>
-    categories.slice(0, 6)
-  )
-
-  useEffect(() => {
-    const shuffled = shuffle(categories).slice(0, 6)
-    setRandomCategories(shuffled)
-    setActiveTab(shuffled[0]?.name ?? defaultTab)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const { currency } = useCurrency()
 
-  // Find the active category ID for DB filtering
-  const activeCategoryObj = categories.find(c => c.name === activeTab)
-  const activeCategoryId = activeCategoryObj?.id ?? null
+  const { data: viatorProducts, isLoading, isError } = useViatorProducts(activeTab, currency)
 
-  // Unified data: DB destinations + Viator products
-  const { activities, isLoading, hasViatorWarning } = useUnifiedActivities(
-    destinations,
-    activeTab,
-    activeCategoryId,
-    currency
-  )
+  const activities: UnifiedActivity[] = useMemo(() => {
+    if (!viatorProducts) return []
+    return viatorProducts.map(mapViatorToActivity)
+  }, [viatorProducts])
 
-  // Shuffle activities once when data changes
   const [shuffledActivities, setShuffledActivities] = useState<UnifiedActivity[]>([])
   useEffect(() => {
     if (activities.length > 0) {
       setShuffledActivities(shuffle(activities))
       setShowAll(false)
+    } else if (!isLoading && viatorProducts) {
+      setShuffledActivities([])
     }
-  }, [activities])
+  }, [activities, isLoading, viatorProducts])
 
   const displayedActivities = useMemo(
     () => (showAll ? shuffledActivities : shuffledActivities.slice(0, 5)),
@@ -191,16 +236,15 @@ export default function TrendingActivity({ categories, destinations }: TrendingA
         Discover the best tours & activities in Bali
       </p>
 
-      {/* Viator warning banner */}
-      {hasViatorWarning && (
+      {isError && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 mb-3 text-xs text-yellow-700">
-          Viator data unavailable — showing local destinations only
+          Viator data unavailable — please try again later
         </div>
       )}
 
       {/* Tabs */}
       <div className="flex w-full gap-2 py-5 overflow-x-auto scrollbar-hide">
-        {randomCategories.map((tab) => (
+        {displayCategories.map((tab) => (
           <TabButton
             key={tab.id}
             label={tab.name}

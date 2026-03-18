@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, useMemo, useEffect, memo } from "react"
-import { Category, Destination as PrismaDestination, Image as PrismaImage } from "@prisma/client"
 import DotsIcon from "../../assets/Icon/DotsIcon"
+import { CATEGORY_ICON_MAP } from "../../assets/Icon/categories"
 import Image from "next/image"
-
-type DestinationWithImages = PrismaDestination & { images: PrismaImage[] };
+import { useViatorProducts } from "@/utils/hooks/useViator"
+import { getViatorImageUrl } from "@/utils/hooks/useViator"
+import type { Category } from "@/types/tourism"
 
 interface DestinationProps {
-  categories: Category[];
-  destinations: DestinationWithImages[];
+  categories: Category[]
 }
 
 /** Fisher-Yates shuffle */
@@ -22,68 +22,77 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr
 }
 
-const MenuItem = memo(function MenuItem({
+// ── Category Card ───────────────────────────────────────────────────────
+const CategoryCard = memo(function CategoryCard({
   label,
+  slug,
   isActive,
   onClick,
-  icon,
 }: {
   label: string
+  slug: string
   isActive: boolean
-  icon: string
   onClick: () => void
 }) {
+  const IconComponent = CATEGORY_ICON_MAP[slug] ?? DotsIcon
+
   return (
     <button
       onClick={onClick}
-      className={`flex flex-1 min-w-[120px] items-center justify-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 whitespace-nowrap
-      ${
-        isActive
-          ? "bg-blue-50 text-blue-600"
-          : "text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-      }`}
+      className={`
+        flex flex-col items-center justify-center gap-2
+        min-w-[80px] w-[80px] sm:w-auto
+        h-[80px] sm:h-[88px]
+        px-2 py-3
+        rounded-xl
+        border
+        transition-all duration-200
+        cursor-pointer
+        shrink-0
+        ${
+          isActive
+            ? "bg-blue-50 border-blue-300 text-blue-600 shadow-sm"
+            : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+        }
+      `}
     >
-      {icon ? (
-        <Image
-          src={icon}
-          alt={label}
-          width={20}
-          height={20}
-          className={`w-[20px] h-[20px] transition-opacity ${
-            isActive ? "opacity-100" : "opacity-60"
-          }`}
-        />
-      ) : (
-        <DotsIcon
-          className="w-[20px] h-[20px]"
-          isActive={isActive}
-        />
-      )}
-
-      <span className="text-sm md:text-base font-semibold">
+      <IconComponent
+        className="w-5 h-5 sm:w-6 sm:h-6 shrink-0"
+        isActive={isActive}
+      />
+      <span className="text-[11px] sm:text-xs font-semibold leading-tight text-center line-clamp-2 w-full px-0.5">
         {label}
       </span>
     </button>
   )
 })
 
-export default function Destination({ categories, destinations }: DestinationProps) {
-  const defaultCategory = categories[0]?.name ?? "Liburan"
+// ── Main Component ──────────────────────────────────────────────────────
+export default function Destination({ categories }: DestinationProps) {
+  const defaultCategory = categories[0]?.name ?? "Tours"
   const [activeTab, setActiveTab] = useState(defaultCategory)
   const [showAll, setShowAll] = useState(false)
 
-  // Filter deterministically for SSR, then shuffle on client to avoid hydration mismatch
-  const filtered = useMemo(() => {
-    const activeCategoryObj = categories.find(c => c.name === activeTab)
-    const activeCatId = activeCategoryObj?.id ?? null
-    return destinations.filter(d => d.categoryId === activeCatId)
-  }, [categories, destinations, activeTab])
+  // Fetch Viator products for the active category
+  const { data: viatorProducts, isLoading } = useViatorProducts(activeTab, "IDR")
 
-  const [visibleDestinations, setVisibleDestinations] = useState(filtered)
+  // Map Viator products to destination-like items for the grid
+  const destinations = useMemo(() => {
+    if (!viatorProducts) return []
+    return viatorProducts.map((product) => ({
+      id: product.productCode,
+      title: product.title,
+      slug: product.productCode,
+      imageUrl: getViatorImageUrl(product.images, 720),
+    }))
+  }, [viatorProducts])
+
+  // Shuffle on client to avoid hydration mismatch
+  const [visibleDestinations, setVisibleDestinations] = useState(destinations)
 
   useEffect(() => {
-    setVisibleDestinations(shuffleArray(filtered))
-  }, [filtered])
+    setVisibleDestinations(shuffleArray(destinations))
+  }, [destinations])
 
   const displayedDestinations = useMemo(
     () => (showAll ? visibleDestinations : visibleDestinations.slice(0, 6)),
@@ -98,14 +107,16 @@ export default function Destination({ categories, destinations }: DestinationPro
 
   return (
     <section id="destinasi" className="pt-10 md:pt-[72px] px-4 md:px-0">
-      {/* Menu */}
-      <div className="flex w-full gap-6 md:gap-2 pb-5 overflow-x-auto scrollbar-hide">
+      {/* Category cards — horizontal scroll on mobile, grid on larger screens */}
+      <div className="
+        flex gap-2 pb-5 overflow-x-auto scrollbar-hide
+      ">
         {categories.map((item) => (
-          <MenuItem
+          <CategoryCard
             key={item.id}
             label={item.name}
+            slug={item.slug}
             isActive={activeTab === item.name}
-            icon={item.image ?? ""}
             onClick={() => handleTabClick(item.name)}
           />
         ))}
@@ -120,26 +131,28 @@ export default function Destination({ categories, destinations }: DestinationPro
         </h1>
 
         <div className="min-h-[220px]">
-          {displayedDestinations.length > 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="relative w-full h-[220px] rounded-md overflow-hidden bg-gray-200 animate-pulse" />
+              ))}
+            </div>
+          ) : displayedDestinations.length > 0 ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {displayedDestinations.map((item) => {
-                   const mainImage = item.images.find(img => img.isMain)?.url || item.images[0]?.url || "/images/destinations/gwk.png"
-
-                   return (
-                    <a href={`/detail/${item.slug}`} key={item.id} target="_self">
-                      <div className="relative w-full h-[220px] rounded-md overflow-hidden">
-                        <Image
-                          src={mainImage}
-                          alt={item.title}
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          className="object-cover transition-transform transform hover:scale-105"
-                        />
-                      </div>
-                    </a>
-                  )
-                })}
+                {displayedDestinations.map((item) => (
+                  <a href={`/viator/${item.slug}`} key={item.id} target="_self">
+                    <div className="relative w-full h-[220px] rounded-md overflow-hidden">
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover transition-transform transform hover:scale-105"
+                      />
+                    </div>
+                  </a>
+                ))}
               </div>
 
               {hasMore && (

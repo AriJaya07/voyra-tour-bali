@@ -1,13 +1,38 @@
-import { Category, Destination as PrismaDestination, Image as PrismaImage } from "@prisma/client"
-
-// Re-export Prisma types for convenience
-export type { Category }
-export type DestinationWithImages = PrismaDestination & { images: PrismaImage[] }
-
 /**
- * Unified activity item — a common shape for both DB destinations and Viator products.
- * This allows mixing data from multiple sources in a single UI component.
+ * Normalized types — source-agnostic.
+ * Components consume these types, never Prisma or Viator types directly.
  */
+
+// ── Category ────────────────────────────────────────────────────────────
+export interface Category {
+  id: number | string
+  name: string
+  slug: string
+  description?: string | null
+  image?: string | null
+  /** Viator tag IDs used when fetching products for this category */
+  tagIds?: number[]
+}
+
+// ── Destination / Product image ─────────────────────────────────────────
+export interface DestinationImage {
+  url: string
+  isMain: boolean
+  altText?: string | null
+}
+
+// ── Destination (gallery items shown in Destination component) ──────────
+export interface DestinationWithImages {
+  id: number | string
+  title: string
+  slug: string
+  description: string
+  price?: number | null
+  categoryId?: number | string | null
+  images: DestinationImage[]
+}
+
+// ── Unified Activity (used by TrendingActivity) ─────────────────────────
 export interface UnifiedActivity {
   id: string                    // DB: `db-{id}`, Viator: productCode
   source: "db" | "viator"
@@ -15,6 +40,7 @@ export interface UnifiedActivity {
   description: string
   imageUrl: string
   price: number
+  priceBeforeDiscount?: number  // original price before discount (Viator fromPriceBeforeDiscount)
   currency: string              // "IDR" | "USD"
   rating?: number
   reviewCount?: number
@@ -22,5 +48,5 @@ export interface UnifiedActivity {
   freeCancellation?: boolean
   slug?: string                 // DB destination slug (for /detail/[slug])
   productCode?: string          // Viator product code (for /viator/[code])
-  categoryId?: number | null
+  categoryId?: number | string | null
 }

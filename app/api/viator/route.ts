@@ -13,8 +13,8 @@ const VIATOR_BASE_URL = VIATOR_API_KEY?.startsWith('sandbox')
 
 const USE_MOCK_DATA = !VIATOR_API_KEY
 
-// Bali destination ID in Viator
-const BALI_DESTINATION_ID = '684'
+// Bali destination ID in Viator (destId=98)
+const BALI_DESTINATION_ID = 98
 
 const VIATOR_HEADERS = {
   Accept: 'application/json;version=2.0',
@@ -23,26 +23,21 @@ const VIATOR_HEADERS = {
   'exp-api-key': VIATOR_API_KEY,
 }
 
-// Map local category names (lowercase) → Viator tag IDs for better filtering
+// Map category names (lowercase) → Viator tag IDs for filtering
 const CATEGORY_TAG_MAP: Record<string, number[]> = {
-  'adventure':      [11903, 11938],
+  'tours':          [11929],
+  'romance':        [11929],
+  'family':         [11929],
   'culture':        [11929, 12032],
   'nature':         [11903, 12029],
-  'water sports':   [11938, 12029],
   'food & drink':   [12071],
-  'wellness':       [12071],
-  'tours':          [11929],
+  'adventure':      [11903, 11938],
+  'water sports':   [11938, 12029],
   'temple':         [11929, 12032],
   'beach':          [11903, 12029],
+  'wellness':       [12071],
   'nightlife':      [12071],
   'shopping':       [12071],
-  'liburan':        [11929],
-  'romantis':       [11929],
-  'keluarga':       [11929],
-  'sport':          [11938],
-  'budaya':         [11929, 12032],
-  'alam':           [11903, 12029],
-  'kuliner':        [12071],
 }
 
 // --------------------------------------------------
@@ -53,6 +48,8 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const action = searchParams.get('action')
+
+    console.log(`[Viator GET] action=${action}`)
 
     // --------------------------------------------------
     // 1. GET PRODUCTS (Bali only)
@@ -282,7 +279,18 @@ export async function POST(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const action = searchParams.get('action')
-    const body = await request.json()
+
+    let body: any
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid or missing JSON body' },
+        { status: 400 }
+      )
+    }
+
+    console.log(`[Viator POST] action=${action}`, Object.keys(body))
 
     // --------------------------------------------------
     // 4. CHECK AVAILABILITY
@@ -305,11 +313,26 @@ export async function POST(request: Request) {
         })
       }
 
+      // Validate required fields
+      if (!body.productCode) {
+        return NextResponse.json({ error: 'Missing productCode' }, { status: 400 })
+      }
+      if (!body.travelDate) {
+        return NextResponse.json({ error: 'Missing travelDate' }, { status: 400 })
+      }
+      if (!body.paxMix || body.paxMix.length === 0) {
+        return NextResponse.json({ error: 'Missing paxMix' }, { status: 400 })
+      }
+
+      console.log('[Viator] Availability request:', JSON.stringify(body))
+
       const response = await axios.post(
-        `${VIATOR_BASE_URL}/availability/schedules`,
+        `${VIATOR_BASE_URL}/availability/check`,
         body,
         { headers: VIATOR_HEADERS, timeout: 15000 }
       )
+
+      console.log('[Viator] Availability response status:', response.status)
 
       return NextResponse.json(response.data)
     }

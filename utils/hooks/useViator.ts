@@ -23,6 +23,19 @@ export interface ViatorReviewSource {
   averageRating: number;
 }
 
+export interface ViatorAgeBand {
+  ageBand: "ADULT" | "CHILD" | "INFANT" | "YOUTH" | "SENIOR" | "TRAVELER";
+  startAge: number;
+  endAge: number;
+  count?: number;
+  price?: number;
+}
+
+export interface ViatorPricingInfo {
+  type?: "PER_PERSON" | "PER_GROUP" | string;
+  ageBands?: ViatorAgeBand[];
+}
+
 export interface ViatorProduct {
   productCode: string;
   title: string;
@@ -31,6 +44,7 @@ export interface ViatorProduct {
     summary: { fromPrice: number };
     currency: string;
   };
+  pricingInfo?: ViatorPricingInfo;
   images: ViatorImage[];
   reviews?: {
     sources?: ViatorReviewSource[];
@@ -137,6 +151,110 @@ export function useViatorProductDetail(
     staleTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
   });
+}
+
+// ── Availability types ───────────────────────────────────────────────
+export interface AvailabilityPaxMix {
+  ageBand: string;
+  numberOfTravelers: number;
+}
+
+export interface AvailabilityPricingDetail {
+  ageBand: string;
+  price: {
+    original: {
+      recommendedRetailPrice: number;
+      partnerNetPrice?: number;
+    };
+  };
+  minTravelers?: number;
+  maxTravelers?: number;
+}
+
+export interface AvailabilityResponse {
+  available?: boolean;
+  bookableItems?: Array<{
+    itemCode?: string;
+    totalPrice?: {
+      price: {
+        recommendedRetailPrice: number;
+      };
+    };
+    seasons?: Array<{
+      pricingRecords?: Array<{
+        pricingDetails?: AvailabilityPricingDetail[];
+      }>;
+    }>;
+  }>;
+}
+
+// ── Hook: Fetch availability + real pricing from Viator ──────────────
+export function useViatorAvailability(
+  productCode: string | undefined,
+  travelDate: string | null,
+  paxMix: AvailabilityPaxMix[],
+  currency: string = "USD"
+) {
+  const hasTravelers = paxMix.some((p) => p.numberOfTravelers > 0);
+  const enabled = !!productCode && !!travelDate && hasTravelers;
+
+  // Stable key from paxMix
+  const paxKey = paxMix
+    .filter((p) => p.numberOfTravelers > 0)
+    .map((p) => `${p.ageBand}:${p.numberOfTravelers}`)
+    .join(",");
+
+  return useQuery<AvailabilityResponse>({
+    queryKey: ["viator-availability", productCode, travelDate, paxKey, currency],
+    queryFn: async () => {
+      const { data } = await api.post<AvailabilityResponse>(
+        "/viator?action=availability",
+        {
+          productCode,
+          travelDate,
+          currency,
+          paxMix: paxMix.filter((p) => p.numberOfTravelers > 0),
+        }
+      );
+      return data;
+    },
+    enabled,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+}
+
+/**
+ * Extract per-ageBand price map from availability response.
+ * Returns { ADULT: 500000, CHILD: 250000, ... }
+ */
+export function extractPriceMap(
+  data: AvailabilityResponse | undefined
+): Record<string, number> {
+  const map: Record<string, number> = {};
+  if (!data?.bookableItems?.length) return map;
+
+  const item = data.bookableItems[0];
+
+  // Try nested seasons → pricingRecords → pricingDetails
+  const pricingDetails =
+    item?.seasons?.[0]?.pricingRecords?.[0]?.pricingDetails;
+
+  if (pricingDetails && pricingDetails.length > 0) {
+    for (const detail of pricingDetails) {
+      map[detail.ageBand] =
+        detail.price?.original?.recommendedRetailPrice ?? 0;
+    }
+    return map;
+  }
+
+  // Fallback: flat totalPrice on bookableItem (mock data shape)
+  if (item?.totalPrice?.price?.recommendedRetailPrice) {
+    map["_TOTAL"] = item.totalPrice.price.recommendedRetailPrice;
+  }
+
+  return map;
 }
 
 // ── Hook: Viator booking mutation ─────────────────────────────────────

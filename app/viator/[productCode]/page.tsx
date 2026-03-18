@@ -4,11 +4,44 @@ import { useParams, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { Suspense } from "react"
-import { useViatorProductDetail, getViatorImageUrl, formatDuration } from "@/utils/hooks/useViator"
+import { useViatorProductDetail, formatDuration } from "@/utils/hooks/useViator"
+import type { ViatorImage } from "@/utils/hooks/useViator"
 import { useCurrency } from "@/utils/hooks/useCurrency"
-import { formatPrice } from "@/utils/formatPrice"
 import Container from "@/components/Container"
 import BookingUser from "@/components/DetailProduct/BookingUser"
+import ImageGallery from "@/components/common/ImageGallery"
+
+const FALLBACK_IMAGE = "/images/activity/melasti.png"
+
+// ── Image helpers ───────────────────────────────────────────────────────
+
+/** Pick the best variant URL from a single Viator image object */
+function pickVariant(img: ViatorImage, preferredWidth = 720): string {
+  const variants = img?.variants
+  if (!variants || variants.length === 0) return FALLBACK_IMAGE
+  const sorted = [...variants].sort(
+    (a, b) => Math.abs(a.width - preferredWidth) - Math.abs(b.width - preferredWidth)
+  )
+  return sorted[0]?.url || FALLBACK_IMAGE
+}
+
+/** Extract unique image URLs from Viator images array (one per image object) */
+function extractAllImages(images: ViatorImage[] | undefined, preferredWidth = 720): string[] {
+  if (!images || images.length === 0) return [FALLBACK_IMAGE]
+
+  // Sort: cover image first
+  const sorted = [...images].sort((a, b) => {
+    if (a.isCover) return -1
+    if (b.isCover) return 1
+    return 0
+  })
+
+  const urls = sorted
+    .map((img) => pickVariant(img, preferredWidth))
+    .filter((url) => url !== FALLBACK_IMAGE)
+
+  return urls.length > 0 ? urls : [FALLBACK_IMAGE]
+}
 
 /** Safely extract display text from a Viator inclusion/exclusion/additionalInfo item */
 function itemText(item: any): string {
@@ -16,11 +49,14 @@ function itemText(item: any): string {
   return item?.otherDescription || item?.description || item?.typeDescription || item?.categoryDescription || ""
 }
 
+// ImageGallery is now imported from @/components/common/ImageGallery
+
+// ── Main Content ────────────────────────────────────────────────────────
+
 function ViatorProductContent() {
   const params = useParams()
   const searchParams = useSearchParams()
   const productCode = params.productCode as string
-  // Price passed from product card via URL (reliable fallback)
   const urlPrice = Number(searchParams.get("price")) || 0
   const { currency } = useCurrency()
   const { data: product, isLoading, isError } = useViatorProductDetail(productCode, currency)
@@ -30,7 +66,17 @@ function ViatorProductContent() {
       <div className="min-h-screen pt-20">
         <Container>
           {/* Banner skeleton */}
-          <div className="w-full aspect-[21/9] bg-gray-200 rounded-2xl animate-pulse mb-8" />
+          <div className="flex flex-col sm:flex-row gap-1 rounded-2xl overflow-hidden mb-8">
+            <div className="w-full sm:w-[55%] h-[280px] sm:h-[420px] bg-gray-200 animate-pulse" />
+            <div className="hidden sm:flex flex-col gap-1 w-[22.5%]">
+              <div className="h-[209px] bg-gray-200 animate-pulse" />
+              <div className="h-[209px] bg-gray-200 animate-pulse" />
+            </div>
+            <div className="hidden sm:flex flex-col gap-1 w-[22.5%]">
+              <div className="h-[209px] bg-gray-200 animate-pulse" />
+              <div className="h-[209px] bg-gray-200 animate-pulse" />
+            </div>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-4">
               <div className="h-8 bg-gray-200 rounded w-3/4 animate-pulse" />
@@ -56,177 +102,193 @@ function ViatorProductContent() {
     )
   }
 
-  const coverUrl = getViatorImageUrl(product.images, 1200)
-  const galleryImages = product.images
-    ?.flatMap(img => img.variants?.filter(v => v.width >= 400) || [])
-    .slice(0, 4) || []
-  // Duration can be at top level or nested inside itinerary
+  // ── Data extraction ─────────────────────────────────────────────────
+  const allImages = extractAllImages(product.images, 720)
   const durationData = product.duration || (product as any).itinerary?.duration
   const duration = formatDuration(durationData)
   const rating = product.reviews?.combinedAverageRating
   const reviewCount = product.reviews?.totalReviews || 0
-  // Use API pricing if available, fall back to price from URL params
   const price = product.pricing?.summary?.fromPrice || urlPrice
   const hasFreeCancellation = product.flags?.includes("FREE_CANCELLATION")
   const confirmationType = product.bookingConfirmationSettings?.confirmationType || product.confirmationType
 
+  // Pick 3 images for "What to Expect" section (skip the first cover)
+  const expectImages = allImages.length > 3
+    ? allImages.slice(allImages.length - 3)
+    : allImages.slice(0, 3)
+
   return (
-    <div className="min-h-screen pt-20 pb-16">
-      {/* Breadcrumb */}
-      <Container>
-        <nav className="flex items-center gap-2 text-sm text-gray-500 mb-4 pt-4">
-          <Link href="/" className="hover:text-[#0071CE] transition">Home</Link>
-          <span>/</span>
-          <span className="text-gray-800 font-medium truncate">{product.title}</span>
-        </nav>
-      </Container>
+    <div className="min-h-screen">
+      {/* ── Banner header (matching reference teal gradient) ── */}
+      <div className="bg-gradient-to-r from-[#00E7FF] to-[#0097E8] pt-3 pb-8">
+        <Container>
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-2 text-sm text-black/70 mb-6 pt-16">
+            <Link href="/" className="hover:text-black transition">Home</Link>
+            <span>&gt;</span>
+            <span className="text-black font-medium truncate max-w-[250px] sm:max-w-none">{product.title}</span>
+          </nav>
 
-      {/* Banner Image */}
-      <Container>
-        <div className="relative w-full aspect-[21/9] sm:aspect-[21/8] rounded-2xl overflow-hidden mb-8">
-          <Image
-            src={coverUrl}
-            alt={product.title}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-
-          {/* Badges */}
-          <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
-            {hasFreeCancellation && (
-              <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                Free Cancellation
-              </span>
-            )}
-            {confirmationType === "INSTANT" && (
-              <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                Instant Confirmation
-              </span>
-            )}
+          {/* Title + Description */}
+          <div className="mb-5">
+            <h1 className="text-xl sm:text-2xl font-bold text-black leading-tight mb-2">
+              {product.title}
+            </h1>
+            {/* Quick meta badges */}
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {rating && (
+                <span className="flex items-center gap-1 bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full">
+                  <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                  </svg>
+                  <span className="font-bold text-black">{rating.toFixed(1)}</span>
+                  <span className="text-black/60">({reviewCount.toLocaleString()})</span>
+                </span>
+              )}
+              {duration && (
+                <span className="flex items-center gap-1 bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full text-black/80">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {duration}
+                </span>
+              )}
+              {hasFreeCancellation && (
+                <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  Free Cancellation
+                </span>
+              )}
+              {confirmationType === "INSTANT" && (
+                <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  Instant Confirmation
+                </span>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Gallery thumbnails */}
-        {galleryImages.length > 1 && (
-          <div className="flex gap-2 mb-8 overflow-x-auto scrollbar-hide">
-            {galleryImages.map((variant, i) => (
-              <div key={i} className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden flex-shrink-0 border-2 border-transparent hover:border-[#0071CE] transition">
-                <Image src={variant.url} alt={`Gallery ${i + 1}`} fill sizes="128px" className="object-cover" />
-              </div>
-            ))}
-          </div>
-        )}
-      </Container>
+          {/* Image gallery grid */}
+          <ImageGallery images={allImages} title={product.title} />
+        </Container>
+      </div>
 
-      {/* Content */}
+      {/* ── Content body ── */}
       <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-10">
+
           {/* Left: Details */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Title & Meta */}
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-                {product.title}
-              </h1>
+          <div className="lg:col-span-2 space-y-10">
 
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                {rating && (
-                  <span className="flex items-center gap-1 bg-yellow-50 px-3 py-1.5 rounded-full">
-                    <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                    </svg>
-                    <span className="font-bold text-gray-800">{rating.toFixed(1)}</span>
-                    <span className="text-gray-500">({reviewCount.toLocaleString()} reviews)</span>
-                  </span>
-                )}
-                {duration && (
-                  <span className="flex items-center gap-1 text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {duration}
-                  </span>
-                )}
+            {/* About */}
+            <section>
+              <div className="flex items-center gap-3 mb-4">
+                <hr className="h-8 w-[4px] bg-[#02ACBE] border-none rounded" />
+                <h2 className="text-2xl font-bold text-black">About This Activity</h2>
               </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 mb-3">About This Activity</h2>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                {product.description}
-              </p>
-            </div>
+              <div className="bg-gradient-to-r from-[#01ACBB]/10 to-[#C4E6E9]/10 rounded-xl p-5 sm:p-8">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line text-sm sm:text-base">
+                  {product.description}
+                </p>
+              </div>
+            </section>
 
             {/* Inclusions */}
             {product.inclusions && product.inclusions.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-3">What&apos;s Included</h2>
-                <ul className="space-y-2">
+              <section>
+                <div className="flex items-center gap-3 mb-4">
+                  <hr className="h-8 w-[4px] bg-green-500 border-none rounded" />
+                  <h2 className="text-xl font-bold text-black">What&apos;s Included</h2>
+                </div>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {product.inclusions.map((item: any, i: number) => {
                     const text = itemText(item)
                     if (!text) return null
                     return (
-                      <li key={i} className="flex items-start gap-2 text-gray-600">
-                        <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <li key={i} className="flex items-start gap-2.5 text-gray-700 bg-green-50 rounded-lg px-4 py-3">
+                        <svg className="w-5 h-5 text-green-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>{text}</span>
+                        <span className="text-sm">{text}</span>
                       </li>
                     )
                   })}
                 </ul>
-              </div>
+              </section>
             )}
 
             {/* Exclusions */}
             {product.exclusions && product.exclusions.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-3">What&apos;s Not Included</h2>
-                <ul className="space-y-2">
+              <section>
+                <div className="flex items-center gap-3 mb-4">
+                  <hr className="h-8 w-[4px] bg-red-400 border-none rounded" />
+                  <h2 className="text-xl font-bold text-black">What&apos;s Not Included</h2>
+                </div>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {product.exclusions.map((item: any, i: number) => {
                     const text = itemText(item)
                     if (!text) return null
                     return (
-                      <li key={i} className="flex items-start gap-2 text-gray-600">
-                        <svg className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <li key={i} className="flex items-start gap-2.5 text-gray-700 bg-red-50 rounded-lg px-4 py-3">
+                        <svg className="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                        <span>{text}</span>
+                        <span className="text-sm">{text}</span>
                       </li>
                     )
                   })}
                 </ul>
-              </div>
+              </section>
+            )}
+
+            {/* What to Expect (image gallery — matching reference) */}
+            {expectImages.length > 0 && expectImages[0] !== FALLBACK_IMAGE && (
+              <section>
+                <div className="flex items-center gap-3 mb-4">
+                  <hr className="h-8 w-[4px] bg-[#02ACBE] border-none rounded" />
+                  <h2 className="text-xl font-bold text-black">What to Expect</h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {expectImages.map((url, i) => (
+                    <div key={i} className="relative w-full aspect-[4/3] rounded-xl overflow-hidden">
+                      <Image
+                        src={url}
+                        alt={`What to expect ${i + 1}`}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
 
             {/* Additional Info */}
             {product.additionalInfo && product.additionalInfo.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-3">Additional Information</h2>
+              <section>
+                <div className="flex items-center gap-3 mb-4">
+                  <hr className="h-8 w-[4px] bg-blue-400 border-none rounded" />
+                  <h2 className="text-xl font-bold text-black">Additional Information</h2>
+                </div>
                 <ul className="space-y-2">
                   {product.additionalInfo.map((info: any, i: number) => {
                     const text = itemText(info)
                     if (!text) return null
                     return (
-                      <li key={i} className="flex items-start gap-2 text-gray-600">
-                        <svg className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <li key={i} className="flex items-start gap-2.5 text-gray-700">
+                        <svg className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span>{text}</span>
+                        <span className="text-sm">{text}</span>
                       </li>
                     )
                   })}
                 </ul>
-              </div>
+              </section>
             )}
 
             {/* Viator link */}
             {product.productUrl && (
-              <div className="pt-4">
+              <div className="pb-4">
                 <a
                   href={product.productUrl}
                   target="_blank"
@@ -249,6 +311,8 @@ function ViatorProductContent() {
                 price={price}
                 title={product.title}
                 productCode={product.productCode}
+                ageBands={product.pricingInfo?.ageBands}
+                pricingCurrency={product.pricing?.currency || "IDR"}
               />
             </div>
           </div>
@@ -257,6 +321,8 @@ function ViatorProductContent() {
     </div>
   )
 }
+
+// ── Page wrapper ────────────────────────────────────────────────────────
 
 export default function ViatorProductPage() {
   return (
