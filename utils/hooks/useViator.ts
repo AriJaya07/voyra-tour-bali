@@ -153,6 +153,31 @@ export function useViatorProductDetail(
   });
 }
 
+// ── Hook: Search Viator products (freetext) ───────────────────────────
+export function useViatorSearch(
+  query: string,
+  currency: string = "USD"
+) {
+  return useQuery<ViatorProduct[]>({
+    queryKey: ["viator-search", query, currency],
+    queryFn: async () => {
+      if (!query.trim()) {
+        const { data } = await api.get("/viator", {
+          params: { action: "products", categoryName: "", currency },
+        });
+        return data?.products ?? [];
+      }
+      const { data } = await api.get("/viator", {
+        params: { action: "search", query, currency },
+      });
+      return data?.products ?? [];
+    },
+    enabled: true,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+}
+
 // ── Availability types ───────────────────────────────────────────────
 export interface AvailabilityPaxMix {
   ageBand: string;

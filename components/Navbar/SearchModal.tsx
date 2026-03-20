@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import Image from "next/image"
 import { useSearchDestinations } from "@/utils/hooks/useSearchDestinations"
+import { useViatorSearch, getViatorImageUrl } from "@/utils/hooks/useViator"
 import { formatPrice } from "@/utils/formatPrice"
 import CloseIcon from "../assets/dashboard/CloseIcon"
 import SearchIcon from "../assets/Icon/SearchIcon"
@@ -30,19 +31,54 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   // React Query - fetch all destinations when modal opens
-  const { data: allResults = [], isLoading } = useSearchDestinations(isOpen)
+  const { data: allResults = [], isLoading: isDbLoading } = useSearchDestinations(isOpen)
 
-  // Client-side filtering on debounced query
+  // React Query - fetch viator products
+  const { data: viatorResults = [], isLoading: isViatorLoading } = useViatorSearch(debouncedQuery)
+
+  const isLoading = isDbLoading || isViatorLoading
+
+  // Client-side filtering on debounced query & map generic structure
   const results = useMemo(() => {
-    if (!debouncedQuery.trim()) return allResults
-    const q = debouncedQuery.toLowerCase()
-    return allResults.filter(
-      (d) =>
-        d.title.toLowerCase().includes(q) ||
-        d.description.toLowerCase().includes(q) ||
-        d.category?.name?.toLowerCase().includes(q)
-    )
-  }, [debouncedQuery, allResults])
+    let dbFiltered = allResults
+    if (debouncedQuery.trim()) {
+      const q = debouncedQuery.toLowerCase()
+      dbFiltered = allResults.filter(
+        (d) =>
+          d.title?.toLowerCase().includes(q) ||
+          d.description?.toLowerCase().includes(q) ||
+          d.category?.name?.toLowerCase().includes(q)
+      )
+    }
+
+    const dbMapped = dbFiltered.map((d) => ({
+      id: `db-${d.id}`,
+      title: d.title,
+      href: `/detail/${d.slug || d.id}`,
+      imageUrl: d.images?.find((i) => i.isMain)?.url || d.images?.[0]?.url || null,
+      categoryName: d.category?.name || "Destination",
+      price: d.price,
+      currency: "IDR"
+    }))
+
+    const viatorFiltered = debouncedQuery.trim()
+      ? viatorResults.filter((v) =>
+          v.title?.toLowerCase().includes(debouncedQuery.toLowerCase())
+        )
+      : viatorResults.slice(0, 10)
+
+    const viatorMapped = viatorFiltered.map((v) => ({
+      id: `viator-${v.productCode}`,
+      title: v.title,
+      href: `/viator/${v.productCode}`,
+      imageUrl: getViatorImageUrl(v.images, 200),
+      categoryName: "Tour / Activity",
+      price: v.pricing?.summary?.fromPrice ?? null,
+      currency: v.pricing?.currency ?? "USD"
+    }))
+
+    return [...dbMapped, ...viatorMapped]
+  }, [debouncedQuery, allResults, viatorResults])
 
   // Focus input when modal opens
   useEffect(() => {
@@ -64,8 +100,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
   if (!isOpen) return null
 
-  const mainImage = (item: typeof allResults[number]) =>
-    item.images.find((i) => i.isMain)?.url || item.images[0]?.url || null
+  if (!isOpen) return null
 
   return (
     <>
@@ -138,11 +173,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 </p>
                 <div className="flex flex-col gap-1">
                   {results.map((item) => {
-                    const img = mainImage(item)
+                    const img = item.imageUrl
                     return (
                       <a
                         key={item.id}
-                        href={`/detail/${item.slug || item.id}`}
+                        href={item.href}
                         onClick={onClose}
                         className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition group cursor-pointer"
                       >
@@ -167,14 +202,14 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            {item.category && (
+                            {item.categoryName && (
                               <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full">
-                                {item.category.name}
+                                {item.categoryName}
                               </span>
                             )}
                             {item.price != null && (
                               <span className="text-xs text-gray-500">
-                                {formatPrice(Number(item.price))}
+                                {formatPrice(Number(item.price), item.currency as "IDR" | "USD")}
                               </span>
                             )}
                           </div>
