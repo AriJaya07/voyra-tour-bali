@@ -34,7 +34,13 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (!isValid) {
-            return null; // ❗ return null instead of throw
+            throw new Error("Invalid email or password");
+          }
+
+          // Require email verification ONLY for regular users.
+          // ADMIN and EDITOR roles can bypass this (though best practice is to set emailVerified=true in DB).
+          if (!user.emailVerified && user.role === 'USER') {
+             throw new Error("Please verify your email first");
           }
 
           // ✅ Always return plain object (include image for profile display)

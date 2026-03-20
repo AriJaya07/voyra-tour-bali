@@ -15,41 +15,50 @@ export async function POST(request: Request) {
       );
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const emailLower = email.toLowerCase().trim();
 
-    if (existingUser) {
-      return NextResponse.json(
-        { message: 'User with this email already exists' },
-        { status: 400 }
-      );
-    }
+    let user = await prisma.user.findUnique({
+      where: { email: emailLower },
+    });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-        role: 'USER',
-        verificationToken,
-        tokenExpiry,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
+    if (user) {
+      if (user.emailVerified) {
+        return NextResponse.json(
+          { message: 'User with this email already exists and is verified. Please log in.' },
+          { status: 400 }
+        );
+      } else {
+        // User exists but is unverified. Update password and send new token.
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            password: hashedPassword,
+            verificationToken,
+            tokenExpiry,
+            name: name || user.name, // update name if provided
+          }
+        });
       }
-    });
+    } else {
+      user = await prisma.user.create({
+        data: {
+          email: emailLower,
+          name,
+          password: hashedPassword,
+          role: 'USER',
+          verificationToken,
+          tokenExpiry,
+        }
+      });
+    }
 
     // Send verification email (non-blocking — don't fail registration if email fails)
     try {
-      await sendVerificationEmail(email, verificationToken);
+      await sendVerificationEmail(user.email, verificationToken);
     } catch (emailErr) {
       console.error('[Email] Failed to send verification email:', emailErr);
     }
@@ -57,7 +66,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message: 'Registration successful! Please check your email to verify your account.',
-        user,
+        user: { id: user.id, email: user.email, name: user.name, role: user.role },
         requiresVerification: true,
       },
       { status: 201 }
