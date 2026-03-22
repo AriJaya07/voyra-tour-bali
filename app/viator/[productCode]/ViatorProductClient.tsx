@@ -8,7 +8,7 @@ import { useViatorProductDetail, formatDuration } from "@/utils/hooks/useViator"
 import type { ViatorImage } from "@/utils/hooks/useViator"
 import { useCurrency } from "@/utils/hooks/useCurrency"
 import Container from "@/components/Container"
-import BookingUser from "@/components/DetailProduct/BookingUser"
+import BookingWidget from "./BookingWidget"
 import ImageGallery from "@/components/common/ImageGallery"
 import ErrorBoundary from "@/components/common/ErrorBoundary"
 import { trackViewItem } from "@/utils/analytics"
@@ -138,13 +138,14 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
             </h1>
             <div className="flex flex-wrap items-center gap-2 text-sm">
               {rating && (
-                <span className="flex items-center gap-1 bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full">
+                <div className="flex items-center gap-1 bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full">
                   <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                   </svg>
                   <span className="font-bold text-black">{rating.toFixed(1)}</span>
                   <span className="text-black/60">({reviewCount.toLocaleString()})</span>
-                </span>
+                  <span className="text-black/50 text-[10px] ml-1 uppercase tracking-wider font-semibold">Powered by Viator / Tripadvisor</span>
+                </div>
               )}
               {duration && (
                 <span className="flex items-center gap-1 bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full text-black/80">
@@ -281,20 +282,34 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
               </section>
             )}
 
-            {product.productUrl && (
-              <div className="pb-4">
-                <a
-                  href={product.productUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-[#0071CE] hover:underline font-medium"
-                >
-                  View on Viator
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              </div>
+            {(product as any).bookableItems && (product as any).bookableItems.length > 0 && (
+              <section>
+                <div className="flex items-center gap-3 mb-4">
+                  <hr className="h-8 w-[4px] bg-purple-400 border-none rounded" />
+                  <h2 className="text-xl font-bold text-black">Available Options</h2>
+                </div>
+                <div className="space-y-4">
+                  {(product as any).bookableItems.map((option: any, i: number) => (
+                    <div key={i} className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm flex flex-col md:flex-row gap-4 justify-between items-start">
+                      <div>
+                        <h3 className="font-bold text-lg text-gray-900 mb-1">{option.title || `Option ${i+1}`}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{option.description || "Experience this tour option."}</p>
+                        {option.startTime && (
+                          <span className="inline-block bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1 rounded-full">
+                            Start Time: {option.startTime}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-left md:text-right shrink-0">
+                        <div className="text-xs text-gray-500 font-medium">From</div>
+                        <div className="font-black text-xl text-[#0071CE]">
+                           {option.totalPrice?.price?.recommendedRetailPrice?.toLocaleString() || price?.toLocaleString()} {product.pricing?.currency || "IDR"}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
           </div>
 
@@ -302,12 +317,12 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-24">
               <ErrorBoundary>
-                <BookingUser
-                  price={price}
+                <BookingWidget
+                  basePrice={price}
                   title={product.title}
                   productCode={product.productCode}
+                  currency={product.pricing?.currency || "IDR"}
                   ageBands={product.pricingInfo?.ageBands}
-                  pricingCurrency={product.pricing?.currency || "IDR"}
                 />
               </ErrorBoundary>
             </div>

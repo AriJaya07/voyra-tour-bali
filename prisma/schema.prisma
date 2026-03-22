@@ -140,26 +140,50 @@ model User {
 }
 
 model Booking {
-  id          Int         @id @default(autoincrement())
-  bookingRef  String
-  productCode String
-  productTitle String
-  totalPrice  Float
-  travelDate  DateTime
-  pax         Int         @default(1)
-  status      BookingStatus @default(PENDING)
+  id             Int         @id @default(autoincrement())
+  bookingRef     String
+  productCode    String
+  productTitle   String
+  productImage   String?
+  totalPrice     Float
+  totalPriceUsd  Float?
+  currency       String      @default("IDR")
+  travelDate     DateTime
+  travelTime     String?
+  meetingPoint   String?
+  pax            Int         @default(1)
+  status         BookingStatus @default(PENDING)
+  
+  travelersJson  Json?
+  isFraudFlagged Boolean     @default(false)
+  voucherEmailed Boolean     @default(false)
 
-  paymentId   String?     @unique
-  snapToken   String?
-  paidAt      DateTime?
+  paymentId      String?     @unique
+  snapToken      String?
+  paidAt         DateTime?
 
-  ticketToken String?     @unique
+  ticketToken    String?     @unique
 
   userId Int
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  travelers      BookingTraveler[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model BookingTraveler {
+  id         Int      @id @default(autoincrement())
+  bookingRef String
+  fullName   String
+  ageBand    String
+
+  bookingId  Int
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum BookingStatus {
@@ -173,4 +197,16 @@ enum UserRole {
   ADMIN
   EDITOR
   USER
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  status    String   @default("ACTIVE") // ACTIVE or UNSUBSCRIBED
+  source    String   @default("WEBSITE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
 }

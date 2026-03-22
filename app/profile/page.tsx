@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import TicketModal from "./TicketModal";
+import CancelModal from "./CancelModal";
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   PENDING: { label: "Pending", className: "bg-amber-100 text-amber-800 border-amber-200" },
@@ -129,6 +131,18 @@ export default function ProfilePage() {
     }
   };
 
+  const [activeTab, setActiveTab] = useState('Upcoming');
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [cancellingTicket, setCancellingTicket] = useState<any>(null);
+
+  const filteredBookings = bookings.filter(b => {
+    const isPast = new Date(b.travelDate) < new Date(new Date().setHours(0,0,0,0));
+    if (activeTab === 'Upcoming') return b.status !== 'CANCELLED' && !isPast;
+    if (activeTab === 'Past') return b.status !== 'CANCELLED' && isPast;
+    if (activeTab === 'Cancelled') return b.status === 'CANCELLED';
+    return true;
+  });
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20">
@@ -218,7 +232,7 @@ export default function ProfilePage() {
                       type="email"
                       value={profile?.email || ""}
                       disabled
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-50. cursor-not-allowed"
                     />
                     <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
                   </div>
@@ -247,60 +261,112 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Booking history */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-900">Booking History</h2>
-            <p className="text-sm text-gray-500 mt-0.5">List of bookings you have made</p>
+        {/* 📋 My Bookings */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8" id="my-bookings">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              📋 My Bookings
+            </h2>
           </div>
           <div className="p-6">
-            {bookings.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <p className="text-gray-600 font-medium">No bookings yet</p>
-                <p className="text-sm text-gray-500 mt-1">Book a tour package to see your history here</p>
+            {/* Tabs */}
+            <div className="flex gap-2 mb-6 border-b border-gray-100 pb-4 overflow-x-auto hide-scrollbar">
+              {['Upcoming', 'Past', 'Cancelled'].map((tab) => {
+                const isActive = activeTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition ${
+                      isActive 
+                        ? 'bg-[#0071CE] text-white shadow-md' 
+                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                )
+              })}
+            </div>
+
+            {filteredBookings.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <div className="text-4xl mb-3">🌴</div>
+                <p className="text-gray-900 font-bold text-lg mb-1">{bookings.length === 0 ? "You have no bookings yet." : `You have no ${activeTab.toLowerCase()} bookings.`}</p>
+                <p className="text-sm text-gray-500 mb-6">Start exploring Bali!</p>
                 <Link
-                  href="/#paket"
-                  className="inline-block mt-4 px-5 py-2.5 bg-[#0071CE] text-white font-bold rounded-full text-sm hover:bg-[#005ba6] transition"
+                  href="/"
+                  className="inline-block px-6 py-3 bg-[#0071CE] text-white font-bold rounded-xl text-sm hover:bg-[#005ba6] transition shadow-sm"
                 >
-                  View Packages
+                  Browse Tours →
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
-                {/* Flow chart / status legend */}
-                <div className="flex flex-wrap gap-2 mb-6 p-4 bg-gray-50 rounded-xl">
-                  {Object.entries(STATUS_LABELS).map(([key, { label, className }]) => (
-                    <span key={key} className={`px-3 py-1 rounded-full text-xs font-semibold border ${className}`}>
-                      {label}
-                    </span>
-                  ))}
-                </div>
-
-                {bookings.map((b) => {
-                  const statusInfo = STATUS_LABELS[b.status] || { label: b.status, className: "bg-gray-100 text-gray-700" };
+              <div className="space-y-5">
+                {filteredBookings.map((b) => {
+                  const statusInfo = STATUS_LABELS[b.status] || { label: b.status || "PENDING", className: "bg-gray-100 text-gray-700" };
+                  
+                  // Mock data for missing fields if old bookings
+                  const imageUrl = (b as any).productImage || "/images/activity/melasti.png"; 
+                  const totalPriceUsd = (b as any).totalPriceUsd || (b.totalPrice / 15000);
+                  const currency = (b as any).currency || "IDR";
+                  const time = (b as any).travelTime || "08:00 AM";
+                  
                   return (
-                    <div
-                      key={b.id}
-                      className="border border-gray-200 rounded-xl p-4 hover:border-[#0071CE]/30 transition"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div>
-                          <p className="font-bold text-gray-900">{b.productTitle}</p>
-                          <p className="text-sm text-gray-500 mt-0.5">
-                            Ref: {b.bookingRef} · {b.pax} guest(s) · {fmtDate(b.travelDate)}
-                          </p>
-                          <p className="text-sm font-semibold text-[#0071CE] mt-2">{formatPrice(b.totalPrice)}</p>
+                    <div key={b.id} className="border border-gray-200 rounded-2xl overflow-hidden hover:border-[#0071CE]/40 transition bg-white shadow-sm flex flex-col md:flex-row">
+                      {/* Tour Cover Image */}
+                      <div className="w-full md:w-48 h-48 md:h-auto bg-gray-200 relative shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={imageUrl} alt={b.productTitle} className="w-full h-full object-cover" />
+                        <div className="absolute top-3 left-3">
+                           <span className={`px-3 py-1 rounded-full text-xs font-bold border shadow-sm backdrop-blur-md bg-white/90 ${statusInfo.className}`}>
+                             {b.status === 'CONFIRMED' ? '🟢 ' : b.status === 'CANCELLED' ? '🔴 ' : '⏳ '}{statusInfo.label}
+                           </span>
                         </div>
-                        <span
-                          className={`self-start sm:self-center px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${statusInfo.className}`}
-                        >
-                          {statusInfo.label}
-                        </span>
+                      </div>
+
+                      {/* Details */}
+                      <div className="p-5 flex-1 flex flex-col justify-between">
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900 leading-tight mb-3">
+                            {b.productTitle}
+                          </h3>
+                          
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <div className="flex items-start gap-2">
+                              <span className="shrink-0 mt-0.5">📅</span>
+                              <span>{fmtDate(b.travelDate)} • {time}</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <span className="shrink-0 mt-0.5">👥</span>
+                              <span>{b.pax} Guest(s) {(b as any).travelers?.length > 0 ? `(${(b as any).travelers.map((t: any) => t.ageBand).join(', ')})` : ''}</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <span className="shrink-0 mt-0.5">💰</span>
+                              <span className="font-semibold text-gray-900">
+                                {currency} {b.totalPrice.toLocaleString()} {totalPriceUsd ? `/ $${totalPriceUsd.toFixed(2)} USD` : ''}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                          {b.status !== 'CANCELLED' && (
+                            <button 
+                              onClick={() => setCancellingTicket(b)}
+                              className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition border border-red-100"
+                            >
+                              ❌ Cancel
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => setSelectedTicket(b)}
+                            className="px-5 py-2 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition shadow-sm"
+                          >
+                            🎫 View Ticket
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -316,6 +382,24 @@ export default function ProfilePage() {
           </Link>
         </div>
       </div>
+      
+      {/* Ticket Modal */}
+      {selectedTicket && (
+        <TicketModal booking={selectedTicket} onClose={() => setSelectedTicket(null)} />
+      )}
+      
+      {/* Cancel Modal */}
+      {cancellingTicket && (
+        <CancelModal 
+          booking={cancellingTicket} 
+          onClose={() => setCancellingTicket(null)} 
+          onSuccess={() => {
+            setCancellingTicket(null);
+            setMessage({ type: "success", text: "Your booking has been cancelled. Refund is being processed." });
+            setBookings(bookings.map(b => b.id === cancellingTicket.id ? { ...b, status: 'CANCELLED' } : b));
+          }}
+        />
+      )}
     </div>
   );
 }

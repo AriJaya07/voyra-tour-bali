@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { generateTicketQR } from '@/lib/ticket'
 import Container from '@/components/Container'
 import Link from 'next/link'
+import CancelButtonClient from './CancelButtonClient'
 
 export async function generateMetadata({
   params,
@@ -160,19 +161,24 @@ export default async function TicketPage({
             </div>
 
             {/* Footer */}
-            <div className="px-6 pb-6 flex gap-3">
-              <Link
-                href="/profile"
-                className="flex-1 text-center py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition"
-              >
-                My Bookings
-              </Link>
-              <Link
-                href="/"
-                className="flex-1 text-center py-3 bg-[#0071CE] text-white rounded-xl text-sm font-semibold hover:bg-[#005ba6] transition"
-              >
-                Explore More
-              </Link>
+            <div className="px-6 pb-4 flex flex-col gap-3">
+              <div className="flex gap-3">
+                <Link
+                  href="/profile"
+                  className="flex-1 text-center py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition"
+                >
+                  My Bookings
+                </Link>
+                <Link
+                  href="/"
+                  className="flex-1 text-center py-3 bg-[#0071CE] text-white rounded-xl text-sm font-semibold hover:bg-[#005ba6] transition"
+                >
+                  Explore More
+                </Link>
+              </div>
+              {isValid && booking.bookingRef && (
+                <CancelButtonClient bookingRef={booking.bookingRef} token={token} />
+              )}
             </div>
           </div>
         </div>
