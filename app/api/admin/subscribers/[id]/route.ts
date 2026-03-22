@@ -16,7 +16,7 @@ async function requireAdmin() {
 // ─────────────────────────────────────────
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireAdmin();
   if (!session) {
@@ -24,6 +24,7 @@ export async function PATCH(
   }
 
   try {
+    const { id } = await params;
     const body = await request.json();
     const { status } = body;
 
@@ -36,7 +37,7 @@ export async function PATCH(
     }
 
     const updated = await (prisma as any).subscription.update({
-      where: { id: params.id },
+      where: { id },
       data: { status, updatedAt: new Date() },
     });
 
@@ -55,7 +56,7 @@ export async function PATCH(
 // ─────────────────────────────────────────
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireAdmin();
   if (!session) {
@@ -63,8 +64,9 @@ export async function DELETE(
   }
 
   try {
+    const { id } = await params;
     await (prisma as any).subscription.delete({
-      where: { id: params.id },
+      where: { id },
     });
     return NextResponse.json({ success: true, message: "Subscriber deleted." });
   } catch (error: any) {
@@ -75,3 +77,4 @@ export async function DELETE(
     return NextResponse.json({ error: "Failed to delete subscriber." }, { status: 500 });
   }
 }
+
