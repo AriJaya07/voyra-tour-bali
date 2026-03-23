@@ -174,7 +174,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
 
       {/* ── Content body ── */}
       <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 py-10">
 
           {/* Left: Details */}
           <div className="lg:col-span-2 space-y-10">

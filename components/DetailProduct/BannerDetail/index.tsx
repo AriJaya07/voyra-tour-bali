@@ -1,5 +1,6 @@
 import { Image as PrismaImage } from "@prisma/client"
 import NextImage from "next/image"
+import Link from "next/link"
 import Container from "../../../components/Container"
 import BackArrowIcon from "../../assets/detail/BackArrowIcon"
 
@@ -30,7 +31,7 @@ export default function BannerDetail({ title, description, images, categoryName 
                 <Container>
                     <div className="">
                         <p className="text-[14px] leading-normal text-black flex gap-3 items-center">
-                            <a href="/" target="_self" className=""><BackArrowIcon className="w-[25px] h-[35px]" /></a>
+                            <Link href="/" className=""><BackArrowIcon className="w-[25px] h-[35px]" /></Link>
                             Beranda  &gt; {categoryName}  &gt; {title}
                         </p>
                     </div>

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, memo } from "react"
 import DotsIcon from "../../assets/Icon/DotsIcon"
 import { CATEGORY_ICON_MAP } from "../../assets/Icon/categories"
 import Image from "next/image"
+import Link from "next/link"
 import { useViatorProducts } from "@/utils/hooks/useViator"
 import { getViatorImageUrl } from "@/utils/hooks/useViator"
 import type { Category } from "@/types/tourism"
@@ -141,7 +142,7 @@ export default function Destination({ categories }: DestinationProps) {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {displayedDestinations.map((item) => (
-                  <a href={`/viator/${item.slug}`} key={item.id} target="_self">
+                  <Link href={`/viator/${item.slug}`} key={item.id}>
                     <div className="relative w-full h-[220px] rounded-md overflow-hidden">
                       <Image
                         src={item.imageUrl}
@@ -151,7 +152,7 @@ export default function Destination({ categories }: DestinationProps) {
                         className="object-cover transition-transform transform hover:scale-105"
                       />
                     </div>
-                  </a>
+                  </Link>
                 ))}
               </div>
 

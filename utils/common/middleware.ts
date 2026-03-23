@@ -28,7 +28,13 @@ export default withAuth(
   }
 );
 
-// Protect /dashboard/* and /profile/* (profile requires login)
+// Protect /dashboard/*, /profile/*, /checkout, and /payment/* (require login)
 export const config = {
-  matcher: ["/dashboard/:path*", "/profile/:path*", "/profile"],
+  matcher: [
+    "/dashboard/:path*",
+    "/profile/:path*",
+    "/profile",
+    "/checkout",
+    "/payment/:path*",
+  ],
 };

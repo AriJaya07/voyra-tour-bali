@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { 
-  FaFacebook, 
-  FaInstagram, 
-  FaTiktok, 
-  FaYoutube, 
-  FaTwitter, 
-  FaTelegramPlane 
+import {
+  FaFacebook,
+  FaInstagram,
+  FaTiktok,
+  FaYoutube,
+  FaTwitter,
+  FaTelegramPlane
 } from 'react-icons/fa';
 
 import VoryaIcon from '../assets/Icon/VoyraIcon';
@@ -44,41 +44,41 @@ const footerLinks = {
 };
 
 const socialLinks = [
-  { 
-    name: 'Facebook', 
-    icon: FaFacebook, 
-    href: 'https://facebook.com/voyrabali', 
-    hoverColor: 'hover:text-blue-500' 
+  {
+    name: 'Facebook',
+    icon: FaFacebook,
+    href: 'https://facebook.com/voyrabali',
+    hoverColor: 'hover:text-blue-500'
   },
-  { 
-    name: 'Instagram', 
-    icon: FaInstagram, 
-    href: 'https://instagram.com/voyrabali', 
-    hoverColor: 'hover:text-pink-500' 
+  {
+    name: 'Instagram',
+    icon: FaInstagram,
+    href: 'https://instagram.com/voyrabali',
+    hoverColor: 'hover:text-pink-500'
   },
-  { 
-    name: 'TikTok', 
-    icon: FaTiktok, 
-    href: 'https://tiktok.com/@voyrabali', 
-    hoverColor: 'hover:text-white' 
+  {
+    name: 'TikTok',
+    icon: FaTiktok,
+    href: 'https://tiktok.com/@voyrabali',
+    hoverColor: 'hover:text-white'
   },
-  { 
-    name: 'YouTube', 
-    icon: FaYoutube, 
-    href: 'https://youtube.com/@voyrabali', 
-    hoverColor: 'hover:text-red-500' 
+  {
+    name: 'YouTube',
+    icon: FaYoutube,
+    href: 'https://youtube.com/@voyrabali',
+    hoverColor: 'hover:text-red-500'
   },
-  { 
-    name: 'Twitter', 
-    icon: FaTwitter, 
-    href: 'https://twitter.com/voyrabali', 
-    hoverColor: 'hover:text-sky-400' 
+  {
+    name: 'Twitter',
+    icon: FaTwitter,
+    href: 'https://twitter.com/voyrabali',
+    hoverColor: 'hover:text-sky-400'
   },
-  { 
-    name: 'Telegram', 
-    icon: FaTelegramPlane, 
-    href: 'https://t.me/voyrabali', 
-    hoverColor: 'hover:text-blue-400' 
+  {
+    name: 'Telegram',
+    icon: FaTelegramPlane,
+    href: 'https://t.me/voyrabali',
+    hoverColor: 'hover:text-blue-400'
   },
 ];
 
@@ -101,7 +101,7 @@ export default function Footer() {
         body: JSON.stringify({ email })
       });
       const data = await res.json();
-      
+
       if (res.ok) {
         setMessage({ type: 'success', text: data.message });
         setEmail('');
@@ -116,14 +116,14 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-zinc-900 text-gray-400 font-sans print:hidden mt-auto">
+    <footer className="bg-zinc-900 text-gray-400 font-sans print:hidden">
       {/* Top Accent Line */}
       <div className="h-1 w-full bg-[#F06400]" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
         {/* TOP SECTION: 4 COLUMNS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          
+
           {/* Column 1: Brand */}
           <div className="space-y-6">
             <Link href="/" aria-label="Home" className="inline-block">
@@ -161,7 +161,7 @@ export default function Footer() {
             <ul className="space-y-4">
               {footerLinks.explore.map((link) => (
                 <li key={link.label}>
-                  <Link 
+                  <Link
                     href={link.href}
                     className="text-sm transition-colors duration-200 hover:text-white cursor-pointer"
                   >
@@ -180,7 +180,7 @@ export default function Footer() {
             <ul className="space-y-4">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
-                  <Link 
+                  <Link
                     href={link.href}
                     className="text-sm transition-colors duration-200 hover:text-white cursor-pointer"
                   >
@@ -199,7 +199,7 @@ export default function Footer() {
             <ul className="space-y-4">
               {footerLinks.support.map((link) => (
                 <li key={link.label}>
-                  <Link 
+                  <Link
                     href={link.href}
                     className="text-sm transition-colors duration-200 hover:text-white cursor-pointer"
                   >
@@ -224,17 +224,17 @@ export default function Footer() {
           </div>
           <form className="flex w-full md:w-auto gap-2 items-start" onSubmit={handleSubscribe}>
             <div className="flex flex-col w-full h-full">
-              <input 
-                type="email" 
+              <input
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email" 
+                placeholder="Enter your email"
                 disabled={loading}
                 className="bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 text-sm rounded-lg focus:ring-2 focus:ring-[#0071CE] focus:border-transparent block w-full px-4 py-3 outline-none transition-all disabled:opacity-50"
                 required
               />
             </div>
-            <button 
+            <button
               type="submit"
               disabled={loading}
               className="bg-[#F06400] hover:bg-orange-600 text-white font-semibold text-sm px-6 py-3 rounded-lg transition-colors duration-200 whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed h-[46px]"
@@ -246,7 +246,7 @@ export default function Footer() {
 
         {/* BOTTOM SECTION: VIATOR BADGE & COPYRIGHT */}
         <div className="border-t border-zinc-800 pt-8 flex flex-col items-center">
-          
+
           {/* Viator Certification Logo */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
             <p className="text-sm text-gray-400 font-medium">

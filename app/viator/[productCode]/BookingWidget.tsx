@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface Traveler {
   ageBand: 'ADULT' | 'CHILD' | 'INFANT' | 'YOUTH' | 'SENIOR' | string;
@@ -75,12 +76,12 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
         const apiPrice = data.bookableItems?.[0]?.totalPrice?.price?.recommendedRetailPrice;
         setPrice(apiPrice || (basePrice * totalTravelers));
       } else {
-        alert("Not available for the selected date/travelers.");
+        toast.warning("Not available for the selected date/travelers.");
         setPrice(null);
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to check availability.");
+      toast.error("Failed to check availability. Please try again.");
     } finally {
       setIsChecking(false);
     }

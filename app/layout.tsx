@@ -7,6 +7,7 @@ import SessionProviderWrapper from "@/components/Wrapper/SessionProviderWrapper"
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import LayoutWrapper from "@/components/Wrapper/LayoutWrapper";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -149,6 +150,17 @@ export default async function RootLayout({
               {children}
             </LayoutWrapper>
           </ReactQueryProvider>
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            toastOptions={{
+              duration: 4000,
+              style: {
+                fontFamily: "inherit",
+              },
+            }}
+          />
         </SessionProviderWrapper>
       </body>
     </html>

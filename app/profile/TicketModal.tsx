@@ -3,6 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { toPng } from "html-to-image";
+import { toast } from "sonner";
 
 interface TicketModalProps {
   booking: any;
@@ -55,7 +56,7 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
         link.click();
       } catch (err) {
         console.error("Failed to save ticket image", err);
-        alert("Could not save image.");
+        toast.error("Could not save ticket image.");
       }
     }
   };
@@ -70,12 +71,12 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(`Ticket sent to ${data.email}`);
+        toast.success(`Ticket sent to ${data.email}`);
       } else {
-        alert("Failed to send email");
+        toast.error("Failed to send email. Please try again.");
       }
     } catch (err) {
-      alert("Error sending email");
+      toast.error("Error sending email. Please try again.");
     } finally {
       setSendingEmail(false);
     }

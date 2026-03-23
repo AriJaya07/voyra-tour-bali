@@ -90,9 +90,9 @@ export default function Navbar() {
       }`}>
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
-          <a href="/" target="_self" className="flex-shrink-0">
+          <Link href="/" target="_self" className="flex-shrink-0">
             <VoryaIcon className="h-[40px] sm:h-[50px] w-auto" />
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-4 xl:gap-6">

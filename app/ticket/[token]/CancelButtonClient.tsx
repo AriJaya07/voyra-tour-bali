@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function CancelButtonClient({ bookingRef, token }: { bookingRef: string, token: string }) {
   const router = useRouter();
@@ -17,10 +18,10 @@ export default function CancelButtonClient({ bookingRef, token }: { bookingRef: 
       if (res.ok && data.refundDetails) {
         setQuote(data);
       } else {
-        alert("Could not get cancellation quote.");
-      }
+        toast.error("Could not get cancellation quote.");
+  }
     } catch (e) {
-      alert("Error fetching cancel quote.");
+      toast.error("Error fetching cancellation quote.");
     } finally {
       setIsQuoting(false);
     }
@@ -36,14 +37,14 @@ export default function CancelButtonClient({ bookingRef, token }: { bookingRef: 
       });
       const data = await res.json();
       if (res.ok && data.status) {
-        alert("Booking cancelled successfully.");
+        toast.success("Booking cancelled successfully.");
         // We would also update the db status here, but for now just refresh
         router.refresh();
       } else {
-        alert("Failed to cancel booking.");
+        toast.error("Failed to cancel booking.");
       }
     } catch (e) {
-      alert("Error cancelling booking.");
+      toast.error("Error cancelling booking. Please try again.");
     } finally {
       setIsCancelling(false);
       setQuote(null);

@@ -78,10 +78,9 @@ const TabButton = memo(function TabButton({
         whitespace-nowrap
         shrink-0
         max-w-[160px] truncate
-        ${
-          isActive
-            ? "bg-blue-50 text-blue-600 shadow-md"
-            : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+        ${isActive
+          ? "bg-blue-50 text-blue-600 shadow-md"
+          : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900"
         }
       `}
       title={label}
@@ -174,9 +173,8 @@ function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: Cur
                 )}
 
                 {/* Current price */}
-                <p className={`text-sm sm:text-base font-black leading-tight ${
-                  item.priceBeforeDiscount ? "text-red-600" : "text-gray-900"
-                }`}>
+                <p className={`text-sm sm:text-base font-black leading-tight ${item.priceBeforeDiscount ? "text-red-600" : "text-gray-900"
+                  }`}>
                   {formatPrice(item.price, currency, sourceCurrency)}
                 </p>
               </>
@@ -224,7 +222,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
   const hasMore = shuffledActivities.length > 5
 
   return (
-    <section id="paket" className="pt-20 px-4 mb-20">
+    <section id="paket" className="py-10 px-4">
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-2xl sm:text-3xl font-bold text-black">
           Trending Activity
@@ -296,17 +294,6 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
             </p>
           </div>
         )}
-      </div>
-
-      {/* Banner */}
-      <div className="flex justify-center mt-12">
-        <Image
-          src="/images/iklan/tolak-angin.png"
-          alt="Advertisement"
-          width={700}
-          height={200}
-          className="w-full max-w-[700px]"
-        />
       </div>
     </section>
   )

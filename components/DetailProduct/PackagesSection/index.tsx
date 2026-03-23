@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useCreatePayment } from "@/utils/hooks/usePayment"
 import { formatPrice } from "@/utils/formatPrice"
+import { toast } from "sonner"
 
 // Types
 type PackageWithRelations = Package & {
@@ -67,7 +68,7 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
           window.location.href = data.redirectUrl;
         },
         onError: () => {
-          alert("A system error occurred while processing your booking.");
+          toast.error("A system error occurred while processing your booking.");
           setBookingPkgId(null);
         },
       }

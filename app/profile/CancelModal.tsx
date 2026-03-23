@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface CancelModalProps {
   booking: any;
@@ -54,10 +55,10 @@ export default function CancelModal({ booking, onClose, onSuccess }: CancelModal
 
         onSuccess();
       } else {
-        alert("Failed to cancel this booking.");
+        toast.error("Failed to cancel this booking.");
       }
     } catch (e) {
-      alert("Error cancelling booking.");
+      toast.error("Error cancelling booking. Please try again.");
     } finally {
       setCancelling(false);
     }
