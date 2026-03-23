@@ -126,10 +126,6 @@ function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: Cur
               Free Cancellation
             </span>
           )}
-
-          <span className="absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-500 text-white">
-            Viator
-          </span>
         </div>
 
         {/* Info */}
