@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function PromotionApp() {
     return (
-        <section className="w-full bg-gray-50 p-4 rounded-2xl mb-5">
+        <section className="w-full flex justify-center items-center bg-gray-50 p-4 rounded-2xl mb-5">
             <div className="w-full max-w-6xl bg-white rounded-2xl flex justify-center shadow-md p-6 md:p-10">
 
                 <div className="flex flex-col lg:flex-row items-center gap-8">
