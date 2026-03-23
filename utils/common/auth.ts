@@ -1,10 +1,16 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -15,7 +21,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) {
-            return null; // ❗ Don't throw error here
+            return null;
           }
 
           const user = await prisma.user.findUnique({
@@ -25,7 +31,12 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user) {
-            return null; // ❗ return null instead of throw
+            return null;
+          }
+
+          // If user registered via Google, they don't have a password
+          if (!user.password) {
+            throw new Error("This account uses Google Sign-In. Please login with Google.");
           }
 
           const isValid = await bcrypt.compare(
@@ -37,13 +48,10 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Invalid email or password");
           }
 
-          // Require email verification ONLY for regular users.
-          // ADMIN and EDITOR roles can bypass this (though best practice is to set emailVerified=true in DB).
           if (!user.emailVerified && user.role === 'USER') {
              throw new Error("Please verify your email first");
           }
 
-          // ✅ Always return plain object (include image for profile display)
           return {
             id: user.id.toString(),
             email: user.email,
@@ -66,7 +74,58 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        const email = user.email?.toLowerCase().trim();
+        if (!email) return false;
+
+        try {
+          // Upsert: create user if not exists, otherwise update Google profile data
+          await prisma.user.upsert({
+            where: { email },
+            update: {
+              name: user.name ?? undefined,
+              image: user.image ?? undefined,
+              provider: "google",
+              emailVerified: true,
+            },
+            create: {
+              email,
+              name: user.name ?? null,
+              image: user.image ?? null,
+              provider: "google",
+              emailVerified: true,
+              // password is null for Google users
+            },
+          });
+        } catch (error) {
+          console.error("Google signIn callback error:", error);
+          return false;
+        }
+      }
+      return true;
+    },
+
+    async jwt({ token, user, account }) {
+      // On initial sign-in, populate token from DB
+      if (account && user) {
+        const email = (user.email ?? token.email)?.toLowerCase().trim();
+        if (email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true, role: true, image: true, emailVerified: true },
+          });
+          if (dbUser) {
+            token.id = dbUser.id.toString();
+            token.role = dbUser.role;
+            token.image = dbUser.image ?? undefined;
+            token.emailVerified = dbUser.emailVerified;
+            return token;
+          }
+        }
+      }
+
+      // For credentials provider (existing flow)
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
@@ -81,7 +140,6 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         (session.user as any).role = token.role;
         (session.user as any).image = token.image;
-        // Fetch latest image from DB (in case user updated profile)
         (session.user as any).emailVerified = token.emailVerified;
         try {
           const user = await prisma.user.findUnique({

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AuthInput from "./AuthInput";
+import GoogleSignInButton from "./GoogleSignInButton";
 import UserIcon from "../assets/login/UserIcon";
 import EmailIcon from "../assets/login/EmailIcon";
 import PasswrodIcon from "../assets/login/PasswordIcon";
@@ -317,6 +318,16 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
           {isLoading ? "Registering..." : "Register Now"}
         </button>
       </form>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-slate-700" />
+        <span className="text-xs text-slate-500 uppercase tracking-wider">or</span>
+        <div className="flex-1 h-px bg-slate-700" />
+      </div>
+
+      {/* Google Sign-Up */}
+      <GoogleSignInButton callbackUrl={callbackUrl} label="Sign up with Google" />
     </>
   );
 }

@@ -123,11 +123,12 @@ model Image {
 model User {
   id       Int       @id @default(autoincrement())
   email    String    @unique
-  password String
+  password String?
   name     String?
   role     UserRole  @default(USER)
   image    String?
   phone    String?
+  provider String    @default("credentials")
 
   emailVerified     Boolean   @default(false)
   verificationToken String?

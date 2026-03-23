@@ -26,6 +26,14 @@ export async function POST(request: Request) {
     const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     if (user) {
+      // If user registered via Google, don't allow password registration
+      if (user.provider === 'google') {
+        return NextResponse.json(
+          { message: 'This email is linked to a Google account. Please sign in with Google.' },
+          { status: 400 }
+        );
+      }
+
       if (user.emailVerified) {
         return NextResponse.json(
           { message: 'User with this email already exists and is verified. Please log in.' },

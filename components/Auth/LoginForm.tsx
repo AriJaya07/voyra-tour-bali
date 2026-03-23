@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import AuthInput from "./AuthInput";
+import GoogleSignInButton from "./GoogleSignInButton";
 import WarningIcon from "../assets/login/WarningIcon";
 import EmailIcon from "../assets/login/EmailIcon";
 import PasswrodIcon from "../assets/login/PasswordIcon";
@@ -148,6 +149,16 @@ export default function LoginForm({ callbackUrl, onRedirect, showDemo }: LoginFo
           )}
         </button>
       </form>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-slate-700" />
+        <span className="text-xs text-slate-500 uppercase tracking-wider">or</span>
+        <div className="flex-1 h-px bg-slate-700" />
+      </div>
+
+      {/* Google Sign-In */}
+      <GoogleSignInButton callbackUrl={callbackUrl || "/"} />
 
       {showDemo && (
         <div className="mt-6 p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
