@@ -1,5 +1,5 @@
 import { Image as PrismaImage } from "@prisma/client"
-import NextImage from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import Link from "next/link"
 import Container from "../../../components/Container"
 import BackArrowIcon from "../../assets/detail/BackArrowIcon"
@@ -43,33 +43,33 @@ export default function BannerDetail({ title, description, images, categoryName 
                         <div className="flex flex-col sm:flex-row gap-1">
                             {/* Image 1 (always visible) */}
                             <div className="relative w-full sm:w-[733px] h-[458px]">
-                                <NextImage src={img1} alt={title} fill sizes="(max-width: 640px) 100vw, 733px" className="object-cover" priority />
+                                <OptimizedImage src={img1} alt={title} fill sizes="(max-width: 640px) 100vw, 733px" className="object-cover" priority />
                             </div>
 
                             {/* On mobile, show only one image */}
                             <div className="flex flex-col sm:hidden gap-1">
                                 <div className="relative w-full h-[226px]">
-                                    <NextImage src={img2} alt={title} fill sizes="100vw" className="object-cover" />
+                                    <OptimizedImage src={img2} alt={title} fill sizes="100vw" className="object-cover" />
                                 </div>
                             </div>
 
                             {/* On larger screens, show multiple images */}
                             <div className="hidden sm:flex sm:flex-col gap-1 sm:w-[362px] h-[458px]">
                                 <div className="relative w-full h-[229px]">
-                                    <NextImage src={img2} alt={title} fill sizes="362px" className="object-cover" />
+                                    <OptimizedImage src={img2} alt={title} fill sizes="362px" className="object-cover" />
                                 </div>
                                 <div className="relative w-full h-[225px]">
-                                    <NextImage src={img3} alt={title} fill sizes="362px" className="object-cover" />
+                                    <OptimizedImage src={img3} alt={title} fill sizes="362px" className="object-cover" />
                                 </div>
                             </div>
 
                             {/* On larger screens, show more images */}
                             <div className="hidden sm:flex sm:flex-col gap-1 sm:w-[362px] h-[458px]">
                                 <div className="relative w-full h-[229px]">
-                                    <NextImage src={img4} alt={title} fill sizes="362px" className="object-cover" />
+                                    <OptimizedImage src={img4} alt={title} fill sizes="362px" className="object-cover" />
                                 </div>
                                 <div className="relative w-full h-[225px]">
-                                    <NextImage src={img5} alt={title} fill sizes="362px" className="object-cover" />
+                                    <OptimizedImage src={img5} alt={title} fill sizes="362px" className="object-cover" />
                                 </div>
                             </div>
                         </div>

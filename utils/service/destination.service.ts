@@ -93,6 +93,13 @@ export const destinationService = {
     return data;
   },
 
+  getByCategory: async (categoryId: number | string): Promise<Destination[]> => {
+    const { data } = await api.get<Destination[]>(BASE, {
+      params: { categoryId },
+    });
+    return data;
+  },
+
   getOne: async (id: number | string): Promise<Destination> => {
     const { data } = await api.get<Destination>(`${BASE}/${id}`);
     return data;

@@ -1,17 +1,20 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
-import Image from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import Link from "next/link"
 import { Suspense, useEffect } from "react"
 import { useViatorProductDetail, formatDuration } from "@/utils/hooks/useViator"
 import type { ViatorImage } from "@/utils/hooks/useViator"
 import { useCurrency } from "@/utils/hooks/useCurrency"
 import Container from "@/components/Container"
-import BookingWidget from "./BookingWidget"
+import BookingWidget from "@/components/viator/BookingWidget"
 import ImageGallery from "@/components/common/ImageGallery"
 import ErrorBoundary from "@/components/common/ErrorBoundary"
 import { trackViewItem } from "@/utils/analytics"
+import LogisticsSection from "@/components/viator/LogisticsSection"
+import ProductDetailsSection from "@/components/viator/ProductDetailsSection"
+import { FaChevronRight } from "react-icons/fa"
 
 const FALLBACK_IMAGE = "/images/activity/melasti.png"
 
@@ -109,7 +112,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
 
   // ── Data extraction ─────────────────────────────────────────────────
   const allImages = extractAllImages(product.images, 720)
-  const durationData = product.duration || (product as any).itinerary?.duration
+  const durationData = product.duration || product.itinerary?.duration
   const duration = formatDuration(durationData)
   const rating = product.reviews?.combinedAverageRating
   const reviewCount = product.reviews?.totalReviews || 0
@@ -126,11 +129,20 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
       {/* ── Banner header ── */}
       <div className="bg-gradient-to-r from-[#00E7FF] to-[#0097E8] pt-3 pb-8">
         <Container>
-          <nav className="flex items-center gap-2 text-sm text-black/70 mb-6 pt-16">
-            <Link href="/" className="hover:text-black transition">Home</Link>
-            <span>&gt;</span>
-            <span className="text-black font-medium truncate max-w-[250px] sm:max-w-none">{product.title}</span>
-          </nav>
+        <nav className="flex items-center flex-wrap gap-1 text-sm text-gray-500 my-6">
+          <Link
+            href="/"
+            className="hover:text-gray-900 transition-colors font-medium"
+          >
+            Home
+          </Link>
+
+          <FaChevronRight className="w-4 h-4 text-gray-400" />
+
+          <span className="text-gray-900 font-semibold truncate max-w-[200px] sm:max-w-[300px] md:max-w-none">
+            {product.title}
+          </span>
+        </nav>
 
           <div className="mb-5">
             <h1 className="text-xl sm:text-2xl font-bold text-black leading-tight mb-2">
@@ -191,6 +203,10 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
               </div>
             </section>
 
+            {product.logistics && (
+              <LogisticsSection logistics={product.logistics} timeZone={product.timeZone} />
+            )}
+
             {product.inclusions && product.inclusions.length > 0 && (
               <section>
                 <div className="flex items-center gap-3 mb-4">
@@ -246,7 +262,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {expectImages.map((url, i) => (
                     <div key={i} className="relative w-full aspect-[4/3] rounded-xl overflow-hidden">
-                      <Image
+                      <OptimizedImage
                         src={url}
                         alt={`What to expect ${i + 1}`}
                         fill
@@ -282,35 +298,15 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
               </section>
             )}
 
-            {(product as any).bookableItems && (product as any).bookableItems.length > 0 && (
-              <section>
-                <div className="flex items-center gap-3 mb-4">
-                  <hr className="h-8 w-[4px] bg-purple-400 border-none rounded" />
-                  <h2 className="text-xl font-bold text-black">Available Options</h2>
-                </div>
-                <div className="space-y-4">
-                  {(product as any).bookableItems.map((option: any, i: number) => (
-                    <div key={i} className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm flex flex-col md:flex-row gap-4 justify-between items-start">
-                      <div>
-                        <h3 className="font-bold text-lg text-gray-900 mb-1">{option.title || `Option ${i+1}`}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{option.description || "Experience this tour option."}</p>
-                        {option.startTime && (
-                          <span className="inline-block bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1 rounded-full">
-                            Start Time: {option.startTime}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-left md:text-right shrink-0">
-                        <div className="text-xs text-gray-500 font-medium">From</div>
-                        <div className="font-black text-xl text-[#0071CE]">
-                           {option.totalPrice?.price?.recommendedRetailPrice?.toLocaleString() || price?.toLocaleString()} {product.pricing?.currency || "IDR"}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+            <ProductDetailsSection
+              cancellationPolicy={product.cancellationPolicy}
+              bookingConfirmation={product.bookingConfirmationSettings}
+              bookingRequirements={product.bookingRequirements}
+              languageGuides={product.languageGuides}
+              itinerary={product.itinerary}
+              productOptions={product.productOptions}
+              supplier={product.supplier}
+            />
           </div>
 
           {/* Right: Booking Sidebar */}
@@ -323,6 +319,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
                   productCode={product.productCode}
                   currency={product.pricing?.currency || "IDR"}
                   ageBands={product.pricingInfo?.ageBands}
+                  productOptions={product.productOptions}
                 />
               </ErrorBoundary>
             </div>

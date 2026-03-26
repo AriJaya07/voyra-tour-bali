@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { productCode, travelDate, paxMix, bookerInfo, communication } = body;
+    const { productCode, productOptionCode, travelDate, paxMix, bookerInfo, communication } = body;
 
     const apiKey = process.env.VIATOR_API_KEY as string;
 
@@ -19,6 +19,17 @@ export async function POST(req: Request) {
       });
     }
 
+    const viatorPayload: Record<string, unknown> = {
+      productCode,
+      travelDate,
+      paxMix,
+      bookerInfo,
+      communication,
+    };
+    if (productOptionCode) {
+      viatorPayload.productOptionCode = productOptionCode;
+    }
+
     const viatorResponse = await fetch('https://api.sandbox.viator.com/partner/bookings/book', {
       method: 'POST',
       headers: {
@@ -26,13 +37,7 @@ export async function POST(req: Request) {
         'Content-Type': 'application/json',
         'exp-api-key': apiKey,
       },
-      body: JSON.stringify({
-        productCode,
-        travelDate,
-        paxMix,
-        bookerInfo,
-        communication
-      }),
+      body: JSON.stringify(viatorPayload),
     });
 
     const data = await viatorResponse.json();

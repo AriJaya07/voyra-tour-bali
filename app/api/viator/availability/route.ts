@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { productCode, travelDate, paxMix, currency } = body;
+    const { productCode, productOptionCode, travelDate, paxMix, currency } = body;
 
     // Validate inputs
     if (!productCode || !travelDate || !paxMix) {
@@ -12,15 +12,17 @@ export async function POST(req: Request) {
 
     // Attempt to hit Viator, fallback to mock if API key unavailable
     const apiKey = process.env.VIATOR_API_KEY as string;
-    
+
     // Fallback Mock for Certification if key is missing or invalid
     if (!apiKey) {
       return NextResponse.json({
         available: true,
         productCode: productCode,
+        productOptionCode: productOptionCode,
         travelDate: travelDate,
         bookableItems: [
           {
+            productOptionCode: productOptionCode,
             itemCode: "ITEM-1",
             totalPrice: {
               price: {
@@ -34,6 +36,16 @@ export async function POST(req: Request) {
       });
     }
 
+    const viatorPayload: Record<string, unknown> = {
+      productCode,
+      travelDate,
+      paxMix,
+      currency: currency || "USD",
+    };
+    if (productOptionCode) {
+      viatorPayload.productOptionCode = productOptionCode;
+    }
+
     const viatorResponse = await fetch('https://api.sandbox.viator.com/partner/availability/check', {
       method: 'POST',
       headers: {
@@ -42,12 +54,7 @@ export async function POST(req: Request) {
         'exp-api-key': apiKey,
         'Accept-Language': 'en-US',
       },
-      body: JSON.stringify({
-        productCode,
-        travelDate,
-        paxMix,
-        currency: currency || "USD"
-      }),
+      body: JSON.stringify(viatorPayload),
     });
 
     const data = await viatorResponse.json();

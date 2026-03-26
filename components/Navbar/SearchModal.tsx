@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from "react"
-import Image from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import { useSearchDestinations } from "@/utils/hooks/useSearchDestinations"
 import { useViatorSearch, getViatorImageUrl } from "@/utils/hooks/useViator"
 import { formatPrice } from "@/utils/formatPrice"
@@ -184,7 +184,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         {/* Thumbnail */}
                         {img ? (
                           <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
-                            <Image
+                            <OptimizedImage
                               src={img}
                               alt={item.title}
                               fill
@@ -233,13 +233,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 </p>
               </div>
             )}
-          </div>
-
-          {/* Footer hint */}
-          <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-400 flex items-center gap-4">
-            <span><kbd className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-xs">↑↓</kbd> navigate</span>
-            <span><kbd className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-xs">↵</kbd> select</span>
-            <span><kbd className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-xs">ESC</kbd> close</span>
           </div>
         </div>
       </div>

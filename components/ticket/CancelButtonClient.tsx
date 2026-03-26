@@ -3,24 +3,32 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { fetchCancelQuote, cancelBooking } from '@/lib/api/viator-client';
 
-export default function CancelButtonClient({ bookingRef, token }: { bookingRef: string, token: string }) {
+interface CancelQuote {
+  refundDetails: {
+    refundAmount: number;
+    currencyCode: string;
+  };
+  status: string;
+}
+
+export default function CancelButtonClient({ bookingRef, token }: { bookingRef: string; token: string }) {
   const router = useRouter();
   const [isQuoting, setIsQuoting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [quote, setQuote] = useState<any>(null);
+  const [quote, setQuote] = useState<CancelQuote | null>(null);
 
   const handleGetQuote = async () => {
     try {
       setIsQuoting(true);
-      const res = await fetch(`/api/viator/cancel-quote?bookingRef=${bookingRef}`);
-      const data = await res.json();
-      if (res.ok && data.refundDetails) {
+      const data = await fetchCancelQuote(bookingRef);
+      if (data.refundDetails) {
         setQuote(data);
       } else {
         toast.error("Could not get cancellation quote.");
-  }
-    } catch (e) {
+      }
+    } catch {
       toast.error("Error fetching cancellation quote.");
     } finally {
       setIsQuoting(false);
@@ -30,20 +38,14 @@ export default function CancelButtonClient({ bookingRef, token }: { bookingRef: 
   const handleCancel = async () => {
     try {
       setIsCancelling(true);
-      const res = await fetch('/api/viator/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingRef, reasonCode: "CUSTOMER_REQUEST" })
-      });
-      const data = await res.json();
-      if (res.ok && data.status) {
+      const data = await cancelBooking(bookingRef);
+      if (data.status) {
         toast.success("Booking cancelled successfully.");
-        // We would also update the db status here, but for now just refresh
         router.refresh();
       } else {
         toast.error("Failed to cancel booking.");
       }
-    } catch (e) {
+    } catch {
       toast.error("Error cancelling booking. Please try again.");
     } finally {
       setIsCancelling(false);
@@ -63,15 +65,15 @@ export default function CancelButtonClient({ bookingRef, token }: { bookingRef: 
             <br/>Status: {quote.status}
           </p>
           <div className="flex gap-2 justify-center">
-            <button 
-              onClick={() => setQuote(null)} 
+            <button
+              onClick={() => setQuote(null)}
               disabled={isCancelling}
               className="px-4 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300"
             >
               Keep Booking
             </button>
-            <button 
-              onClick={handleCancel} 
+            <button
+              onClick={handleCancel}
               disabled={isCancelling}
               className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700"
             >
@@ -80,7 +82,7 @@ export default function CancelButtonClient({ bookingRef, token }: { bookingRef: 
           </div>
         </div>
       ) : (
-        <button 
+        <button
           onClick={handleGetQuote}
           disabled={isQuoting}
           className="w-full text-center py-3 bg-red-100 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-200 transition"

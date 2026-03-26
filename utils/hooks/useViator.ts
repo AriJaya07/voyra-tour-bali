@@ -36,6 +36,88 @@ export interface ViatorPricingInfo {
   ageBands?: ViatorAgeBand[];
 }
 
+export interface ViatorLogisticsLocation {
+  location: { ref: string };
+  description?: string;
+  pickupType?: string;
+}
+
+export interface ViatorLogistics {
+  start?: ViatorLogisticsLocation[];
+  end?: ViatorLogisticsLocation[];
+  redemption?: {
+    redemptionType?: string;
+    specialInstructions?: string;
+  };
+  travelerPickup?: {
+    pickupOptionType?: string;
+    allowCustomTravelerPickup?: boolean;
+    locations?: ViatorLogisticsLocation[];
+    additionalInfo?: string;
+  };
+}
+
+export interface ViatorCancellationPolicy {
+  type: string;
+  description: string;
+  cancelIfBadWeather?: boolean;
+  cancelIfInsufficientTravelers?: boolean;
+  refundEligibility?: Array<{
+    dayRangeMin: number;
+    dayRangeMax?: number;
+    percentageRefundable: number;
+  }>;
+}
+
+export interface ViatorBookingRequirements {
+  minTravelersPerBooking?: number;
+  maxTravelersPerBooking?: number;
+  requiresAdultForBooking?: boolean;
+}
+
+export interface ViatorLanguageGuide {
+  type: string;
+  language: string;
+  legacyGuide?: string;
+}
+
+export interface ViatorItineraryItem {
+  pointOfInterestLocation?: {
+    location: { ref: string };
+    attractionId?: number;
+  };
+  duration?: {
+    fixedDurationInMinutes?: number;
+  };
+  passByWithoutStopping?: boolean;
+  admissionIncluded?: string;
+  description?: string;
+}
+
+export interface ViatorItinerary {
+  itineraryType?: string;
+  skipTheLine?: boolean;
+  privateTour?: boolean;
+  duration?: {
+    fixedDurationInMinutes?: number;
+    variableDurationFromMinutes?: number;
+    variableDurationToMinutes?: number;
+  };
+  itineraryItems?: ViatorItineraryItem[];
+}
+
+export interface ViatorProductOption {
+  productOptionCode: string;
+  title: string;
+  description: string;
+  languageGuides?: ViatorLanguageGuide[];
+}
+
+export interface ViatorSupplier {
+  name: string;
+  reference?: string;
+}
+
 export interface ViatorProduct {
   productCode: string;
   title: string;
@@ -49,7 +131,7 @@ export interface ViatorProduct {
   reviews?: {
     sources?: ViatorReviewSource[];
     totalReviews: number;
-    combinedAverageRating: number;
+    combinedAverageRating?: number;
   };
   duration?: {
     fixedDurationInMinutes?: number;
@@ -61,11 +143,24 @@ export interface ViatorProduct {
   productUrl?: string;
   destinations?: { ref: string; primary?: boolean }[];
   tags?: number[];
-  itinerary?: any;
+  itinerary?: ViatorItinerary;
   inclusions?: any[];
   exclusions?: any[];
   additionalInfo?: string[];
-  bookingConfirmationSettings?: { confirmationType: string };
+  bookingConfirmationSettings?: {
+    confirmationType: string;
+    bookingCutoffType?: string;
+    bookingCutoffInMinutes?: number;
+    bookingCutoffFixedTime?: string;
+  };
+  logistics?: ViatorLogistics;
+  timeZone?: string;
+  cancellationPolicy?: ViatorCancellationPolicy;
+  bookingRequirements?: ViatorBookingRequirements;
+  languageGuides?: ViatorLanguageGuide[];
+  bookingQuestions?: string[];
+  productOptions?: ViatorProductOption[];
+  supplier?: ViatorSupplier;
 }
 
 interface ViatorBookingPayload {
@@ -115,20 +210,24 @@ export function formatDuration(duration?: ViatorProduct["duration"]): string {
   return `${hours}h ${remaining}m`;
 }
 
-// ── Hook: Fetch Viator products (Bali) ────────────────────────────────
+// ── Hook: Fetch Viator products by tag IDs (Bali) ───────────────────
 export function useViatorProducts(
-  categoryName: string | null,
+  tagIds: number[] | null,
   currency: string = "USD"
 ) {
   return useQuery<ViatorProduct[]>({
-    queryKey: ["viator-products", categoryName, currency],
+    queryKey: ["viator-products", tagIds, currency],
     queryFn: async () => {
       const { data } = await api.get("/viator", {
-        params: { action: "products", categoryName, currency },
+        params: {
+          action: "products",
+          tagIds: tagIds ? JSON.stringify(tagIds) : undefined,
+          currency,
+        },
       });
       return data?.products ?? [];
     },
-    enabled: !!categoryName,
+    enabled: !!tagIds && tagIds.length > 0,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
@@ -162,8 +261,9 @@ export function useViatorSearch(
     queryKey: ["viator-search", query, currency],
     queryFn: async () => {
       if (!query.trim()) {
+        // No search term — fetch general Bali products (no category filter)
         const { data } = await api.get("/viator", {
-          params: { action: "products", categoryName: "", currency },
+          params: { action: "products", currency },
         });
         return data?.products ?? [];
       }

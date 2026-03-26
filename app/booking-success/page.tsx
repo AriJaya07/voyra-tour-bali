@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import BookingSuccessClient from './BookingSuccessClient';
+import BookingSuccessClient from '@/components/booking/BookingSuccessClient';
 
 export default function BookingSuccessPage() {
   return (

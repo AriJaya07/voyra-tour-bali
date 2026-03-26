@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { generateTicketQR } from '@/lib/ticket'
 import Container from '@/components/Container'
 import Link from 'next/link'
-import CancelButtonClient from './CancelButtonClient'
+import CancelButtonClient from '@/components/ticket/CancelButtonClient'
 
 export async function generateMetadata({
   params,

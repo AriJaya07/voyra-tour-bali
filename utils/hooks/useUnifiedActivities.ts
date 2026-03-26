@@ -14,7 +14,7 @@ import type { DestinationWithImages, UnifiedActivity } from "@/types/tourism"
  */
 export function useUnifiedActivities(
   destinations: DestinationWithImages[],
-  categoryName: string | null,
+  tagIds: number[] | null,
   categoryId: number | null,
   currency: string = "USD"
 ) {
@@ -22,7 +22,7 @@ export function useUnifiedActivities(
     data: viatorProducts,
     isLoading: viatorLoading,
     isError: viatorError,
-  } = useViatorProducts(categoryName, currency)
+  } = useViatorProducts(tagIds, currency)
 
   const activities: UnifiedActivity[] = useMemo(() => {
     return mergeActivities(

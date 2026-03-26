@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import type { ViatorProductOption } from '@/utils/hooks/useViator';
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
 
@@ -16,12 +18,36 @@ interface Traveler {
   max: number;
 }
 
-export default function BookingWidget({ productCode, title, basePrice, currency, ageBands }: { productCode: string, title: string, basePrice: number, currency: string, ageBands?: any[] }) {
+interface BookingWidgetProps {
+  productCode: string;
+  title: string;
+  basePrice: number;
+  currency: string;
+  ageBands?: Array<{
+    ageBand: string;
+    startAge: number;
+    endAge: number;
+    minTravelersPerBooking?: number;
+    maxTravelersPerBooking?: number;
+  }>;
+  productOptions?: ViatorProductOption[];
+}
+
+export default function BookingWidget({ productCode, title, basePrice, currency, ageBands, productOptions }: BookingWidgetProps) {
+  const { data: session } = useSession();
   const router = useRouter();
+
+  // ── Option selection ──
+  const hasOptions = productOptions && productOptions.length > 0;
+  const [selectedOptionCode, setSelectedOptionCode] = useState<string>(
+    hasOptions ? productOptions![0].productOptionCode : ""
+  );
+  const [detailOption, setDetailOption] = useState<ViatorProductOption | null>(null);
+
   const [date, setDate] = useState<Date | null>(null);
-  
+
   // Use dynamic age bands if available, otherwise fallback
-  const initTravelers = ageBands && ageBands.length > 0 ? ageBands.map((ab: any) => ({
+  const initTravelers = ageBands && ageBands.length > 0 ? ageBands.map((ab) => ({
     ageBand: ab.ageBand,
     label: `${ab.ageBand.charAt(0) + ab.ageBand.slice(1).toLowerCase()} (${ab.startAge}-${ab.endAge} yrs)`,
     count: ab.ageBand === 'ADULT' ? Math.max(1, ab.minTravelersPerBooking || 1) : 0,
@@ -39,7 +65,6 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
 
   const totalTravelers = travelers.reduce((acc, t) => acc + t.count, 0);
 
-  // Update traveler counts considering min/max per age band
   const updateTraveler = (index: number, delta: number) => {
     const newTravelers = [...travelers];
     const target = newTravelers[index];
@@ -47,18 +72,28 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
     if (newCount >= target.min && newCount <= target.max) {
       target.count = newCount;
       setTravelers(newTravelers);
-      setPrice(null); 
+      setPrice(null);
     }
   };
 
-  // 1. Availability API Call
+  // Reset price when option changes (different option = different availability)
+  const handleOptionChange = (code: string) => {
+    setSelectedOptionCode(code);
+    setPrice(null);
+  };
+
+  // ── Availability check (includes productOptionCode) ──
   const handleCheckAvailability = async () => {
+    if (!session) {
+      const currentUrl = typeof window !== "undefined" ? window.location.pathname : "/";
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
     if (!date || totalTravelers === 0) return;
     setIsChecking(true);
 
-    // format date as YYYY-MM-DD local time adjusted
-    const offset = date.getTimezoneOffset()
-    const travelDateStr = new Date(date.getTime() - (offset*60*1000)).toISOString().split('T')[0]
+    const offset = date.getTimezoneOffset();
+    const travelDateStr = new Date(date.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
 
     const paxMix = travelers.filter(t => t.count > 0).map(t => ({
       ageBand: t.ageBand,
@@ -69,12 +104,17 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
       const res = await fetch('/api/viator/availability', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productCode, travelDate: travelDateStr, paxMix, currency }),
+        body: JSON.stringify({
+          productCode,
+          ...(selectedOptionCode && { productOptionCode: selectedOptionCode }),
+          travelDate: travelDateStr,
+          paxMix,
+          currency,
+        }),
       });
       const data = await res.json();
 
       if (res.ok && data.available !== false) {
-        // Parse the total price from the first bookable item, or use fallback
         const apiPrice = data.bookableItems?.[0]?.totalPrice?.price?.recommendedRetailPrice;
         setPrice(apiPrice || (basePrice * totalTravelers));
       } else {
@@ -89,11 +129,12 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
     }
   };
 
-  // WhatsApp booking inquiry
+  // ── WhatsApp inquiry ──
   const buildWaUrl = () => {
     const selectedDate = date
       ? date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
       : '—';
+    const selectedOption = productOptions?.find(o => o.productOptionCode === selectedOptionCode);
     const travelerLines = travelers
       .filter(t => t.count > 0)
       .map(t => `  ${t.label}: ${t.count} pax`)
@@ -103,6 +144,7 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
       `I would like to book the following tour:`,
       ``,
       `Tour: ${title}`,
+      ...(selectedOption ? [`Option: ${selectedOption.title}`] : []),
       `Date: ${selectedDate}`,
       `Travelers:`,
       travelerLines || '  Not specified',
@@ -113,12 +155,12 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
     return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`;
   };
 
-  // 2. Booking API Call - Redirect to Checkout
+  // ── Redirect to checkout (includes productOptionCode) ──
   const handleBooking = async () => {
     if (!date || !price) return;
 
-    const offset = date.getTimezoneOffset()
-    const travelDateStr = new Date(date.getTime() - (offset*60*1000)).toISOString().split('T')[0]
+    const offset = date.getTimezoneOffset();
+    const travelDateStr = new Date(date.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
 
     const paxMix = travelers.filter(t => t.count > 0).map(t => ({
       ageBand: t.ageBand,
@@ -127,6 +169,7 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
 
     const queryParams = new URLSearchParams({
       productCode,
+      ...(selectedOptionCode && { productOptionCode: selectedOptionCode }),
       title,
       date: travelDateStr,
       paxMix: JSON.stringify(paxMix),
@@ -136,12 +179,58 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
     router.push(`/checkout?${queryParams.toString()}`);
   };
 
+  // ── Step numbering (shifts if options exist) ──
+  const stepOffset = hasOptions ? 1 : 0;
+
   return (
     <div className="border border-[#E6E6E6] rounded-2xl p-5 sm:p-6 my-10 lg:my-0 shadow-sm bg-white w-full">
       <h2 className="text-xl font-bold mb-4 text-black">Book this Tour</h2>
 
+      {/* Step: Select Tour Option */}
+      {hasOptions && (
+        <div className="mb-4">
+          <label className="block text-sm font-semibold mb-2 text-gray-700">1. Select Option</label>
+          <div className="space-y-2">
+            {productOptions!.map((opt) => {
+              const isSelected = selectedOptionCode === opt.productOptionCode;
+              return (
+                <button
+                  key={opt.productOptionCode}
+                  onClick={() => handleOptionChange(opt.productOptionCode)}
+                  className={`w-full text-left p-3 rounded-xl border-2 transition ${
+                    isSelected
+                      ? "border-[#0071CE] bg-blue-50/50"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      isSelected ? "border-[#0071CE]" : "border-gray-300"
+                    }`}>
+                      {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#0071CE]" />}
+                    </div>
+                    <p className={`text-sm font-bold flex-1 min-w-0 truncate ${isSelected ? "text-[#0071CE]" : "text-gray-900"}`}>
+                      {opt.title}
+                    </p>
+                    {opt.description && (
+                      <span
+                        onClick={(e) => { e.stopPropagation(); setDetailOption(opt); }}
+                        className="text-[11px] font-semibold text-[#0071CE] hover:underline shrink-0"
+                      >
+                        Details
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Step: Select Date */}
       <div className="mb-4">
-        <label className="block text-sm font-semibold mb-2 text-gray-700">1. Select Date</label>
+        <label className="block text-sm font-semibold mb-2 text-gray-700">{stepOffset + 1}. Select Date</label>
         <style>{`
           .booking-cal { width: 100%; border: none !important; font-family: inherit; font-size: 13px; }
           .booking-cal .react-calendar__tile--active { background: #0071CE !important; color: white !important; border-radius: 8px; }
@@ -157,22 +246,24 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
         </div>
       </div>
 
+      {/* Step: Travelers */}
       <div className="mb-4">
-        <label className="block text-sm font-semibold mb-2 text-gray-700">2. Travelers</label>
+        <label className="block text-sm font-semibold mb-2 text-gray-700">{stepOffset + 2}. Travelers</label>
         <div className="border border-[#E6E6E6] rounded-xl p-4 space-y-3">
           {travelers.map((t, idx) => (
             <div key={t.ageBand} className="flex justify-between items-center">
               <span className="text-gray-800 font-medium">{t.label}</span>
               <div className="flex items-center gap-3">
-                <button 
+                <button
                   onClick={() => updateTraveler(idx, -1)}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 font-bold text-gray-700 hover:bg-gray-200"
-                  disabled={t.count === 0}
+                  disabled={t.count <= t.min}
                 >-</button>
                 <span className="w-4 text-center text-gray-900 font-bold">{t.count}</span>
-                <button 
+                <button
                   onClick={() => updateTraveler(idx, 1)}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold hover:bg-blue-100"
+                  disabled={t.count >= t.max}
                 >+</button>
               </div>
             </div>
@@ -241,6 +332,63 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
           >
             Change Date or Travelers
           </button>
+        </div>
+      )}
+      {/* Option Detail Modal */}
+      {detailOption && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
+          onClick={() => setDetailOption(null)}
+        >
+          <div
+            className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-xl overflow-hidden max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900">{detailOption.title}</h3>
+              <button
+                onClick={() => setDetailOption(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-400"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="px-5 py-4 overflow-y-auto space-y-4">
+              {detailOption.description && (
+                <div
+                  className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: detailOption.description }}
+                />
+              )}
+              {detailOption.languageGuides && detailOption.languageGuides.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {detailOption.languageGuides.map((g, i) => (
+                    <span key={i} className="text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                      {g.language.toUpperCase()} {g.type === "GUIDE" ? "Guide" : g.type}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  handleOptionChange(detailOption.productOptionCode);
+                  setDetailOption(null);
+                }}
+                className="w-full py-3 bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold rounded-xl transition text-sm"
+              >
+                Select This Option
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useMemo, memo, useEffect } from "react"
-import Image from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import Link from "next/link"
 import { useCurrency } from "@/utils/hooks/useCurrency"
-import { useViatorProducts } from "@/utils/hooks/useViator"
-import { getViatorImageUrl, formatDuration } from "@/utils/hooks/useViator"
+import { useViatorProducts, getViatorImageUrl, formatDuration } from "@/utils/hooks/useViator"
+import { useDBDestinations } from "@/utils/hooks/useDestinations"
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
 import type { Category, UnifiedActivity } from "@/types/tourism"
 import { trackCategoryClick } from "@/utils/analytics"
@@ -68,19 +68,18 @@ const TabButton = memo(function TabButton({
     <button
       onClick={onClick}
       className={`
-        md:h-[48px] h-[40px]
-        px-5 sm:px-6
+        h-[40px] sm:h-[44px]
+        px-4 sm:px-5
         rounded-full
-        text-xs sm:text-sm md:text-base
+        text-xs sm:text-sm
         font-semibold
         transition-all duration-200
         cursor-pointer
         whitespace-nowrap
         shrink-0
-        max-w-[160px] truncate
         ${isActive
-          ? "bg-blue-50 text-blue-600 shadow-md"
-          : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+          ? "bg-blue-50 text-blue-600 border border-blue-200 shadow-sm"
+          : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-900"
         }
       `}
       title={label}
@@ -105,7 +104,7 @@ function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: Cur
       <div className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 h-full flex flex-col">
         {/* Image */}
         <div className="relative w-full aspect-[4/3] overflow-hidden">
-          <Image
+          <OptimizedImage
             src={item.imageUrl}
             alt={item.title}
             fill
@@ -186,30 +185,76 @@ function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: Cur
 
 // ── Main Component ──────────────────────────────────────────────────────
 
+/** Map a DB destination to UnifiedActivity */
+function mapDBToActivity(dest: any): UnifiedActivity {
+  const mainImage = dest.images?.find((img: any) => img.isMain)?.url
+    || dest.images?.[0]?.url
+    || "/images/destinations/gwk.png"
+
+  return {
+    id: `db-${dest.id}`,
+    source: "db",
+    title: dest.title,
+    description: dest.description || "",
+    imageUrl: mainImage,
+    price: dest.price ?? 0,
+    currency: "IDR",
+    slug: dest.slug || String(dest.id),
+    categoryId: dest.categoryId,
+  }
+}
+
 export default function TrendingActivity({ categories }: TrendingActivityProps) {
-  const displayCategories = categories.slice(0, 8)
-  const defaultTab = displayCategories[0]?.name ?? "Tours"
-  const [activeTab, setActiveTab] = useState(defaultTab)
+  const initial = categories.slice(0, 5)
+  const [displayCategories, setDisplayCategories] = useState(initial)
+
+  // Shuffle on client only to avoid hydration mismatch
+  useEffect(() => {
+    const shuffled = shuffle(categories).slice(0, 5)
+    setDisplayCategories(shuffled)
+    if (shuffled[0]) setActiveId(shuffled[0].id)
+  }, [categories])
+
+  // Track active tab by ID (not name) to prevent cross-source collisions
+  const [activeId, setActiveId] = useState<string | number>(initial[0]?.id ?? "")
   const [showAll, setShowAll] = useState(false)
 
   const { currency } = useCurrency()
 
-  const { data: viatorProducts, isLoading, isError } = useViatorProducts(activeTab, currency)
+  // Find active category by unique ID — safe even if two sources share a name
+  const activeCategory = displayCategories.find((c) => c.id === activeId) ?? displayCategories[0]
+  const isViator = activeCategory?.source === "viator"
+
+  // Fetch from the correct source based on category
+  const { data: viatorProducts, isLoading: isViatorLoading, isError } = useViatorProducts(
+    isViator ? activeCategory?.tagIds ?? null : null,
+    currency
+  )
+  const { data: dbDestinations, isLoading: isDBLoading } = useDBDestinations(
+    !isViator ? activeCategory?.id ?? null : null
+  )
+
+  const isLoading = isViator ? isViatorLoading : isDBLoading
 
   const activities: UnifiedActivity[] = useMemo(() => {
-    if (!viatorProducts) return []
-    return viatorProducts.map(mapViatorToActivity)
-  }, [viatorProducts])
+    if (isViator) {
+      if (!viatorProducts) return []
+      return viatorProducts.map(mapViatorToActivity)
+    }
+    // DB source
+    if (!dbDestinations) return []
+    return dbDestinations.map(mapDBToActivity)
+  }, [isViator, viatorProducts, dbDestinations])
 
   const [shuffledActivities, setShuffledActivities] = useState<UnifiedActivity[]>([])
   useEffect(() => {
     if (activities.length > 0) {
       setShuffledActivities(shuffle(activities))
       setShowAll(false)
-    } else if (!isLoading && viatorProducts) {
+    } else if (!isLoading) {
       setShuffledActivities([])
     }
-  }, [activities, isLoading, viatorProducts])
+  }, [activities, isLoading])
 
   const displayedActivities = useMemo(
     () => (showAll ? shuffledActivities : shuffledActivities.slice(0, 5)),
@@ -243,8 +288,9 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
           <TabButton
             key={tab.id}
             label={tab.name}
-            isActive={activeTab === tab.name}
-            onClick={() => { setActiveTab(tab.name); trackCategoryClick(tab.name) }}
+            // icon={iconMap.get(tab.slug) ?? DotsIcon}
+            isActive={activeId === tab.id}
+            onClick={() => { setActiveId(tab.id); trackCategoryClick(tab.name) }}
           />
         ))}
       </div>
@@ -286,7 +332,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
         ) : (
           <div className="w-full h-[220px] rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50/50">
             <p className="text-gray-500 font-medium text-center px-4">
-              No activities available for &quot;<span className="font-bold text-gray-700">{activeTab}</span>&quot; at the moment.
+              No activities available for &quot;<span className="font-bold text-gray-700">{activeCategory?.name}</span>&quot; at the moment.
             </p>
           </div>
         )}

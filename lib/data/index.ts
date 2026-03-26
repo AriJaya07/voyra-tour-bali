@@ -7,13 +7,13 @@ export { getProductDetailFromViator as getProductDetail }
 
 /**
  * Data source strategy:
- *   "viator" → Viator API only (current default)
+ *   "viator" → Viator API only
  *   "db"     → Database only
- *   "hybrid" → DB first, fallback/merge with Viator
+ *   "hybrid" → Both sources, each category tagged with its own source
  */
 type DataSource = "viator" | "db" | "hybrid"
 
-const DATA_SOURCE: DataSource = "viator"
+const DATA_SOURCE: DataSource = "hybrid"
 
 // ── Categories ──────────────────────────────────────────────────────────
 
@@ -23,9 +23,14 @@ export async function getCategories(): Promise<Category[]> {
       return getCategoriesFromDB()
 
     case "hybrid": {
-      const dbCategories = await getCategoriesFromDB()
-      if (dbCategories.length > 0) return dbCategories
-      return getCategoriesFromViator()
+      // Fetch both sources in parallel — each tagged with source: "db" | "viator"
+      const [dbCategories, viatorCategories] = await Promise.all([
+        getCategoriesFromDB(),
+        getCategoriesFromViator(),
+      ])
+
+      // Viator first (primary content), then DB categories
+      return [...viatorCategories, ...dbCategories]
     }
 
     case "viator":
@@ -42,9 +47,11 @@ export async function getDestinations(): Promise<DestinationWithImages[]> {
       return getDestinationsFromDB()
 
     case "hybrid": {
-      const dbDestinations = await getDestinationsFromDB()
-      if (dbDestinations.length > 0) return dbDestinations
-      return getDestinationsFromViator()
+      const [dbDestinations, viatorDestinations] = await Promise.all([
+        getDestinationsFromDB(),
+        getDestinationsFromViator(),
+      ])
+      return [...dbDestinations, ...viatorDestinations]
     }
 
     case "viator":

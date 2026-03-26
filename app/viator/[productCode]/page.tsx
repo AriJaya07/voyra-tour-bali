@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import { getProductDetail } from "@/lib/data"
-import ViatorProductClient from "./ViatorProductClient"
+import ViatorProductClient from "@/components/viator/ViatorProductClient"
 
 const SITE_URL = process.env.NEXTAUTH_URL || "https://voyra-tour-bali.vercel.app"
 
