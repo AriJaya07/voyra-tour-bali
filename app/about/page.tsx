@@ -48,12 +48,20 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-[#0071CE] via-[#005ba6] to-[#003d73] text-white overflow-hidden">
+      <section className="relative text-white overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="/images/about-us/about-banner.png"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0071CE]/80 to-[#004a8a]/60" />
+        </div>
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-300 rounded-full blur-3xl" />
         </div>
-        <div className="relative max-w-5xl mx-auto px-6 py-24 sm:py-32 text-center">
+        <div className="relative max-w-5xl mx-auto px-6 py-20 sm:py-24 text-center">
           <p className="text-sm font-bold uppercase tracking-widest text-blue-200 mb-4">
             About Us
           </p>
@@ -186,8 +194,16 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] py-16">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+      <section className="relative py-16 overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="/images/about-us/about-visit.png"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0071CE]/60 to-[#004a8a]/85" />
+        </div>
+        <div className="relative max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-black text-white mb-4">
             Ready to explore Bali?
           </h2>
