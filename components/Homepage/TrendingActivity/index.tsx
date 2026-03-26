@@ -68,19 +68,18 @@ const TabButton = memo(function TabButton({
     <button
       onClick={onClick}
       className={`
-        md:h-[48px] h-[40px]
-        px-5 sm:px-6
+        h-[40px] sm:h-[44px]
+        px-4 sm:px-5
         rounded-full
-        text-xs sm:text-sm md:text-base
+        text-xs sm:text-sm
         font-semibold
         transition-all duration-200
         cursor-pointer
         whitespace-nowrap
         shrink-0
-        max-w-[160px] truncate
         ${isActive
-          ? "bg-blue-50 text-blue-600 shadow-md"
-          : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+          ? "bg-blue-50 text-blue-600 border border-blue-200 shadow-sm"
+          : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-900"
         }
       `}
       title={label}
@@ -206,10 +205,18 @@ function mapDBToActivity(dest: any): UnifiedActivity {
 }
 
 export default function TrendingActivity({ categories }: TrendingActivityProps) {
-  const displayCategories = categories.slice(0, 8)
+  const initial = categories.slice(0, 5)
+  const [displayCategories, setDisplayCategories] = useState(initial)
+
+  // Shuffle on client only to avoid hydration mismatch
+  useEffect(() => {
+    const shuffled = shuffle(categories).slice(0, 5)
+    setDisplayCategories(shuffled)
+    if (shuffled[0]) setActiveId(shuffled[0].id)
+  }, [categories])
+
   // Track active tab by ID (not name) to prevent cross-source collisions
-  const defaultId = displayCategories[0]?.id ?? ""
-  const [activeId, setActiveId] = useState<string | number>(defaultId)
+  const [activeId, setActiveId] = useState<string | number>(initial[0]?.id ?? "")
   const [showAll, setShowAll] = useState(false)
 
   const { currency } = useCurrency()
@@ -281,6 +288,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
           <TabButton
             key={tab.id}
             label={tab.name}
+            // icon={iconMap.get(tab.slug) ?? DotsIcon}
             isActive={activeId === tab.id}
             onClick={() => { setActiveId(tab.id); trackCategoryClick(tab.name) }}
           />

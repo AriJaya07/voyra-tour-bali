@@ -234,13 +234,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               </div>
             )}
           </div>
-
-          {/* Footer hint */}
-          <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-400 flex items-center gap-4">
-            <span><kbd className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-xs">↑↓</kbd> navigate</span>
-            <span><kbd className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-xs">↵</kbd> select</span>
-            <span><kbd className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-xs">ESC</kbd> close</span>
-          </div>
         </div>
       </div>
     </>

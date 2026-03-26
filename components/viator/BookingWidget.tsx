@@ -42,6 +42,7 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
   const [selectedOptionCode, setSelectedOptionCode] = useState<string>(
     hasOptions ? productOptions![0].productOptionCode : ""
   );
+  const [detailOption, setDetailOption] = useState<ViatorProductOption | null>(null);
 
   const [date, setDate] = useState<Date | null>(null);
 
@@ -202,23 +203,23 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
                       : "border-gray-200 hover:border-gray-300 bg-white"
                   }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                  <div className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                       isSelected ? "border-[#0071CE]" : "border-gray-300"
                     }`}>
                       {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#0071CE]" />}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-bold ${isSelected ? "text-[#0071CE]" : "text-gray-900"}`}>
-                        {opt.title}
-                      </p>
-                      {opt.description && (
-                        <p
-                          className="text-xs text-gray-500 mt-0.5 line-clamp-2"
-                          dangerouslySetInnerHTML={{ __html: opt.description }}
-                        />
-                      )}
-                    </div>
+                    <p className={`text-sm font-bold flex-1 min-w-0 truncate ${isSelected ? "text-[#0071CE]" : "text-gray-900"}`}>
+                      {opt.title}
+                    </p>
+                    {opt.description && (
+                      <span
+                        onClick={(e) => { e.stopPropagation(); setDetailOption(opt); }}
+                        className="text-[11px] font-semibold text-[#0071CE] hover:underline shrink-0"
+                      >
+                        Details
+                      </span>
+                    )}
                   </div>
                 </button>
               );
@@ -331,6 +332,63 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
           >
             Change Date or Travelers
           </button>
+        </div>
+      )}
+      {/* Option Detail Modal */}
+      {detailOption && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
+          onClick={() => setDetailOption(null)}
+        >
+          <div
+            className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-xl overflow-hidden max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900">{detailOption.title}</h3>
+              <button
+                onClick={() => setDetailOption(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-400"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="px-5 py-4 overflow-y-auto space-y-4">
+              {detailOption.description && (
+                <div
+                  className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: detailOption.description }}
+                />
+              )}
+              {detailOption.languageGuides && detailOption.languageGuides.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {detailOption.languageGuides.map((g, i) => (
+                    <span key={i} className="text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                      {g.language.toUpperCase()} {g.type === "GUIDE" ? "Guide" : g.type}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  handleOptionChange(detailOption.productOptionCode);
+                  setDetailOption(null);
+                }}
+                className="w-full py-3 bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold rounded-xl transition text-sm"
+              >
+                Select This Option
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
