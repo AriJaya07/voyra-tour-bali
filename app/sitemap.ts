@@ -34,16 +34,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Dynamic destination pages
-  const destinations = await prisma.destination.findMany({
-    select: { slug: true, updatedAt: true },
-  });
+  let destinationPages: MetadataRoute.Sitemap = [];
+  try {
+    const destinations = await prisma.destination.findMany({
+      select: { slug: true, updatedAt: true },
+    });
 
-  const destinationPages: MetadataRoute.Sitemap = destinations.map((d) => ({
-    url: `${SITE_URL}/detail/${d.slug}`,
-    lastModified: d.updatedAt,
-    changeFrequency: "weekly" as const,
-    priority: 0.9,
-  }));
+    destinationPages = destinations.map((d) => ({
+      url: `${SITE_URL}/detail/${d.slug}`,
+      lastModified: d.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+    }));
+  } catch {
+    // DB unreachable at build time — return static pages only
+  }
 
   return [...staticPages, ...destinationPages];
 }

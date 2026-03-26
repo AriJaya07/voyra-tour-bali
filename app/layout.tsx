@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import ReactQueryProvider from "./ReactQueryProvider";
+import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 import SessionProviderWrapper from "@/components/Wrapper/SessionProviderWrapper";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";

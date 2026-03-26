@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import type { Booking } from "@/types/booking";
+import { fetchCancelQuote, cancelBooking, updateBookingStatus } from "@/lib/api/viator-client";
 
 interface CancelModalProps {
-  booking: any;
+  booking: Booking;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -17,11 +19,10 @@ export default function CancelModal({ booking, onClose, onSuccess }: CancelModal
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchQuote() {
+    async function getQuote() {
       try {
-        const res = await fetch(`/api/viator/cancel-quote?bookingRef=${booking.bookingRef}`);
-        const data = await res.json();
-        if (res.ok && data.refundDetails) {
+        const data = await fetchCancelQuote(booking.bookingRef);
+        if (data.refundDetails) {
           setQuote(data);
         } else {
           setError("Refund policy could not be verified automatically. Contact support.");
@@ -32,26 +33,16 @@ export default function CancelModal({ booking, onClose, onSuccess }: CancelModal
         setLoading(false);
       }
     }
-    fetchQuote();
+    getQuote();
   }, [booking.bookingRef]);
 
   const handleCancel = async () => {
     setCancelling(true);
     try {
-      const res = await fetch("/api/viator/cancel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingRef: booking.bookingRef, reasonCode: "CUSTOMER_REQUEST" }),
-      });
-      const data = await res.json();
-      if (res.ok && data.status) {
-        // Now hit our own DB to update status if our API hasn't already done it
-        // The API viator/cancel presumably canceled with Viator.
-        await fetch("/api/bookings", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bookingRef: booking.bookingRef, status: "CANCELLED" }),
-        }).catch(() => {}); // In case PATCH /api/bookings isn't fully implemented yet, fail silently
+      const data = await cancelBooking(booking.bookingRef);
+      if (data.status) {
+        // Update our own DB status
+        await updateBookingStatus(booking.bookingRef, "CANCELLED").catch(() => {});
 
         onSuccess();
       } else {

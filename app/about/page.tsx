@@ -1,49 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { StatCard, FeatureCard, FaqItem } from "@/components/about";
+import { FAQ_ITEMS } from "@/lib/data/about";
 
-
-// ── FAQ Data ────────────────────────────────────────────────────────────
-const FAQ_ITEMS = [
-  {
-    question: "What is Voyra Tourism?",
-    answer:
-      "Voyra Tourism is a Bali-based travel platform that connects travelers with curated destinations, tour packages, and unique cultural experiences across the island. We partner with local guides and trusted operators to deliver authentic, memorable journeys.",
-  },
-  {
-    question: "How do I book a tour or package?",
-    answer:
-      "Simply browse our destinations or tour packages, select the one you like, choose your preferred date and number of guests, then click 'Book & Pay Now'. You'll be redirected to our secure payment page powered by Midtrans. Once payment is confirmed, you'll receive a booking reference.",
-  },
-  {
-    question: "What payment methods do you accept?",
-    answer:
-      "We accept a wide range of payment methods through Midtrans, including bank transfers (BCA, BNI, BRI, Mandiri), credit/debit cards (Visa, Mastercard), e-wallets (GoPay, OVO, Dana, ShopeePay), and convenience store payments (Indomaret, Alfamart).",
-  },
-  {
-    question: "Can I cancel or reschedule my booking?",
-    answer:
-      "Yes, you can request a cancellation or reschedule through your profile page or by contacting us via WhatsApp. Cancellation policies vary depending on the tour operator and how close to the travel date the request is made. We recommend reaching out at least 48 hours in advance.",
-  },
-  {
-    question: "Is it safe to travel in Bali?",
-    answer:
-      "Bali is one of the safest destinations in Southeast Asia for tourists. We work exclusively with licensed, insured tour operators and provide 24/7 customer support during your trip. We also recommend purchasing travel insurance for added peace of mind.",
-  },
-  {
-    question: "Do you offer group or private tours?",
-    answer:
-      "Yes! Many of our packages offer both shared group tours and private options. Private tours can be customized to your preferences — just reach out via WhatsApp and our team will help tailor the perfect itinerary for you.",
-  },
-  {
-    question: "How do I contact Voyra for support?",
-    answer:
-      "You can reach us via WhatsApp for quick responses, or through the Contact Us link in the footer. Our support team is available daily from 8 AM to 10 PM Bali time (WITA).",
-  },
-];
-
-// ── About Page ──────────────────────────────────────────────────────────
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
@@ -226,105 +186,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-    </div>
-  );
-}
-
-// ── Sub-components ──────────────────────────────────────────────────────
-
-function StatCard({
-  value,
-  label,
-  icon,
-}: {
-  value: string;
-  label: string;
-  icon: string;
-}) {
-  return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
-      <span className="text-3xl mb-2 block">{icon}</span>
-      <p className="text-2xl font-black text-gray-900">{value}</p>
-      <p className="text-sm text-gray-500 mt-1">{label}</p>
-    </div>
-  );
-}
-
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-      <span className="text-3xl mb-4 block">{icon}</span>
-      <h3 className="text-base font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
-    </div>
-  );
-}
-
-function FaqItem({ question, answer }: { question: string; answer: string }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div
-      className={`border rounded-2xl transition-all duration-300 ${
-        open
-          ? "border-[#0071CE]/30 bg-blue-50/30 shadow-sm"
-          : "border-gray-200 bg-white hover:border-gray-300"
-      }`}
-    >
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-6 py-5 text-left cursor-pointer"
-      >
-        <span
-          className={`text-sm sm:text-base font-semibold pr-4 transition-colors duration-200 ${
-            open ? "text-[#0071CE]" : "text-gray-900"
-          }`}
-        >
-          {question}
-        </span>
-        <span
-          className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-            open
-              ? "bg-[#0071CE] text-white rotate-180"
-              : "bg-gray-100 text-gray-500"
-          }`}
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </span>
-      </button>
-
-      {/* Animated answer container */}
-      <div
-        className={`grid transition-all duration-300 ease-in-out ${
-          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
-      >
-        <div className="overflow-hidden">
-          <p className="px-6 pb-5 text-sm text-gray-600 leading-relaxed">
-            {answer}
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

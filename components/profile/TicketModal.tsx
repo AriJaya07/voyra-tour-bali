@@ -4,9 +4,10 @@ import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
+import type { Booking } from "@/types/booking";
 
 interface TicketModalProps {
-  booking: any;
+  booking: Booking;
   onClose: () => void;
 }
 
@@ -31,7 +32,7 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
   const qrString = `VOYRA-${booking.bookingRef}-${booking.productCode}-${booking.travelDate}`;
   const travelers = booking.travelers || [];
   const leadTraveler = travelers.length > 0 ? travelers[0].fullName : "Guest";
-  const paxSummary = travelers.map((t: any) => t.ageBand).reduce((acc: any, curr: string) => {
+  const paxSummary = travelers.map((t) => t.ageBand).reduce((acc: Record<string, number>, curr: string) => {
     acc[curr] = (acc[curr] || 0) + 1;
     return acc;
   }, {});
@@ -249,8 +250,8 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
               <button onClick={handleSaveImage} className="py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2">
                 📱 Save
               </button>
-              <button 
-                onClick={handleResendEmail} 
+              <button
+                onClick={handleResendEmail}
                 disabled={sendingEmail}
                 className="col-span-2 py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2 disabled:opacity-60"
               >

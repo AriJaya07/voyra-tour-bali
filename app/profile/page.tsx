@@ -4,17 +4,16 @@ import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import TicketModal from "./TicketModal";
-import CancelModal from "./CancelModal";
-
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  PENDING: { label: "Pending", className: "bg-amber-100 text-amber-800 border-amber-200" },
-  CONFIRMED: { label: "Confirmed", className: "bg-blue-100 text-blue-800 border-blue-200" },
-  COMPLETED: { label: "Completed", className: "bg-green-100 text-green-800 border-green-200" },
-  CANCELLED: { label: "Cancelled", className: "bg-gray-100 text-gray-600 border-gray-200" },
-};
-
+import TicketModal from "@/components/profile/TicketModal";
+import CancelModal from "@/components/profile/CancelModal";
+import { fetchProfile, updateProfile, uploadAvatar, fetchUserBookings } from "@/lib/api/profile";
+import { BOOKING_STATUS_MAP } from "@/types/booking";
+import type { Booking } from "@/types/booking";
+import type { UserProfile, ProfileFormMessage } from "@/types/profile";
 import { formatPrice } from "@/utils/formatPrice";
+
+const TABS = ["Upcoming", "Past", "Cancelled"] as const;
+type Tab = (typeof TABS)[number];
 
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString("en-US", {
@@ -27,30 +26,11 @@ const fmtDate = (d: string) =>
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
-  const [profile, setProfile] = useState<{
-    id: number;
-    email: string;
-    name: string | null;
-    image: string | null;
-    phone: string | null;
-    role: string;
-  } | null>(null);
-  const [bookings, setBookings] = useState<
-    Array<{
-      id: number;
-      bookingRef: string;
-      productCode: string;
-      productTitle: string;
-      totalPrice: number;
-      travelDate: string;
-      pax: number;
-      status: string;
-      createdAt: string;
-    }>
-  >([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<ProfileFormMessage | null>(null);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -61,20 +41,11 @@ export default function ProfilePage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [profileRes, bookingsRes] = await Promise.all([
-          fetch("/api/profile"),
-          fetch("/api/bookings"),
-        ]);
-        if (profileRes.ok) {
-          const p = await profileRes.json();
-          setProfile(p);
-          setName(p.name || "");
-          setPhone(p.phone || "");
-        }
-        if (bookingsRes.ok) {
-          const b = await bookingsRes.json();
-          setBookings(b);
-        }
+        const [p, b] = await Promise.all([fetchProfile(), fetchUserBookings()]);
+        setProfile(p);
+        setName(p.name || "");
+        setPhone(p.phone || "");
+        setBookings(b);
       } catch {
         setMessage({ type: "error", text: "Failed to load data" });
       } finally {
@@ -89,13 +60,7 @@ export default function ProfilePage() {
     setSaving(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), phone: phone.trim() || null }),
-      });
-      if (!res.ok) throw new Error("Failed to save");
-      const p = await res.json();
+      const p = await updateProfile({ name: name.trim(), phone: phone.trim() || null });
       setProfile(p);
       setMessage({ type: "success", text: "Profile updated successfully" });
     } catch {
@@ -111,17 +76,10 @@ export default function ProfilePage() {
     setSaving(true);
     setMessage(null);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/profile/upload-avatar", {
-        method: "POST",
-        body: fd,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const { url } = await res.json();
+      const { url } = await uploadAvatar(file);
       setProfile((p) => (p ? { ...p, image: url } : null));
       setMessage({ type: "success", text: "Profile photo updated successfully" });
-      await update(); // Refresh session so navbar shows new image
+      await update();
       router.refresh();
     } catch {
       setMessage({ type: "error", text: "Failed to upload profile photo" });
@@ -131,15 +89,15 @@ export default function ProfilePage() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState('Upcoming');
-  const [selectedTicket, setSelectedTicket] = useState<any>(null);
-  const [cancellingTicket, setCancellingTicket] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("Upcoming");
+  const [selectedTicket, setSelectedTicket] = useState<Booking | null>(null);
+  const [cancellingTicket, setCancellingTicket] = useState<Booking | null>(null);
 
-  const filteredBookings = bookings.filter(b => {
-    const isPast = new Date(b.travelDate) < new Date(new Date().setHours(0,0,0,0));
-    if (activeTab === 'Upcoming') return b.status !== 'CANCELLED' && !isPast;
-    if (activeTab === 'Past') return b.status !== 'CANCELLED' && isPast;
-    if (activeTab === 'Cancelled') return b.status === 'CANCELLED';
+  const filteredBookings = bookings.filter((b) => {
+    const isPast = new Date(b.travelDate) < new Date(new Date().setHours(0, 0, 0, 0));
+    if (activeTab === "Upcoming") return b.status !== "CANCELLED" && !isPast;
+    if (activeTab === "Past") return b.status !== "CANCELLED" && isPast;
+    if (activeTab === "Cancelled") return b.status === "CANCELLED";
     return true;
   });
 
@@ -232,7 +190,7 @@ export default function ProfilePage() {
                       type="email"
                       value={profile?.email || ""}
                       disabled
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-50. cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
                     />
                     <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
                   </div>
@@ -261,77 +219,68 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* 📋 My Bookings */}
+        {/* My Bookings */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8" id="my-bookings">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              📋 My Bookings
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900">My Bookings</h2>
           </div>
           <div className="p-6">
             {/* Tabs */}
             <div className="flex gap-2 mb-6 border-b border-gray-100 pb-4 overflow-x-auto hide-scrollbar">
-              {['Upcoming', 'Past', 'Cancelled'].map((tab) => {
-                const isActive = activeTab === tab;
-                return (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition ${
-                      isActive 
-                        ? 'bg-[#0071CE] text-white shadow-md' 
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                )
-              })}
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition ${
+                    activeTab === tab
+                      ? "bg-[#0071CE] text-white shadow-md"
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
 
             {filteredBookings.length === 0 ? (
               <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                <div className="text-4xl mb-3">🌴</div>
-                <p className="text-gray-900 font-bold text-lg mb-1">{bookings.length === 0 ? "You have no bookings yet." : `You have no ${activeTab.toLowerCase()} bookings.`}</p>
+                <p className="text-gray-900 font-bold text-lg mb-1">
+                  {bookings.length === 0 ? "You have no bookings yet." : `You have no ${activeTab.toLowerCase()} bookings.`}
+                </p>
                 <p className="text-sm text-gray-500 mb-6">Start exploring Bali!</p>
                 <Link
                   href="/"
                   className="inline-block px-6 py-3 bg-[#0071CE] text-white font-bold rounded-xl text-sm hover:bg-[#005ba6] transition shadow-sm"
                 >
-                  Browse Tours →
+                  Browse Tours
                 </Link>
               </div>
             ) : (
               <div className="space-y-5">
                 {filteredBookings.map((b) => {
-                  const statusInfo = STATUS_LABELS[b.status] || { label: b.status || "PENDING", className: "bg-gray-100 text-gray-700" };
-                  
-                  // Mock data for missing fields if old bookings
-                  const imageUrl = (b as any).productImage || "/images/activity/melasti.png"; 
-                  const totalPriceUsd = (b as any).totalPriceUsd || (b.totalPrice / 15000);
-                  const currency = (b as any).currency || "IDR";
-                  const time = (b as any).travelTime || "08:00 AM";
-                  
+                  const statusInfo = BOOKING_STATUS_MAP[b.status] || { label: b.status || "PENDING", className: "bg-gray-100 text-gray-700" };
+                  const imageUrl = b.productImage || "/images/activity/melasti.png";
+                  const totalPriceUsd = b.totalPriceUsd || b.totalPrice / 15000;
+                  const currency = b.currency || "IDR";
+                  const time = b.travelTime || "08:00 AM";
+
                   return (
                     <div key={b.id} className="border border-gray-200 rounded-2xl overflow-hidden hover:border-[#0071CE]/40 transition bg-white shadow-sm flex flex-col md:flex-row">
-                      {/* Tour Cover Image */}
                       <div className="w-full md:w-48 h-48 md:h-auto bg-gray-200 relative shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={imageUrl} alt={b.productTitle} className="w-full h-full object-cover" />
                         <div className="absolute top-3 left-3">
-                           <span className={`px-3 py-1 rounded-full text-xs font-bold border shadow-sm backdrop-blur-md bg-white/90 ${statusInfo.className}`}>
-                             {b.status === 'CONFIRMED' ? '🟢 ' : b.status === 'CANCELLED' ? '🔴 ' : '⏳ '}{statusInfo.label}
-                           </span>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold border shadow-sm backdrop-blur-md bg-white/90 ${statusInfo.className}`}>
+                            {statusInfo.label}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Details */}
                       <div className="p-5 flex-1 flex flex-col justify-between">
                         <div>
                           <h3 className="font-bold text-lg text-gray-900 leading-tight mb-3">
                             {b.productTitle}
                           </h3>
-                          
                           <div className="space-y-2 text-sm text-gray-600">
                             <div className="flex items-start gap-2">
                               <span className="shrink-0 mt-0.5">📅</span>
@@ -339,32 +288,36 @@ export default function ProfilePage() {
                             </div>
                             <div className="flex items-start gap-2">
                               <span className="shrink-0 mt-0.5">👥</span>
-                              <span>{b.pax} Guest(s) {(b as any).travelers?.length > 0 ? `(${(b as any).travelers.map((t: any) => t.ageBand).join(', ')})` : ''}</span>
+                              <span>
+                                {b.pax} Guest(s)
+                                {b.travelers && b.travelers.length > 0
+                                  ? ` (${b.travelers.map((t) => t.ageBand).join(", ")})`
+                                  : ""}
+                              </span>
                             </div>
                             <div className="flex items-start gap-2">
                               <span className="shrink-0 mt-0.5">💰</span>
                               <span className="font-semibold text-gray-900">
-                                {currency} {b.totalPrice.toLocaleString()} {totalPriceUsd ? `/ $${totalPriceUsd.toFixed(2)} USD` : ''}
+                                {currency} {b.totalPrice.toLocaleString()} {totalPriceUsd ? `/ $${totalPriceUsd.toFixed(2)} USD` : ""}
                               </span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Actions */}
                         <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
-                          {b.status !== 'CANCELLED' && (
-                            <button 
+                          {b.status !== "CANCELLED" && (
+                            <button
                               onClick={() => setCancellingTicket(b)}
                               className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition border border-red-100"
                             >
-                              ❌ Cancel
+                              Cancel
                             </button>
                           )}
-                          <button 
+                          <button
                             onClick={() => setSelectedTicket(b)}
                             className="px-5 py-2 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition shadow-sm"
                           >
-                            🎫 View Ticket
+                            View Ticket
                           </button>
                         </div>
                       </div>
@@ -378,25 +331,23 @@ export default function ProfilePage() {
 
         <div className="mt-6 text-center">
           <Link href="/" className="text-[#0071CE] font-medium hover:underline">
-            ← Back to Home
+            Back to Home
           </Link>
         </div>
       </div>
-      
-      {/* Ticket Modal */}
+
       {selectedTicket && (
         <TicketModal booking={selectedTicket} onClose={() => setSelectedTicket(null)} />
       )}
-      
-      {/* Cancel Modal */}
+
       {cancellingTicket && (
-        <CancelModal 
-          booking={cancellingTicket} 
-          onClose={() => setCancellingTicket(null)} 
+        <CancelModal
+          booking={cancellingTicket}
+          onClose={() => setCancellingTicket(null)}
           onSuccess={() => {
             setCancellingTicket(null);
             setMessage({ type: "success", text: "Your booking has been cancelled. Refund is being processed." });
-            setBookings(bookings.map(b => b.id === cancellingTicket.id ? { ...b, status: 'CANCELLED' } : b));
+            setBookings(bookings.map((b) => (b.id === cancellingTicket.id ? { ...b, status: "CANCELLED" } : b)));
           }}
         />
       )}

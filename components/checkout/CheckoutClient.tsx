@@ -5,6 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import Container from '@/components/Container';
+import { checkAvailability, createBooking } from '@/lib/api/viator-client';
+
+interface PaxMixItem {
+  ageBand: string;
+  numberOfTravelers: number;
+}
 
 export default function CheckoutClient() {
   const router = useRouter();
@@ -18,7 +24,7 @@ export default function CheckoutClient() {
   const paxMixStr = searchParams.get('paxMix') || "[]";
   const initialPrice = Number(searchParams.get('total')) || 0;
 
-  const [paxMix, setPaxMix] = useState<any[]>([]);
+  const [paxMix, setPaxMix] = useState<PaxMixItem[]>([]);
   const [price, setPrice] = useState<number>(initialPrice);
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
@@ -33,7 +39,6 @@ export default function CheckoutClient() {
     termAccepted: false
   });
 
-  // Auto-fill form with user profile data
   useEffect(() => {
     if (!session?.user) return;
 
@@ -51,7 +56,6 @@ export default function CheckoutClient() {
           phone: prev.phone || profile.phone || '',
         }));
       } catch {
-        // Fallback to session data
         const name = session.user.name || '';
         setForm(prev => ({
           ...prev,
@@ -73,42 +77,33 @@ export default function CheckoutClient() {
     }
   }, [paxMixStr]);
 
-  // Real-time /availability/check and price update logic
   useEffect(() => {
     if (!productCode || !date || paxMix.length === 0) return;
 
-    const checkAvailability = async () => {
+    const check = async () => {
       try {
         setIsChecking(true);
-        const res = await fetch('/api/viator/availability', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productCode, travelDate: date, paxMix, currency }),
-        });
-        const data = await res.json();
+        const data = await checkAvailability({ productCode, travelDate: date, paxMix, currency });
 
-        if (res.ok && data.available !== false) {
+        if (data.available !== false) {
           const apiPrice = data.bookableItems?.[0]?.totalPrice?.price?.recommendedRetailPrice;
-          
-          // Price Update Logic
           if (apiPrice && apiPrice !== price) {
-             toast.info(`Price updated from ${price} ${currency} to ${apiPrice} ${currency} based on live availability.`);
-             setPrice(apiPrice);
+            toast.info(`Price updated from ${price} ${currency} to ${apiPrice} ${currency} based on live availability.`);
+            setPrice(apiPrice);
           }
           setAvailabilityChecked(true);
         } else {
           setErrorMsg("This activity is no longer available for the selected date/travelers.");
         }
-      } catch (error) {
-        console.error(error);
+      } catch {
         setErrorMsg("Failed to check live availability.");
       } finally {
         setIsChecking(false);
       }
     };
-    checkAvailability();
+    check();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paxMix]); // wait for paxMix to be parsed
+  }, [paxMix]);
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,28 +112,16 @@ export default function CheckoutClient() {
 
     setIsBooking(true);
     try {
-      const res = await fetch('/api/viator/booking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productCode,
-          travelDate: date,
-          paxMix,
-          bookerInfo: {
-            firstName: form.firstName,
-            lastName: form.lastName
-          },
-          communication: {
-            email: form.email,
-            phone: form.phone
-          }
-        }),
+      const data = await createBooking({
+        productCode,
+        travelDate: date,
+        paxMix,
+        bookerInfo: { firstName: form.firstName, lastName: form.lastName },
+        communication: { email: form.email, phone: form.phone },
       });
-      
-      const data = await res.json();
 
-      if (res.ok && data.bookingRef) {
-        const totalTravelers = paxMix.reduce((acc: number, t: any) => acc + t.numberOfTravelers, 0);
+      if (data.bookingRef) {
+        const totalTravelers = paxMix.reduce((acc: number, t: PaxMixItem) => acc + t.numberOfTravelers, 0);
         const queryParams = new URLSearchParams({
           ref: data.bookingRef,
           title,
@@ -153,15 +136,14 @@ export default function CheckoutClient() {
       } else {
         toast.error(data.error || "Could not complete booking.");
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error("An error occurred during booking. Please try again.");
     } finally {
       setIsBooking(false);
     }
   };
 
-  const totalTravelers = paxMix.reduce((acc: number, t: any) => acc + t.numberOfTravelers, 0);
+  const totalTravelers = paxMix.reduce((acc: number, t: PaxMixItem) => acc + t.numberOfTravelers, 0);
 
   if (!productCode) {
     return (
@@ -250,51 +232,19 @@ export default function CheckoutClient() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="firstName" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">First Name</label>
-                      <input
-                        id="firstName"
-                        required
-                        type="text"
-                        placeholder="Enter first name"
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition"
-                        value={form.firstName}
-                        onChange={e => setForm({...form, firstName: e.target.value})}
-                      />
+                      <input id="firstName" required type="text" placeholder="Enter first name" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition" value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
                     </div>
                     <div>
                       <label htmlFor="lastName" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Last Name</label>
-                      <input
-                        id="lastName"
-                        required
-                        type="text"
-                        placeholder="Enter last name"
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition"
-                        value={form.lastName}
-                        onChange={e => setForm({...form, lastName: e.target.value})}
-                      />
+                      <input id="lastName" required type="text" placeholder="Enter last name" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition" value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} />
                     </div>
                     <div>
                       <label htmlFor="email" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Email Address</label>
-                      <input
-                        id="email"
-                        required
-                        type="email"
-                        placeholder="you@example.com"
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition"
-                        value={form.email}
-                        onChange={e => setForm({...form, email: e.target.value})}
-                      />
+                      <input id="email" required type="email" placeholder="you@example.com" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
                     </div>
                     <div>
                       <label htmlFor="phone" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Phone Number</label>
-                      <input
-                        id="phone"
-                        required
-                        type="tel"
-                        placeholder="+62 812 3456 7890"
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition"
-                        value={form.phone}
-                        onChange={e => setForm({...form, phone: e.target.value})}
-                      />
+                      <input id="phone" required type="tel" placeholder="+62 812 3456 7890" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
                     </div>
                   </div>
                 </div>
@@ -310,28 +260,14 @@ export default function CheckoutClient() {
                     <h2 className="text-base sm:text-lg font-bold text-gray-900">Terms & Conditions</h2>
                   </div>
 
-                  <label
-                    htmlFor="termAccept"
-                    className="flex items-start gap-3.5 p-4 rounded-xl bg-[#F8F8F8] border border-gray-100 cursor-pointer hover:border-[#0071CE]/30 transition group"
-                  >
-                    <input
-                      type="checkbox"
-                      id="termAccept"
-                      required
-                      checked={form.termAccepted}
-                      onChange={e => setForm({...form, termAccepted: e.target.checked})}
-                      className="mt-0.5 w-5 h-5 rounded border-gray-300 text-[#0071CE] focus:ring-[#0071CE] shrink-0"
-                    />
+                  <label htmlFor="termAccept" className="flex items-start gap-3.5 p-4 rounded-xl bg-[#F8F8F8] border border-gray-100 cursor-pointer hover:border-[#0071CE]/30 transition group">
+                    <input type="checkbox" id="termAccept" required checked={form.termAccepted} onChange={e => setForm({...form, termAccepted: e.target.checked})} className="mt-0.5 w-5 h-5 rounded border-gray-300 text-[#0071CE] focus:ring-[#0071CE] shrink-0" />
                     <span className="text-sm text-gray-600 leading-relaxed">
                       By clicking &apos;Confirm Booking&apos;, you agree to Viator&apos;s Customer Terms of Use and Privacy Statement, and you also agree to enter into a direct contract with the supplier of the experience as described on the listing page.
                     </span>
                   </label>
 
-                  <button
-                    type="submit"
-                    disabled={isBooking || !availabilityChecked}
-                    className="w-full mt-5 bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
-                  >
+                  <button type="submit" disabled={isBooking || !availabilityChecked} className="w-full mt-5 bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2">
                     {isBooking ? (
                       <>
                         <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
@@ -367,46 +303,34 @@ export default function CheckoutClient() {
                     Booking Summary
                   </h2>
                 </div>
-
                 <div className="p-5 sm:p-6">
-                  {/* Experience Title */}
                   <div className="mb-4 pb-4 border-b border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Experience</p>
                     <p className="text-sm font-bold text-gray-900 leading-snug">{title}</p>
                   </div>
-
-                  {/* Details Grid */}
                   <div className="space-y-3 mb-5">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500 flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         Date
                       </span>
                       <span className="text-sm font-bold text-gray-900">{date}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500 flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         Travelers
                       </span>
                       <span className="text-sm font-bold text-gray-900">{totalTravelers} pax</span>
                     </div>
                   </div>
-
-                  {/* Price */}
                   <div className="bg-[#F8F8F8] rounded-xl p-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-bold text-gray-700">Total Price</span>
                       <span className="text-xl sm:text-2xl font-black text-[#0071CE]">{price.toLocaleString()} {currency}</span>
                     </div>
                     <p className="text-xs text-green-600 font-medium mt-1.5 flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                       No hidden fees. Taxes included.
                     </p>
                   </div>
@@ -418,25 +342,19 @@ export default function CheckoutClient() {
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="flex flex-col items-center gap-1.5">
                     <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
+                      <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                     </div>
                     <span className="text-[10px] sm:text-xs font-medium text-gray-600">Secure</span>
                   </div>
                   <div className="flex flex-col items-center gap-1.5">
                     <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
+                      <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     </div>
                     <span className="text-[10px] sm:text-xs font-medium text-gray-600">Instant</span>
                   </div>
                   <div className="flex flex-col items-center gap-1.5">
                     <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                      </svg>
+                      <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                     </div>
                     <span className="text-[10px] sm:text-xs font-medium text-gray-600">Top Rated</span>
                   </div>
