@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from "react"
-import Image from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import { useSearchDestinations } from "@/utils/hooks/useSearchDestinations"
 import { useViatorSearch, getViatorImageUrl } from "@/utils/hooks/useViator"
 import { formatPrice } from "@/utils/formatPrice"
@@ -184,7 +184,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         {/* Thumbnail */}
                         {img ? (
                           <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
-                            <Image
+                            <OptimizedImage
                               src={img}
                               alt={item.title}
                               fill

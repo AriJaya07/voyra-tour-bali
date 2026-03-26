@@ -1,7 +1,7 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
-import Image from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import Link from "next/link"
 import { Suspense, useEffect } from "react"
 import { useViatorProductDetail, formatDuration } from "@/utils/hooks/useViator"
@@ -246,7 +246,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {expectImages.map((url, i) => (
                     <div key={i} className="relative w-full aspect-[4/3] rounded-xl overflow-hidden">
-                      <Image
+                      <OptimizedImage
                         src={url}
                         alt={`What to expect ${i + 1}`}
                         fill

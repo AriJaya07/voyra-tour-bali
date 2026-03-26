@@ -1,4 +1,4 @@
-import NextImage from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 
 interface ExcpectDetailProps {
     images?: string[];
@@ -23,7 +23,7 @@ export default function ExcpectDetail({ images }: ExcpectDetailProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-center">
                     {displayImages.slice(0, 3).map((img) => (
                         <div key={img} className="relative w-full aspect-[4/3] rounded-lg overflow-hidden">
-                            <NextImage
+                            <OptimizedImage
                                 src={img}
                                 alt="What to expect"
                                 fill

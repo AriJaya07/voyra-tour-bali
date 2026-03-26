@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import Image from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 
 const FALLBACK_IMAGE = "/images/activity/melasti.png"
 const AUTOPLAY_INTERVAL = 4000
@@ -74,7 +74,7 @@ function GalleryModal({
 
         {/* Main image */}
         <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden bg-black">
-          <Image
+          <OptimizedImage
             src={images[index]}
             alt={`${index + 1}`}
             fill
@@ -122,7 +122,7 @@ function GalleryModal({
                   index === i ? "border-white" : "border-transparent opacity-50 hover:opacity-80"
                 }`}
               >
-                <Image src={url} alt={`Thumb ${i + 1}`} fill sizes="56px" className="object-cover" />
+                <OptimizedImage src={url} alt={`Thumb ${i + 1}`} fill sizes="56px" className="object-cover" />
               </button>
             ))}
           </div>
@@ -154,17 +154,17 @@ function BannerGallery({ images, title, onOpenModal }: {
           onClick={() => onOpenModal(0)}
           className="relative w-full sm:w-[55%] h-[280px] sm:h-[420px] cursor-pointer overflow-hidden group"
         >
-          <Image src={img1} alt={title} fill priority sizes="(max-width: 640px) 100vw, 55vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+          <OptimizedImage src={img1} alt={title} fill priority sizes="(max-width: 640px) 100vw, 55vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
         </button>
 
         {img2 && (
           <div className="hidden sm:flex flex-col gap-1 w-[22.5%]">
             <button onClick={() => onOpenModal(1)} className="relative w-full h-[209px] cursor-pointer overflow-hidden group">
-              <Image src={img2} alt={`${title} 2`} fill sizes="22.5vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+              <OptimizedImage src={img2} alt={`${title} 2`} fill sizes="22.5vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
             </button>
             {img3 && (
               <button onClick={() => onOpenModal(2)} className="relative w-full h-[209px] cursor-pointer overflow-hidden group">
-                <Image src={img3} alt={`${title} 3`} fill sizes="22.5vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                <OptimizedImage src={img3} alt={`${title} 3`} fill sizes="22.5vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
               </button>
             )}
           </div>
@@ -173,11 +173,11 @@ function BannerGallery({ images, title, onOpenModal }: {
         {img4 && (
           <div className="hidden sm:flex flex-col gap-1 w-[22.5%]">
             <button onClick={() => onOpenModal(3)} className="relative w-full h-[209px] cursor-pointer overflow-hidden group">
-              <Image src={img4} alt={`${title} 4`} fill sizes="22.5vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+              <OptimizedImage src={img4} alt={`${title} 4`} fill sizes="22.5vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
             </button>
             {img5 && (
               <button onClick={() => onOpenModal(4)} className="relative w-full h-[209px] cursor-pointer overflow-hidden group">
-                <Image src={img5} alt={`${title} 5`} fill sizes="22.5vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                <OptimizedImage src={img5} alt={`${title} 5`} fill sizes="22.5vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
                 {extraCount > 0 && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                     <span className="text-white text-lg font-bold">+{extraCount} more</span>
@@ -198,7 +198,7 @@ function BannerGallery({ images, title, onOpenModal }: {
               onClick={() => onOpenModal(i)}
               className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 border-transparent hover:border-[#0071CE] transition"
             >
-              <Image src={url} alt={`Thumbnail ${i + 1}`} fill sizes="80px" className="object-cover" />
+              <OptimizedImage src={url} alt={`Thumbnail ${i + 1}`} fill sizes="80px" className="object-cover" />
             </button>
           ))}
         </div>
@@ -221,7 +221,7 @@ function CompactGallery({ images, onOpenModal }: {
           onClick={() => onOpenModal(i)}
           className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg overflow-hidden shrink-0 border border-gray-200 hover:border-blue-400 transition cursor-pointer"
         >
-          <Image src={url} alt={`Gallery ${i + 1}`} fill sizes="72px" className="object-cover" />
+          <OptimizedImage src={url} alt={`Gallery ${i + 1}`} fill sizes="72px" className="object-cover" />
           {i === 4 && images.length > 5 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <span className="text-white text-xs font-bold">+{images.length - 5}</span>

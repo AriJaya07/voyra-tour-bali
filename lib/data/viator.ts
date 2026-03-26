@@ -18,22 +18,62 @@ const VIATOR_HEADERS = {
 /** Bali destination ID in Viator (destId=98) */
 const BALI_DESTINATION_ID = 98
 
-// ── Display name lookup ─────────────────────────────────────────────────
-// The Viator v2 API returns tags as plain numbers — no names.
-// This lookup provides human-readable names for known tag IDs.
-// It is NOT the category source — categories are discovered dynamically
-// from real products. This only controls what name is displayed.
-// Unknown tags will show as "Tag {id}".
+// ── System/internal tags to exclude ──────────────────────────────────────
+// These are Viator internal tags (quality scores, availability flags,
+// logistics) that should never appear as user-facing categories.
+const BLOCKED_TAG_IDS = new Set<number>([
+  367661, // Short term availability
+  367654, // Low Last Minute Supplier Cancellation Rate
+  367652, // Top Product
+  367653, // Low Supplier Cancellation Rate
+  367659, // Curated Catalog
+  367660, // Port Pickup
+  21972,  // Excellent Quality
+])
+
+// Tags with IDs >= this threshold are almost always system/internal tags
+const SYSTEM_TAG_THRESHOLD = 100000
+
+// ── Category grouping ───────────────────────────────────────────────────
+// Groups multiple Viator tag IDs into a single user-facing category.
+// Each group defines: display name, slug (for icon matching), and tag IDs.
+// Tags not in any group are shown individually using TAG_DISPLAY_NAMES.
+interface CategoryGroup {
+  name: string
+  slug: string
+  tagIds: number[]
+}
+
+const CATEGORY_GROUPS: CategoryGroup[] = [
+  { name: "Tours",              slug: "tours",            tagIds: [11929, 11930, 21733, 11928, 11926] },
+  { name: "Private Tours",      slug: "private-tours",    tagIds: [11941, 11938, 21482] },
+  { name: "Culture & Temples",  slug: "culture",          tagIds: [12032, 21521] },
+  { name: "Nature",             slug: "nature",           tagIds: [11903, 11906] },
+  { name: "Beach & Water",      slug: "beach",            tagIds: [21503, 12029, 11938] },
+  { name: "Adventure",          slug: "adventure",        tagIds: [11938, 11903] },
+  { name: "Food & Drink",       slug: "food-and-drink",   tagIds: [12071] },
+  { name: "Day Trips",          slug: "day-trips",        tagIds: [21480] },
+  { name: "Romantic",           slug: "romance",          tagIds: [21486] },
+  { name: "Family",             slug: "family",           tagIds: [21491] },
+  { name: "Wellness & Spa",     slug: "wellness-and-spa", tagIds: [21510] },
+  { name: "Nightlife",          slug: "nightlife",        tagIds: [21514] },
+]
+
+// ── Fallback display names for ungrouped tags ───────────────────────────
 const TAG_DISPLAY_NAMES: Record<number, string> = {
   11929: "Tours",
+  11930: "Bus Tours",
+  21733: "Car Tours",
+  11928: "Full-day Tours",
+  11926: "Sightseeing",
+  11941: "Private Sightseeing Tours",
+  11938: "Private & Luxury",
   12032: "Culture",
   11903: "Nature",
   12071: "Food & Drink",
-  11938: "Adventure",
   12029: "Water Sports",
   21521: "Temple",
   21503: "Beach",
-  11926: "Sightseeing",
   21480: "Day Trips",
   11906: "Wildlife",
   21510: "Wellness & Spa",
@@ -217,20 +257,77 @@ export async function getCategoriesFromViator(): Promise<Category[]> {
 
   if (baliTags.size === 0) return []
 
-  // Sort by product count (most popular first)
-  const sorted = Array.from(baliTags.values()).sort((a, b) => b.productCount - a.productCount)
+  // Collect all discovered tag IDs (filtered: no blocked, no system tags)
+  const validTagIds = new Set<number>()
+  for (const tagId of baliTags.keys()) {
+    if (BLOCKED_TAG_IDS.has(tagId)) continue
+    if (tagId >= SYSTEM_TAG_THRESHOLD) continue
+    validTagIds.add(tagId)
+  }
 
-  return sorted.slice(0, 12).map((tag) => {
-    const name = tagNames.get(tag.id) || `Tag ${tag.id}`
-    return {
-      id: `viator-${tag.id}`,
+  // Build grouped categories — merge multiple tag IDs into one category
+  const usedTagIds = new Set<number>()
+  const categories: Category[] = []
+
+  for (const group of CATEGORY_GROUPS) {
+    // Find which of this group's tag IDs actually exist in products
+    const matchingIds = group.tagIds.filter((id) => validTagIds.has(id))
+    if (matchingIds.length === 0) continue
+
+    // Pick the best image (from the tag with the most products)
+    let bestImage = "/images/destinations/gwk.png"
+    let bestCount = 0
+    for (const id of matchingIds) {
+      const tag = baliTags.get(id)
+      if (tag && tag.productCount > bestCount) {
+        bestCount = tag.productCount
+        bestImage = tag.image
+      }
+    }
+
+    // Sum product counts across all tags in the group
+    const totalProducts = matchingIds.reduce(
+      (sum, id) => sum + (baliTags.get(id)?.productCount ?? 0), 0
+    )
+
+    categories.push({
+      id: `viator-${matchingIds[0]}`,
+      name: group.name,
+      slug: group.slug,
+      image: bestImage,
+      source: "viator",
+      tagIds: matchingIds,
+      _productCount: totalProducts,
+    } as Category & { _productCount: number })
+
+    matchingIds.forEach((id) => usedTagIds.add(id))
+  }
+
+  // Add any remaining valid tags not covered by groups
+  for (const tagId of validTagIds) {
+    if (usedTagIds.has(tagId)) continue
+
+    const tag = baliTags.get(tagId)!
+    const name = tagNames.get(tagId) || TAG_DISPLAY_NAMES[tagId] || `Tag ${tagId}`
+
+    categories.push({
+      id: `viator-${tagId}`,
       name,
       slug: slugify(name),
       image: tag.image,
-      source: "viator" as const,
-      tagIds: [tag.id],
-    }
-  })
+      source: "viator",
+      tagIds: [tagId],
+      _productCount: tag.productCount,
+    } as Category & { _productCount: number })
+  }
+
+  // Sort by product count, return top 12
+  categories.sort((a, b) =>
+    ((b as any)._productCount ?? 0) - ((a as any)._productCount ?? 0)
+  )
+
+  // Strip the temporary _productCount before returning
+  return categories.slice(0, 12).map(({ _productCount, ...cat }: any) => cat)
 }
 
 // ── Public: Product detail (unchanged) ──────────────────────────────────

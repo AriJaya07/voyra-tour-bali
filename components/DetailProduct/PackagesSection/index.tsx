@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Package, Category, Image as PrismaImage } from "@prisma/client"
-import NextImage from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import WhatappIcon from "../../assets/sosmed/WhatappIcon"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -103,7 +103,7 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
               {/* Image */}
               {mainImage ? (
                 <div className="relative h-[200px] overflow-hidden">
-                  <NextImage
+                  <OptimizedImage
                     src={mainImage}
                     alt={pkg.title}
                     fill

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, memo, useEffect } from "react"
-import Image from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import Link from "next/link"
 import { useCurrency } from "@/utils/hooks/useCurrency"
 import { useViatorProducts, getViatorImageUrl, formatDuration } from "@/utils/hooks/useViator"
@@ -105,7 +105,7 @@ function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: Cur
       <div className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 h-full flex flex-col">
         {/* Image */}
         <div className="relative w-full aspect-[4/3] overflow-hidden">
-          <Image
+          <OptimizedImage
             src={item.imageUrl}
             alt={item.title}
             fill

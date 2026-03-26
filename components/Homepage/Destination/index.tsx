@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, memo } from "react"
 import DotsIcon from "../../assets/Icon/DotsIcon"
 import { getCategoryIcon } from "../../assets/Icon/categories"
-import Image from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import Link from "next/link"
 import { useViatorProducts, getViatorImageUrl } from "@/utils/hooks/useViator"
 import { useDBDestinations } from "@/utils/hooks/useDestinations"
@@ -136,8 +136,6 @@ export default function Destination({ categories }: DestinationProps) {
     setShowAll(false)
   }
 
-  console.log(categories, "PPP")
-
   return (
     <section id="destinasi" className="pt-10 md:pt-[72px] px-4 md:px-0">
       {/* Category cards — horizontal scroll on mobile, grid on larger screens */}
@@ -176,7 +174,7 @@ export default function Destination({ categories }: DestinationProps) {
                 {displayedDestinations.map((item) => (
                   <Link href={item.href} key={item.id}>
                     <div className="relative w-full h-[220px] rounded-md overflow-hidden">
-                      <Image
+                      <OptimizedImage
                         src={item.imageUrl}
                         alt={item.title}
                         fill
