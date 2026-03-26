@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { StatCard, FeatureCard, FaqItem } from "@/components/about";
 import { FAQ_ITEMS } from "@/lib/data/about";
 
 export default function AboutPage() {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -177,12 +181,14 @@ export default function AboutPage() {
             >
               Browse Destinations
             </Link>
-            <Link
-              href="/register"
-              className="px-8 py-3.5 bg-white/15 text-white font-bold rounded-full hover:bg-white/25 transition border border-white/30 text-sm"
-            >
-              Create Free Account
-            </Link>
+            {!isLoggedIn && (
+              <Link
+                href="/register"
+                className="px-8 py-3.5 bg-white/15 text-white font-bold rounded-full hover:bg-white/25 transition border border-white/30 text-sm"
+              >
+                Create Free Account
+              </Link>
+            )}
           </div>
         </div>
       </section>

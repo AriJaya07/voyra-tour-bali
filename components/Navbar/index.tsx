@@ -8,6 +8,7 @@ import BurgerIcon from "../assets/Icon/BurgerIcon"
 import VoryaIcon from "../assets/Icon/VoyraIcon"
 import SearchModal from "./SearchModal"
 import SearchIcon from "../assets/Icon/SearchIcon"
+import { ProfileIcon, DashboardIcon, HomeIcon, SignOutIcon, ChevronDownIcon, CurrencyIcon, SearchNavIcon } from "../assets/Icon/NavIcons"
 import { useCurrency } from "@/utils/hooks/useCurrency"
 
 const NAV_ITEMS = [
@@ -183,9 +184,7 @@ export default function Navbar() {
                     alt={session.user?.name || "User"}
                     className="h-10 w-10 rounded-full object-cover border-2 border-[#0071CE] shadow-sm group-hover:border-[#005ba6] transition"
                   />
-                  <svg className={`w-3 h-3 text-gray-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <ChevronDownIcon className={`w-3 h-3 text-gray-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Dropdown popup */}
@@ -218,9 +217,7 @@ export default function Navbar() {
                             onClick={() => setIsProfileOpen(false)}
                             className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
                           >
-                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
+                            <DashboardIcon className="w-4 h-4 text-gray-400" />
                             Dashboard Admin
                           </a>
                         )}
@@ -229,9 +226,7 @@ export default function Navbar() {
                           onClick={() => setIsProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
                         >
-                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
+                          <ProfileIcon className="w-4 h-4 text-gray-400" />
                           My Profile
                         </a>
                         <a
@@ -239,9 +234,7 @@ export default function Navbar() {
                           onClick={() => setIsProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
                         >
-                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                          </svg>
+                          <HomeIcon className="w-4 h-4 text-gray-400" />
                           Home
                         </a>
 
@@ -250,9 +243,7 @@ export default function Navbar() {
                             onClick={() => { setIsProfileOpen(false); signOut({ callbackUrl: '/' }) }}
                             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition"
                           >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
+                            <SignOutIcon className="w-4 h-4" />
                             Sign Out
                           </button>
                         </div>
@@ -374,9 +365,7 @@ export default function Navbar() {
             className="flex items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
           >
             <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <CurrencyIcon className="w-4 h-4 text-gray-400" />
               <span>Currency</span>
             </div>
             <span className="flex items-center gap-1.5">
@@ -397,9 +386,7 @@ export default function Navbar() {
             aria-label="Search"
             className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:text-[#0071CE] hover:bg-gray-50 rounded-xl transition"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <SearchNavIcon className="w-5 h-5" />
             Search destinations...
           </button>
 
@@ -421,14 +408,26 @@ export default function Navbar() {
                 <Link
                   href="/profile"
                   onClick={() => setIsOpen(false)}
-                  className="w-full text-left px-4 py-3 text-sm font-medium text-[#0071CE] hover:bg-blue-50 rounded-xl transition"
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-[#0071CE] hover:bg-blue-50 rounded-xl transition"
                 >
+                  <ProfileIcon className="w-4 h-4" />
                   My Profile
                 </Link>
+                {userRole === "ADMIN" && (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
+                  >
+                    <DashboardIcon className="w-4 h-4 text-gray-400" />
+                    Dashboard Admin
+                  </Link>
+                )}
                 <button
                   onClick={() => signOut()}
-                  className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 bg-red-50 rounded-xl mt-1"
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl mt-1 transition"
                 >
+                  <SignOutIcon className="w-4 h-4" />
                   Sign Out
                 </button>
               </>
