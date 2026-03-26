@@ -22,11 +22,10 @@ export {
   BeachIcon,
 }
 
-/** Map category slug → icon component */
-export const CATEGORY_ICON_MAP: Record<
-  string,
-  React.ComponentType<React.SVGProps<SVGSVGElement> & { isActive?: boolean }>
-> = {
+type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement> & { isActive?: boolean }>
+
+/** Map category slug → icon component (exact match) */
+export const CATEGORY_ICON_MAP: Record<string, IconComponent> = {
   tours: ToursIcon,
   romance: RomanceIcon,
   family: FamilyIcon,
@@ -37,4 +36,60 @@ export const CATEGORY_ICON_MAP: Record<
   "water-sports": WaterSportsIcon,
   temple: TempleIcon,
   beach: BeachIcon,
+}
+
+/**
+ * Keyword → icon mapping for dynamic Viator categories.
+ * Matches if the slug or name contains the keyword.
+ * Order matters — first match wins.
+ */
+const KEYWORD_ICON_MAP: [string, IconComponent][] = [
+  ["temple", TempleIcon],
+  ["beach", BeachIcon],
+  ["water", WaterSportsIcon],
+  ["surf", WaterSportsIcon],
+  ["snorkel", WaterSportsIcon],
+  ["dive", WaterSportsIcon],
+  ["adventure", AdventureIcon],
+  ["outdoor", AdventureIcon],
+  ["hiking", AdventureIcon],
+  ["trek", AdventureIcon],
+  ["food", FoodDrinkIcon],
+  ["drink", FoodDrinkIcon],
+  ["culinary", FoodDrinkIcon],
+  ["dining", FoodDrinkIcon],
+  ["culture", CultureIcon],
+  ["cultural", CultureIcon],
+  ["heritage", CultureIcon],
+  ["museum", CultureIcon],
+  ["nature", NatureIcon],
+  ["wildlife", NatureIcon],
+  ["eco", NatureIcon],
+  ["garden", NatureIcon],
+  ["romance", RomanceIcon],
+  ["honeymoon", RomanceIcon],
+  ["couple", RomanceIcon],
+  ["sunset", RomanceIcon],
+  ["family", FamilyIcon],
+  ["kid", FamilyIcon],
+  ["tour", ToursIcon],
+  ["sightseeing", ToursIcon],
+  ["excursion", ToursIcon],
+]
+
+/**
+ * Resolves an icon for a category.
+ * Tries exact slug match first, then keyword match against the slug.
+ */
+export function getCategoryIcon(slug: string): IconComponent | null {
+  // 1. Exact match
+  if (CATEGORY_ICON_MAP[slug]) return CATEGORY_ICON_MAP[slug]
+
+  // 2. Keyword match
+  const lower = slug.toLowerCase()
+  for (const [keyword, icon] of KEYWORD_ICON_MAP) {
+    if (lower.includes(keyword)) return icon
+  }
+
+  return null
 }

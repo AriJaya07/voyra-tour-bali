@@ -23,23 +23,6 @@ const VIATOR_HEADERS = {
   'exp-api-key': VIATOR_API_KEY,
 }
 
-// Map category names (lowercase) → Viator tag IDs for filtering
-const CATEGORY_TAG_MAP: Record<string, number[]> = {
-  'tours':          [11929],
-  'romance':        [11929],
-  'family':         [11929],
-  'culture':        [11929, 12032],
-  'nature':         [11903, 12029],
-  'food & drink':   [12071],
-  'adventure':      [11903, 11938],
-  'water sports':   [11938, 12029],
-  'temple':         [11929, 12032],
-  'beach':          [11903, 12029],
-  'wellness':       [12071],
-  'nightlife':      [12071],
-  'shopping':       [12071],
-}
-
 // --------------------------------------------------
 // GET REQUESTS
 // --------------------------------------------------
@@ -81,18 +64,18 @@ export async function GET(request: Request) {
       }
 
       const currency = searchParams.get('currency') || 'USD'
-      const categoryName = searchParams.get('categoryName') || ''
+      const tagIdsParam = searchParams.get('tagIds')
 
-      // Build filtering — always Bali, optionally with tags
+      // Build filtering — always Bali, optionally filtered by tag IDs
       const filtering: Record<string, any> = {
         destination: BALI_DESTINATION_ID,
       }
 
-      // Map category name to Viator tags for better results per tab
-      if (categoryName) {
-        const tags = CATEGORY_TAG_MAP[categoryName.toLowerCase()]
-        if (tags && tags.length > 0) {
-          filtering.tags = tags
+      if (tagIdsParam) {
+        try {
+          filtering.tags = JSON.parse(tagIdsParam)
+        } catch {
+          // If parsing fails, ignore the filter
         }
       }
 

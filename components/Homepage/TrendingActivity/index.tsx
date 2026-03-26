@@ -4,8 +4,8 @@ import { useState, useMemo, memo, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useCurrency } from "@/utils/hooks/useCurrency"
-import { useViatorProducts } from "@/utils/hooks/useViator"
-import { getViatorImageUrl, formatDuration } from "@/utils/hooks/useViator"
+import { useViatorProducts, getViatorImageUrl, formatDuration } from "@/utils/hooks/useViator"
+import { useDBDestinations } from "@/utils/hooks/useDestinations"
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
 import type { Category, UnifiedActivity } from "@/types/tourism"
 import { trackCategoryClick } from "@/utils/analytics"
@@ -186,30 +186,68 @@ function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: Cur
 
 // ── Main Component ──────────────────────────────────────────────────────
 
+/** Map a DB destination to UnifiedActivity */
+function mapDBToActivity(dest: any): UnifiedActivity {
+  const mainImage = dest.images?.find((img: any) => img.isMain)?.url
+    || dest.images?.[0]?.url
+    || "/images/destinations/gwk.png"
+
+  return {
+    id: `db-${dest.id}`,
+    source: "db",
+    title: dest.title,
+    description: dest.description || "",
+    imageUrl: mainImage,
+    price: dest.price ?? 0,
+    currency: "IDR",
+    slug: dest.slug || String(dest.id),
+    categoryId: dest.categoryId,
+  }
+}
+
 export default function TrendingActivity({ categories }: TrendingActivityProps) {
   const displayCategories = categories.slice(0, 8)
-  const defaultTab = displayCategories[0]?.name ?? "Tours"
-  const [activeTab, setActiveTab] = useState(defaultTab)
+  // Track active tab by ID (not name) to prevent cross-source collisions
+  const defaultId = displayCategories[0]?.id ?? ""
+  const [activeId, setActiveId] = useState<string | number>(defaultId)
   const [showAll, setShowAll] = useState(false)
 
   const { currency } = useCurrency()
 
-  const { data: viatorProducts, isLoading, isError } = useViatorProducts(activeTab, currency)
+  // Find active category by unique ID — safe even if two sources share a name
+  const activeCategory = displayCategories.find((c) => c.id === activeId) ?? displayCategories[0]
+  const isViator = activeCategory?.source === "viator"
+
+  // Fetch from the correct source based on category
+  const { data: viatorProducts, isLoading: isViatorLoading, isError } = useViatorProducts(
+    isViator ? activeCategory?.tagIds ?? null : null,
+    currency
+  )
+  const { data: dbDestinations, isLoading: isDBLoading } = useDBDestinations(
+    !isViator ? activeCategory?.id ?? null : null
+  )
+
+  const isLoading = isViator ? isViatorLoading : isDBLoading
 
   const activities: UnifiedActivity[] = useMemo(() => {
-    if (!viatorProducts) return []
-    return viatorProducts.map(mapViatorToActivity)
-  }, [viatorProducts])
+    if (isViator) {
+      if (!viatorProducts) return []
+      return viatorProducts.map(mapViatorToActivity)
+    }
+    // DB source
+    if (!dbDestinations) return []
+    return dbDestinations.map(mapDBToActivity)
+  }, [isViator, viatorProducts, dbDestinations])
 
   const [shuffledActivities, setShuffledActivities] = useState<UnifiedActivity[]>([])
   useEffect(() => {
     if (activities.length > 0) {
       setShuffledActivities(shuffle(activities))
       setShowAll(false)
-    } else if (!isLoading && viatorProducts) {
+    } else if (!isLoading) {
       setShuffledActivities([])
     }
-  }, [activities, isLoading, viatorProducts])
+  }, [activities, isLoading])
 
   const displayedActivities = useMemo(
     () => (showAll ? shuffledActivities : shuffledActivities.slice(0, 5)),
@@ -243,8 +281,8 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
           <TabButton
             key={tab.id}
             label={tab.name}
-            isActive={activeTab === tab.name}
-            onClick={() => { setActiveTab(tab.name); trackCategoryClick(tab.name) }}
+            isActive={activeId === tab.id}
+            onClick={() => { setActiveId(tab.id); trackCategoryClick(tab.name) }}
           />
         ))}
       </div>
@@ -286,7 +324,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
         ) : (
           <div className="w-full h-[220px] rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50/50">
             <p className="text-gray-500 font-medium text-center px-4">
-              No activities available for &quot;<span className="font-bold text-gray-700">{activeTab}</span>&quot; at the moment.
+              No activities available for &quot;<span className="font-bold text-gray-700">{activeCategory?.name}</span>&quot; at the moment.
             </p>
           </div>
         )}

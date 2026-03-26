@@ -115,20 +115,24 @@ export function formatDuration(duration?: ViatorProduct["duration"]): string {
   return `${hours}h ${remaining}m`;
 }
 
-// ── Hook: Fetch Viator products (Bali) ────────────────────────────────
+// ── Hook: Fetch Viator products by tag IDs (Bali) ───────────────────
 export function useViatorProducts(
-  categoryName: string | null,
+  tagIds: number[] | null,
   currency: string = "USD"
 ) {
   return useQuery<ViatorProduct[]>({
-    queryKey: ["viator-products", categoryName, currency],
+    queryKey: ["viator-products", tagIds, currency],
     queryFn: async () => {
       const { data } = await api.get("/viator", {
-        params: { action: "products", categoryName, currency },
+        params: {
+          action: "products",
+          tagIds: tagIds ? JSON.stringify(tagIds) : undefined,
+          currency,
+        },
       });
       return data?.products ?? [];
     },
-    enabled: !!categoryName,
+    enabled: !!tagIds && tagIds.length > 0,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
@@ -162,8 +166,9 @@ export function useViatorSearch(
     queryKey: ["viator-search", query, currency],
     queryFn: async () => {
       if (!query.trim()) {
+        // No search term — fetch general Bali products (no category filter)
         const { data } = await api.get("/viator", {
-          params: { action: "products", categoryName: "", currency },
+          params: { action: "products", currency },
         });
         return data?.products ?? [];
       }

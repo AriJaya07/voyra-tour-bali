@@ -2,11 +2,11 @@
 
 import { useState, useMemo, useEffect, memo } from "react"
 import DotsIcon from "../../assets/Icon/DotsIcon"
-import { CATEGORY_ICON_MAP } from "../../assets/Icon/categories"
+import { getCategoryIcon } from "../../assets/Icon/categories"
 import Image from "next/image"
 import Link from "next/link"
-import { useViatorProducts } from "@/utils/hooks/useViator"
-import { getViatorImageUrl } from "@/utils/hooks/useViator"
+import { useViatorProducts, getViatorImageUrl } from "@/utils/hooks/useViator"
+import { useDBDestinations } from "@/utils/hooks/useDestinations"
 import type { Category } from "@/types/tourism"
 
 interface DestinationProps {
@@ -35,7 +35,7 @@ const CategoryCard = memo(function CategoryCard({
   isActive: boolean
   onClick: () => void
 }) {
-  const IconComponent = CATEGORY_ICON_MAP[slug] ?? DotsIcon
+  const IconComponent = getCategoryIcon(slug) ?? DotsIcon
 
   return (
     <button
@@ -70,23 +70,53 @@ const CategoryCard = memo(function CategoryCard({
 
 // ── Main Component ──────────────────────────────────────────────────────
 export default function Destination({ categories }: DestinationProps) {
-  const defaultCategory = categories[0]?.name ?? "Tours"
-  const [activeTab, setActiveTab] = useState(defaultCategory)
+  // Track active tab by ID (not name) to prevent cross-source collisions
+  const defaultId = categories[0]?.id ?? ""
+  const [activeId, setActiveId] = useState<string | number>(defaultId)
   const [showAll, setShowAll] = useState(false)
 
-  // Fetch Viator products for the active category
-  const { data: viatorProducts, isLoading } = useViatorProducts(activeTab, "IDR")
+  // Find active category by unique ID — safe even if two sources share a name
+  const activeCategory = categories.find((c) => c.id === activeId) ?? categories[0]
+  const isViator = activeCategory?.source === "viator"
 
-  // Map Viator products to destination-like items for the grid
+  // Fetch from the correct source based on category
+  const { data: viatorProducts, isLoading: isViatorLoading } = useViatorProducts(
+    isViator ? activeCategory?.tagIds ?? null : null,
+    "IDR"
+  )
+  const { data: dbDestinations, isLoading: isDBLoading } = useDBDestinations(
+    !isViator ? activeCategory?.id ?? null : null
+  )
+
+  const isLoading = isViator ? isViatorLoading : isDBLoading
+
+  // Map data to a unified shape for the grid
   const destinations = useMemo(() => {
-    if (!viatorProducts) return []
-    return viatorProducts.map((product) => ({
-      id: product.productCode,
-      title: product.title,
-      slug: product.productCode,
-      imageUrl: getViatorImageUrl(product.images, 720),
-    }))
-  }, [viatorProducts])
+    if (isViator) {
+      if (!viatorProducts) return []
+      return viatorProducts.map((product) => ({
+        id: product.productCode,
+        title: product.title,
+        slug: product.productCode,
+        imageUrl: getViatorImageUrl(product.images, 720),
+        href: `/viator/${product.productCode}`,
+      }))
+    }
+    // DB source
+    if (!dbDestinations) return []
+    return dbDestinations.map((dest) => {
+      const mainImage = dest.images?.find((img) => img.isMain)?.url
+        || dest.images?.[0]?.url
+        || "/images/destinations/gwk.png"
+      return {
+        id: String(dest.id),
+        title: dest.title,
+        slug: dest.slug || String(dest.id),
+        imageUrl: mainImage,
+        href: `/detail/${dest.slug || dest.id}`,
+      }
+    })
+  }, [isViator, viatorProducts, dbDestinations])
 
   // Shuffle on client to avoid hydration mismatch
   const [visibleDestinations, setVisibleDestinations] = useState(destinations)
@@ -101,10 +131,12 @@ export default function Destination({ categories }: DestinationProps) {
   )
   const hasMore = visibleDestinations.length > 6
 
-  const handleTabClick = (tab: string) => {
-    setActiveTab(tab)
+  const handleTabClick = (id: string | number) => {
+    setActiveId(id)
     setShowAll(false)
   }
+
+  console.log(categories, "PPP")
 
   return (
     <section id="destinasi" className="pt-10 md:pt-[72px] px-4 md:px-0">
@@ -117,8 +149,8 @@ export default function Destination({ categories }: DestinationProps) {
             key={item.id}
             label={item.name}
             slug={item.slug}
-            isActive={activeTab === item.name}
-            onClick={() => handleTabClick(item.name)}
+            isActive={activeId === item.id}
+            onClick={() => handleTabClick(item.id)}
           />
         ))}
       </div>
@@ -128,7 +160,7 @@ export default function Destination({ categories }: DestinationProps) {
       {/* Content */}
       <div className="pt-5">
         <h1 className="pb-3 text-2xl sm:text-3xl font-bold text-[#434343]">
-          {activeTab}
+          {activeCategory?.name ?? ""}
         </h1>
 
         <div className="min-h-[220px]">
@@ -142,7 +174,7 @@ export default function Destination({ categories }: DestinationProps) {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {displayedDestinations.map((item) => (
-                  <Link href={`/viator/${item.slug}`} key={item.id}>
+                  <Link href={item.href} key={item.id}>
                     <div className="relative w-full h-[220px] rounded-md overflow-hidden">
                       <Image
                         src={item.imageUrl}
@@ -170,7 +202,7 @@ export default function Destination({ categories }: DestinationProps) {
           ) : (
             <div className="w-full h-[220px] rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50/50">
               <p className="text-gray-500 font-medium text-center px-4">
-                No destinations available for &quot;<span className="font-bold text-gray-700">{activeTab}</span>&quot; at the moment.
+                No destinations available for &quot;<span className="font-bold text-gray-700">{activeCategory?.name}</span>&quot; at the moment.
               </p>
             </div>
           )}

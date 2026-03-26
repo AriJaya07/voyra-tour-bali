@@ -10,7 +10,9 @@ export interface Category {
   slug: string
   description?: string | null
   image?: string | null
-  /** Viator tag IDs used when fetching products for this category */
+  /** Data source this category belongs to */
+  source?: "db" | "viator"
+  /** Viator tag IDs — used to filter products via filtering.tags */
   tagIds?: number[]
 }
 

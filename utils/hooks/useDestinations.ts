@@ -3,6 +3,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { destinationService } from "../service/destination.service";
 
+/**
+ * Fetches DB destinations filtered by categoryId.
+ * Used by homepage components for categories with source: "db".
+ */
+export function useDBDestinations(categoryId: number | string | null) {
+  return useQuery({
+    queryKey: ["db-destinations", categoryId],
+    queryFn: () => destinationService.getByCategory(categoryId!),
+    enabled: !!categoryId,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+}
 
 export function useDestinations() {
   const queryClient = useQueryClient();

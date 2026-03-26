@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -17,6 +18,7 @@ interface Traveler {
 }
 
 export default function BookingWidget({ productCode, title, basePrice, currency, ageBands }: { productCode: string, title: string, basePrice: number, currency: string, ageBands?: any[] }) {
+  const { data: session } = useSession();
   const router = useRouter();
   const [date, setDate] = useState<Date | null>(null);
   
@@ -53,6 +55,11 @@ export default function BookingWidget({ productCode, title, basePrice, currency,
 
   // 1. Availability API Call
   const handleCheckAvailability = async () => {
+    if (!session) {
+      const currentUrl = typeof window !== "undefined" ? window.location.pathname : "/";
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
     if (!date || totalTravelers === 0) return;
     setIsChecking(true);
 

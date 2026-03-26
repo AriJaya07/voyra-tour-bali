@@ -1,9 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const categoryId = req.nextUrl.searchParams.get("categoryId");
+
+    const where = categoryId ? { categoryId: Number(categoryId) } : {};
+
     const destinations = await prisma.destination.findMany({
+      where,
       include: {
         category: true,
         images: true,
