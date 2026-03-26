@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, memo } from "react"
 import DotsIcon from "../../assets/Icon/DotsIcon"
-import { getCategoryIcon } from "../../assets/Icon/categories"
+import { assignCategoryIcons } from "../../assets/Icon/categories"
 import OptimizedImage from "@/components/common/OptimizedImage"
 import Link from "next/link"
 import { useViatorProducts, getViatorImageUrl } from "@/utils/hooks/useViator"
@@ -26,17 +26,15 @@ function shuffleArray<T>(array: T[]): T[] {
 // ── Category Card ───────────────────────────────────────────────────────
 const CategoryCard = memo(function CategoryCard({
   label,
-  slug,
+  icon: IconComponent,
   isActive,
   onClick,
 }: {
   label: string
-  slug: string
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement> & { isActive?: boolean }>
   isActive: boolean
   onClick: () => void
 }) {
-  const IconComponent = getCategoryIcon(slug) ?? DotsIcon
-
   return (
     <button
       onClick={onClick}
@@ -70,6 +68,12 @@ const CategoryCard = memo(function CategoryCard({
 
 // ── Main Component ──────────────────────────────────────────────────────
 export default function Destination({ categories }: DestinationProps) {
+  // Assign unique icons to all categories once
+  const iconMap = useMemo(
+    () => assignCategoryIcons(categories.map((c) => c.slug)),
+    [categories]
+  )
+
   // Track active tab by ID (not name) to prevent cross-source collisions
   const defaultId = categories[0]?.id ?? ""
   const [activeId, setActiveId] = useState<string | number>(defaultId)
@@ -146,7 +150,7 @@ export default function Destination({ categories }: DestinationProps) {
           <CategoryCard
             key={item.id}
             label={item.name}
-            slug={item.slug}
+            icon={iconMap.get(item.slug) ?? DotsIcon}
             isActive={activeId === item.id}
             onClick={() => handleTabClick(item.id)}
           />
@@ -157,9 +161,6 @@ export default function Destination({ categories }: DestinationProps) {
 
       {/* Content */}
       <div className="pt-5">
-        <h1 className="pb-3 text-2xl sm:text-3xl font-bold text-[#434343]">
-          {activeCategory?.name ?? ""}
-        </h1>
 
         <div className="min-h-[220px]">
           {isLoading ? (

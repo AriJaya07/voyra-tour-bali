@@ -18,6 +18,7 @@ export default function CheckoutClient() {
   const { data: session } = useSession();
 
   const productCode = searchParams.get('productCode') || "";
+  const productOptionCode = searchParams.get('productOptionCode') || "";
   const title = searchParams.get('title') || "";
   const date = searchParams.get('date') || "";
   const currency = searchParams.get('currency') || "USD";
@@ -83,7 +84,7 @@ export default function CheckoutClient() {
     const check = async () => {
       try {
         setIsChecking(true);
-        const data = await checkAvailability({ productCode, travelDate: date, paxMix, currency });
+        const data = await checkAvailability({ productCode, ...(productOptionCode && { productOptionCode }), travelDate: date, paxMix, currency });
 
         if (data.available !== false) {
           const apiPrice = data.bookableItems?.[0]?.totalPrice?.price?.recommendedRetailPrice;
@@ -114,6 +115,7 @@ export default function CheckoutClient() {
     try {
       const data = await createBooking({
         productCode,
+        ...(productOptionCode && { productOptionCode }),
         travelDate: date,
         paxMix,
         bookerInfo: { firstName: form.firstName, lastName: form.lastName },

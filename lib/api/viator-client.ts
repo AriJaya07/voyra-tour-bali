@@ -1,5 +1,6 @@
 export async function checkAvailability(params: {
   productCode: string;
+  productOptionCode?: string;
   travelDate: string;
   paxMix: Array<{ ageBand: string; numberOfTravelers: number }>;
   currency: string;
@@ -14,6 +15,7 @@ export async function checkAvailability(params: {
 
 export async function createBooking(params: {
   productCode: string;
+  productOptionCode?: string;
   travelDate: string;
   paxMix: Array<{ ageBand: string; numberOfTravelers: number }>;
   bookerInfo: { firstName: string; lastName: string };

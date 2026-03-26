@@ -36,6 +36,88 @@ export interface ViatorPricingInfo {
   ageBands?: ViatorAgeBand[];
 }
 
+export interface ViatorLogisticsLocation {
+  location: { ref: string };
+  description?: string;
+  pickupType?: string;
+}
+
+export interface ViatorLogistics {
+  start?: ViatorLogisticsLocation[];
+  end?: ViatorLogisticsLocation[];
+  redemption?: {
+    redemptionType?: string;
+    specialInstructions?: string;
+  };
+  travelerPickup?: {
+    pickupOptionType?: string;
+    allowCustomTravelerPickup?: boolean;
+    locations?: ViatorLogisticsLocation[];
+    additionalInfo?: string;
+  };
+}
+
+export interface ViatorCancellationPolicy {
+  type: string;
+  description: string;
+  cancelIfBadWeather?: boolean;
+  cancelIfInsufficientTravelers?: boolean;
+  refundEligibility?: Array<{
+    dayRangeMin: number;
+    dayRangeMax?: number;
+    percentageRefundable: number;
+  }>;
+}
+
+export interface ViatorBookingRequirements {
+  minTravelersPerBooking?: number;
+  maxTravelersPerBooking?: number;
+  requiresAdultForBooking?: boolean;
+}
+
+export interface ViatorLanguageGuide {
+  type: string;
+  language: string;
+  legacyGuide?: string;
+}
+
+export interface ViatorItineraryItem {
+  pointOfInterestLocation?: {
+    location: { ref: string };
+    attractionId?: number;
+  };
+  duration?: {
+    fixedDurationInMinutes?: number;
+  };
+  passByWithoutStopping?: boolean;
+  admissionIncluded?: string;
+  description?: string;
+}
+
+export interface ViatorItinerary {
+  itineraryType?: string;
+  skipTheLine?: boolean;
+  privateTour?: boolean;
+  duration?: {
+    fixedDurationInMinutes?: number;
+    variableDurationFromMinutes?: number;
+    variableDurationToMinutes?: number;
+  };
+  itineraryItems?: ViatorItineraryItem[];
+}
+
+export interface ViatorProductOption {
+  productOptionCode: string;
+  title: string;
+  description: string;
+  languageGuides?: ViatorLanguageGuide[];
+}
+
+export interface ViatorSupplier {
+  name: string;
+  reference?: string;
+}
+
 export interface ViatorProduct {
   productCode: string;
   title: string;
@@ -49,7 +131,7 @@ export interface ViatorProduct {
   reviews?: {
     sources?: ViatorReviewSource[];
     totalReviews: number;
-    combinedAverageRating: number;
+    combinedAverageRating?: number;
   };
   duration?: {
     fixedDurationInMinutes?: number;
@@ -61,11 +143,24 @@ export interface ViatorProduct {
   productUrl?: string;
   destinations?: { ref: string; primary?: boolean }[];
   tags?: number[];
-  itinerary?: any;
+  itinerary?: ViatorItinerary;
   inclusions?: any[];
   exclusions?: any[];
   additionalInfo?: string[];
-  bookingConfirmationSettings?: { confirmationType: string };
+  bookingConfirmationSettings?: {
+    confirmationType: string;
+    bookingCutoffType?: string;
+    bookingCutoffInMinutes?: number;
+    bookingCutoffFixedTime?: string;
+  };
+  logistics?: ViatorLogistics;
+  timeZone?: string;
+  cancellationPolicy?: ViatorCancellationPolicy;
+  bookingRequirements?: ViatorBookingRequirements;
+  languageGuides?: ViatorLanguageGuide[];
+  bookingQuestions?: string[];
+  productOptions?: ViatorProductOption[];
+  supplier?: ViatorSupplier;
 }
 
 interface ViatorBookingPayload {
