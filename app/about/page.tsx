@@ -59,7 +59,7 @@ export default function AboutPage() {
       </section>
 
       {/* Mission / What We Do */}
-      <section className="max-w-5xl flex flex-row gap-3 items-center mx-auto px-4 py-20">
+      <section className="max-w-5xl flex flex-row gap-3 items-center mx-auto px-4 py-10">
         <ViatorBanner />
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -94,7 +94,7 @@ export default function AboutPage() {
       </section>
 
       {/* Why Choose Us */}
-      <section className="bg-gray-50 py-20">
+      <section className="bg-gray-50 py-10">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-14">
             <p className="text-sm font-bold text-[#0071CE] uppercase tracking-widest mb-3">
