@@ -1,11 +1,19 @@
 import AppStoreIcon from "@/components/assets/Icon/AppStoreIcon";
 import PlayStoreIcon from "@/components/assets/Icon/PlayStoreIcon";
+import ViatorBanner from "@/components/viator/ViatorBanner";
 import Link from "next/link";
 
 export default function PromotionApp() {
     return (
-        <section className="w-full flex justify-center items-center bg-gray-50 p-4 rounded-2xl mb-5">
-            <div className="w-full max-w-6xl bg-white rounded-2xl flex justify-center shadow-md p-6 md:p-10">
+        <section className="w-full flex flex-col justify-center items-center p-4 rounded-2xl mb-5">
+            <ViatorBanner 
+                partnerId="P00292613"
+                width="728"
+                height="90"
+                language="en"
+                selection="banner2" 
+            />
+            <div className="w-[728px] bg-white rounded-b-2xl flex justify-center shadow-md p-6 md:p-10">
 
                 <div className="flex flex-col lg:flex-row items-center gap-8">
 

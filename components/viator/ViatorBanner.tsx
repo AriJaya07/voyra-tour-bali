@@ -11,19 +11,19 @@ interface ViatorBannerProps {
 }
 
 export default function ViatorBanner({
-  partnerId = "P00292613",
-  width = "120",
-  height = "600",
-  language = "en",
-  selection = "banner1",
+  partnerId,
+  width,
+  height,
+  language,
+  selection,
 }: ViatorBannerProps) {
   return (
-    <div className="flex justify-center w-full my-4">
+    <div className="flex justify-center w-full">
       {/* Container for the specific banner size */}
       <div
         data-id="viator-banner"
         data-partner-id={partnerId}
-        data-url="https://www.viator.com/"
+        data-url="https://www.viator.com/Bali/d98-ttd"
         data-banner-width={width}
         data-banner-height={height}
         data-banner-language={language}

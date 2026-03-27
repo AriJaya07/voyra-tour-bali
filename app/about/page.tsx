@@ -60,7 +60,13 @@ export default function AboutPage() {
 
       {/* Mission / What We Do */}
       <section className="max-w-5xl flex flex-row gap-3 items-center mx-auto px-4 py-10">
-        <ViatorBanner />
+        <ViatorBanner 
+          partnerId="P00292613"
+          width="120"
+          height="600"
+          language="en"
+          selection="banner1" 
+        />
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
