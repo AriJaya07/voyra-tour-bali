@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { StatCard, FeatureCard, FaqItem } from "@/components/about";
 import { FAQ_ITEMS } from "@/lib/data/about";
+import ViatorBanner from "@/components/viator/ViatorBanner";
 
 export default function AboutPage() {
   const { data: session } = useSession();
@@ -58,40 +59,43 @@ export default function AboutPage() {
       </section>
 
       {/* Mission / What We Do */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div>
-            <p className="text-sm font-bold text-[#0071CE] uppercase tracking-widest mb-3">
-              Our Mission
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight">
-              Making Bali accessible to every traveler
-            </h2>
-            <p className="mt-5 text-gray-600 leading-relaxed">
-              Voyra Tourism was founded with a simple belief: every traveler
-              deserves an authentic Bali experience without the hassle of
-              planning. We bridge the gap between travelers and Bali's rich
-              culture, stunning landscapes, and warm hospitality.
-            </p>
-            <p className="mt-4 text-gray-600 leading-relaxed">
-              From the terraced rice fields of Ubud to the crystal-clear waters
-              of Nusa Penida, our curated destinations and tour packages are
-              designed to give you the best of Bali — whether you're a
-              first-time visitor or a seasoned explorer.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <StatCard value="500+" label="Happy Travelers" icon="🌏" />
-            <StatCard value="50+" label="Destinations" icon="📍" />
-            <StatCard value="30+" label="Tour Packages" icon="📦" />
-            <StatCard value="24/7" label="Customer Support" icon="💬" />
+      <section className="max-w-5xl flex flex-row gap-3 items-center mx-auto px-4 py-20">
+        <ViatorBanner />
+        <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <p className="text-sm font-bold text-[#0071CE] uppercase tracking-widest mb-3">
+                Our Mission
+              </p>
+              <h2 className="text-xl sm:text-4xl font-black text-gray-900 leading-tight">
+                Making Bali accessible to every traveler
+              </h2>
+              <p className="mt-5 text-gray-600 leading-relaxed text-sm">
+                Voyra Tourism was founded with a simple belief: every traveler
+                deserves an authentic Bali experience without the hassle of
+                planning. We bridge the gap between travelers and Bali's rich
+                culture, stunning landscapes, and warm hospitality.
+              </p>
+              <p className="mt-4 text-gray-600 leading-relaxed text-sm">
+                From the terraced rice fields of Ubud to the crystal-clear waters
+                of Nusa Penida, our curated destinations and tour packages are
+                designed to give you the best of Bali — whether you're a
+                first-time visitor or a seasoned explorer.
+              </p>
+            </div>
+            <div className="flex flex-col sm:block hidden">
+              <StatCard value="500+" label="Happy Travelers" icon="🌏" />
+              <StatCard value="50+" label="Destinations" icon="📍" />
+              <StatCard value="30+" label="Tour Packages" icon="📦" />
+              <StatCard value="24/7" label="Customer Support" icon="💬" />
+            </div>
           </div>
         </div>
       </section>
 
       {/* Why Choose Us */}
       <section className="bg-gray-50 py-20">
-        <div className="max-w-5xl mx-auto px-6">
+        <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-14">
             <p className="text-sm font-bold text-[#0071CE] uppercase tracking-widest mb-3">
               Why Choose Us
