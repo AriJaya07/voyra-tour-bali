@@ -9,6 +9,7 @@ import { useDBDestinations } from "@/utils/hooks/useDestinations"
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
 import type { Category, UnifiedActivity } from "@/types/tourism"
 import { trackCategoryClick } from "@/utils/analytics"
+import Pagination from "@/components/ui/Pagination"
 
 interface TrendingActivityProps {
   categories: Category[]
@@ -228,12 +229,10 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
   const activeCategory = displayCategories.find((c) => c.id === activeId) ?? displayCategories[0]
   const isViator = activeCategory?.source === "viator"
 
-  // ── Pagination state ────────────────────────────────────────────────
+  // ── Pagination ──────────────────────────────────────────────────────
   const [viatorPage, setViatorPage] = useState(1)
   const ITEMS_PER_PAGE = 5
-  const [accumulatedViator, setAccumulatedViator] = useState<UnifiedActivity[]>([])
 
-  // Fetch from the correct source based on category
   const { data: viatorData, isLoading: isViatorLoading, isError } = useViatorProducts(
     isViator ? activeCategory?.tagIds ?? null : null,
     currency,
@@ -244,51 +243,29 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
     !isViator ? activeCategory?.id ?? null : null
   )
 
-  const isInitialLoading = isViator ? (isViatorLoading && viatorPage === 1) : isDBLoading
-  const isLoadingMore = isViator && isViatorLoading && viatorPage > 1
-  const isLoading = isInitialLoading
+  const isLoading = isViator ? isViatorLoading : isDBLoading
 
-  // Accumulate Viator products across pages
+  const rawTotalPages = Math.ceil((viatorData?.totalCount ?? 0) / ITEMS_PER_PAGE)
+  const [viatorTotalPages, setViatorTotalPages] = useState(0)
   useEffect(() => {
-    if (!isViator || !viatorData?.products) return
-    const newItems = viatorData.products.map(mapViatorToActivity)
-    if (viatorPage === 1) {
-      setAccumulatedViator(newItems)
-    } else {
-      setAccumulatedViator((prev) => {
-        const existingIds = new Set(prev.map((a) => a.id))
-        const unique = newItems.filter((a) => !existingIds.has(a.id))
-        return [...prev, ...unique]
-      })
-    }
-  }, [viatorData, viatorPage, isViator])
+    if (rawTotalPages > 0) setViatorTotalPages(rawTotalPages)
+  }, [rawTotalPages])
 
   const activities: UnifiedActivity[] = useMemo(() => {
-    if (isViator) return accumulatedViator
+    if (isViator) {
+      if (!viatorData?.products) return []
+      return viatorData.products.map(mapViatorToActivity)
+    }
     if (!dbDestinations) return []
     return dbDestinations.map(mapDBToActivity)
-  }, [isViator, accumulatedViator, dbDestinations])
+  }, [isViator, viatorData, dbDestinations])
 
-  const [shuffledActivities, setShuffledActivities] = useState<UnifiedActivity[]>([])
-  useEffect(() => {
-    if (viatorPage === 1 && activities.length > 0) {
-      setShuffledActivities(shuffle(activities))
-      setShowAll(false)
-    } else if (viatorPage > 1) {
-      setShuffledActivities(activities)
-    } else if (!isLoading) {
-      setShuffledActivities([])
-    }
-  }, [activities, isLoading, viatorPage])
+  const displayedActivities = useMemo(
+    () => (!isViator && !showAll ? activities.slice(0, 5) : activities),
+    [isViator, showAll, activities]
+  )
 
-  const displayedActivities = useMemo(() => {
-    if (isViator) return shuffledActivities
-    return showAll ? shuffledActivities : shuffledActivities.slice(0, 5)
-  }, [isViator, showAll, shuffledActivities])
-
-  const hasMore = isViator
-    ? (viatorData?.hasMore ?? false)
-    : shuffledActivities.length > 5
+  const dbHasMore = !isViator && activities.length > 5
 
   return (
     <section id="paket" className="py-10">
@@ -318,16 +295,17 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
             label={tab.name}
             // icon={iconMap.get(tab.slug) ?? DotsIcon}
             isActive={activeId === tab.id}
-            onClick={() => { setActiveId(tab.id); setViatorPage(1); setShowAll(false); setAccumulatedViator([]); trackCategoryClick(tab.name) }}
+            onClick={() => { setActiveId(tab.id); setViatorPage(1); setShowAll(false); trackCategoryClick(tab.name) }}
           />
         ))}
       </div>
 
       {/* Activities */}
-      <div className="min-h-[220px]">
-        {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+      <div>
+        {/* Grid — skeleton matches real card height */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" style={{ minHeight: "280px" }}>
+          {isLoading ? (
+            Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
               <div key={i} className="bg-gray-100 rounded-xl animate-pulse">
                 <div className="aspect-[4/3] bg-gray-200 rounded-t-xl" />
                 <div className="p-3 space-y-2">
@@ -336,59 +314,38 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
                   <div className="h-5 bg-gray-200 rounded w-1/3 mt-2" />
                 </div>
               </div>
-            ))}
-          </div>
-        ) : displayedActivities.length > 0 ? (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {displayedActivities.map((item) => (
-                <ActivityCard key={item.id} item={item} currency={currency} />
-              ))}
-
-              {/* Skeleton placeholders while loading next page */}
-              {isLoadingMore && Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-                <div key={`skeleton-${i}`} className="bg-gray-100 rounded-xl animate-pulse">
-                  <div className="aspect-[4/3] bg-gray-200 rounded-t-xl" />
-                  <div className="p-3 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4" />
-                    <div className="h-3 bg-gray-200 rounded w-1/2" />
-                    <div className="h-5 bg-gray-200 rounded w-1/3 mt-2" />
-                  </div>
-                </div>
-              ))}
+            ))
+          ) : displayedActivities.length > 0 ? (
+            displayedActivities.map((item) => (
+              <ActivityCard key={item.id} item={item} currency={currency} />
+            ))
+          ) : (
+            <div className="col-span-full w-full h-[220px] rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50/50">
+              <p className="text-gray-500 font-medium text-center px-4">
+                No activities available for &quot;<span className="font-bold text-gray-700">{activeCategory?.name}</span>&quot; at the moment.
+              </p>
             </div>
+          )}
+        </div>
 
-            {(hasMore || isLoadingMore) && (
-              <div className="pt-8 pb-4 flex justify-center">
-                <button
-                  onClick={() => {
-                    if (isViator) {
-                      setViatorPage((p) => p + 1)
-                    } else {
-                      setShowAll(!showAll)
-                    }
-                  }}
-                  disabled={isLoadingMore}
-                  className="px-8 py-2.5 bg-white border-2 border-blue-500 text-blue-500 font-bold rounded-full hover:bg-blue-500 hover:text-white transition-all shadow-md cursor-pointer disabled:border-gray-300 disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-400 flex items-center gap-2"
-                >
-                  {isLoadingMore ? (
-                    <>
-                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Loading...
-                    </>
-                  ) : isViator ? "Load More" : showAll ? "Show Less" : "See All Activity"}
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="w-full h-[220px] rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50/50">
-            <p className="text-gray-500 font-medium text-center px-4">
-              No activities available for &quot;<span className="font-bold text-gray-700">{activeCategory?.name}</span>&quot; at the moment.
-            </p>
+        {/* Pagination — always visible */}
+        {isViator && viatorTotalPages > 1 && (
+          <Pagination
+            currentPage={viatorPage}
+            totalPages={viatorTotalPages}
+            onPageChange={setViatorPage}
+            isLoading={isViatorLoading}
+          />
+        )}
+
+        {dbHasMore && (
+          <div className="flex justify-center pt-6">
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="px-8 py-2.5 bg-white border-2 border-blue-500 text-blue-500 font-bold rounded-full hover:bg-blue-500 hover:text-white transition-all shadow-md cursor-pointer"
+            >
+              {showAll ? "Show Less" : "See All Activity"}
+            </button>
           </div>
         )}
       </div>

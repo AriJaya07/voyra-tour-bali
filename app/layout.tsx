@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import LayoutWrapper from "@/components/Wrapper/LayoutWrapper";
 import { Toaster } from "sonner";
+import ExchangeRateProvider from "@/components/providers/ExchangeRateProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -146,6 +147,7 @@ export default async function RootLayout({
       >
         <SessionProviderWrapper session={session}>
           <ReactQueryProvider>
+            <ExchangeRateProvider />
             <LayoutWrapper>
               {children}
             </LayoutWrapper>

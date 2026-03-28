@@ -514,7 +514,67 @@ export function useViatorExchangeRates() {
       const { data } = await api.get("/viator/exchange-rates");
       return data;
     },
-    staleTime: 1000 * 60 * 60, // 1 hour (server handles real expiry)
+    staleTime: 1000 * 60 * 60,
+    refetchOnWindowFocus: false,
+  });
+}
+
+// ── Attractions ─────────────────────────────────────────────────────
+
+export interface ViatorAttraction {
+  attractionId: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  productCount: number;
+  rating?: number | null;
+  reviewCount?: number;
+  destinationId?: number;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface ViatorAttractionsResponse {
+  attractions: ViatorAttraction[];
+  totalCount: number;
+  page: number;
+  count: number;
+  hasMore: boolean;
+}
+
+export function useViatorAttractions(
+  query: string = "",
+  page: number = 1,
+  count: number = 10
+) {
+  return useQuery<ViatorAttractionsResponse>({
+    queryKey: ["viator-attractions", query, page, count],
+    queryFn: async () => {
+      const { data } = await api.get("/viator/attractions", {
+        params: { query, page, count },
+      });
+      return {
+        attractions: data?.attractions ?? [],
+        totalCount: data?.totalCount ?? 0,
+        page: data?.page ?? page,
+        count: data?.count ?? count,
+        hasMore: data?.hasMore ?? false,
+      };
+    },
+    staleTime: 1000 * 60 * 30,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useViatorAttractionDetail(attractionId: string | null) {
+  return useQuery<ViatorAttraction>({
+    queryKey: ["viator-attraction-detail", attractionId],
+    queryFn: async () => {
+      const { data } = await api.get(`/viator/attractions/${attractionId}`);
+      return data;
+    },
+    enabled: !!attractionId,
+    staleTime: 1000 * 60 * 60,
     refetchOnWindowFocus: false,
   });
 }

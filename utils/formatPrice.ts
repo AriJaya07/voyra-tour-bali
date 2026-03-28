@@ -1,8 +1,8 @@
 export type CurrencyCode = "IDR" | "USD";
 
-// Approximate conversion rate — update as needed or fetch from an API
-const IDR_TO_USD = 0.000063;
-const USD_TO_IDR = 1 / IDR_TO_USD;
+// Fallback rates — used when Viator rates aren't loaded yet
+const FALLBACK_IDR_TO_USD = 0.000063;
+const FALLBACK_USD_TO_IDR = 1 / FALLBACK_IDR_TO_USD;
 
 const formatters: Record<CurrencyCode, Intl.NumberFormat> = {
   IDR: new Intl.NumberFormat("id-ID", {
@@ -21,21 +21,35 @@ const formatters: Record<CurrencyCode, Intl.NumberFormat> = {
 
 /**
  * Format a number as a currency string.
- * By default assumes `amount` is already in the target `currency` (no conversion).
- * Pass `sourceCurrency` when the amount is in a different currency and needs converting.
+ *
+ * @param amount        - The price value
+ * @param currency      - Target display currency ("IDR" or "USD")
+ * @param sourceCurrency - Original currency of the amount (if different, will convert)
+ * @param liveRates     - Viator exchange rates (e.g. { USD: 1, IDR: 15850 })
  */
 export function formatPrice(
   amount: number,
   currency: CurrencyCode = "IDR",
-  sourceCurrency?: CurrencyCode
+  sourceCurrency?: CurrencyCode,
+  liveRates?: Record<string, number> | null
 ): string {
   let value = amount;
+
   if (sourceCurrency && sourceCurrency !== currency) {
-    if (sourceCurrency === "IDR" && currency === "USD") {
-      value = amount * IDR_TO_USD;
-    } else if (sourceCurrency === "USD" && currency === "IDR") {
-      value = amount * USD_TO_IDR;
+    if (liveRates && liveRates[sourceCurrency] && liveRates[currency]) {
+      // Use Viator exchange rates: convert source → USD base → target
+      const sourceToUsd = 1 / liveRates[sourceCurrency];
+      const usdToTarget = liveRates[currency];
+      value = amount * sourceToUsd * usdToTarget;
+    } else {
+      // Fallback to hardcoded rates
+      if (sourceCurrency === "IDR" && currency === "USD") {
+        value = amount * FALLBACK_IDR_TO_USD;
+      } else if (sourceCurrency === "USD" && currency === "IDR") {
+        value = amount * FALLBACK_USD_TO_IDR;
+      }
     }
   }
+
   return formatters[currency].format(value);
 }

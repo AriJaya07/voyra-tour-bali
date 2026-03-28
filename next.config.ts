@@ -25,6 +25,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'dynamic-media.tacdn.com',
+      },
+      {
+        protocol: 'https',
         hostname: '*.viator.com',
       },
     ],

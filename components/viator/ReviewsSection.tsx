@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useViatorReviews } from "@/utils/hooks/useViator";
+import Pagination from "@/components/ui/Pagination";
 
 interface ReviewsSectionProps {
   productCode: string;
@@ -28,8 +29,12 @@ export default function ReviewsSection({ productCode }: ReviewsSectionProps) {
   const { data, isLoading } = useViatorReviews(productCode, page, 5);
 
   const reviews = data?.reviews ?? [];
-  const hasMore = data?.hasMore ?? false;
   const totalCount = data?.totalCount ?? 0;
+  const rawTotalPages = Math.ceil(totalCount / 5);
+  const [totalPages, setTotalPages] = useState(0);
+  useEffect(() => {
+    if (rawTotalPages > 0) setTotalPages(rawTotalPages);
+  }, [rawTotalPages]);
 
   if (!isLoading && reviews.length === 0 && page === 1) return null;
 
@@ -49,7 +54,7 @@ export default function ReviewsSection({ productCode }: ReviewsSectionProps) {
         Total review count and overall rating based on Viator and Tripadvisor reviews
       </p>
 
-      <div className="space-y-4">
+      <div className="min-h-[400px] space-y-4">
         {reviews.map((review) => (
           <div
             key={review.reviewId}
@@ -103,17 +108,12 @@ export default function ReviewsSection({ productCode }: ReviewsSectionProps) {
           ))}
       </div>
 
-      {/* Load more */}
-      {hasMore && !isLoading && (
-        <div className="flex justify-center mt-6">
-          <button
-            onClick={() => setPage((p) => p + 1)}
-            className="px-6 py-2.5 bg-white border-2 border-gray-200 text-gray-600 font-bold text-sm rounded-full hover:border-[#0071CE] hover:text-[#0071CE] transition"
-          >
-            Load More Reviews
-          </button>
-        </div>
-      )}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        isLoading={isLoading}
+      />
     </section>
   );
 }

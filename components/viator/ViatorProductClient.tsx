@@ -15,6 +15,7 @@ import { trackViewItem } from "@/utils/analytics"
 import LogisticsSection from "@/components/viator/LogisticsSection"
 import ProductDetailsSection from "@/components/viator/ProductDetailsSection"
 import ReviewsSection from "@/components/viator/ReviewsSection"
+import AttractionsSection from "@/components/viator/AttractionsSection"
 import { FaChevronRight } from "react-icons/fa"
 
 const FALLBACK_IMAGE = "/images/activity/melasti.png"
@@ -314,6 +315,8 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
               productOptions={product.productOptions}
               supplier={product.supplier}
             />
+
+            <AttractionsSection />
           </div>
 
           {/* Right: Booking Sidebar */}
