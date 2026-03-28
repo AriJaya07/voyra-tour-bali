@@ -1,6 +1,6 @@
 import AppStoreIcon from "@/components/assets/Icon/AppStoreIcon";
 import PlayStoreIcon from "@/components/assets/Icon/PlayStoreIcon";
-import ViatorBanner from "@/components/viator/ViatorBanner";
+import ViatorBanner from "@/components/viator/widget/ViatorBanner";
 import Link from "next/link";
 
 export default function PromotionApp() {
