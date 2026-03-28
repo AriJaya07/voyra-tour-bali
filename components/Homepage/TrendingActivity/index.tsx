@@ -225,42 +225,67 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
   const activeCategory = displayCategories.find((c) => c.id === activeId) ?? displayCategories[0]
   const isViator = activeCategory?.source === "viator"
 
+  // ── Pagination state ────────────────────────────────────────────────
+  const [viatorPage, setViatorPage] = useState(1)
+  const ITEMS_PER_PAGE = 5
+  const [accumulatedViator, setAccumulatedViator] = useState<UnifiedActivity[]>([])
+
   // Fetch from the correct source based on category
-  const { data: viatorProducts, isLoading: isViatorLoading, isError } = useViatorProducts(
+  const { data: viatorData, isLoading: isViatorLoading, isError } = useViatorProducts(
     isViator ? activeCategory?.tagIds ?? null : null,
-    currency
+    currency,
+    viatorPage,
+    ITEMS_PER_PAGE
   )
   const { data: dbDestinations, isLoading: isDBLoading } = useDBDestinations(
     !isViator ? activeCategory?.id ?? null : null
   )
 
-  const isLoading = isViator ? isViatorLoading : isDBLoading
+  const isInitialLoading = isViator ? (isViatorLoading && viatorPage === 1) : isDBLoading
+  const isLoadingMore = isViator && isViatorLoading && viatorPage > 1
+  const isLoading = isInitialLoading
+
+  // Accumulate Viator products across pages
+  useEffect(() => {
+    if (!isViator || !viatorData?.products) return
+    const newItems = viatorData.products.map(mapViatorToActivity)
+    if (viatorPage === 1) {
+      setAccumulatedViator(newItems)
+    } else {
+      setAccumulatedViator((prev) => {
+        const existingIds = new Set(prev.map((a) => a.id))
+        const unique = newItems.filter((a) => !existingIds.has(a.id))
+        return [...prev, ...unique]
+      })
+    }
+  }, [viatorData, viatorPage, isViator])
 
   const activities: UnifiedActivity[] = useMemo(() => {
-    if (isViator) {
-      if (!viatorProducts) return []
-      return viatorProducts.map(mapViatorToActivity)
-    }
-    // DB source
+    if (isViator) return accumulatedViator
     if (!dbDestinations) return []
     return dbDestinations.map(mapDBToActivity)
-  }, [isViator, viatorProducts, dbDestinations])
+  }, [isViator, accumulatedViator, dbDestinations])
 
   const [shuffledActivities, setShuffledActivities] = useState<UnifiedActivity[]>([])
   useEffect(() => {
-    if (activities.length > 0) {
+    if (viatorPage === 1 && activities.length > 0) {
       setShuffledActivities(shuffle(activities))
       setShowAll(false)
+    } else if (viatorPage > 1) {
+      setShuffledActivities(activities)
     } else if (!isLoading) {
       setShuffledActivities([])
     }
-  }, [activities, isLoading])
+  }, [activities, isLoading, viatorPage])
 
-  const displayedActivities = useMemo(
-    () => (showAll ? shuffledActivities : shuffledActivities.slice(0, 5)),
-    [showAll, shuffledActivities]
-  )
-  const hasMore = shuffledActivities.length > 5
+  const displayedActivities = useMemo(() => {
+    if (isViator) return shuffledActivities
+    return showAll ? shuffledActivities : shuffledActivities.slice(0, 5)
+  }, [isViator, showAll, shuffledActivities])
+
+  const hasMore = isViator
+    ? (viatorData?.hasMore ?? false)
+    : shuffledActivities.length > 5
 
   return (
     <section id="paket" className="py-10">
@@ -290,7 +315,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
             label={tab.name}
             // icon={iconMap.get(tab.slug) ?? DotsIcon}
             isActive={activeId === tab.id}
-            onClick={() => { setActiveId(tab.id); trackCategoryClick(tab.name) }}
+            onClick={() => { setActiveId(tab.id); setViatorPage(1); setShowAll(false); setAccumulatedViator([]); trackCategoryClick(tab.name) }}
           />
         ))}
       </div>
@@ -299,7 +324,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
       <div className="min-h-[220px]">
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
               <div key={i} className="bg-gray-100 rounded-xl animate-pulse">
                 <div className="aspect-[4/3] bg-gray-200 rounded-t-xl" />
                 <div className="p-3 space-y-2">
@@ -316,15 +341,42 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
               {displayedActivities.map((item) => (
                 <ActivityCard key={item.id} item={item} currency={currency} />
               ))}
+
+              {/* Skeleton placeholders while loading next page */}
+              {isLoadingMore && Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                <div key={`skeleton-${i}`} className="bg-gray-100 rounded-xl animate-pulse">
+                  <div className="aspect-[4/3] bg-gray-200 rounded-t-xl" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-3 bg-gray-200 rounded w-1/2" />
+                    <div className="h-5 bg-gray-200 rounded w-1/3 mt-2" />
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {hasMore && (
+            {(hasMore || isLoadingMore) && (
               <div className="pt-8 pb-4 flex justify-center">
                 <button
-                  onClick={() => setShowAll(!showAll)}
-                  className="px-8 py-2.5 bg-white border-2 border-blue-500 text-blue-500 font-bold rounded-full hover:bg-blue-500 hover:text-white transition-all shadow-md cursor-pointer"
+                  onClick={() => {
+                    if (isViator) {
+                      setViatorPage((p) => p + 1)
+                    } else {
+                      setShowAll(!showAll)
+                    }
+                  }}
+                  disabled={isLoadingMore}
+                  className="px-8 py-2.5 bg-white border-2 border-blue-500 text-blue-500 font-bold rounded-full hover:bg-blue-500 hover:text-white transition-all shadow-md cursor-pointer disabled:border-gray-300 disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-400 flex items-center gap-2"
                 >
-                  {showAll ? "Show Less" : "See All Activity"}
+                  {isLoadingMore ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Loading...
+                    </>
+                  ) : isViator ? "Load More" : showAll ? "Show Less" : "See All Activity"}
                 </button>
               </div>
             )}

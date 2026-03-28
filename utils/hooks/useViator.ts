@@ -210,22 +210,41 @@ export function formatDuration(duration?: ViatorProduct["duration"]): string {
   return `${hours}h ${remaining}m`;
 }
 
-// ── Hook: Fetch Viator products by tag IDs (Bali) ───────────────────
+// ── Paginated response shape ────────────────────────────────────────
+export interface ViatorPaginatedResponse {
+  products: ViatorProduct[];
+  totalCount: number;
+  page: number;
+  count: number;
+  hasMore: boolean;
+}
+
+// ── Hook: Fetch Viator products by tag IDs (Bali) — paginated ───────
 export function useViatorProducts(
   tagIds: number[] | null,
-  currency: string = "USD"
+  currency: string = "USD",
+  page: number = 1,
+  count: number = 50
 ) {
-  return useQuery<ViatorProduct[]>({
-    queryKey: ["viator-products", tagIds, currency],
+  return useQuery<ViatorPaginatedResponse>({
+    queryKey: ["viator-products", tagIds, currency, page, count],
     queryFn: async () => {
       const { data } = await api.get("/viator", {
         params: {
           action: "products",
           tagIds: tagIds ? JSON.stringify(tagIds) : undefined,
           currency,
+          page,
+          count,
         },
       });
-      return data?.products ?? [];
+      return {
+        products: data?.products ?? [],
+        totalCount: data?.totalCount ?? 0,
+        page: data?.page ?? page,
+        count: data?.count ?? count,
+        hasMore: data?.hasMore ?? false,
+      };
     },
     enabled: !!tagIds && tagIds.length > 0,
     staleTime: 1000 * 60 * 5,
@@ -252,25 +271,38 @@ export function useViatorProductDetail(
   });
 }
 
-// ── Hook: Search Viator products (freetext) ───────────────────────────
+// ── Hook: Search Viator products (freetext) — paginated ─────────────
 export function useViatorSearch(
   query: string,
-  currency: string = "USD"
+  currency: string = "USD",
+  page: number = 1,
+  count: number = 20
 ) {
-  return useQuery<ViatorProduct[]>({
-    queryKey: ["viator-search", query, currency],
+  return useQuery<ViatorPaginatedResponse>({
+    queryKey: ["viator-search", query, currency, page, count],
     queryFn: async () => {
       if (!query.trim()) {
-        // No search term — fetch general Bali products (no category filter)
         const { data } = await api.get("/viator", {
-          params: { action: "products", currency },
+          params: { action: "products", currency, page, count },
         });
-        return data?.products ?? [];
+        return {
+          products: data?.products ?? [],
+          totalCount: data?.totalCount ?? 0,
+          page: data?.page ?? page,
+          count: data?.count ?? count,
+          hasMore: data?.hasMore ?? false,
+        };
       }
       const { data } = await api.get("/viator", {
-        params: { action: "search", query, currency },
+        params: { action: "search", query, currency, page, count },
       });
-      return data?.products ?? [];
+      return {
+        products: data?.products ?? [],
+        totalCount: data?.totalCount ?? 0,
+        page: data?.page ?? page,
+        count: data?.count ?? count,
+        hasMore: data?.hasMore ?? false,
+      };
     },
     enabled: true,
     staleTime: 1000 * 60 * 5,

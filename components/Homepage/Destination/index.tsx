@@ -83,29 +83,54 @@ export default function Destination({ categories }: DestinationProps) {
   const activeCategory = categories.find((c) => c.id === activeId) ?? categories[0]
   const isViator = activeCategory?.source === "viator"
 
+  // ── Pagination state ────────────────────────────────────────────────
+  const [viatorPage, setViatorPage] = useState(1)
+  const ITEMS_PER_PAGE = 6
+
+  type DestItem = { id: string; title: string; slug: string; imageUrl: string; href: string }
+  const [accumulatedViator, setAccumulatedViator] = useState<DestItem[]>([])
+
   // Fetch from the correct source based on category
-  const { data: viatorProducts, isLoading: isViatorLoading } = useViatorProducts(
+  const { data: viatorData, isLoading: isViatorLoading } = useViatorProducts(
     isViator ? activeCategory?.tagIds ?? null : null,
-    "IDR"
+    "IDR",
+    viatorPage,
+    ITEMS_PER_PAGE
   )
   const { data: dbDestinations, isLoading: isDBLoading } = useDBDestinations(
     !isViator ? activeCategory?.id ?? null : null
   )
 
-  const isLoading = isViator ? isViatorLoading : isDBLoading
+  // Initial load = page 1 loading with no accumulated data
+  // Load more = page > 1 loading (keep existing items visible)
+  const isInitialLoading = isViator ? (isViatorLoading && viatorPage === 1) : isDBLoading
+  const isLoadingMore = isViator && isViatorLoading && viatorPage > 1
+  const isLoading = isInitialLoading
+
+  // Accumulate Viator products across pages
+  useEffect(() => {
+    if (!isViator || !viatorData?.products) return
+    const newItems = viatorData.products.map((product) => ({
+      id: product.productCode,
+      title: product.title,
+      slug: product.productCode,
+      imageUrl: getViatorImageUrl(product.images, 720),
+      href: `/viator/${product.productCode}`,
+    }))
+    if (viatorPage === 1) {
+      setAccumulatedViator(newItems)
+    } else {
+      setAccumulatedViator((prev) => {
+        const existingIds = new Set(prev.map((d) => d.id))
+        const unique = newItems.filter((d) => !existingIds.has(d.id))
+        return [...prev, ...unique]
+      })
+    }
+  }, [viatorData, viatorPage, isViator])
 
   // Map data to a unified shape for the grid
   const destinations = useMemo(() => {
-    if (isViator) {
-      if (!viatorProducts) return []
-      return viatorProducts.map((product) => ({
-        id: product.productCode,
-        title: product.title,
-        slug: product.productCode,
-        imageUrl: getViatorImageUrl(product.images, 720),
-        href: `/viator/${product.productCode}`,
-      }))
-    }
+    if (isViator) return accumulatedViator
     // DB source
     if (!dbDestinations) return []
     return dbDestinations.map((dest) => {
@@ -120,24 +145,35 @@ export default function Destination({ categories }: DestinationProps) {
         href: `/detail/${dest.slug || dest.id}`,
       }
     })
-  }, [isViator, viatorProducts, dbDestinations])
+  }, [isViator, accumulatedViator, dbDestinations])
 
-  // Shuffle on client to avoid hydration mismatch
+  // Shuffle only on first load (page 1), not on Load More
   const [visibleDestinations, setVisibleDestinations] = useState(destinations)
 
   useEffect(() => {
-    setVisibleDestinations(shuffleArray(destinations))
-  }, [destinations])
+    if (viatorPage === 1) {
+      setVisibleDestinations(shuffleArray(destinations))
+    } else {
+      setVisibleDestinations(destinations)
+    }
+  }, [destinations, viatorPage])
 
-  const displayedDestinations = useMemo(
-    () => (showAll ? visibleDestinations : visibleDestinations.slice(0, 6)),
-    [showAll, visibleDestinations]
-  )
-  const hasMore = visibleDestinations.length > 6
+  // Viator: show all accumulated (pagination controls the count)
+  // DB: client-side show/hide toggle
+  const displayedDestinations = useMemo(() => {
+    if (isViator) return visibleDestinations
+    return showAll ? visibleDestinations : visibleDestinations.slice(0, 6)
+  }, [isViator, showAll, visibleDestinations])
+
+  const hasMore = isViator
+    ? (viatorData?.hasMore ?? false)
+    : visibleDestinations.length > 6
 
   const handleTabClick = (id: string | number) => {
     setActiveId(id)
     setShowAll(false)
+    setViatorPage(1)
+    setAccumulatedViator([])
   }
 
   return (
@@ -165,7 +201,7 @@ export default function Destination({ categories }: DestinationProps) {
         <div className="min-h-[220px]">
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
                 <div key={i} className="relative w-full h-[220px] rounded-md overflow-hidden bg-gray-200 animate-pulse" />
               ))}
             </div>
@@ -185,15 +221,35 @@ export default function Destination({ categories }: DestinationProps) {
                     </div>
                   </Link>
                 ))}
+
+                {/* Skeleton placeholders while loading next page */}
+                {isLoadingMore && Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                  <div key={`skeleton-${i}`} className="relative w-full h-[220px] rounded-md overflow-hidden bg-gray-200 animate-pulse" />
+                ))}
               </div>
 
-              {hasMore && (
+              {(hasMore || isLoadingMore) && (
                 <div className="flex justify-center mt-10">
                   <button
-                    onClick={() => setShowAll(!showAll)}
-                    className="px-8 py-3 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-colors shadow-md"
+                    onClick={() => {
+                      if (isViator) {
+                        setViatorPage((p) => p + 1)
+                      } else {
+                        setShowAll(!showAll)
+                      }
+                    }}
+                    disabled={isLoadingMore}
+                    className="px-8 py-3 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-colors shadow-md disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {showAll ? "Show Less" : "Show More"}
+                    {isLoadingMore ? (
+                      <>
+                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Loading...
+                      </>
+                    ) : isViator ? "Load More" : showAll ? "Show Less" : "Show More"}
                   </button>
                 </div>
               )}

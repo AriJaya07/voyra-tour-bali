@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from '@/lib/config/viator';
 
 export async function POST(req: Request) {
   try {
@@ -9,23 +10,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing bookingRef" }, { status: 400 });
     }
 
-    const apiKey = process.env.VIATOR_API_KEY as string;
-
     // Fallback Mock for Certification
-    if (!apiKey) {
+    if (!VIATOR_API_KEY) {
       return NextResponse.json({
         bookingRef,
         status: "CANCELLED"
       });
     }
 
-    const viatorResponse = await fetch(`https://api.sandbox.viator.com/partner/bookings/${bookingRef}/cancel`, {
+    const viatorResponse = await fetch(`${VIATOR_API_URL}/bookings/${bookingRef}/cancel`, {
       method: 'POST',
-      headers: {
-        'Accept': 'application/json;version=2.0',
-        'Content-Type': 'application/json',
-        'exp-api-key': apiKey,
-      },
+      headers: VIATOR_HEADERS,
       body: JSON.stringify({ reasonCode: reasonCode || "CUSTOMER_REQUEST" })
     });
 

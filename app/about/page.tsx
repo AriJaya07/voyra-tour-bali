@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { StatCard, FeatureCard, FaqItem } from "@/components/about";
 import { FAQ_ITEMS } from "@/lib/data/about";
-import ViatorBanner from "@/components/viator/ViatorBanner";
+import ViatorBanner from "@/components/viator/widget/ViatorBanner";
 
 export default function AboutPage() {
   const { data: session } = useSession();

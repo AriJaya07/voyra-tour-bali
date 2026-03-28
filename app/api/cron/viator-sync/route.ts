@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
 
 export async function GET(request: Request) {
   // Check Vercel Cron Secret (Optional but recommended in production)
@@ -9,10 +10,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const apiKey = process.env.VIATOR_API_KEY;
-    const apiUrl = process.env.VIATOR_API_URL || "https://api.sandbox.viator.com/partner";
-    
-    if (!apiKey) {
+    if (!VIATOR_API_KEY) {
       return NextResponse.json({ error: "API Key missing" }, { status: 500 });
     }
 
@@ -20,13 +18,10 @@ export async function GET(request: Request) {
     const modifiedSince = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
 
     console.log(`[VIATOR CRON] Checking modifications since ${modifiedSince}`);
-    
+
     // Step 1: Find which bookings were modified
-    const modifiedRes = await fetch(`${apiUrl}/bookings/modified-since?modifiedSince=${modifiedSince}`, {
-      headers: {
-        "Accept": "application/json;version=2.0",
-        "exp-api-key": apiKey
-      }
+    const modifiedRes = await fetch(`${VIATOR_API_URL}/bookings/modified-since?modifiedSince=${modifiedSince}`, {
+      headers: VIATOR_HEADERS,
     });
 
     if (!modifiedRes.ok) {
@@ -40,13 +35,9 @@ export async function GET(request: Request) {
 
     // Step 2: Fetch the exact new status for these modified bookings
     if (refs.length > 0) {
-      const statusRes = await fetch(`${apiUrl}/bookings/status`, {
+      const statusRes = await fetch(`${VIATOR_API_URL}/bookings/status`, {
         method: "POST",
-        headers: {
-          "Accept": "application/json;version=2.0",
-          "Content-Type": "application/json",
-          "exp-api-key": apiKey
-        },
+        headers: VIATOR_HEADERS,
         body: JSON.stringify({ bookingRefs: refs })
       });
       

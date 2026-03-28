@@ -19,15 +19,17 @@ export function useUnifiedActivities(
   currency: string = "USD"
 ) {
   const {
-    data: viatorProducts,
+    data: viatorData,
     isLoading: viatorLoading,
     isError: viatorError,
   } = useViatorProducts(tagIds, currency)
 
+  const viatorProducts = viatorData?.products ?? []
+
   const activities: UnifiedActivity[] = useMemo(() => {
     return mergeActivities(
       destinations,
-      viatorProducts ?? [],
+      viatorProducts,
       categoryId
     )
   }, [destinations, viatorProducts, categoryId])
@@ -35,7 +37,7 @@ export function useUnifiedActivities(
   // We have DB data immediately, only Viator is loading
   const hasDbData = activities.some(a => a.source === "db")
   const isLoading = viatorLoading && !hasDbData
-  const hasViatorWarning = viatorError || (viatorProducts?.length === 0 && !viatorLoading)
+  const hasViatorWarning = viatorError || (viatorProducts.length === 0 && !viatorLoading)
 
   return {
     activities,

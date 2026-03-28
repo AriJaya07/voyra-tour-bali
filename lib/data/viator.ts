@@ -1,19 +1,6 @@
 import axios from "axios"
 import type { Category, DestinationWithImages, DestinationImage } from "@/types/tourism"
-
-// ── Viator config ───────────────────────────────────────────────────────
-const VIATOR_API_KEY = process.env.VIATOR_API_KEY || ""
-
-const VIATOR_BASE_URL = VIATOR_API_KEY?.startsWith("sandbox")
-  ? "https://api.sandbox.viator.com/partner"
-  : "https://api.viator.com/partner"
-
-const VIATOR_HEADERS = {
-  Accept: "application/json;version=2.0",
-  "Accept-Language": "en-US",
-  "Content-Type": "application/json",
-  "exp-api-key": VIATOR_API_KEY,
-}
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator"
 
 /** Bali destination ID in Viator (destId=98) */
 const BALI_DESTINATION_ID = 98
@@ -155,7 +142,7 @@ async function fetchBaliProductTags(): Promise<Map<number, DiscoveredTag>> {
 
   try {
     const response = await axios.post(
-      `${VIATOR_BASE_URL}/products/search`,
+      `${VIATOR_API_URL}/products/search`,
       {
         filtering: { destination: BALI_DESTINATION_ID },
         currency: "USD",
@@ -201,8 +188,8 @@ async function fetchViatorTagMap(): Promise<Map<number, string>> {
   if (!VIATOR_API_KEY) return new Map()
 
   const endpoints = [
-    `${VIATOR_BASE_URL}/products/tags`,
-    `${VIATOR_BASE_URL}/taxonomy/tags`,
+    `${VIATOR_API_URL}/products/tags`,
+    `${VIATOR_API_URL}/taxonomy/tags`,
   ]
 
   for (const url of endpoints) {
@@ -340,7 +327,7 @@ export async function getProductDetailFromViator(
 
   try {
     const response = await axios.get(
-      `${VIATOR_BASE_URL}/products/${productCode}`,
+      `${VIATOR_API_URL}/products/${productCode}`,
       {
         headers: { ...VIATOR_HEADERS, "Accept-Currency": currency },
         timeout: 10000,
@@ -373,7 +360,7 @@ export async function getDestinationsFromViator(
 
   try {
     const response = await axios.post(
-      `${VIATOR_BASE_URL}/products/search`,
+      `${VIATOR_API_URL}/products/search`,
       {
         filtering: { destination: BALI_DESTINATION_ID },
         currency,

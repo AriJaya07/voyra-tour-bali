@@ -124,9 +124,9 @@ export default function LogisticsSection({ logistics, timeZone }: LogisticsSecti
   const hasPickup = pickup && (pickup.pickupOptionType || pickup.additionalInfo);
   const hasRedemption = redemption?.specialInstructions;
 
-  // Collect all unique location refs to resolve
+  // Collect unique location refs to resolve (cap to avoid API limits)
   const allRefs = new Set<string>();
-  for (const loc of [...startPoints, ...endPoints]) {
+  for (const loc of [...startPoints.slice(0, 10), ...endPoints.slice(0, 10)]) {
     const ref = loc.location?.ref;
     if (ref && !ref.startsWith("MEET_") && !ref.startsWith("CONTACT_")) {
       allRefs.add(ref);
