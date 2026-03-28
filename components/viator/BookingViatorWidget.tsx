@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { ViatorProductOption, ViatorLogistics, ViatorLanguageGuide } from "@/utils/hooks/useViator";
+import { useViatorSchedules } from "@/utils/hooks/useViator";
 import { useBookingStore, type AvailabilitySlot } from "@/utils/hooks/useBookingStore";
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
@@ -57,6 +58,16 @@ export default function BookingViatorWidget({
   const { data: session } = useSession();
   const router = useRouter();
   const setProductSelection = useBookingStore((s) => s.setProductSelection);
+
+  // ── Pre-load availability schedule (gray out unavailable dates) ─────
+  const { data: scheduleData } = useViatorSchedules(productCode, currency);
+  const unavailableDateSet = new Set(scheduleData?.unavailableDates ?? []);
+
+  const isDateUnavailable = ({ date }: { date: Date }) => {
+    if (!scheduleData) return false; // Don't block if schedule not loaded yet
+    const iso = date.toISOString().split("T")[0];
+    return unavailableDateSet.has(iso);
+  };
 
   // ── Tour options ────────────────────────────────────────────────────
   const hasOptions = productOptions && productOptions.length > 0;
@@ -355,6 +366,7 @@ export default function BookingViatorWidget({
             onChange={(val) => { setDate(val as Date); resetAvailability(); }}
             value={date}
             minDate={new Date()}
+            tileDisabled={isDateUnavailable}
             className="viator-booking-cal"
           />
         </div>

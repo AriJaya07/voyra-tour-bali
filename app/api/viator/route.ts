@@ -83,7 +83,7 @@ export async function GET(request: Request) {
         },
         {
           headers: VIATOR_HEADERS,
-          timeout: 15000,
+          timeout: 120000,
         }
       )
 
@@ -147,7 +147,7 @@ export async function GET(request: Request) {
               ...VIATOR_HEADERS,
               'Accept-Currency': currency,
             },
-            timeout: 15000,
+            timeout: 120000,
           }
         ),
         axios.post(
@@ -158,7 +158,7 @@ export async function GET(request: Request) {
             currency,
             pagination: { start: 1, count: 5 },
           },
-          { headers: VIATOR_HEADERS, timeout: 15000 }
+          { headers: VIATOR_HEADERS, timeout: 120000 }
         ).catch(() => null),
       ])
 
@@ -209,7 +209,7 @@ export async function GET(request: Request) {
         },
         {
           headers: VIATOR_HEADERS,
-          timeout: 15000,
+          timeout: 120000,
         }
       )
 
@@ -310,7 +310,7 @@ export async function POST(request: Request) {
       const response = await axios.post(
         `${VIATOR_API_URL}/availability/check`,
         body,
-        { headers: VIATOR_HEADERS, timeout: 15000 }
+        { headers: VIATOR_HEADERS, timeout: 120000 }
       )
 
       console.log('[Viator] Availability response status:', response.status)
@@ -349,7 +349,7 @@ export async function POST(request: Request) {
           const response = await axios.post(
             `${VIATOR_API_URL}/bookings/book`,
             body,
-            { headers: VIATOR_HEADERS, timeout: 30000 }
+            { headers: VIATOR_HEADERS, timeout: 120000 }
           )
 
           orderId = response.data.orderId

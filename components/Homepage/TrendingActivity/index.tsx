@@ -136,7 +136,10 @@ function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: Cur
           {/* Rating & Duration */}
           <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
             {item.rating && (
-              <span className="flex items-center gap-0.5">
+              <span
+                className="flex items-center gap-0.5"
+                title="Total review count and overall rating based on Viator and Tripadvisor reviews"
+              >
                 <svg className="w-3.5 h-3.5 text-yellow-400 fill-current" viewBox="0 0 20 20">
                   <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                 </svg>

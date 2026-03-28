@@ -149,7 +149,7 @@ async function fetchBaliProductTags(): Promise<Map<number, DiscoveredTag>> {
         pagination: { start: 1, count: 50 },
         sorting: { sort: "DEFAULT" },
       },
-      { headers: VIATOR_HEADERS, timeout: 15000 }
+      { headers: VIATOR_HEADERS, timeout: 120000 }
     )
 
     const products: any[] = response.data?.products || []
@@ -194,7 +194,7 @@ async function fetchViatorTagMap(): Promise<Map<number, string>> {
 
   for (const url of endpoints) {
     try {
-      const response = await axios.get(url, { headers: VIATOR_HEADERS, timeout: 15000 })
+      const response = await axios.get(url, { headers: VIATOR_HEADERS, timeout: 120000 })
 
       const raw = response.data?.tags
         || response.data?.data
@@ -367,7 +367,7 @@ export async function getDestinationsFromViator(
         pagination: { start: 1, count: 30 },
         sorting: { sort: "DEFAULT" },
       },
-      { headers: VIATOR_HEADERS, timeout: 15000 }
+      { headers: VIATOR_HEADERS, timeout: 120000 }
     )
 
     const products = response.data?.products || []

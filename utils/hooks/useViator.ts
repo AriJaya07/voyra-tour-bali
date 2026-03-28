@@ -426,3 +426,95 @@ export function useViatorBooking() {
     },
   });
 }
+
+// ── Reviews ─────────────────────────────────────────────────────────
+
+export interface ViatorReview {
+  reviewId: string;
+  rating: number;
+  title?: string;
+  text: string;
+  author?: string;
+  publishedDate?: string;
+  provider?: string;
+}
+
+export interface ViatorReviewsResponse {
+  reviews: ViatorReview[];
+  totalCount: number;
+  page: number;
+  count: number;
+  hasMore: boolean;
+}
+
+export function useViatorReviews(
+  productCode: string | null,
+  page: number = 1,
+  count: number = 10
+) {
+  return useQuery<ViatorReviewsResponse>({
+    queryKey: ["viator-reviews", productCode, page, count],
+    queryFn: async () => {
+      const { data } = await api.get("/viator/reviews", {
+        params: { productCode, page, count },
+      });
+      return {
+        reviews: data?.reviews ?? [],
+        totalCount: data?.totalCount ?? 0,
+        page: data?.page ?? page,
+        count: data?.count ?? count,
+        hasMore: data?.hasMore ?? false,
+      };
+    },
+    enabled: !!productCode,
+    staleTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+  });
+}
+
+// ── Availability Schedules ──────────────────────────────────────────
+
+export interface ViatorSchedulesResponse {
+  productCode: string;
+  currency: string;
+  availableDates: string[];
+  unavailableDates: string[];
+}
+
+export function useViatorSchedules(
+  productCode: string | null,
+  currency: string = "USD"
+) {
+  return useQuery<ViatorSchedulesResponse>({
+    queryKey: ["viator-schedules", productCode, currency],
+    queryFn: async () => {
+      const { data } = await api.get("/viator/schedules", {
+        params: { productCode, currency },
+      });
+      return data;
+    },
+    enabled: !!productCode,
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+  });
+}
+
+// ── Exchange Rates ──────────────────────────────────────────────────
+
+export interface ViatorExchangeRates {
+  rates: Record<string, number>;
+  cached: boolean;
+  expiresAt: string;
+}
+
+export function useViatorExchangeRates() {
+  return useQuery<ViatorExchangeRates>({
+    queryKey: ["viator-exchange-rates"],
+    queryFn: async () => {
+      const { data } = await api.get("/viator/exchange-rates");
+      return data;
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour (server handles real expiry)
+    refetchOnWindowFocus: false,
+  });
+}

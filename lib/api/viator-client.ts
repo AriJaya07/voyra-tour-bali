@@ -55,11 +55,22 @@ export async function fetchCancelQuote(bookingRef: string) {
   return res.json();
 }
 
-export async function cancelBooking(bookingRef: string) {
+export interface CancelReason {
+  reasonCode: string;
+  description: string;
+}
+
+export async function fetchCancelReasons(): Promise<CancelReason[]> {
+  const res = await fetch("/api/viator/cancel-reasons");
+  const data = await res.json();
+  return data.reasons || [];
+}
+
+export async function cancelBooking(bookingRef: string, reasonCode: string = "CUSTOMER_REQUEST") {
   const res = await fetch("/api/viator/cancel", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ bookingRef, reasonCode: "CUSTOMER_REQUEST" }),
+    body: JSON.stringify({ bookingRef, reasonCode }),
   });
   return res.json();
 }

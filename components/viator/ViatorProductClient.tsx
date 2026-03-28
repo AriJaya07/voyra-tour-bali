@@ -14,6 +14,7 @@ import ErrorBoundary from "@/components/common/ErrorBoundary"
 import { trackViewItem } from "@/utils/analytics"
 import LogisticsSection from "@/components/viator/LogisticsSection"
 import ProductDetailsSection from "@/components/viator/ProductDetailsSection"
+import ReviewsSection from "@/components/viator/ReviewsSection"
 import { FaChevronRight } from "react-icons/fa"
 
 const FALLBACK_IMAGE = "/images/activity/melasti.png"
@@ -155,8 +156,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                   </svg>
                   <span className="font-bold text-black">{rating.toFixed(1)}</span>
-                  <span className="text-black/60">({reviewCount.toLocaleString()})</span>
-                  <span className="text-black/50 text-[10px] ml-1 uppercase tracking-wider font-semibold">Powered by Viator / Tripadvisor</span>
+                  <span className="text-black/60">({reviewCount.toLocaleString()} reviews)</span>
                 </div>
               )}
               {duration && (
@@ -178,6 +178,11 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
                 </span>
               )}
             </div>
+            {rating && (
+              <p className="text-black/40 text-[9px] mt-1">
+                Total review count and overall rating based on Viator and Tripadvisor reviews
+              </p>
+            )}
           </div>
 
           <ImageGallery images={allImages} title={product.title} />
@@ -297,6 +302,8 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
                 </ul>
               </section>
             )}
+
+            <ReviewsSection productCode={product.productCode} />
 
             <ProductDetailsSection
               cancellationPolicy={product.cancellationPolicy}

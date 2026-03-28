@@ -1,10 +1,24 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
+import { VIATOR_API_KEY } from "@/lib/config/viator";
+import {
+  fetchModifiedBookings,
+  fetchBookingStatuses,
+  acknowledgeBookingModifications,
+} from "@/lib/services/viatorSyncService";
 
+/**
+ * GET /api/cron/viator-sync
+ *
+ * Cron job to sync booking status changes from Viator.
+ * Run every 6 hours. Uses /bookings/modified-since + /bookings/status.
+ * Acknowledges processed modifications so they don't repeat.
+ *
+ * vercel.json:
+ *   path: /api/cron/viator-sync, schedule: every 6 hours
+ */
 export async function GET(request: Request) {
-  // Check Vercel Cron Secret (Optional but recommended in production)
-  const authHeader = request.headers.get('authorization');
+  const authHeader = request.headers.get("authorization");
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -14,51 +28,76 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "API Key missing" }, { status: 500 });
     }
 
-    // Look back 2 hours for modifications (covers 30 min cron intervals safely)
-    const modifiedSince = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    // Look back 7 hours to safely cover 6-hour intervals
+    const modifiedSince = new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString();
 
-    console.log(`[VIATOR CRON] Checking modifications since ${modifiedSince}`);
+    console.log(`[BOOKING SYNC] Checking modifications since ${modifiedSince}`);
 
-    // Step 1: Find which bookings were modified
-    const modifiedRes = await fetch(`${VIATOR_API_URL}/bookings/modified-since?modifiedSince=${modifiedSince}`, {
-      headers: VIATOR_HEADERS,
-    });
+    // Step 1: Find modified bookings
+    const refs = await fetchModifiedBookings(modifiedSince);
 
-    if (!modifiedRes.ok) {
-      return NextResponse.json({ error: "Viator API returned an error" }, { status: modifiedRes.status });
+    console.log(`[BOOKING SYNC] Found ${refs.length} modified bookings`);
+
+    if (refs.length === 0) {
+      return NextResponse.json({ success: true, syncedCount: 0 });
     }
 
-    const modifiedData = await modifiedRes.json();
-    const refs = modifiedData.bookingRefs || [];
+    // Step 2: Fetch current statuses
+    const statuses = await fetchBookingStatuses(refs);
 
-    console.log(`[VIATOR CRON] Found ${refs.length} modified bookings.`);
+    // Step 3: Update our database
+    let updatedCount = 0;
+    for (const s of statuses) {
+      if (!s.bookingRef || !s.status) continue;
 
-    // Step 2: Fetch the exact new status for these modified bookings
-    if (refs.length > 0) {
-      const statusRes = await fetch(`${VIATOR_API_URL}/bookings/status`, {
-        method: "POST",
-        headers: VIATOR_HEADERS,
-        body: JSON.stringify({ bookingRefs: refs })
+      const mapped = mapViatorStatus(s.status);
+      if (!mapped) continue;
+
+      const result = await prisma.booking.updateMany({
+        where: { bookingRef: s.bookingRef },
+        data: { status: mapped },
       });
-      
-      if (statusRes.ok) {
-         const statuses = await statusRes.json(); // Array of { bookingRef, status }
-         
-         const updates = statuses.map((s: any) => 
-           prisma.booking.updateMany({
-             where: { bookingRef: s.bookingRef },
-             data: { status: s.status }
-           })
-         );
-         
-         await Promise.all(updates);
-         console.log(`[VIATOR CRON] Successfully updated ${updates.length} records in DB.`);
-      }
+
+      if (result.count > 0) updatedCount++;
     }
 
-    return NextResponse.json({ success: true, syncedCount: refs.length });
-  } catch (error: any) {
-    console.error("[VIATOR CRON] Fatal Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.log(`[BOOKING SYNC] Updated ${updatedCount} bookings in DB`);
+
+    // Step 4: Acknowledge so Viator stops returning these
+    const acknowledged = await acknowledgeBookingModifications(refs);
+
+    console.log(`[BOOKING SYNC] Acknowledged: ${acknowledged}`);
+
+    return NextResponse.json({
+      success: true,
+      syncedCount: updatedCount,
+      acknowledged,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[BOOKING SYNC] Error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/**
+ * Map Viator booking status to our BookingStatus enum.
+ */
+function mapViatorStatus(
+  viatorStatus: string
+): "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | null {
+  switch (viatorStatus.toUpperCase()) {
+    case "CONFIRMED":
+    case "RECONFIRMED":
+      return "CONFIRMED";
+    case "PENDING":
+      return "PENDING";
+    case "CANCELLED":
+    case "REJECTED":
+      return "CANCELLED";
+    case "COMPLETED":
+      return "COMPLETED";
+    default:
+      return null;
   }
 }
