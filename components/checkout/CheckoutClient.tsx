@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import Container from "@/components/Container";
 import { useBookingStore } from "@/utils/hooks/useBookingStore";
 import type { TravelerInfo, BookingQuestion } from "@/utils/hooks/useBookingStore";
+import { MIDTRANS_SNAP_URL, MIDTRANS_CLIENT_KEY } from "@/lib/config/midtrans";
 
 const STEPS = ["Contact", "Travelers", "Activity", "Review & Pay"];
 
@@ -55,6 +56,13 @@ function StepContact({
   const [form, setForm] = useState(contactInfo);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const updateField = (field: string, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
+    }
+  };
+
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!form.firstName.trim()) errs.firstName = "Required";
@@ -93,27 +101,36 @@ function StepContact({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">First Name *</label>
-            <input type="text" placeholder="First name" className={inputCls("firstName")} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+            <input type="text" placeholder="First name" className={inputCls("firstName")} value={form.firstName} onChange={(e) => updateField("firstName", e.target.value)} />
             {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Last Name *</label>
-            <input type="text" placeholder="Last name" className={inputCls("lastName")} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+            <input type="text" placeholder="Last name" className={inputCls("lastName")} value={form.lastName} onChange={(e) => updateField("lastName", e.target.value)} />
             {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Email Address *</label>
-            <input type="email" placeholder="you@example.com" className={inputCls("email")} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <input type="email" placeholder="you@example.com" className={inputCls("email")} value={form.email} onChange={(e) => updateField("email", e.target.value)} />
             {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Confirm Email *</label>
-            <input type="email" placeholder="Confirm email" className={inputCls("confirmEmail")} value={form.confirmEmail} onChange={(e) => setForm({ ...form, confirmEmail: e.target.value })} />
+            <input type="email" placeholder="Confirm email" className={inputCls("confirmEmail")} value={form.confirmEmail} onChange={(e) => updateField("confirmEmail", e.target.value)} />
             {errors.confirmEmail && <p className="text-xs text-red-500 mt-1">{errors.confirmEmail}</p>}
+            {!errors.confirmEmail && form.confirmEmail && form.email !== form.confirmEmail && (
+              <p className="text-xs text-red-500 mt-1">Emails don&apos;t match</p>
+            )}
+            {form.confirmEmail && form.email === form.confirmEmail && (
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                Emails match
+              </p>
+            )}
           </div>
           <div className="sm:col-span-2">
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Phone Number *</label>
-            <input type="tel" placeholder="+62 812 3456 7890" className={inputCls("phone")} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <input type="tel" placeholder="+62 812 3456 7890" className={inputCls("phone")} value={form.phone} onChange={(e) => updateField("phone", e.target.value)} />
             {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
           </div>
         </div>
@@ -161,6 +178,10 @@ function StepTravelers({
     const updated = [...travelers];
     updated[idx] = { ...updated[idx], [field]: value };
     setLocalTravelers(updated);
+    const errKey = `${idx}-${field}`;
+    if (errors[errKey]) {
+      setErrors((prev) => { const next = { ...prev }; delete next[errKey]; return next; });
+    }
   };
 
   const validate = () => {
@@ -269,6 +290,74 @@ function StepActivity({
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Resolve pickup locations: call /api/viator/locations to get real names,
+  // same approach as LogisticsSection on product detail page
+  const [resolvedLocations, setResolvedLocations] = useState<Array<{ name: string; address?: string }>>([]);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(store.availablePickupLocations.length > 0);
+
+  useEffect(() => {
+    const locations = store.availablePickupLocations;
+    if (locations.length === 0) {
+      setIsLoadingLocations(false);
+      return;
+    }
+
+    // Collect refs that need resolving (skip special prefixes)
+    const refs = locations
+      .map((l) => l.ref)
+      .filter((r) => r && !r.startsWith("MEET_") && !r.startsWith("CONTACT_"));
+
+    const buildResult = (resolvedMap: Map<string, { name: string; address: string }>) => {
+      const result: Array<{ name: string; address?: string }> = [];
+      for (const l of locations) {
+        const resolved = resolvedMap.get(l.ref);
+        // Priority: resolved name > description > skip (never show raw ref)
+        const name = resolved?.name || l.description || "";
+        if (name) result.push({ name, address: resolved?.address });
+      }
+      return result;
+    };
+
+    if (refs.length === 0) {
+      // No refs to resolve, use descriptions only
+      setResolvedLocations(buildResult(new Map()));
+      setIsLoadingLocations(false);
+      return;
+    }
+
+    const limitedRefs = refs.slice(0, 20);
+    const resolve = async () => {
+      const resolvedMap = new Map<string, { name: string; address: string }>();
+      try {
+        const res = await fetch("/api/viator/locations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refs: limitedRefs }),
+        });
+        const data = await res.json();
+        const apiLocations = data.locations || [];
+
+        for (let i = 0; i < apiLocations.length; i++) {
+          const loc = apiLocations[i];
+          if (loc.name || loc.address) {
+            // Match by ref if available, otherwise by position (same order as input)
+            const key = loc.ref || limitedRefs[i] || `idx-${i}`;
+            resolvedMap.set(key, {
+              name: loc.name || "",
+              address: loc.address || "",
+            });
+          }
+        }
+      } catch {
+        // Fallback: will use description text
+      }
+      setResolvedLocations(buildResult(resolvedMap));
+      setIsLoadingLocations(false);
+    };
+    resolve();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -323,41 +412,55 @@ function StepActivity({
         </div>
 
         <div className="space-y-4">
-          {/* Meeting Point */}
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-              Meeting / Pickup Location
-            </label>
-            <input
-              type="text"
-              placeholder="Hotel name or pickup location"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition"
-              value={meetingPoint}
-              onChange={(e) => setMeetingPoint(e.target.value)}
-            />
-          </div>
+          {/* Meeting / Pickup Location — resolved from Viator */}
+          {store.availablePickupLocations.length > 0 && (
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                Meeting / Pickup Location
+              </label>
+              {isLoadingLocations ? (
+                <div className="flex items-center gap-2 py-3 px-4 border border-gray-200 rounded-xl">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#0071CE] border-t-transparent" />
+                  <span className="text-sm text-gray-500">Loading pickup locations...</span>
+                </div>
+              ) : resolvedLocations.length > 0 ? (
+                <select
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition bg-white"
+                  value={meetingPoint}
+                  onChange={(e) => setMeetingPoint(e.target.value)}
+                >
+                  <option value="">Select pickup location</option>
+                  {resolvedLocations.map((loc, i) => (
+                    <option key={i} value={loc.name}>
+                      {loc.name}{loc.address ? ` — ${loc.address}` : ""}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+            </div>
+          )}
 
-          {/* Language Guide */}
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-              Preferred Language
-            </label>
-            <select
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition bg-white"
-              value={languageGuide}
-              onChange={(e) => setLanguageGuide(e.target.value)}
-            >
-              <option value="">Select language (optional)</option>
-              <option value="en">English</option>
-              <option value="id">Bahasa Indonesia</option>
-              <option value="zh">Chinese (Mandarin)</option>
-              <option value="ja">Japanese</option>
-              <option value="ko">Korean</option>
-              <option value="fr">French</option>
-              <option value="de">German</option>
-              <option value="es">Spanish</option>
-            </select>
-          </div>
+          {/* Language Guide — dynamic from Viator */}
+          {store.availableLanguageGuides.length > 0 && (
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                Preferred Language
+              </label>
+              <select
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition bg-white"
+                value={languageGuide}
+                onChange={(e) => setLanguageGuide(e.target.value)}
+              >
+                <option value="">Select language</option>
+                {store.availableLanguageGuides.map((g, i) => (
+                  <option key={i} value={g.language}>
+                    {g.language.charAt(0).toUpperCase() + g.language.slice(1)}
+                    {g.type === "GUIDE" ? " (Guide)" : g.type === "AUDIO" ? " (Audio)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Dynamic Booking Questions */}
           {isLoadingQuestions ? (
@@ -379,7 +482,7 @@ function StepActivity({
                         <select
                           className={`w-full border ${errors[q.questionId] ? "border-red-400" : "border-gray-200"} rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition bg-white`}
                           value={answers[q.questionId] || ""}
-                          onChange={(e) => setAnswers({ ...answers, [q.questionId]: e.target.value })}
+                          onChange={(e) => { setAnswers({ ...answers, [q.questionId]: e.target.value }); if (errors[q.questionId]) { setErrors((prev) => { const next = { ...prev }; delete next[q.questionId]; return next; }); } }}
                         >
                           <option value="">Select...</option>
                           {q.allowedAnswers.map((a) => (
@@ -392,7 +495,7 @@ function StepActivity({
                           placeholder="Enter your answer"
                           className={`w-full border ${errors[q.questionId] ? "border-red-400" : "border-gray-200"} rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition`}
                           value={answers[q.questionId] || ""}
-                          onChange={(e) => setAnswers({ ...answers, [q.questionId]: e.target.value })}
+                          onChange={(e) => { setAnswers({ ...answers, [q.questionId]: e.target.value }); if (errors[q.questionId]) { setErrors((prev) => { const next = { ...prev }; delete next[q.questionId]; return next; }); } }}
                         />
                       )}
                       {errors[q.questionId] && <p className="text-xs text-red-500 mt-1">{errors[q.questionId]}</p>}
@@ -811,12 +914,8 @@ export default function CheckoutClient() {
     <div className="min-h-screen bg-[#F8F8F8] pt-10 pb-8 sm:pb-16">
       {/* Midtrans Snap Script */}
       <script
-        src={
-          process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
-            ? "https://app.midtrans.com/snap/snap.js"
-            : "https://app.sandbox.midtrans.com/snap/snap.js"
-        }
-        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+        src={MIDTRANS_SNAP_URL}
+        data-client-key={MIDTRANS_CLIENT_KEY}
         async
       />
 

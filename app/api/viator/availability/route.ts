@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
+import {
+  VIATOR_API_KEY,
+  VIATOR_API_URL,
+  VIATOR_HEADERS,
+  VIATOR_MOCK_BOOKING,
+} from "@/lib/config/viator";
 
 export async function POST(req: Request) {
   try {
@@ -14,31 +19,58 @@ export async function POST(req: Request) {
       );
     }
 
-    // Fallback mock for development
-    if (!VIATOR_API_KEY) {
+    // ── Mock mode: return fake availability so full flow can be tested ──
+    if (!VIATOR_API_KEY || VIATOR_MOCK_BOOKING) {
+      const totalPax = (paxMix as any[]).reduce(
+        (sum: number, p: any) => sum + (p.numberOfTravelers || 1),
+        0
+      );
+      const pricePerPax = 350000; // IDR mock price
+      const mockSlots = [
+        {
+          productOptionCode: productOptionCode || "DEFAULT",
+          startTime: "09:00",
+          tourGradeCode: "TG1",
+          available: true,
+          totalPrice: pricePerPax * totalPax,
+          partnerNetPrice: Math.round(pricePerPax * 0.8) * totalPax,
+          currencyCode: currency || "IDR",
+        },
+        {
+          productOptionCode: productOptionCode || "DEFAULT",
+          startTime: "13:00",
+          tourGradeCode: "TG1",
+          available: true,
+          totalPrice: pricePerPax * totalPax,
+          partnerNetPrice: Math.round(pricePerPax * 0.8) * totalPax,
+          currencyCode: currency || "IDR",
+        },
+      ];
+
       return NextResponse.json({
         available: true,
         productCode,
         productOptionCode,
         travelDate,
-        bookableItems: [
-          {
-            productOptionCode: productOptionCode || "DEFAULT",
-            startTime: "09:00",
-            tourGradeCode: "TG1",
-            available: true,
-            totalPrice: {
-              price: {
-                recommendedRetailPrice: 150000,
-                partnerNetPrice: 120000,
-                currencyCode: currency || "USD",
-              },
+        slots: mockSlots,
+        bookableItems: mockSlots.map((s) => ({
+          productOptionCode: s.productOptionCode,
+          startTime: s.startTime,
+          tourGrade: { gradeCode: s.tourGradeCode },
+          available: true,
+          totalPrice: {
+            price: {
+              recommendedRetailPrice: s.totalPrice,
+              partnerNetPrice: s.partnerNetPrice,
+              currencyCode: s.currencyCode,
             },
           },
-        ],
+        })),
+        _mock: true,
       });
     }
 
+    // ── Real Viator API call ──
     const viatorPayload: Record<string, unknown> = {
       productCode,
       travelDate,
@@ -49,11 +81,14 @@ export async function POST(req: Request) {
       viatorPayload.productOptionCode = productOptionCode;
     }
 
-    const viatorResponse = await fetch(`${VIATOR_API_URL}/availability/check`, {
-      method: "POST",
-      headers: VIATOR_HEADERS,
-      body: JSON.stringify(viatorPayload),
-    });
+    const viatorResponse = await fetch(
+      `${VIATOR_API_URL}/availability/check`,
+      {
+        method: "POST",
+        headers: VIATOR_HEADERS,
+        body: JSON.stringify(viatorPayload),
+      }
+    );
 
     const data = await viatorResponse.json();
 
@@ -87,7 +122,8 @@ export async function POST(req: Request) {
         lineItems: item.lineItems?.map((li: any) => ({
           ageBand: li.ageBand,
           numberOfTravelers: li.numberOfTravelers,
-          subtotalPrice: li.subtotalPrice?.price?.recommendedRetailPrice || 0,
+          subtotalPrice:
+            li.subtotalPrice?.price?.recommendedRetailPrice || 0,
         })),
       }));
 

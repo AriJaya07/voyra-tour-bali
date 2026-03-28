@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { generateTicketToken } from "@/lib/ticket";
 import { sendBookingConfirmation } from "@/lib/email";
-import { VIATOR_API_KEY, VIATOR_API_URL } from "@/lib/config/viator";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_MOCK_BOOKING } from "@/lib/config/viator";
 import { MIDTRANS_SERVER_KEY } from "@/lib/config/midtrans";
 
 /**
@@ -52,9 +52,13 @@ async function confirmViatorBooking(booking: any): Promise<{
   voucherUrl?: string;
   error?: string;
 }> {
-  if (!VIATOR_API_KEY) {
-    console.log("No Viator API key, skipping Viator booking confirmation");
-    return { success: true, bookingRef: `MOCK-${booking.id}` };
+  if (!VIATOR_API_KEY || VIATOR_MOCK_BOOKING) {
+    console.log("[Viator] Mock mode — simulating successful booking confirmation");
+    return {
+      success: true,
+      bookingRef: `MOCK-VTR-${booking.id}-${Date.now()}`,
+      voucherUrl: undefined,
+    };
   }
 
   try {

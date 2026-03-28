@@ -326,6 +326,8 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
                   }
                   ageBands={product.pricingInfo?.ageBands}
                   productOptions={product.productOptions}
+                  logistics={product.logistics}
+                  languageGuides={product.languageGuides}
                 />
               </ErrorBoundary>
             </div>

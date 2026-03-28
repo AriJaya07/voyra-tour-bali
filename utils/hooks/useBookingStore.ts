@@ -24,6 +24,17 @@ export interface BookingQuestionAnswer {
   answer: string;
 }
 
+export interface PickupLocation {
+  ref: string;
+  name: string;
+  description?: string;
+}
+
+export interface LanguageGuideOption {
+  type: string;
+  language: string;
+}
+
 export interface AvailabilitySlot {
   productOptionCode: string;
   startTime?: string;
@@ -60,7 +71,11 @@ interface BookingStore {
   // Step 2: Travelers
   travelers: TravelerInfo[];
 
-  // Step 3: Activity details
+  // Step 3: Activity details (dynamic from Viator product data)
+  availablePickupLocations: PickupLocation[];
+  availableLanguageGuides: LanguageGuideOption[];
+  pickupType: string; // e.g. "PICKUP_AND_MEET_AT_START_POINT"
+  allowCustomPickup: boolean;
   meetingPoint: string;
   languageGuide: string;
   bookingQuestions: BookingQuestion[];
@@ -103,6 +118,10 @@ const initialState = {
     phone: "",
   },
   travelers: [],
+  availablePickupLocations: [],
+  availableLanguageGuides: [],
+  pickupType: "",
+  allowCustomPickup: false,
   meetingPoint: "",
   languageGuide: "",
   bookingQuestions: [],

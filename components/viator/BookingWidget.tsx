@@ -6,7 +6,7 @@ import "react-calendar/dist/Calendar.css";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { ViatorProductOption } from "@/utils/hooks/useViator";
+import type { ViatorProductOption, ViatorLogistics, ViatorLanguageGuide } from "@/utils/hooks/useViator";
 import { useBookingStore, type AvailabilitySlot } from "@/utils/hooks/useBookingStore";
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
@@ -34,6 +34,8 @@ interface BookingWidgetProps {
     maxTravelersPerBooking?: number;
   }>;
   productOptions?: ViatorProductOption[];
+  logistics?: ViatorLogistics;
+  languageGuides?: ViatorLanguageGuide[];
 }
 
 export default function BookingWidget({
@@ -43,6 +45,8 @@ export default function BookingWidget({
   currency,
   productImage,
   cancellationPolicy,
+  logistics,
+  languageGuides,
   ageBands,
   productOptions,
 }: BookingWidgetProps) {
@@ -167,9 +171,12 @@ export default function BookingWidget({
   const selectedSlot = selectedSlotIdx >= 0 ? slots[selectedSlotIdx] : null;
   const displayPrice = selectedSlot?.totalPrice || null;
 
+  const [isBooking, setIsBooking] = useState(false);
+
   // Navigate to multi-step checkout
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!date || !selectedSlot) return;
+    setIsBooking(true);
 
     const offset = date.getTimezoneOffset();
     const travelDateStr = new Date(date.getTime() - offset * 60 * 1000).toISOString().split("T")[0];
@@ -177,6 +184,57 @@ export default function BookingWidget({
     const paxMix = travelers
       .filter((t) => t.count > 0)
       .map((t) => ({ ageBand: t.ageBand, numberOfTravelers: t.count }));
+
+    // Extract raw pickup locations from logistics
+    const rawLocations = logistics?.travelerPickup?.locations || logistics?.start || [];
+    const pickupType = logistics?.travelerPickup?.pickupOptionType || "";
+    const allowCustomPickup = logistics?.travelerPickup?.allowCustomTravelerPickup || false;
+
+    // Resolve location refs to get real names/addresses
+    let pickupLocations = rawLocations.map((loc) => ({
+      ref: loc.location?.ref || "",
+      name: loc.description || "",
+      description: loc.description,
+    }));
+
+    const refsToResolve = rawLocations
+      .map((loc) => loc.location?.ref)
+      .filter((ref): ref is string => !!ref && !ref.startsWith("MEET_") && !ref.startsWith("CONTACT_"));
+
+    if (refsToResolve.length > 0) {
+      try {
+        const res = await fetch("/api/viator/locations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refs: refsToResolve }),
+        });
+        const data = await res.json();
+        const resolvedMap = new Map<string, { name: string; address: string }>();
+        for (const loc of data.locations || []) {
+          if (loc.name || loc.address) {
+            resolvedMap.set(loc.ref, { name: loc.name, address: loc.address });
+          }
+        }
+
+        // Merge resolved names into pickup locations
+        pickupLocations = rawLocations.map((loc) => {
+          const ref = loc.location?.ref || "";
+          const resolved = resolvedMap.get(ref);
+          const name = resolved
+            ? [resolved.name, resolved.address].filter(Boolean).join(" — ")
+            : loc.description || ref;
+          return { ref, name, description: loc.description };
+        });
+      } catch {
+        // Fallback: use description text
+      }
+    }
+
+    // Extract language guides
+    const langGuides = (languageGuides || []).map((g) => ({
+      type: g.type,
+      language: g.language,
+    }));
 
     // Store all selection data in Zustand
     setProductSelection({
@@ -191,9 +249,14 @@ export default function BookingWidget({
       totalPrice: selectedSlot.totalPrice,
       currency: selectedSlot.currencyCode || currency,
       cancellationPolicy: cancellationPolicy || "",
+      availablePickupLocations: pickupLocations,
+      availableLanguageGuides: langGuides,
+      pickupType,
+      allowCustomPickup,
       currentStep: 0,
     });
 
+    setIsBooking(false);
     router.push("/checkout");
   };
 
@@ -381,12 +444,25 @@ export default function BookingWidget({
 
               <button
                 onClick={handleBooking}
-                className="w-full bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold py-3.5 rounded-xl transition transform active:scale-[0.98] flex items-center justify-center gap-2"
+                disabled={isBooking}
+                className="w-full bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-[#0071CE]/70 text-white font-bold py-3.5 rounded-xl transition transform active:scale-[0.98] flex items-center justify-center gap-2"
               >
-                Book Now
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+                {isBooking ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Preparing...
+                  </>
+                ) : (
+                  <>
+                    Book Now
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </>
+                )}
               </button>
 
               <div className="flex items-center gap-2 my-3">
