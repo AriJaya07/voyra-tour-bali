@@ -34,7 +34,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const { data: allResults = [], isLoading: isDbLoading } = useSearchDestinations(isOpen)
 
   // React Query - fetch viator products
-  const { data: viatorResults = [], isLoading: isViatorLoading } = useViatorSearch(debouncedQuery)
+  const { data: viatorData, isLoading: isViatorLoading } = useViatorSearch(debouncedQuery)
+  const viatorResults = viatorData?.products ?? []
 
   const isLoading = isDbLoading || isViatorLoading
 

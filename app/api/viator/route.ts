@@ -26,6 +26,9 @@ export async function GET(request: Request) {
     // --------------------------------------------------
 
     if (action === 'products') {
+      const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+      const count = Math.min(50, Math.max(1, parseInt(searchParams.get('count') || '50', 10)))
+
       if (USE_MOCK_DATA) {
         return NextResponse.json({
           products: [
@@ -46,15 +49,17 @@ export async function GET(request: Request) {
                 }
               ]
             }
-          ]
+          ],
+          totalCount: 1,
+          page,
+          count,
         })
       }
 
       const currency = searchParams.get('currency') || 'USD'
       const tagIdsParam = searchParams.get('tagIds')
 
-      // Build filtering — always Bali, optionally filtered by tag IDs
-      const filtering: Record<string, any> = {
+      const filtering: Record<string, unknown> = {
         destination: BALI_DESTINATION_ID,
       }
 
@@ -66,18 +71,15 @@ export async function GET(request: Request) {
         }
       }
 
+      const start = (page - 1) * count + 1
+
       const response = await axios.post(
         `${VIATOR_API_URL}/products/search`,
         {
           filtering,
           currency,
-          pagination: {
-            start: 1,
-            count: 30
-          },
-          sorting: {
-            sort: 'DEFAULT'
-          }
+          pagination: { start, count },
+          sorting: { sort: 'DEFAULT' },
         },
         {
           headers: VIATOR_HEADERS,
@@ -85,9 +87,14 @@ export async function GET(request: Request) {
         }
       )
 
+      const totalCount = response.data.totalCount || 0
+
       return NextResponse.json({
         products: response.data.products || [],
-        totalCount: response.data.totalCount || 0,
+        totalCount,
+        page,
+        count,
+        hasMore: start + count - 1 < totalCount,
       })
     }
 
@@ -179,27 +186,26 @@ export async function GET(request: Request) {
     if (action === 'search') {
       const query = searchParams.get('query') || ''
       const currency = searchParams.get('currency') || 'USD'
+      const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+      const count = Math.min(50, Math.max(1, parseInt(searchParams.get('count') || '20', 10)))
 
       if (!query.trim()) {
-        return NextResponse.json({ products: [] })
+        return NextResponse.json({ products: [], totalCount: 0, page, count, hasMore: false })
       }
 
       if (USE_MOCK_DATA) {
-        return NextResponse.json({ products: [] })
+        return NextResponse.json({ products: [], totalCount: 0, page, count, hasMore: false })
       }
+
+      const start = (page - 1) * count + 1
 
       const response = await axios.post(
         `${VIATOR_API_URL}/products/search`,
         {
-          filtering: {
-            destination: BALI_DESTINATION_ID,
-          },
+          filtering: { destination: BALI_DESTINATION_ID },
           searchTerm: query,
           currency,
-          pagination: {
-            start: 1,
-            count: 20
-          }
+          pagination: { start, count },
         },
         {
           headers: VIATOR_HEADERS,
@@ -207,9 +213,14 @@ export async function GET(request: Request) {
         }
       )
 
+      const totalCount = response.data.totalCount || 0
+
       return NextResponse.json({
         products: response.data.products || [],
-        totalCount: response.data.totalCount || 0,
+        totalCount,
+        page,
+        count,
+        hasMore: start + count - 1 < totalCount,
       })
     }
 
