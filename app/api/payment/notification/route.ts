@@ -3,12 +3,11 @@ import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { generateTicketToken } from "@/lib/ticket";
 import { sendBookingConfirmation } from "@/lib/email";
-
-const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || "";
+import { VIATOR_API_KEY, VIATOR_API_URL } from "@/lib/config/viator";
+import { MIDTRANS_SERVER_KEY } from "@/lib/config/midtrans";
 
 /**
  * Verify Midtrans notification signature.
- * signature_key = SHA512(order_id + status_code + gross_amount + serverKey)
  */
 function verifySignature(
   orderId: string,
@@ -16,7 +15,7 @@ function verifySignature(
   grossAmount: string,
   signatureKey: string
 ): boolean {
-  const payload = orderId + statusCode + grossAmount + SERVER_KEY;
+  const payload = orderId + statusCode + grossAmount + MIDTRANS_SERVER_KEY;
   const computed = crypto.createHash("sha512").update(payload).digest("hex");
   return computed === signatureKey;
 }
@@ -41,6 +40,119 @@ function mapStatus(
       return "PENDING";
     default:
       return null;
+  }
+}
+
+/**
+ * Confirm booking with Viator Partner API after payment success.
+ */
+async function confirmViatorBooking(booking: any): Promise<{
+  success: boolean;
+  bookingRef?: string;
+  voucherUrl?: string;
+  error?: string;
+}> {
+  if (!VIATOR_API_KEY) {
+    console.log("No Viator API key, skipping Viator booking confirmation");
+    return { success: true, bookingRef: `MOCK-${booking.id}` };
+  }
+
+  try {
+    // Build paxMix from stored data
+    const paxMix = booking.paxMixJson || [
+      { ageBand: "ADULT", numberOfTravelers: booking.pax },
+    ];
+
+    // Build travelers list
+    const travelers =
+      booking.travelersJson?.map((t: any) => ({
+        ageBand: t.ageBand || "ADULT",
+        firstName: t.firstName,
+        lastName: t.lastName,
+      })) || [];
+
+    // Build booking questions
+    const bookingQuestions =
+      booking.bookingQuestionsJson?.map((q: any) => ({
+        questionId: q.questionId,
+        answer: q.answer,
+      })) || [];
+
+    const viatorPayload: Record<string, unknown> = {
+      productCode: booking.productCode,
+      travelDate: booking.travelDate.toISOString().split("T")[0],
+      paxMix,
+      bookerInfo: {
+        firstName: booking.leadFirstName || "Guest",
+        lastName: booking.leadLastName || "",
+      },
+      communication: {
+        email: booking.leadEmail || "",
+        phone: booking.leadPhone || "",
+      },
+    };
+
+    if (booking.productOptionCode) {
+      viatorPayload.productOptionCode = booking.productOptionCode;
+    }
+    if (booking.tourGradeCode) {
+      viatorPayload.tourGradeCode = booking.tourGradeCode;
+    }
+    if (booking.startTime) {
+      viatorPayload.startTime = booking.startTime;
+    }
+    if (travelers.length > 0) {
+      viatorPayload.travelers = travelers;
+      viatorPayload.leadTraveler = {
+        firstName: booking.leadFirstName || travelers[0]?.firstName,
+        lastName: booking.leadLastName || travelers[0]?.lastName,
+        email: booking.leadEmail,
+        phone: booking.leadPhone,
+      };
+    }
+    if (bookingQuestions.length > 0) {
+      viatorPayload.bookingQuestions = bookingQuestions;
+    }
+    if (booking.languageGuide) {
+      viatorPayload.languageGuide = booking.languageGuide;
+    }
+
+    console.log(
+      `[Viator] Confirming booking for order ${booking.paymentId}...`
+    );
+
+    const res = await fetch(`${VIATOR_API_URL}/bookings/book`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json;version=2.0",
+        "Content-Type": "application/json",
+        "exp-api-key": VIATOR_API_KEY,
+      },
+      body: JSON.stringify(viatorPayload),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.bookingRef) {
+      console.log(
+        `[Viator] Booking confirmed: ${data.bookingRef} for order ${booking.paymentId}`
+      );
+      return {
+        success: true,
+        bookingRef: data.bookingRef,
+        voucherUrl: data.voucherInfo?.url || null,
+      };
+    }
+
+    const errMsg = data.message || data.error || JSON.stringify(data);
+    console.error(`[Viator] Booking failed for ${booking.paymentId}: ${errMsg}`);
+    return { success: false, error: errMsg };
+  } catch (error: any) {
+    console.error(
+      `[Viator] Booking error for ${booking.paymentId}:`,
+      error?.message || error
+    );
+    return { success: false, error: error?.message || "Unknown error" };
   }
 }
 
@@ -93,11 +205,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Booking already finalized" });
     }
 
-    // Generate ticket token when transitioning to CONFIRMED
-    const isNewConfirmation = newStatus === "CONFIRMED" && booking.status !== "CONFIRMED"
-    const ticketToken = isNewConfirmation ? generateTicketToken() : booking.ticketToken
+    // Check for idempotency — don't re-process if already confirmed
+    const isNewConfirmation =
+      newStatus === "CONFIRMED" && booking.status !== "CONFIRMED";
+    const ticketToken = isNewConfirmation
+      ? generateTicketToken()
+      : booking.ticketToken;
 
-    // Update booking
+    // Update payment status
     await prisma.booking.update({
       where: { paymentId: order_id },
       data: {
@@ -111,25 +226,62 @@ export async function POST(request: Request) {
       `Midtrans webhook: ${order_id} → ${newStatus} (was ${booking.status})`
     );
 
-    // Send confirmation email with ticket link (non-blocking)
-    if (isNewConfirmation && ticketToken) {
-      sendBookingConfirmation({
-        email: booking.user.email,
-        userName: booking.user.name || "",
-        bookingRef: booking.bookingRef,
-        productTitle: booking.productTitle,
-        travelDate: booking.travelDate.toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
-        pax: booking.pax,
-        totalPrice: `Rp ${Math.round(booking.totalPrice).toLocaleString("id-ID")}`,
-        ticketToken,
-      }).catch((err) => {
-        console.error("[Email] Failed to send booking confirmation:", err);
-      });
+    // ── CRITICAL: After payment success, confirm with Viator ──
+    if (isNewConfirmation) {
+      // Prevent duplicate Viator bookings
+      if (booking.viatorBookingRef) {
+        console.log(
+          `[Viator] Already booked: ${booking.viatorBookingRef}, skipping`
+        );
+      } else {
+        const viatorResult = await confirmViatorBooking(booking);
+
+        if (viatorResult.success) {
+          await prisma.booking.update({
+            where: { paymentId: order_id },
+            data: {
+              viatorBookingRef: viatorResult.bookingRef || null,
+              viatorBookingStatus: "CONFIRMED",
+              viatorVoucherUrl: viatorResult.voucherUrl || null,
+              viatorBookingError: null,
+            },
+          });
+        } else {
+          // Payment succeeded but Viator booking failed — flag for retry
+          await prisma.booking.update({
+            where: { paymentId: order_id },
+            data: {
+              viatorBookingStatus: "FAILED",
+              viatorBookingError: viatorResult.error || "Unknown error",
+              viatorRetryCount: { increment: 1 },
+            },
+          });
+          console.error(
+            `[CRITICAL] Payment OK but Viator booking FAILED for ${order_id}. Manual intervention needed.`
+          );
+        }
+      }
+
+      // Send confirmation email with ticket link (non-blocking)
+      if (ticketToken) {
+        sendBookingConfirmation({
+          email: booking.user.email,
+          userName: booking.user.name || "",
+          bookingRef: booking.bookingRef,
+          productTitle: booking.productTitle,
+          travelDate: booking.travelDate.toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          pax: booking.pax,
+          totalPrice: `Rp ${Math.round(booking.totalPrice).toLocaleString("id-ID")}`,
+          ticketToken,
+        }).catch((err) => {
+          console.error("[Email] Failed to send booking confirmation:", err);
+        });
+      }
     }
 
     return NextResponse.json({ message: "OK" });

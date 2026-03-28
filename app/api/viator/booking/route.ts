@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from '@/lib/config/viator';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { productCode, productOptionCode, travelDate, paxMix, bookerInfo, communication } = body;
 
-    const apiKey = process.env.VIATOR_API_KEY as string;
-
     // Fallback Mock for Certification
-    if (!apiKey) {
+    if (!VIATOR_API_KEY) {
       return NextResponse.json({
         bookingRef: `BR-${Date.now()}`,
         orderId: `OR-${Math.floor(Math.random() * 1000000)}`,
@@ -30,13 +29,9 @@ export async function POST(req: Request) {
       viatorPayload.productOptionCode = productOptionCode;
     }
 
-    const viatorResponse = await fetch('https://api.sandbox.viator.com/partner/bookings/book', {
+    const viatorResponse = await fetch(`${VIATOR_API_URL}/bookings/book`, {
       method: 'POST',
-      headers: {
-        'Accept': 'application/json;version=2.0',
-        'Content-Type': 'application/json',
-        'exp-api-key': apiKey,
-      },
+      headers: VIATOR_HEADERS,
       body: JSON.stringify(viatorPayload),
     });
 

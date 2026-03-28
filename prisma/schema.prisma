@@ -154,14 +154,37 @@ model Booking {
   meetingPoint   String?
   pax            Int         @default(1)
   status         BookingStatus @default(PENDING)
-  
+
+  // Viator booking fields
+  productOptionCode String?
+  tourGradeCode     String?
+  startTime         String?
+  paxMixJson        Json?
+  bookingQuestionsJson Json?
+  languageGuide     String?
+
+  // Lead traveler contact
+  leadFirstName  String?
+  leadLastName   String?
+  leadEmail      String?
+  leadPhone      String?
+
   travelersJson  Json?
   isFraudFlagged Boolean     @default(false)
   voucherEmailed Boolean     @default(false)
 
+  // Payment
   paymentId      String?     @unique
   snapToken      String?
   paidAt         DateTime?
+  idempotencyKey String?     @unique
+
+  // Viator confirmation
+  viatorBookingRef   String?
+  viatorBookingStatus String?
+  viatorVoucherUrl   String?
+  viatorBookingError String?
+  viatorRetryCount   Int       @default(0)
 
   ticketToken    String?     @unique
 
@@ -177,6 +200,8 @@ model Booking {
 model BookingTraveler {
   id         Int      @id @default(autoincrement())
   bookingRef String
+  firstName  String
+  lastName   String
   fullName   String
   ageBand    String
 

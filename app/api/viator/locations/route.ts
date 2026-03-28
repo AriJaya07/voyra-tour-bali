@@ -1,18 +1,6 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
-
-const VIATOR_API_KEY = process.env.VIATOR_API_KEY || "";
-
-const VIATOR_BASE_URL = VIATOR_API_KEY?.startsWith("sandbox")
-  ? "https://api.sandbox.viator.com/partner"
-  : "https://api.viator.com/partner";
-
-const VIATOR_HEADERS = {
-  Accept: "application/json;version=2.0",
-  "Accept-Language": "en-US",
-  "Content-Type": "application/json",
-  "exp-api-key": VIATOR_API_KEY,
-};
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
 
 export async function POST(req: Request) {
   try {
@@ -34,13 +22,11 @@ export async function POST(req: Request) {
       });
     }
 
-    // ✅ FIX: correct payload key
     const response = await axios.post(
-      `${VIATOR_BASE_URL}/locations/bulk`,
-      { refs }, // ✅ correct
+      `${VIATOR_API_URL}/locations/bulk`,
+      { locations: refs },
       { headers: VIATOR_HEADERS, timeout: 10000 }
     );
-    console.log(response, "PPPP")
 
     const raw = response.data?.locations || [];
 

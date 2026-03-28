@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
 
 // GET /api/bookings — get current user's bookings
 export async function GET() {
@@ -26,17 +27,11 @@ export async function GET() {
     if (activeBookings.length > 0) {
       try {
         const refs = activeBookings.map(b => b.bookingRef);
-        const apiKey = process.env.VIATOR_API_KEY;
-        const apiUrl = process.env.VIATOR_API_URL || "https://api.sandbox.viator.com/partner";
 
-        if (apiKey) {
-          const viatorRes = await fetch(`${apiUrl}/bookings/status`, {
+        if (VIATOR_API_KEY) {
+          const viatorRes = await fetch(`${VIATOR_API_URL}/bookings/status`, {
             method: "POST",
-            headers: {
-              "Accept": "application/json;version=2.0",
-              "Content-Type": "application/json",
-              "exp-api-key": apiKey
-            },
+            headers: VIATOR_HEADERS,
             body: JSON.stringify({ bookingRefs: refs }),
             // Dont cache this request
             cache: 'no-store'

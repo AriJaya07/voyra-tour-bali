@@ -318,6 +318,12 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
                   title={product.title}
                   productCode={product.productCode}
                   currency={product.pricing?.currency || "IDR"}
+                  productImage={allImages[0]}
+                  cancellationPolicy={
+                    product.cancellationPolicy?.type === "ALL_SALES_FINAL"
+                      ? "All sales final - no refunds"
+                      : product.cancellationPolicy?.description || "Free cancellation available"
+                  }
                   ageBands={product.pricingInfo?.ageBands}
                   productOptions={product.productOptions}
                 />

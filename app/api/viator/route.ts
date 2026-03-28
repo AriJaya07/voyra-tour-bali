@@ -3,25 +3,12 @@ import axios from 'axios'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/utils/common/auth'
 import { prisma } from '@/lib/prisma'
-
-const VIATOR_API_KEY = process.env.VIATOR_API_KEY || ''
-
-// Sandbox vs Production
-const VIATOR_BASE_URL = VIATOR_API_KEY?.startsWith('sandbox')
-  ? 'https://api.sandbox.viator.com/partner'
-  : 'https://api.viator.com/partner'
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from '@/lib/config/viator'
 
 const USE_MOCK_DATA = !VIATOR_API_KEY
 
 // Bali destination ID in Viator (destId=98)
 const BALI_DESTINATION_ID = 98
-
-const VIATOR_HEADERS = {
-  Accept: 'application/json;version=2.0',
-  'Accept-Language': 'en-US',
-  'Content-Type': 'application/json',
-  'exp-api-key': VIATOR_API_KEY,
-}
 
 // --------------------------------------------------
 // GET REQUESTS
@@ -80,7 +67,7 @@ export async function GET(request: Request) {
       }
 
       const response = await axios.post(
-        `${VIATOR_BASE_URL}/products/search`,
+        `${VIATOR_API_URL}/products/search`,
         {
           filtering,
           currency,
@@ -147,7 +134,7 @@ export async function GET(request: Request) {
       // Fetch full product detail + pricing in parallel
       const [detailRes, searchRes] = await Promise.all([
         axios.get(
-          `${VIATOR_BASE_URL}/products/${productCode}`,
+          `${VIATOR_API_URL}/products/${productCode}`,
           {
             headers: {
               ...VIATOR_HEADERS,
@@ -157,7 +144,7 @@ export async function GET(request: Request) {
           }
         ),
         axios.post(
-          `${VIATOR_BASE_URL}/products/search`,
+          `${VIATOR_API_URL}/products/search`,
           {
             filtering: {},
             searchTerm: productCode,
@@ -202,7 +189,7 @@ export async function GET(request: Request) {
       }
 
       const response = await axios.post(
-        `${VIATOR_BASE_URL}/products/search`,
+        `${VIATOR_API_URL}/products/search`,
         {
           filtering: {
             destination: BALI_DESTINATION_ID,
@@ -310,7 +297,7 @@ export async function POST(request: Request) {
       console.log('[Viator] Availability request:', JSON.stringify(body))
 
       const response = await axios.post(
-        `${VIATOR_BASE_URL}/availability/check`,
+        `${VIATOR_API_URL}/availability/check`,
         body,
         { headers: VIATOR_HEADERS, timeout: 15000 }
       )
@@ -349,7 +336,7 @@ export async function POST(request: Request) {
       } else {
         try {
           const response = await axios.post(
-            `${VIATOR_BASE_URL}/bookings/book`,
+            `${VIATOR_API_URL}/bookings/book`,
             body,
             { headers: VIATOR_HEADERS, timeout: 30000 }
           )

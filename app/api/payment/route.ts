@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import { snap } from "@/lib/midtrans";
+import crypto from "crypto";
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +14,27 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { productCode, productTitle, travelDate, pax, totalPrice } = body;
+    const {
+      productCode,
+      productTitle,
+      productImage,
+      productOptionCode,
+      tourGradeCode,
+      startTime,
+      travelDate,
+      pax,
+      paxMix,
+      totalPrice,
+      currency,
+      leadFirstName,
+      leadLastName,
+      leadEmail,
+      leadPhone,
+      travelers,
+      meetingPoint,
+      languageGuide,
+      bookingQuestionAnswers,
+    } = body;
 
     if (!productCode || !productTitle || !travelDate || !pax || !totalPrice) {
       return NextResponse.json(
@@ -22,24 +43,59 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create booking in DB with PENDING status
+    // Generate idempotency key to prevent duplicate bookings
+    const idempotencyKey = crypto
+      .createHash("sha256")
+      .update(`${session.user.id}-${productCode}-${travelDate}-${Date.now()}`)
+      .digest("hex")
+      .substring(0, 32);
+
+    // Create booking in DB with PENDING status + all booking data
     const booking = await prisma.booking.create({
       data: {
         userId: Number(session.user.id),
-        bookingRef: "",
+        bookingRef: "", // Will be set after Midtrans order ID
         productCode,
         productTitle,
+        productImage: productImage || null,
+        productOptionCode: productOptionCode || null,
+        tourGradeCode: tourGradeCode || null,
+        startTime: startTime || null,
         totalPrice: Math.round(Number(totalPrice)),
+        currency: currency || "IDR",
         travelDate: new Date(travelDate),
         pax: Number(pax),
+        paxMixJson: paxMix || null,
+        meetingPoint: meetingPoint || null,
+        languageGuide: languageGuide || null,
+        bookingQuestionsJson: bookingQuestionAnswers || null,
+        leadFirstName: leadFirstName || null,
+        leadLastName: leadLastName || null,
+        leadEmail: leadEmail || null,
+        leadPhone: leadPhone || null,
+        travelersJson: travelers || null,
+        idempotencyKey,
         status: "PENDING",
       },
     });
 
+    // Save travelers individually
+    if (travelers && Array.isArray(travelers) && travelers.length > 0) {
+      await prisma.bookingTraveler.createMany({
+        data: travelers.map((t: any) => ({
+          bookingId: booking.id,
+          bookingRef: "", // Will update after orderId
+          firstName: t.firstName || "",
+          lastName: t.lastName || "",
+          fullName: `${t.firstName || ""} ${t.lastName || ""}`.trim(),
+          ageBand: t.ageBand || "ADULT",
+        })),
+      });
+    }
+
     const orderId = `VOYRA-${booking.id}-${Date.now()}`;
 
-    // Create Midtrans Snap transaction
-    // Midtrans IDR requires whole numbers — round per-item price and derive gross from it
+    // Midtrans IDR requires whole numbers
     const perItemPrice = Math.round(Number(totalPrice) / Number(pax));
     const grossAmount = perItemPrice * Number(pax);
 
@@ -57,8 +113,10 @@ export async function POST(request: Request) {
         },
       ],
       customer_details: {
-        first_name: session.user.name || "Guest",
-        email: session.user.email || "",
+        first_name: leadFirstName || session.user.name || "Guest",
+        last_name: leadLastName || "",
+        email: leadEmail || session.user.email || "",
+        phone: leadPhone || "",
       },
       callbacks: {
         finish: `${process.env.NEXTAUTH_URL}/payment/success`,
@@ -77,6 +135,12 @@ export async function POST(request: Request) {
         snapToken: snapResponse.token,
         bookingRef: orderId,
       },
+    });
+
+    // Update traveler bookingRefs
+    await prisma.bookingTraveler.updateMany({
+      where: { bookingId: booking.id },
+      data: { bookingRef: orderId },
     });
 
     return NextResponse.json({
