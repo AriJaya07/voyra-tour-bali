@@ -8,6 +8,11 @@ import Container from "@/components/Container";
 import { useBookingStore } from "@/utils/hooks/useBookingStore";
 import type { TravelerInfo, BookingQuestion } from "@/utils/hooks/useBookingStore";
 import { MIDTRANS_SNAP_URL, MIDTRANS_CLIENT_KEY } from "@/lib/config/midtrans";
+import { handleMidtransBooking } from "@/lib/services/midtransService";
+import { holdBooking, getPaymentMethods, confirmBooking } from "@/lib/viator-checkout";
+import type { BookingInput, ViatorPaymentAccount, ViatorFlowStep } from "@/types/bookingFlow";
+import PaymentSelector from "@/components/booking/PaymentSelector";
+import HoldTimer from "@/components/booking/HoldTimer";
 
 const STEPS = ["Contact", "Travelers", "Activity", "Review & Pay"];
 
@@ -521,6 +526,8 @@ function StepActivity({
 }
 
 // ── Step 3: Review & Pay ────────────────────────────────────────────
+// VIATOR → hold → select payment → confirm (all on our site)
+// LOCAL  → Midtrans Snap payment
 function StepReview({
   onBack,
 }: {
@@ -529,86 +536,135 @@ function StepReview({
   const store = useBookingStore();
   const router = useRouter();
   const { data: session } = useSession();
-  const [isProcessing, setIsProcessing] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  const isViator = store.source === "VIATOR";
+
+  // ── Viator step-by-step state ──────────────────────────────────────
+  const [viatorStep, setViatorStep] = useState<ViatorFlowStep>("idle");
+  const [sessionToken, setSessionToken] = useState("");
+  const [expiration, setExpiration] = useState("");
+  const [paymentMethods, setPaymentMethods] = useState<ViatorPaymentAccount[]>([]);
+  const [selectedPaymentId, setSelectedPaymentId] = useState("");
+  const [viatorError, setViatorError] = useState("");
+
+  // ── Midtrans state ─────────────────────────────────────────────────
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [midtransError, setMidtransError] = useState("");
 
   const totalTravelers = store.paxMix.reduce((acc, p) => acc + p.numberOfTravelers, 0);
 
-  const handlePayment = async () => {
-    if (!termsAccepted) {
-      toast.warning("Please accept the Terms of Use.");
-      return;
+  const buildBookingInput = (): BookingInput => ({
+    productCode: store.productCode,
+    productTitle: store.productTitle,
+    productImage: store.productImage,
+    productOptionCode: store.productOptionCode,
+    travelDate: store.travelDate,
+    startTime: store.startTime,
+    tourGradeCode: store.tourGradeCode,
+    paxMix: store.paxMix,
+    travelers: store.travelers,
+    leadTraveler: {
+      firstName: store.contactInfo.firstName,
+      lastName: store.contactInfo.lastName,
+      email: store.contactInfo.email,
+      phone: store.contactInfo.phone,
+    },
+    totalPrice: store.totalPrice,
+    currency: store.currency,
+    meetingPoint: store.meetingPoint,
+    languageGuide: store.languageGuide,
+    bookingQuestionAnswers: store.bookingQuestionAnswers,
+  });
+
+  // ── Viator: Hold booking ──────────────────────────────────────────
+  const handleViatorHold = async () => {
+    if (!termsAccepted) { toast.warning("Please accept the Terms of Use."); return; }
+    if (!session?.user?.id) { toast.error("Please login to continue."); return; }
+
+    setViatorStep("holding");
+    setViatorError("");
+    try {
+      const holdRes = await holdBooking(buildBookingInput());
+      setSessionToken(holdRes.sessionToken);
+      setExpiration(holdRes.expiration);
+
+      setViatorStep("selecting_payment");
+      const methods = await getPaymentMethods(holdRes.sessionToken);
+      setPaymentMethods(methods);
+      if (methods.length > 0) setSelectedPaymentId(methods[0].id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to hold booking";
+      setViatorError(msg);
+      setViatorStep("error");
+      toast.error(msg);
     }
-    if (!session?.user?.id) {
-      toast.error("Please login to continue.");
-      return;
+  };
+
+  // ── Viator: Confirm booking ───────────────────────────────────────
+  const handleViatorConfirm = async () => {
+    if (!selectedPaymentId) { toast.warning("Please select a payment method."); return; }
+
+    setViatorStep("confirming");
+    try {
+      const booking = await confirmBooking({ sessionToken, paymentAccountId: selectedPaymentId });
+      setViatorStep("confirmed");
+      toast.success("Booking confirmed!");
+      router.push(`/booking-success?ref=${encodeURIComponent(booking.bookingRef || "")}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Booking confirmation failed";
+      setViatorError(msg);
+      setViatorStep("error");
+      toast.error(msg);
     }
+  };
+
+  const handleExpired = useCallback(() => {
+    setViatorStep("expired");
+    toast.error("Your booking hold has expired. Please try again.");
+  }, []);
+
+  const handleViatorReset = () => {
+    setViatorStep("idle");
+    setSessionToken("");
+    setExpiration("");
+    setPaymentMethods([]);
+    setSelectedPaymentId("");
+    setViatorError("");
+  };
+
+  // ── Midtrans: Pay now ─────────────────────────────────────────────
+  const handleMidtransPayment = async () => {
+    if (!termsAccepted) { toast.warning("Please accept the Terms of Use."); return; }
+    if (!session?.user?.id) { toast.error("Please login to continue."); return; }
 
     setIsProcessing(true);
+    setMidtransError("");
     try {
-      // 1. Create booking in DB + get Midtrans Snap token
-      const res = await fetch("/api/payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productCode: store.productCode,
-          productTitle: store.productTitle,
-          productImage: store.productImage,
-          productOptionCode: store.productOptionCode,
-          tourGradeCode: store.tourGradeCode,
-          startTime: store.startTime,
-          travelDate: store.travelDate,
-          pax: totalTravelers,
-          paxMix: store.paxMix,
-          totalPrice: store.totalPrice,
-          currency: store.currency,
-          // Lead traveler
-          leadFirstName: store.contactInfo.firstName,
-          leadLastName: store.contactInfo.lastName,
-          leadEmail: store.contactInfo.email,
-          leadPhone: store.contactInfo.phone,
-          // All travelers
-          travelers: store.travelers,
-          // Activity details
-          meetingPoint: store.meetingPoint,
-          languageGuide: store.languageGuide,
-          bookingQuestionAnswers: store.bookingQuestionAnswers,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.error || "Failed to create payment.");
+      const result = await handleMidtransBooking(buildBookingInput());
+      if (!result.success) {
+        const msg = result.error || "Failed to create payment.";
+        setMidtransError(msg);
+        toast.error(msg);
         return;
       }
-
-      // 2. Redirect to Midtrans Snap
-      if (data.snapToken) {
-        // Use Snap popup if available, otherwise redirect
-        if (typeof window !== "undefined" && (window as any).snap) {
-          (window as any).snap.pay(data.snapToken, {
-            onSuccess: () => {
-              router.push(`/payment/success?order_id=${data.orderId}&transaction_status=settlement`);
-            },
-            onPending: () => {
-              router.push(`/payment/pending?order_id=${data.orderId}`);
-            },
-            onError: () => {
-              toast.error("Payment failed. Please try again.");
-              setIsProcessing(false);
-            },
-            onClose: () => {
-              toast.info("Payment window closed. You can retry.");
-              setIsProcessing(false);
-            },
+      if (result.snapToken) {
+        const win = window as unknown as Record<string, unknown>;
+        if (typeof window !== "undefined" && win.snap) {
+          const snap = win.snap as { pay: (token: string, callbacks: Record<string, () => void>) => void };
+          snap.pay(result.snapToken, {
+            onSuccess: () => router.push(`/payment/success?order_id=${result.orderId}&transaction_status=settlement`),
+            onPending: () => router.push(`/payment/pending?order_id=${result.orderId}`),
+            onError: () => { toast.error("Payment failed."); setIsProcessing(false); },
+            onClose: () => { toast.info("Payment window closed."); setIsProcessing(false); },
           });
-        } else if (data.redirectUrl) {
-          window.location.href = data.redirectUrl;
+          return;
+        } else if (result.redirectUrl) {
+          window.location.href = result.redirectUrl;
+          return;
         }
-      } else {
-        toast.error("Could not initialize payment.");
       }
+      toast.error("Could not initialize payment.");
     } catch {
       toast.error("An error occurred. Please try again.");
     } finally {
@@ -616,8 +672,16 @@ function StepReview({
     }
   };
 
+  const isViatorBusy = viatorStep === "holding" || viatorStep === "confirming";
+  const currentError = isViator ? viatorError : midtransError;
+
   return (
     <div className="space-y-5">
+      {/* Hold Timer — Viator flow only */}
+      {isViator && expiration && viatorStep !== "confirmed" && viatorStep !== "idle" && viatorStep !== "error" && (
+        <HoldTimer expiration={expiration} onExpired={handleExpired} />
+      )}
+
       {/* Booking Summary */}
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <div className="flex items-center gap-2.5 mb-5">
@@ -629,13 +693,11 @@ function StepReview({
           <h2 className="text-base sm:text-lg font-bold text-gray-900">Review Your Booking</h2>
         </div>
 
-        {/* Product */}
         <div className="mb-4 pb-4 border-b border-gray-100">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Experience</p>
           <p className="text-sm font-bold text-gray-900 leading-snug">{store.productTitle}</p>
         </div>
 
-        {/* Date & Time */}
         <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-100">
           <div>
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Date</p>
@@ -649,7 +711,6 @@ function StepReview({
           )}
         </div>
 
-        {/* Contact */}
         <div className="mb-4 pb-4 border-b border-gray-100">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Contact</p>
           <div className="text-sm text-gray-700 space-y-1">
@@ -659,7 +720,6 @@ function StepReview({
           </div>
         </div>
 
-        {/* Travelers */}
         <div className="mb-4 pb-4 border-b border-gray-100">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Travelers ({totalTravelers})</p>
           <div className="space-y-1.5">
@@ -672,7 +732,6 @@ function StepReview({
           </div>
         </div>
 
-        {/* Meeting Point */}
         {store.meetingPoint && (
           <div className="mb-4 pb-4 border-b border-gray-100">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Meeting Point</p>
@@ -680,7 +739,6 @@ function StepReview({
           </div>
         )}
 
-        {/* Cancellation Policy */}
         {store.cancellationPolicy && (
           <div className="mb-4 pb-4 border-b border-gray-100">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Cancellation Policy</p>
@@ -688,7 +746,6 @@ function StepReview({
           </div>
         )}
 
-        {/* Price */}
         <div className="bg-[#F8F8F8] rounded-xl p-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-gray-700">Total Price</span>
@@ -705,6 +762,29 @@ function StepReview({
         </div>
       </div>
 
+      {/* Payment Selector — Viator flow, shown after hold */}
+      {isViator && viatorStep === "selecting_payment" && paymentMethods.length > 0 && (
+        <PaymentSelector
+          methods={paymentMethods}
+          selectedId={selectedPaymentId}
+          onSelect={setSelectedPaymentId}
+          disabled={isViatorBusy}
+        />
+      )}
+
+      {/* Error banner */}
+      {currentError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p className="text-sm font-bold text-red-800">Booking Error</p>
+            <p className="text-xs text-red-600 mt-0.5">{currentError}</p>
+          </div>
+        </div>
+      )}
+
       {/* Terms */}
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <label className="flex items-start gap-3.5 p-4 rounded-xl bg-[#F8F8F8] border border-gray-100 cursor-pointer hover:border-[#0071CE]/30 transition">
@@ -715,38 +795,108 @@ function StepReview({
             className="mt-0.5 w-5 h-5 rounded border-gray-300 text-[#0071CE] focus:ring-[#0071CE] shrink-0"
           />
           <span className="text-sm text-gray-600 leading-relaxed">
-            By clicking &apos;Pay Now&apos;, you agree to the Terms of Use and Privacy Statement. Your payment will be processed securely via Midtrans. Booking will be confirmed with the supplier after successful payment.
+            {isViator
+              ? "By proceeding, you agree to the Terms of Use and Privacy Statement. Your booking will be processed securely through our platform."
+              : "By clicking 'Pay Now', you agree to the Terms of Use and Privacy Statement. Your payment will be processed securely via Midtrans."}
           </span>
         </label>
       </div>
 
       {/* Actions */}
       <div className="flex gap-3">
-        <button type="button" onClick={onBack} className="flex-1 py-4 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={isViatorBusy || isProcessing}
+          className="flex-1 py-4 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Back
         </button>
-        <button
-          onClick={handlePayment}
-          disabled={isProcessing || !termsAccepted}
-          className="flex-[2] bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
-        >
-          {isProcessing ? (
-            <>
-              <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Processing Payment...
-            </>
-          ) : (
-            <>
+
+        {isViator ? (
+          /* ── Viator flow: hold → select payment → confirm ── */
+          viatorStep === "expired" || viatorStep === "error" ? (
+            <button
+              onClick={handleViatorReset}
+              className="flex-[2] bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
+            >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Pay Now — {store.totalPrice.toLocaleString()} {store.currency}
-            </>
-          )}
-        </button>
+              Try Again
+            </button>
+          ) : viatorStep === "selecting_payment" ? (
+            <button
+              onClick={handleViatorConfirm}
+              disabled={!selectedPaymentId}
+              className="flex-[2] bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              {viatorStep === "confirming" as unknown ? (
+                <>
+                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Confirming...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Confirm Booking — {store.totalPrice.toLocaleString()} {store.currency}
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={handleViatorHold}
+              disabled={!termsAccepted || isViatorBusy}
+              className="flex-[2] bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              {isViatorBusy ? (
+                <>
+                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Reserving your spot...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Proceed to Payment
+                </>
+              )}
+            </button>
+          )
+        ) : (
+          /* ── LOCAL flow: Midtrans Snap ── */
+          <button
+            onClick={handleMidtransPayment}
+            disabled={isProcessing || !termsAccepted}
+            className="flex-[2] bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            {isProcessing ? (
+              <>
+                <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Processing Payment...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Pay Now — {store.totalPrice.toLocaleString()} {store.currency}
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -912,12 +1062,14 @@ export default function CheckoutClient() {
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] pt-10 pb-8 sm:pb-16">
-      {/* Midtrans Snap Script */}
-      <script
-        src={MIDTRANS_SNAP_URL}
-        data-client-key={MIDTRANS_CLIENT_KEY}
-        async
-      />
+      {/* Midtrans Snap Script — only needed for LOCAL products */}
+      {store.source === "LOCAL" && MIDTRANS_SNAP_URL && (
+        <script
+          src={MIDTRANS_SNAP_URL}
+          data-client-key={MIDTRANS_CLIENT_KEY}
+          async
+        />
+      )}
 
       <Container>
         {/* Header */}

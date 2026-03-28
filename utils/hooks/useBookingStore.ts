@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { ProductSource } from "@/types/bookingFlow";
 
 export interface PaxMixItem {
   ageBand: string;
@@ -46,6 +47,10 @@ export interface AvailabilitySlot {
 }
 
 interface BookingStore {
+  // Product source — determines checkout flow
+  source: ProductSource;
+  viatorUrl: string;
+
   // Step 0: Product selection (from BookingWidget)
   productCode: string;
   productTitle: string;
@@ -99,6 +104,8 @@ interface BookingStore {
 }
 
 const initialState = {
+  source: "VIATOR" as ProductSource,
+  viatorUrl: "",
   productCode: "",
   productTitle: "",
   productImage: "",

@@ -8,7 +8,7 @@ import { useViatorProductDetail, formatDuration } from "@/utils/hooks/useViator"
 import type { ViatorImage } from "@/utils/hooks/useViator"
 import { useCurrency } from "@/utils/hooks/useCurrency"
 import Container from "@/components/Container"
-import BookingWidget from "@/components/viator/BookingWidget"
+import BookingViatorWidget from "@/components/viator/BookingViatorWidget"
 import ImageGallery from "@/components/common/ImageGallery"
 import ErrorBoundary from "@/components/common/ErrorBoundary"
 import { trackViewItem } from "@/utils/analytics"
@@ -313,7 +313,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-24">
               <ErrorBoundary>
-                <BookingWidget
+                <BookingViatorWidget
                   basePrice={price}
                   title={product.title}
                   productCode={product.productCode}

@@ -8,29 +8,26 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { ViatorProductOption, ViatorLogistics, ViatorLanguageGuide } from "@/utils/hooks/useViator";
 import { useBookingStore, type AvailabilitySlot } from "@/utils/hooks/useBookingStore";
-import type { ProductSource } from "@/types/bookingFlow";
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
 
+// ── Types ──────────────────────────────────────────────────────────────
+
 interface Traveler {
-  ageBand: "ADULT" | "CHILD" | "INFANT" | "YOUTH" | "SENIOR" | string;
+  ageBand: string;
   count: number;
   label: string;
   min: number;
   max: number;
 }
 
-interface BookingWidgetProps {
+interface BookingViatorWidgetProps {
   productCode: string;
   title: string;
   basePrice: number;
   currency: string;
   productImage?: string;
   cancellationPolicy?: string;
-  /** Product source — VIATOR redirects externally, LOCAL goes to /checkout */
-  source?: ProductSource;
-  /** Viator deep link URL (required when source=VIATOR) */
-  viatorUrl?: string;
   ageBands?: Array<{
     ageBand: string;
     startAge: number;
@@ -43,32 +40,35 @@ interface BookingWidgetProps {
   languageGuides?: ViatorLanguageGuide[];
 }
 
-export default function BookingWidget({
+// ── Component ──────────────────────────────────────────────────────────
+
+export default function BookingViatorWidget({
   productCode,
   title,
   basePrice,
   currency,
   productImage,
   cancellationPolicy,
-  source = "VIATOR",
-  viatorUrl,
   logistics,
   languageGuides,
   ageBands,
   productOptions,
-}: BookingWidgetProps) {
+}: BookingViatorWidgetProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const setProductSelection = useBookingStore((s) => s.setProductSelection);
 
+  // ── Tour options ────────────────────────────────────────────────────
   const hasOptions = productOptions && productOptions.length > 0;
   const [selectedOptionCode, setSelectedOptionCode] = useState<string>(
     hasOptions ? productOptions![0].productOptionCode : ""
   );
   const [detailOption, setDetailOption] = useState<ViatorProductOption | null>(null);
+
+  // ── Date & travelers ────────────────────────────────────────────────
   const [date, setDate] = useState<Date | null>(null);
 
-  const initTravelers =
+  const initTravelers: Traveler[] =
     ageBands && ageBands.length > 0
       ? ageBands.map((ab) => ({
           ageBand: ab.ageBand,
@@ -87,16 +87,21 @@ export default function BookingWidget({
   const [selectedSlotIdx, setSelectedSlotIdx] = useState<number>(-1);
   const [isChecking, setIsChecking] = useState(false);
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
 
   const totalTravelers = travelers.reduce((acc, t) => acc + t.count, 0);
+  const selectedSlot = selectedSlotIdx >= 0 ? slots[selectedSlotIdx] : null;
+  const displayPrice = selectedSlot?.totalPrice || null;
+  const stepOffset = hasOptions ? 1 : 0;
 
+  // ── Traveler update ─────────────────────────────────────────────────
   const updateTraveler = (index: number, delta: number) => {
-    const newTravelers = [...travelers];
-    const target = newTravelers[index];
+    const updated = [...travelers];
+    const target = updated[index];
     const newCount = target.count + delta;
     if (newCount >= target.min && newCount <= target.max) {
       target.count = newCount;
-      setTravelers(newTravelers);
+      setTravelers(updated);
       setSlots([]);
       setSelectedSlotIdx(-1);
       setAvailabilityChecked(false);
@@ -110,6 +115,13 @@ export default function BookingWidget({
     setAvailabilityChecked(false);
   };
 
+  const resetAvailability = () => {
+    setSlots([]);
+    setSelectedSlotIdx(-1);
+    setAvailabilityChecked(false);
+  };
+
+  // ── Check availability via Viator API ───────────────────────────────
   const handleCheckAvailability = async () => {
     if (!session) {
       const currentUrl = typeof window !== "undefined" ? window.location.pathname : "/";
@@ -121,7 +133,6 @@ export default function BookingWidget({
 
     const offset = date.getTimezoneOffset();
     const travelDateStr = new Date(date.getTime() - offset * 60 * 1000).toISOString().split("T")[0];
-
     const paxMix = travelers
       .filter((t) => t.count > 0)
       .map((t) => ({ ageBand: t.ageBand, numberOfTravelers: t.count }));
@@ -141,20 +152,18 @@ export default function BookingWidget({
       const data = await res.json();
 
       if (res.ok && data.available !== false) {
-        // Use parsed slots if available, otherwise build from bookableItems
         const parsedSlots: AvailabilitySlot[] = data.slots ||
-          (data.bookableItems || []).map((item: any) => ({
-            productOptionCode: item.productOptionCode || selectedOptionCode,
-            startTime: item.startTime || null,
-            tourGradeCode: item.tourGrade?.gradeCode || null,
+          (data.bookableItems || []).map((item: Record<string, unknown>) => ({
+            productOptionCode: (item.productOptionCode as string) || selectedOptionCode,
+            startTime: (item.startTime as string) || null,
+            tourGradeCode: (item.tourGrade as Record<string, string>)?.gradeCode || null,
             available: true,
-            totalPrice: item.totalPrice?.price?.recommendedRetailPrice || basePrice * totalTravelers,
-            partnerNetPrice: item.totalPrice?.price?.partnerNetPrice || 0,
-            currencyCode: item.totalPrice?.price?.currencyCode || currency,
+            totalPrice: (item.totalPrice as Record<string, Record<string, number>>)?.price?.recommendedRetailPrice || basePrice * totalTravelers,
+            partnerNetPrice: (item.totalPrice as Record<string, Record<string, number>>)?.price?.partnerNetPrice || 0,
+            currencyCode: (item.totalPrice as Record<string, Record<string, string>>)?.price?.currencyCode || currency,
           }));
 
         const availableSlots = parsedSlots.filter((s) => s.available);
-
         if (availableSlots.length === 0) {
           toast.warning("Not available for the selected date/travelers.");
           return;
@@ -175,29 +184,22 @@ export default function BookingWidget({
     }
   };
 
-  const selectedSlot = selectedSlotIdx >= 0 ? slots[selectedSlotIdx] : null;
-  const displayPrice = selectedSlot?.totalPrice || null;
-
-  const [isBooking, setIsBooking] = useState(false);
-
-  // Navigate to internal checkout (all products go through our checkout)
+  // ── Book → store in Zustand → navigate to /checkout ─────────────────
   const handleBooking = async () => {
     if (!date || !selectedSlot) return;
     setIsBooking(true);
 
     const offset = date.getTimezoneOffset();
     const travelDateStr = new Date(date.getTime() - offset * 60 * 1000).toISOString().split("T")[0];
-
     const paxMix = travelers
       .filter((t) => t.count > 0)
       .map((t) => ({ ageBand: t.ageBand, numberOfTravelers: t.count }));
 
-    // Extract raw pickup locations from logistics
+    // Resolve pickup locations
     const rawLocations = logistics?.travelerPickup?.locations || logistics?.start || [];
     const pickupType = logistics?.travelerPickup?.pickupOptionType || "";
     const allowCustomPickup = logistics?.travelerPickup?.allowCustomTravelerPickup || false;
 
-    // Resolve location refs to get real names/addresses
     let pickupLocations = rawLocations.map((loc) => ({
       ref: loc.location?.ref || "",
       name: loc.description || "",
@@ -222,8 +224,6 @@ export default function BookingWidget({
             resolvedMap.set(loc.ref, { name: loc.name, address: loc.address });
           }
         }
-
-        // Merge resolved names into pickup locations
         pickupLocations = rawLocations.map((loc) => {
           const ref = loc.location?.ref || "";
           const resolved = resolvedMap.get(ref);
@@ -237,16 +237,14 @@ export default function BookingWidget({
       }
     }
 
-    // Extract language guides
     const langGuides = (languageGuides || []).map((g) => ({
       type: g.type,
       language: g.language,
     }));
 
-    // Store all selection data in Zustand (LOCAL products only reach here)
     setProductSelection({
-      source,
-      viatorUrl: viatorUrl || "",
+      source: "VIATOR",
+      viatorUrl: "",
       productCode,
       productTitle: title,
       productImage: productImage || "",
@@ -269,7 +267,7 @@ export default function BookingWidget({
     router.push("/checkout");
   };
 
-  // WhatsApp
+  // ── WhatsApp fallback ───────────────────────────────────────────────
   const buildWaUrl = () => {
     const selectedDate = date
       ? date.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
@@ -280,28 +278,28 @@ export default function BookingWidget({
       .map((t) => `  ${t.label}: ${t.count} pax`)
       .join("\n");
     const lines = [
-      `Hello Voyra Bali!`,
-      `I would like to book the following tour:`,
-      ``,
+      "Hello Voyra Bali!",
+      "I would like to book the following tour:",
+      "",
       `Tour: ${title}`,
       ...(selectedOption ? [`Option: ${selectedOption.title}`] : []),
       `Date: ${selectedDate}`,
-      `Travelers:`,
+      "Travelers:",
       travelerLines || "  Not specified",
       ...(displayPrice ? [`Total: ${displayPrice.toLocaleString()} ${currency}`] : []),
-      ``,
-      `Please confirm, thank you!`,
+      "",
+      "Please confirm, thank you!",
     ];
     return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;
   };
 
-  const stepOffset = hasOptions ? 1 : 0;
+  // ── Render ──────────────────────────────────────────────────────────
 
   return (
     <div className="border border-[#E6E6E6] rounded-2xl p-5 sm:p-6 my-10 lg:my-0 shadow-sm bg-white w-full">
       <h2 className="text-xl font-bold mb-4 text-black">Book this Tour</h2>
 
-      {/* Step: Select Tour Option */}
+      {/* Tour Option Selector */}
       {hasOptions && (
         <div className="mb-4">
           <label className="block text-sm font-semibold mb-2 text-gray-700">1. Select Option</label>
@@ -317,11 +315,7 @@ export default function BookingWidget({
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        isSelected ? "border-[#0071CE]" : "border-gray-300"
-                      }`}
-                    >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#0071CE]" : "border-gray-300"}`}>
                       {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#0071CE]" />}
                     </div>
                     <p className={`text-sm font-bold flex-1 min-w-0 truncate ${isSelected ? "text-[#0071CE]" : "text-gray-900"}`}>
@@ -329,10 +323,7 @@ export default function BookingWidget({
                     </p>
                     {opt.description && (
                       <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDetailOption(opt);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); setDetailOption(opt); }}
                         className="text-[11px] font-semibold text-[#0071CE] hover:underline shrink-0"
                       >
                         Details
@@ -346,35 +337,30 @@ export default function BookingWidget({
         </div>
       )}
 
-      {/* Step: Select Date */}
+      {/* Date Picker */}
       <div className="mb-4">
         <label className="block text-sm font-semibold mb-2 text-gray-700">{stepOffset + 1}. Select Date</label>
         <style>{`
-          .booking-cal { width: 100%; border: none !important; font-family: inherit; font-size: 13px; }
-          .booking-cal .react-calendar__tile--active { background: #0071CE !important; color: white !important; border-radius: 8px; }
-          .booking-cal .react-calendar__tile--now { background: #e0f0ff !important; border-radius: 8px; }
-          .booking-cal .react-calendar__tile:hover { background: #b3d9ff !important; border-radius: 8px; }
-          .booking-cal .react-calendar__navigation button:hover { background: #f0f7ff !important; border-radius: 8px; }
-          .booking-cal .react-calendar__navigation button { font-weight: 700; color: #1a1a1a; font-size: 14px; }
-          .booking-cal .react-calendar__tile:disabled { background: #f5f5f5; color: #c0c0c0; }
-          .booking-cal .react-calendar__tile { padding: 8px 4px; }
+          .viator-booking-cal { width: 100%; border: none !important; font-family: inherit; font-size: 13px; }
+          .viator-booking-cal .react-calendar__tile--active { background: #0071CE !important; color: white !important; border-radius: 8px; }
+          .viator-booking-cal .react-calendar__tile--now { background: #e0f0ff !important; border-radius: 8px; }
+          .viator-booking-cal .react-calendar__tile:hover { background: #b3d9ff !important; border-radius: 8px; }
+          .viator-booking-cal .react-calendar__navigation button:hover { background: #f0f7ff !important; border-radius: 8px; }
+          .viator-booking-cal .react-calendar__navigation button { font-weight: 700; color: #1a1a1a; font-size: 14px; }
+          .viator-booking-cal .react-calendar__tile:disabled { background: #f5f5f5; color: #c0c0c0; }
+          .viator-booking-cal .react-calendar__tile { padding: 8px 4px; }
         `}</style>
         <div className="border border-[#E6E6E6] rounded-xl overflow-hidden p-2">
           <Calendar
-            onChange={(val) => {
-              setDate(val as Date);
-              setSlots([]);
-              setSelectedSlotIdx(-1);
-              setAvailabilityChecked(false);
-            }}
+            onChange={(val) => { setDate(val as Date); resetAvailability(); }}
             value={date}
             minDate={new Date()}
-            className="booking-cal"
+            className="viator-booking-cal"
           />
         </div>
       </div>
 
-      {/* Step: Travelers */}
+      {/* Travelers */}
       <div className="mb-4">
         <label className="block text-sm font-semibold mb-2 text-gray-700">{stepOffset + 2}. Travelers</label>
         <div className="border border-[#E6E6E6] rounded-xl p-4 space-y-3">
@@ -384,16 +370,16 @@ export default function BookingWidget({
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => updateTraveler(idx, -1)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 font-bold text-gray-700 hover:bg-gray-200"
                   disabled={t.count <= t.min}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 font-bold text-gray-700 hover:bg-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed"
                 >
                   -
                 </button>
                 <span className="w-4 text-center text-gray-900 font-bold">{t.count}</span>
                 <button
                   onClick={() => updateTraveler(idx, 1)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold hover:bg-blue-100"
                   disabled={t.count >= t.max}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold hover:bg-blue-100 disabled:text-gray-300 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
@@ -403,23 +389,21 @@ export default function BookingWidget({
         </div>
       </div>
 
-      {/* Check Availability Button */}
+      {/* Check Availability / Results */}
       {!availabilityChecked ? (
         <button
           onClick={handleCheckAvailability}
           disabled={!date || totalTravelers === 0 || isChecking}
-          className="w-full bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold py-3.5 rounded-xl disabled:bg-gray-300 disabled:cursor-not-allowed transition transform active:scale-[0.98]"
+          className="w-full bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold py-3.5 rounded-xl disabled:bg-gray-300 disabled:cursor-not-allowed transition active:scale-[0.98]"
         >
           {isChecking ? "Checking Availability..." : "Check Availability"}
         </button>
       ) : (
         <div className="mt-4 space-y-4">
-          {/* Time Slot Selection */}
+          {/* Time Slots */}
           {slots.length > 1 && (
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
-                {stepOffset + 3}. Select Time
-              </label>
+              <label className="block text-sm font-semibold mb-2 text-gray-700">{stepOffset + 3}. Select Time</label>
               <div className="grid grid-cols-2 gap-2">
                 {slots.map((slot, idx) => (
                   <button
@@ -441,7 +425,7 @@ export default function BookingWidget({
             </div>
           )}
 
-          {/* Price & Book */}
+          {/* Price + Book */}
           {selectedSlot && (
             <div className="p-5 bg-[#F8F8F8] rounded-xl border border-gray-200">
               <div className="flex justify-between items-center mb-4">
@@ -454,7 +438,7 @@ export default function BookingWidget({
               <button
                 onClick={handleBooking}
                 disabled={isBooking}
-                className="w-full bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-[#0071CE]/70 text-white font-bold py-3.5 rounded-xl transition transform active:scale-[0.98] flex items-center justify-center gap-2"
+                className="w-full bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-[#0071CE]/70 text-white font-bold py-3.5 rounded-xl transition active:scale-[0.98] flex items-center justify-center gap-2"
               >
                 {isBooking ? (
                   <>
@@ -492,14 +476,7 @@ export default function BookingWidget({
                 Ask via WhatsApp
               </a>
 
-              <button
-                onClick={() => {
-                  setSlots([]);
-                  setSelectedSlotIdx(-1);
-                  setAvailabilityChecked(false);
-                }}
-                className="w-full text-center text-sm text-gray-500 mt-3 hover:underline"
-              >
+              <button onClick={resetAvailability} className="w-full text-center text-sm text-gray-500 mt-3 hover:underline">
                 Change Date or Travelers
               </button>
             </div>
@@ -519,10 +496,7 @@ export default function BookingWidget({
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h3 className="text-sm font-bold text-gray-900">{detailOption.title}</h3>
-              <button
-                onClick={() => setDetailOption(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-400"
-              >
+              <button onClick={() => setDetailOption(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-400">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -530,18 +504,12 @@ export default function BookingWidget({
             </div>
             <div className="px-5 py-4 overflow-y-auto space-y-4">
               {detailOption.description && (
-                <div
-                  className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: detailOption.description }}
-                />
+                <div className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: detailOption.description }} />
               )}
               {detailOption.languageGuides && detailOption.languageGuides.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {detailOption.languageGuides.map((g, i) => (
-                    <span
-                      key={i}
-                      className="text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full"
-                    >
+                    <span key={i} className="text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
                       {g.language.toUpperCase()} {g.type === "GUIDE" ? "Guide" : g.type}
                     </span>
                   ))}
@@ -550,10 +518,7 @@ export default function BookingWidget({
             </div>
             <div className="px-5 py-3 border-t border-gray-100">
               <button
-                onClick={() => {
-                  handleOptionChange(detailOption.productOptionCode);
-                  setDetailOption(null);
-                }}
+                onClick={() => { handleOptionChange(detailOption.productOptionCode); setDetailOption(null); }}
                 className="w-full py-3 bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold rounded-xl transition text-sm"
               >
                 Select This Option

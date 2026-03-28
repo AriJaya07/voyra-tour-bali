@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import Container from "@/components/Container";
 import AboutDetail from "@/components/DetailProduct/AboutDetail";
 import BannerDetail from "@/components/DetailProduct/BannerDetail";
-import BookingUser from "@/components/DetailProduct/BookingUser";
+import BookingLocalWidget from "@/components/booking/BookingLocalWidget";
 import ExcpectDetail from "@/components/DetailProduct/ExpectDetail";
 import ContentsSection from "@/components/DetailProduct/ContentsSection";
 import LocationSection from "@/components/DetailProduct/LocationSection";
@@ -48,7 +48,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function Detail({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
 
-    // Fetch destination + all related tables in one query
     const destination = await prisma.destination.findFirst({
         where: { slug },
         include: {
@@ -71,7 +70,6 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
         },
     });
 
-    // Empty / not found state
     if (!destination) {
         return (
             <div className="flex flex-col justify-center items-center py-40 gap-4 text-center px-4">
@@ -93,7 +91,6 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
         destination.images[0]?.url ||
         "";
 
-    // Build list of content images to pass to ExpectDetail
     const contentImages = destination.contents
         .flatMap((c) => c.images.map((img) => img.url))
         .slice(0, 3);
@@ -109,29 +106,34 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
             />
 
             <Container>
-                {/* ── About ── */}
-                <AboutDetail
-                    description={destination.description}
-                    mainImage={mainImage}
-                />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 py-8">
+                    {/* ── Left: Product details ── */}
+                    <div className="lg:col-span-2 space-y-0">
+                        <AboutDetail
+                            description={destination.description}
+                            mainImage={mainImage}
+                        />
+                        <ContentsSection contents={destination.contents} />
+                        <LocationSection locations={destination.locations} />
+                        <PackagesSection
+                            packages={destination.packages}
+                            destinationTitle={destination.title}
+                        />
+                        <ExcpectDetail images={contentImages.length > 0 ? contentImages : undefined} />
+                    </div>
 
-                {/* ── Contents / Highlights ── */}
-                <ContentsSection contents={destination.contents} />
-
-                {/* ── Locations ── */}
-                <LocationSection locations={destination.locations} />
-
-                {/* ── Packages ── */}
-                <PackagesSection
-                    packages={destination.packages}
-                    destinationTitle={destination.title}
-                />
-
-                {/* ── What to Expect (images from content) ── */}
-                <ExcpectDetail images={contentImages.length > 0 ? contentImages : undefined} />
-
-                {/* ── Booking ── */}
-                <BookingUser price={price} title={destination.title} />
+                    {/* ── Right: Sticky booking card ── */}
+                    <div className="lg:col-span-1">
+                        <div className="lg:sticky lg:top-24">
+                            <BookingLocalWidget
+                                price={price}
+                                title={destination.title}
+                                image={mainImage}
+                                pricingCurrency="IDR"
+                            />
+                        </div>
+                    </div>
+                </div>
             </Container>
         </div>
     );

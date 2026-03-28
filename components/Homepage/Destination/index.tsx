@@ -141,7 +141,7 @@ export default function Destination({ categories }: DestinationProps) {
   }
 
   return (
-    <section id="destinasi" className="pt-10 md:pt-[72px] px-4 md:px-0">
+    <section id="destinasi" className="pt-10 md:pt-[72px]">
       {/* Category cards — horizontal scroll on mobile, grid on larger screens */}
       <div className="
         flex gap-2 pb-5 overflow-x-auto scrollbar-hide

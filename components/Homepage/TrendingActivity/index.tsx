@@ -263,7 +263,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
   const hasMore = shuffledActivities.length > 5
 
   return (
-    <section id="paket" className="py-10 px-4">
+    <section id="paket" className="py-10">
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-2xl sm:text-3xl font-bold text-black">
           Trending Activity
