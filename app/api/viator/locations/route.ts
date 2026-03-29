@@ -40,7 +40,7 @@ export async function POST(req: Request) {
         const response = await axios.post(
           `${VIATOR_API_URL}/locations/bulk`,
           { locations: chunk },
-          { headers: VIATOR_HEADERS, timeout: 10000 }
+          { headers: VIATOR_HEADERS, timeout: 120000 }
         );
         const raw = response.data?.locations || [];
         allLocations.push(...raw);
@@ -80,6 +80,8 @@ export async function POST(req: Request) {
               longitude: loc.center.longitude,
             }
           : null,
+        provider: (loc.provider as string) || null,
+        providerReference: (loc.providerReference as string) || null,
       };
     });
 

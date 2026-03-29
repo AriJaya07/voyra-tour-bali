@@ -10,3 +10,14 @@ export const VIATOR_HEADERS = {
   "Content-Type": "application/json",
   "exp-api-key": VIATOR_API_KEY,
 };
+
+/** Viator API timeout — 120 seconds as required by certification. */
+export const VIATOR_TIMEOUT_MS = 120000;
+
+/**
+ * Create an AbortSignal that times out after the Viator-required 120s.
+ * Use with native fetch: `fetch(url, { signal: viatorSignal(), ... })`
+ */
+export function viatorSignal(): AbortSignal {
+  return AbortSignal.timeout(VIATOR_TIMEOUT_MS);
+}

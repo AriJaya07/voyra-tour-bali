@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
 
 /**
  * GET /api/viator/reviews?productCode=XXX&page=1&count=10
@@ -51,6 +51,7 @@ export async function GET(req: NextRequest) {
     const res = await fetch(`${VIATOR_API_URL}/reviews/product`, {
       method: "POST",
       headers: VIATOR_HEADERS,
+      signal: viatorSignal(),
       body: JSON.stringify({
         productCode,
         pagination: { start, count },

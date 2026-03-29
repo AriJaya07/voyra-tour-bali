@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
 
 /**
  * GET /api/viator/exchange-rates
@@ -40,6 +40,7 @@ export async function GET() {
 
     const res = await fetch(`${VIATOR_API_URL}/exchange-rates`, {
       headers: VIATOR_HEADERS,
+      signal: viatorSignal(),
     });
 
     if (!res.ok) {

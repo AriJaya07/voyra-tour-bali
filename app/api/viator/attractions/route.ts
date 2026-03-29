@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
 
 const BALI_DESTINATION_ID = "98";
 
@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
     const res = await fetch(`${VIATOR_API_URL}/search/freetext`, {
       method: "POST",
       headers: VIATOR_HEADERS,
+      signal: viatorSignal(),
       body: JSON.stringify({
         searchTerm: query.trim() || "bali",
         searchTypes: [

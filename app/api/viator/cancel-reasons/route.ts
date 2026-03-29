@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
 
 /**
  * GET /api/viator/cancel-reasons
@@ -25,6 +25,7 @@ export async function GET() {
 
     const res = await fetch(`${VIATOR_API_URL}/bookings/cancel-reasons`, {
       headers: VIATOR_HEADERS,
+      signal: viatorSignal(),
       next: { revalidate: 86400 }, // Cache for 24 hours
     });
 

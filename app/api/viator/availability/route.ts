@@ -4,6 +4,7 @@ import {
   VIATOR_API_URL,
   VIATOR_HEADERS,
   VIATOR_MOCK_BOOKING,
+  viatorSignal,
 } from "@/lib/config/viator";
 
 export async function POST(req: Request) {
@@ -86,6 +87,7 @@ export async function POST(req: Request) {
       {
         method: "POST",
         headers: VIATOR_HEADERS,
+        signal: viatorSignal(),
         body: JSON.stringify(viatorPayload),
       }
     );

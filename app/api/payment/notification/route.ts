@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { generateTicketToken } from "@/lib/ticket";
 import { sendBookingConfirmation } from "@/lib/email";
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_MOCK_BOOKING } from "@/lib/config/viator";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_MOCK_BOOKING, viatorSignal } from "@/lib/config/viator";
 import { MIDTRANS_SERVER_KEY } from "@/lib/config/midtrans";
 
 /**
@@ -132,6 +132,7 @@ async function confirmViatorBooking(booking: any): Promise<{
         "Content-Type": "application/json",
         "exp-api-key": VIATOR_API_KEY,
       },
+      signal: viatorSignal(),
       body: JSON.stringify(viatorPayload),
     });
 

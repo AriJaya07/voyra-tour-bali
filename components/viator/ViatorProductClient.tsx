@@ -74,7 +74,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-20">
+      <div className="min-h-screen py-20">
         <Container>
           <div className="flex flex-col sm:flex-row gap-1 rounded-2xl overflow-hidden mb-8">
             <div className="w-full sm:w-[55%] h-[280px] sm:h-[420px] bg-gray-200 animate-pulse" />
@@ -102,7 +102,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
 
   if (isError || !product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
         <h2 className="text-2xl font-bold text-gray-800">Product Not Found</h2>
         <p className="text-gray-500">We couldn&apos;t find this activity. It may no longer be available.</p>
         <Link href="/" className="px-6 py-3 bg-[#0071CE] text-white rounded-xl font-bold hover:bg-[#005ba6] transition">

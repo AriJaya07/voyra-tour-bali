@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
 
 // GET /api/bookings — get current user's bookings
 export async function GET() {
@@ -32,8 +32,8 @@ export async function GET() {
           const viatorRes = await fetch(`${VIATOR_API_URL}/bookings/status`, {
             method: "POST",
             headers: VIATOR_HEADERS,
+            signal: viatorSignal(),
             body: JSON.stringify({ bookingRefs: refs }),
-            // Dont cache this request
             cache: 'no-store'
           });
 

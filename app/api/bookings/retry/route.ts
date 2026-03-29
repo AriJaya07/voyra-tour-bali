@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_MOCK_BOOKING } from "@/lib/config/viator";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_MOCK_BOOKING, viatorSignal } from "@/lib/config/viator";
 const MAX_RETRIES = 5;
 
 /**
@@ -95,6 +95,7 @@ export async function POST(request: Request) {
             "Content-Type": "application/json",
             "exp-api-key": VIATOR_API_KEY,
           },
+          signal: viatorSignal(),
           body: JSON.stringify(viatorPayload),
         });
 

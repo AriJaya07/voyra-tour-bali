@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import type { ViatorLogistics } from "@/utils/hooks/useViator";
+
+const LeafletMap = lazy(() => import("@/components/ui/LeafletMap"));
 
 interface LogisticsSectionProps {
   logistics: ViatorLogistics;
@@ -99,17 +101,19 @@ function LocationCard({
   );
 }
 
-// Embedded map preview
-function MapEmbed({ lat, lng }: { lat: number; lng: number }) {
+// Embedded map preview using Leaflet (free, no API key required)
+function MapEmbed({ lat, lng, label }: { lat: number; lng: number; label?: string }) {
   return (
-    <div className="mt-3 rounded-xl overflow-hidden border border-gray-200">
-      <iframe
-        src={`https://maps.google.com/maps?q=${lat},${lng}&z=14&output=embed`}
-        className="w-full h-48"
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title="Location map"
-      />
+    <div className="mt-3">
+      <Suspense
+        fallback={
+          <div className="w-full h-48 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#0071CE] border-t-transparent" />
+          </div>
+        }
+      >
+        <LeafletMap lat={lat} lng={lng} label={label} />
+      </Suspense>
     </div>
   );
 }
@@ -214,7 +218,7 @@ export default function LogisticsSection({ logistics, timeZone }: LogisticsSecti
                 </div>
                 {primaryResolved?.center && (
                   <div className="pl-9">
-                    <MapEmbed lat={primaryResolved.center.latitude} lng={primaryResolved.center.longitude} />
+                    <MapEmbed lat={primaryResolved.center.latitude} lng={primaryResolved.center.longitude} label={primaryResolved.name || undefined} />
                   </div>
                 )}
               </div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from "@/lib/config/viator";
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
 
 /**
  * GET /api/viator/schedules?productCode=XXX&currency=USD
@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
       `${VIATOR_API_URL}/availability/schedules/${productCode}`,
       {
         headers: { ...VIATOR_HEADERS, "Accept-Currency": currency },
+        signal: viatorSignal(),
         next: { revalidate: 21600 }, // Cache 6 hours
       }
     );

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VIATOR_API_URL, VIATOR_HEADERS, VIATOR_MOCK_BOOKING } from "@/lib/config/viator";
+import { VIATOR_API_URL, VIATOR_HEADERS, VIATOR_MOCK_BOOKING, viatorSignal } from "@/lib/config/viator";
 import { mockGetPaymentMethods } from "@/lib/viatorMock";
 
 export async function GET(req: NextRequest) {
@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
       {
         method: "GET",
         headers: VIATOR_HEADERS,
+        signal: viatorSignal(),
       }
     );
 

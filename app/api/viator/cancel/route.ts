@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS } from '@/lib/config/viator';
+import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS, viatorSignal } from '@/lib/config/viator';
 
 export async function POST(req: Request) {
   try {
@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     const viatorResponse = await fetch(`${VIATOR_API_URL}/bookings/${bookingRef}/cancel`, {
       method: 'POST',
       headers: VIATOR_HEADERS,
+      signal: viatorSignal(),
       body: JSON.stringify({ reasonCode: reasonCode || "CUSTOMER_REQUEST" })
     });
 
