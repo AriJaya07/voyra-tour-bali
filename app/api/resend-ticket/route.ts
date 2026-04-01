@@ -32,11 +32,11 @@ export async function POST(request: Request) {
     // Attempt to set up nodemailer transport
     // Fallback to ethereal or dummy if strict env vars aren't fully configured by user locally
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || "587"),
       auth: {
-        user: process.env.SMTP_USER || "dummy@example.com",
-        pass: process.env.SMTP_PASS || "dummypass",
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
       // for dummy local testing (optional configuration)
       ignoreTLS: true
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
 
     try {
       await transporter.sendMail({
-        from: '"Voyra Tourism" <noreply@balitravelnow.com>',
+        from: `"Voyra Tourism" <${process.env.SMTP_FROM}>`,
         to: session.user.email || booking.user.email,
         subject: `Your Voyra Ticket [${booking.bookingRef}]`,
         html

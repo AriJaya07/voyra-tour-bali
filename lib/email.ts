@@ -4,7 +4,7 @@ const SITE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000"
 const SITE_NAME = "Voyra Bali Tour"
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,
   secure: false,
   auth: {
@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
   },
 })
 
-const FROM = `${SITE_NAME} <${process.env.SMTP_USER || "noreply@voyra.com"}>`
+const FROM = `${SITE_NAME} <${process.env.SMTP_FROM}>`
 
 // ── Email Verification ──────────────────────────────────────────────────
 
