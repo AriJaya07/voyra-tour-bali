@@ -13,11 +13,9 @@ import EyesCloseIcon from "../assets/login/EyesCloseIcon copy";
 interface LoginFormProps {
   callbackUrl: string | null;
   onRedirect: (url: string) => void;
-  /** Show demo credentials fill-in (for admin login) */
-  showDemo?: boolean;
 }
 
-export default function LoginForm({ callbackUrl, onRedirect, showDemo }: LoginFormProps) {
+export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -168,26 +166,6 @@ export default function LoginForm({ callbackUrl, onRedirect, showDemo }: LoginFo
 
       {/* Google Sign-In */}
       <GoogleSignInButton callbackUrl={callbackUrl || "/"} />
-
-      {showDemo && (
-        <div className="mt-6 p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Demo Login</p>
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span>Email: <span className="text-slate-300 font-mono">admin@travel.com</span></span>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail("admin@travel.com");
-                setPassword("admin123");
-              }}
-              className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors text-xs font-medium"
-            >
-              Auto-fill
-            </button>
-          </div>
-          <p className="text-xs text-slate-400 mt-1">Password: <span className="text-slate-300 font-mono">admin123</span></p>
-        </div>
-      )}
     </>
   );
 }

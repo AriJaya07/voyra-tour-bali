@@ -57,7 +57,7 @@ export default function LoginDash() {
         href: `/register?callbackUrl=${encodeURIComponent(callbackUrl || "")}`,
       }}
     >
-      <LoginForm callbackUrl={callbackUrl} onRedirect={(url) => router.replace(url)} showDemo />
+      <LoginForm callbackUrl={callbackUrl} onRedirect={(url) => router.replace(url)} />
     </AuthLayout>
   );
 }
