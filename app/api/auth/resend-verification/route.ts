@@ -5,7 +5,7 @@ import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json();
+    const { email, callbackUrl } = await request.json();
 
     if (!email) {
       return NextResponse.json(
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     });
 
     try {
-      await sendVerificationEmail(user.email, verificationToken);
+      await sendVerificationEmail(user.email, verificationToken, callbackUrl);
     } catch (emailErr) {
       console.error('[Email] Failed to send verification email during resend:', emailErr);
     }

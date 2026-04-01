@@ -1,22 +1,32 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthLayout, LoginForm } from "@/components/Auth";
-import VoryaIcon from "@/components/assets/Icon/VoyraIcon";
+import { toast } from "sonner";
 
 export default function LoginDash() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const callbackUrl = searchParams.get("callbackUrl") || null;
+  const verified = searchParams.get("verified");
+  const toastShown = useRef(false);
 
   const getRedirectUrl = (role: string | undefined) => {
     if (callbackUrl && !callbackUrl.startsWith("/dashboard")) return callbackUrl;
     if (role === "ADMIN") return "/dashboard";
     return "/";
   };
+
+  // Show success toast when arriving after email verification
+  useEffect(() => {
+    if (verified === "true" && !toastShown.current) {
+      toastShown.current = true;
+      toast.success("Email verified successfully! Please sign in to continue.");
+    }
+  }, [verified]);
 
   useEffect(() => {
     if (status === "authenticated" && session?.user) {

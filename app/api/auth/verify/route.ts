@@ -4,10 +4,17 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const token = searchParams.get('token')
+  const callbackUrl = searchParams.get('callbackUrl')
   const SITE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
+  const buildRedirect = (params: Record<string, string>) => {
+    const qs = new URLSearchParams(params)
+    if (callbackUrl) qs.set('callbackUrl', callbackUrl)
+    return NextResponse.redirect(`${SITE_URL}/login?${qs.toString()}`)
+  }
+
   if (!token) {
-    return NextResponse.redirect(`${SITE_URL}/login?error=MissingToken`)
+    return buildRedirect({ error: 'MissingToken' })
   }
 
   const user = await prisma.user.findFirst({
@@ -17,11 +24,11 @@ export async function GET(request: Request) {
   })
 
   if (!user) {
-    return NextResponse.redirect(`${SITE_URL}/login?error=InvalidToken`)
+    return buildRedirect({ error: 'InvalidToken' })
   }
 
   if (user.tokenExpiry && user.tokenExpiry < new Date()) {
-    return NextResponse.redirect(`${SITE_URL}/login?error=ExpiredToken`)
+    return buildRedirect({ error: 'ExpiredToken' })
   }
 
   // Mark email as verified
@@ -34,5 +41,5 @@ export async function GET(request: Request) {
     },
   })
 
-  return NextResponse.redirect(`${SITE_URL}/login?verified=true`)
+  return buildRedirect({ verified: 'true' })
 }

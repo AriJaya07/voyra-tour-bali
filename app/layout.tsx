@@ -23,6 +23,13 @@ const geistMono = Geist_Mono({
 const SITE_URL = process.env.NEXTAUTH_URL || "https://voyra-tour-bali.vercel.app";
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {

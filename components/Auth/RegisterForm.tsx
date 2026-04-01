@@ -96,7 +96,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
       const response = await fetch("/api/auth/resend-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: registeredEmail }),
+        body: JSON.stringify({ email: registeredEmail, callbackUrl }),
       });
       const data = await response.json();
       
@@ -154,6 +154,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
           name,
           email: email.toLowerCase().trim(),
           password,
+          callbackUrl,
         }),
       });
 

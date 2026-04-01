@@ -33,9 +33,10 @@ export default function Navbar() {
   const userImage = (session?.user as any)?.image || "/images/people.png"
   const userRole = (session?.user as any)?.role as string | undefined
 
-  // Lock scroll when menu open
+  // Lock scroll when menu open + cleanup on unmount
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "auto"
+    document.body.style.overflow = isOpen ? "hidden" : ""
+    return () => { document.body.style.overflow = "" }
   }, [isOpen])
 
   // Track scroll position for active section + navbar style
@@ -84,19 +85,19 @@ export default function Navbar() {
   return (
     <>
       {/* NAVBAR */}
-      <header className={`w-full fixed top-0 z-40 transition-all duration-300 ${
+      <header className={`w-full fixed top-0 left-0 right-0 z-40 transition-all duration-300 overflow-hidden ${
         scrolled
           ? "bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm"
           : "bg-white border-b border-gray-200"
       }`}>
-        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 min-w-0">
           {/* Logo */}
           <Link href="/" target="_self" className="flex-shrink-0">
             <VoryaIcon className="h-[40px] sm:h-[50px] w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-4 xl:gap-6">
+          <div className="hidden lg:flex items-center gap-4 xl:gap-6 min-w-0">
             {NAV_ITEMS.map((item) => {
               const hasPage = "href" in item && item.href
               const isActive = hasPage
@@ -265,7 +266,7 @@ export default function Navbar() {
           </div>
 
           {/* Mobile: Currency Toggle + Burger */}
-          <div className="flex lg:hidden items-center gap-2">
+          <div className="flex lg:hidden items-center gap-2 flex-shrink-0">
             <button
               onClick={toggleCurrency}
               className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200 text-xs font-medium cursor-pointer"
@@ -301,8 +302,8 @@ export default function Navbar() {
       {/* MOBILE SLIDE MENU */}
       <aside
         className={`
-          fixed top-0 right-0 z-50 h-full w-[80%] max-w-[320px]
-          bg-white shadow-lg overflow-y-auto
+          fixed top-0 right-0 z-50 h-[100dvh] w-[80%] max-w-[320px]
+          bg-white shadow-lg overflow-y-auto overscroll-contain
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "translate-x-full"}
         `}

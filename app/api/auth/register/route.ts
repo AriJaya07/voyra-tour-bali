@@ -6,7 +6,7 @@ import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, name } = await request.json();
+    const { email, password, name, callbackUrl } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
     // Send verification email (non-blocking — don't fail registration if email fails)
     try {
-      await sendVerificationEmail(user.email, verificationToken);
+      await sendVerificationEmail(user.email, verificationToken, callbackUrl);
     } catch (emailErr) {
       console.error('[Email] Failed to send verification email:', emailErr);
     }

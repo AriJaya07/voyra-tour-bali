@@ -17,8 +17,10 @@ const FROM = `${SITE_NAME} <${process.env.SMTP_FROM}>`
 
 // ── Email Verification ──────────────────────────────────────────────────
 
-export async function sendVerificationEmail(email: string, token: string) {
-  const verifyUrl = `${SITE_URL}/api/auth/verify?token=${token}`
+export async function sendVerificationEmail(email: string, token: string, callbackUrl?: string) {
+  const params = new URLSearchParams({ token })
+  if (callbackUrl) params.set("callbackUrl", callbackUrl)
+  const verifyUrl = `${SITE_URL}/api/auth/verify?${params.toString()}`
 
   await transporter.sendMail({
     from: FROM,
@@ -39,6 +41,36 @@ export async function sendVerificationEmail(email: string, token: string) {
         </p>
         <p style="color: #888; font-size: 13px; margin-top: 24px;">
           This link expires in 24 hours. If you didn't create an account, ignore this email.
+        </p>
+      </div>
+    `,
+  })
+}
+
+// ── Password Reset ─────────────────────────────────────────────────────
+
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const resetUrl = `${SITE_URL}/reset-password?token=${token}`
+
+  await transporter.sendMail({
+    from: FROM,
+    to: email,
+    subject: `Reset your password — ${SITE_NAME}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px;">
+        <h2 style="color: #0071CE; margin-bottom: 16px;">Reset Your Password</h2>
+        <p style="color: #333; line-height: 1.6;">
+          We received a request to reset your password. Click the button below to choose a new password.
+        </p>
+        <a href="${resetUrl}"
+           style="display: inline-block; margin: 24px 0; padding: 14px 32px; background: #0071CE; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+          Reset Password
+        </a>
+        <p style="color: #888; font-size: 13px;">
+          Or copy this link: <a href="${resetUrl}">${resetUrl}</a>
+        </p>
+        <p style="color: #888; font-size: 13px; margin-top: 24px;">
+          This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.
         </p>
       </div>
     `,

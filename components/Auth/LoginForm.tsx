@@ -126,10 +126,19 @@ export default function LoginForm({ callbackUrl, onRedirect, showDemo }: LoginFo
           }
         />
 
+        <div className="text-right">
+          <a
+            href="/forgot-password"
+            className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+          >
+            Forgot Password?
+          </a>
+        </div>
+
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-bold text-sm hover:from-violet-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-900/40 active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
+          className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-bold text-sm hover:from-violet-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-900/40 active:scale-[0.98] flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>
