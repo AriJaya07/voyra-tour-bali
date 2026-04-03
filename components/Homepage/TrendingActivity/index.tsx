@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useMemo, memo, useEffect } from "react"
-import OptimizedImage from "@/components/common/OptimizedImage"
-import Link from "next/link"
+import { useState, useMemo, useEffect } from "react"
 import { useCurrency } from "@/utils/hooks/useCurrency"
-import { useViatorProducts, getViatorImageUrl, formatDuration } from "@/utils/hooks/useViator"
+import { useViatorProducts } from "@/utils/hooks/useViator"
 import { useDBDestinations } from "@/utils/hooks/useDestinations"
-import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
 import type { Category, UnifiedActivity } from "@/types/tourism"
 import { trackCategoryClick } from "@/utils/analytics"
 import Pagination from "@/components/ui/Pagination"
+import { SkeletonTranding } from "./SkeletonTranding"
+import { TabButton } from "./TabButton"
+import { ActivityCard } from "./ActivityCard"
+import { mapDBToActivity, mapViatorToActivity } from "./activityMappers"
 
 interface TrendingActivityProps {
   categories: Category[]
@@ -25,188 +26,7 @@ function shuffle<T>(array: T[]): T[] {
   return arr
 }
 
-// ── Pricing helpers ─────────────────────────────────────────────────────
-
-function getDiscountPercent(price: number, before?: number): number | null {
-  if (!before || before <= price) return null
-  return Math.round(((before - price) / before) * 100)
-}
-
-/** Map a Viator product to UnifiedActivity (includes discount data) */
-function mapViatorToActivity(product: any): UnifiedActivity {
-  const fromPrice = product.pricing?.summary?.fromPrice ?? 0
-  const beforeDiscount = product.pricing?.summary?.fromPriceBeforeDiscount
-
-  return {
-    id: product.productCode,
-    source: "viator",
-    title: product.title,
-    description: product.description || "",
-    imageUrl: getViatorImageUrl(product.images, 480),
-    price: fromPrice,
-    priceBeforeDiscount: beforeDiscount && beforeDiscount > fromPrice ? beforeDiscount : undefined,
-    currency: product.pricing?.currency ?? "USD",
-    rating: product.reviews?.combinedAverageRating,
-    reviewCount: product.reviews?.totalReviews,
-    duration: formatDuration(product.duration),
-    freeCancellation: product.flags?.includes("FREE_CANCELLATION"),
-    productCode: product.productCode,
-  }
-}
-
-// ── Tab Button ──────────────────────────────────────────────────────────
-
-const TabButton = memo(function TabButton({
-  label,
-  isActive,
-  onClick,
-}: {
-  label: string
-  isActive: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`
-        h-[40px] sm:h-[44px]
-        px-4 sm:px-5
-        rounded-full
-        text-xs sm:text-sm
-        font-semibold
-        transition-all duration-200
-        cursor-pointer
-        whitespace-nowrap
-        shrink-0
-        ${isActive
-          ? "bg-blue-50 text-blue-600 border border-blue-200 shadow-sm"
-          : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-900"
-        }
-      `}
-      title={label}
-    >
-      {label}
-    </button>
-  )
-})
-
-// ── Activity Card ───────────────────────────────────────────────────────
-
-function ActivityCard({ item, currency }: { item: UnifiedActivity; currency: CurrencyCode }) {
-  const href = item.source === "viator"
-    ? `/viator/${item.productCode}?price=${item.price}&cur=${item.currency}`
-    : `/detail/${item.slug}`
-
-  const discountPercent = getDiscountPercent(item.price, item.priceBeforeDiscount)
-  const sourceCurrency = item.currency as CurrencyCode
-
-  return (
-    <Link href={href} className="group block">
-      <div className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 h-full flex flex-col">
-        {/* Image */}
-        <div className="relative w-full aspect-[4/3] overflow-hidden">
-          <OptimizedImage
-            src={item.imageUrl}
-            alt={item.title}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-
-          {/* Discount badge */}
-          {discountPercent && (
-            <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-              -{discountPercent}%
-            </span>
-          )}
-
-          {/* Free cancellation badge (shift right if discount exists) */}
-          {item.freeCancellation && !discountPercent && (
-            <span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-              Free Cancellation
-            </span>
-          )}
-        </div>
-
-        {/* Info */}
-        <div className="p-3 flex flex-col flex-1">
-          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1.5 group-hover:text-blue-600 transition-colors">
-            {item.title}
-          </h3>
-
-          {/* Rating & Duration */}
-          <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-            {item.rating && (
-              <span
-                className="flex items-center gap-0.5"
-                title="Total review count and overall rating based on Viator and Tripadvisor reviews"
-              >
-                <svg className="w-3.5 h-3.5 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                </svg>
-                <span className="font-semibold text-gray-700">{item.rating.toFixed(1)}</span>
-                <span>({(item.reviewCount ?? 0).toLocaleString()})</span>
-              </span>
-            )}
-            {item.duration && (
-              <span className="flex items-center gap-0.5">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {item.duration}
-              </span>
-            )}
-          </div>
-
-          {/* Price */}
-          <div className="mt-auto">
-            {item.price > 0 ? (
-              <>
-                <p className="text-[10px] text-gray-400 leading-tight">From</p>
-
-                {/* Original price (strikethrough) when discount exists */}
-                {item.priceBeforeDiscount && (
-                  <p className="text-[11px] text-gray-400 line-through leading-tight">
-                    {formatPrice(item.priceBeforeDiscount, currency, sourceCurrency)}
-                  </p>
-                )}
-
-                {/* Current price */}
-                <p className={`text-sm sm:text-base font-black leading-tight ${item.priceBeforeDiscount ? "text-red-600" : "text-gray-900"
-                  }`}>
-                  {formatPrice(item.price, currency, sourceCurrency)}
-                </p>
-              </>
-            ) : (
-              <p className="text-xs text-gray-400 italic">Check price</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </Link>
-  )
-}
-
 // ── Main Component ──────────────────────────────────────────────────────
-
-/** Map a DB destination to UnifiedActivity */
-function mapDBToActivity(dest: any): UnifiedActivity {
-  const mainImage = dest.images?.find((img: any) => img.isMain)?.url
-    || dest.images?.[0]?.url
-    || "/images/destinations/gwk.png"
-
-  return {
-    id: `db-${dest.id}`,
-    source: "db",
-    title: dest.title,
-    description: dest.description || "",
-    imageUrl: mainImage,
-    price: dest.price ?? 0,
-    currency: "IDR",
-    slug: dest.slug || String(dest.id),
-    categoryId: dest.categoryId,
-  }
-}
 
 export default function TrendingActivity({ categories }: TrendingActivityProps) {
   const initial = categories.slice(0, 5)
@@ -303,17 +123,10 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
       {/* Activities */}
       <div>
         {/* Grid — skeleton matches real card height */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" style={{ minHeight: "280px" }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 min-h-[900px] sm:min-h-[600px] md:min-h-[600px] lg:min-h-[300px]">
           {isLoading ? (
             Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-              <div key={i} className="bg-gray-100 rounded-xl animate-pulse">
-                <div className="aspect-[4/3] bg-gray-200 rounded-t-xl" />
-                <div className="p-3 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 rounded w-1/2" />
-                  <div className="h-5 bg-gray-200 rounded w-1/3 mt-2" />
-                </div>
-              </div>
+              <SkeletonTranding key={i} />
             ))
           ) : displayedActivities.length > 0 ? (
             displayedActivities.map((item) => (
