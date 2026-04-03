@@ -261,7 +261,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
             setName(e.target.value);
             clearError();
           }}
-          placeholder="e.g. Ari Jaya"
+          placeholder="e.g. John Doe"
           icon={
             <UserIcon className="w-4 h-4" />
           }
