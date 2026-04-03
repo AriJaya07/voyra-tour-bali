@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { SITE_NAME, SITE_URL } from "@/lib/config";
+import { SITE_NAME, SITE_URL, buildWhatsAppUrl } from "@/lib/config";
 import PageHero from "@/components/legal/PageHero";
 import SectionBlock from "@/components/legal/SectionBlock";
 import Container from "@/components/Container";
@@ -128,7 +128,7 @@ export default function TermsPage() {
             </p>
             <div className="bg-gray-50 rounded-xl p-5 mt-3 space-y-2 text-sm">
               <p><strong>📧 Email:</strong> <a href="mailto:info@balitravelnow.com" className="text-[#0071CE] hover:underline">info@balitravelnow.com</a></p>
-              <p><strong>💬 WhatsApp:</strong> <a href="https://wa.me/6281234567890?text=Hello%2C+I+have+a+question+about+Terms+%26+Conditions." target="_blank" rel="noopener noreferrer" className="text-[#0071CE] hover:underline">Chat with us</a></p>
+              <p><strong>💬 WhatsApp:</strong> <a href={buildWhatsAppUrl("Hello, I have a question about Terms & Conditions.")} target="_blank" rel="noopener noreferrer" className="text-[#0071CE] hover:underline">Chat with us</a></p>
               <p><strong>📍 Address:</strong> Bali, Indonesia 82121</p>
             </div>
           </SectionBlock>

@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { SITE_NAME, SITE_URL } from "@/lib/config";
+import { SITE_NAME, SITE_URL, buildWhatsAppUrl } from "@/lib/config";
 import PageHero from "@/components/legal/PageHero";
 import SectionBlock from "@/components/legal/SectionBlock";
 import Container from "@/components/Container";
@@ -177,7 +177,7 @@ export default function CancellationPolicyPage() {
             <p className="text-gray-600 text-sm mb-5">Our team is available daily to help you with booking changes, cancellations, and refunds.</p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a
-                href="https://wa.me/6281234567890?text=Hello%2C+I+need+help+with+a+cancellation+for+booking+"
+                href={buildWhatsAppUrl("Hello, I need help with a cancellation for booking ")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors"

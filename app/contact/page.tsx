@@ -3,9 +3,9 @@
 import { useState } from "react";
 import PageHero from "@/components/legal/PageHero";
 import Container from "@/components/Container";
+import { buildWhatsAppUrl } from "@/lib/config";
 
-const WHATSAPP_NUMBER = "6281234567890";
-const WHATSAPP_DEFAULT_MSG = "Hello, I would like to inquire about booking a tour.";
+
 
 interface FormState {
   name: string;
@@ -65,9 +65,11 @@ export default function ContactPage() {
     }
   };
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    form.message.trim() ? `Hello, my name is ${form.name}. ${form.message}` : WHATSAPP_DEFAULT_MSG
-  )}`;
+  const whatsappUrl = buildWhatsAppUrl(
+    form.message.trim()
+      ? `Hello, my name is ${form.name}. ${form.message}`
+      : undefined
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">

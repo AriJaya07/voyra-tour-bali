@@ -17,6 +17,27 @@ export const GA_MEASUREMENT_ID =
 export const GOOGLE_SITE_VERIFICATION =
   process.env.GOOGLE_SITE_VERIFICATION || "";
 
+// ── WhatsApp ───────────────────────────────────────────────────────
+/** Raw number from env, e.g. "08571233232" */
+const _rawWA = process.env.NEXT_PUBLIC_WA_NUMBER || "";
+
+/**
+ * International format for wa.me links (no +, no spaces).
+ * Converts leading 0 to Indonesian country code 62.
+ * e.g. "08571233232" → "628571233232"
+ */
+export const WHATSAPP_NUMBER = _rawWA.startsWith("0")
+  ? "62" + _rawWA.slice(1)
+  : _rawWA;
+
+/**
+ * Builds a full WhatsApp deep-link URL with an optional pre-filled message.
+ * Usage: buildWhatsAppUrl("Hello, I want to book a tour")
+ */
+export function buildWhatsAppUrl(message = "Hello, I would like to inquire about booking a tour.") {
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
 // ── Brand Identity ────────────────────────────────────────────────
 export const SITE_NAME = "Bali Travel Now";
 export const SITE_TAGLINE = "Best Bali Tours, Activities & Experiences";
