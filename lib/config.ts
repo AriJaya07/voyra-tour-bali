@@ -12,7 +12,7 @@ export const SITE_URL =
   process.env.NEXTAUTH_URL || "https://www.balitravelnow.com";
 
 export const GA_MEASUREMENT_ID =
-  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
+  process.env.GA_MEASUREMENT_ID || "";
 
 export const GOOGLE_SITE_VERIFICATION =
   process.env.GOOGLE_SITE_VERIFICATION || "";
