@@ -147,7 +147,7 @@ export default function AboutPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="max-w-3xl mx-auto px-6 py-20">
+      <section id="faq" className="max-w-3xl mx-auto px-6 py-20">
         <div className="text-center mb-12">
           <p className="text-sm font-bold text-[#0071CE] uppercase tracking-widest mb-3">
             FAQ

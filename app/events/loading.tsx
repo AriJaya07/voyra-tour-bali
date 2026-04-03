@@ -8,6 +8,7 @@ export default function Loading() {
         <SectionHeader 
           title="Bali Events Calendar" 
           subtitle="Loading upcoming events and schedules..."
+          centered
         />
         
         <div className="flex flex-col space-y-6 mt-12">

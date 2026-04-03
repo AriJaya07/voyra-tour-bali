@@ -38,7 +38,7 @@ const LEGAL_LINKS: NavLink[] = [
   { label: "Terms & Conditions",  href: "/terms",               ready: true  },
   { label: "Privacy Policy",      href: "/privacy",             ready: true  },
   { label: "Cancellation Policy", href: "/cancellation-policy", ready: true  },
-  { label: "FAQ",                 href: "/faq",                 ready: false },
+  { label: "FAQ",                 href: "/about#faq",           ready: true  },
   { label: "How to Book",         href: "/how-to-book",         ready: false },
 ];
 

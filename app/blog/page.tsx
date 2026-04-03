@@ -4,6 +4,7 @@ import BlogCard from '@/components/Blog/BlogCard';
 import CategoryFilter from '@/components/Blog/CategoryFilter';
 import SectionHeader from '@/components/Blog/SectionHeader';
 import ErrorState from '@/components/Blog/ErrorState';
+import BlogPagination from '@/components/Blog/BlogPagination';
 
 export const metadata: Metadata = {
   title: 'Blog & Travel Guide | Bali Travel Now',
@@ -17,6 +18,9 @@ export default async function BlogPage(props: {
 }) {
   const searchParams = await props.searchParams;
   const categoryId = searchParams?.categoryId as string | undefined;
+  const pageStr = searchParams?.page as string | undefined;
+  const currentPage = pageStr ? parseInt(pageStr, 10) : 1;
+  const limit = 10;
 
   // Parallel fetch for optimal performance
   const [destinations, categories, highlights] = await Promise.all([
@@ -38,13 +42,16 @@ export default async function BlogPage(props: {
     ? destinations.filter(d => String(d.categoryId) === categoryId)
     : destinations;
 
+  const totalPages = Math.ceil(filteredDestinations.length / limit);
+  const paginatedDestinations = filteredDestinations.slice((currentPage - 1) * limit, currentPage * limit);
+
   const featuredBlog = highlights && highlights.length > 0 ? highlights[0] : null;
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20">
+    <main className="min-h-screen bg-gray-50">
       {/* Search & Header (Optional decoration) */}
-      <div className="bg-white border-b border-gray-100 pt-20 pb-16">
-        <div className="container mx-auto px-4">
+      <div className="bg-white border-b border-gray-100 md:pt-10 pt-1">
+        <div className="container mx-auto md:px-4">
           <SectionHeader 
             title="Discover Bali" 
             subtitle="Expert insights, travel guides, and inspiring destinations for your next adventure in the Island of the Gods."
@@ -56,7 +63,7 @@ export default async function BlogPage(props: {
       <div className="container mx-auto px-4 pt-10">
         
         {/* Category Filter */}
-        <div className="mb-12 sticky top-[65px] z-20 bg-gray-50/80 backdrop-blur-md py-4">
+        <div className="sticky top-[65px] z-20 bg-gray-50/80 backdrop-blur-md py-4">
           <CategoryFilter categories={categories} />
         </div>
 
@@ -92,19 +99,26 @@ export default async function BlogPage(props: {
         )}
 
         {/* Blog Grid */}
-        <div>
+        <div id="blog-list" className="scroll-mt-32">
           <h2 className="text-2xl font-bold mb-6 text-gray-900 lg:mb-8">
             {categoryId 
              ? `Insights: ${categories.find(c => String(c.id) === categoryId)?.displayCat || 'Filtered'}` 
              : "Latest Articles"}
           </h2>
           
-          {filteredDestinations.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-              {filteredDestinations.map(blog => (
-                <BlogCard key={blog.id} blog={blog} />
-              ))}
-            </div>
+          {paginatedDestinations.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+                {paginatedDestinations.map(blog => (
+                  <BlogCard key={blog.id} blog={blog} />
+                ))}
+              </div>
+              <div className="md:pb-20 pb-8">
+                {totalPages > 1 && (
+                    <BlogPagination totalPages={totalPages} />
+                  )}
+              </div>
+            </>
           ) : (
             <div className="py-20 text-center bg-white rounded-3xl border border-gray-100 ">
               <div className="text-gray-400 mb-4">

@@ -24,14 +24,21 @@ export default function CategoryFilter({ categories }: { categories: Category[] 
   );
 
   const handleCategoryClick = (categoryId: string) => {
-    router.push(pathname + "?" + createQueryString("categoryId", categoryId), { scroll: false });
+    const params = new URLSearchParams(searchParams.toString());
+    if (categoryId) {
+      params.set("categoryId", categoryId);
+    } else {
+      params.delete("categoryId");
+    }
+    params.delete("page");
+    router.push(pathname + "?" + params.toString(), { scroll: false });
   };
 
   if (!categories || categories.length === 0) return null;
 
   return (
-    <div className="w-full relative py-2">
-      <div className="flex space-x-3 overflow-x-auto pb-4 pt-1 snap-x scrollbar-hide no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+    <div className="w-full relative">
+      <div className="flex space-x-3 overflow-x-auto pb-4 pt-1 snap-x scrollbar-hide no-scrollbar px-4 md:mx-0 md:px-0">
         <button
           onClick={() => handleCategoryClick("")}
           className={`shrink-0 snap-start px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
