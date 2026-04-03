@@ -9,6 +9,7 @@ import { authOptions } from "@/utils/common/auth";
 import LayoutWrapper from "@/components/Wrapper/LayoutWrapper";
 import { Toaster } from "sonner";
 import ExchangeRateProvider from "@/components/providers/ExchangeRateProvider";
+import { GtmBodyNoScript, GtmHead } from "@/components/Global/Gtm";
 import {
   SITE_URL,
   GA_MEASUREMENT_ID,
@@ -116,6 +117,10 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Google Tag Manager (GTM) */}
+        <GtmHead />
+        {/* End Google Tag Manager */}
+
         {/* Google Analytics 4 */}
         {GA_MEASUREMENT_ID && (
           <>
@@ -145,6 +150,10 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {/* Google Tag Manager (noscript) */}
+        <GtmBodyNoScript />
+        {/* End Google Tag Manager (noscript) */}
+
         <SessionProviderWrapper session={session}>
           <ReactQueryProvider>
             <ExchangeRateProvider />
