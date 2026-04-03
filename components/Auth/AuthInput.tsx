@@ -11,7 +11,7 @@ interface AuthInputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const inputBase =
-  "w-full px-4 py-3 bg-[#ECECEC] border border-slate-700 text-black placeholder-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all";
+  "w-full h-12 px-4 bg-[#ECECEC] border border-slate-700 text-black placeholder-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-[box-shadow,border-color] duration-200";
 
 export default function AuthInput({
   label,

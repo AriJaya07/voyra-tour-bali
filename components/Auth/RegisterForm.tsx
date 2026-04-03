@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AuthInput from "./AuthInput";
 import GoogleSignInButton from "./GoogleSignInButton";
+import Button from "../ui/Button";
 import UserIcon from "../assets/login/UserIcon";
 import EmailIcon from "../assets/login/EmailIcon";
 import PasswrodIcon from "../assets/login/PasswordIcon";
@@ -215,25 +216,24 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
               {resendMessage}
             </p>
           )}
-          <button
+          <Button
             onClick={handleResend}
-            disabled={resending || cooldownTime > 0}
-            className="w-full py-3 bg-white/10 text-white rounded-xl font-bold text-sm hover:bg-white/20 disabled:opacity-50 transition-all border border-white/10 cursor-pointer"
+            variant="auth"
+            isLoading={resending}
+            disabled={cooldownTime > 0}
           >
-            {resending 
-              ? "Sending..." 
-              : cooldownTime > 0 
-                ? `Resend in ${formatTime(cooldownTime)}` 
-                : "Resend Verification Email"
+            {cooldownTime > 0 
+              ? `Resend in ${formatTime(cooldownTime)}` 
+              : "Resend Verification Email"
             }
-          </button>
+          </Button>
           
-          <button
+          <Button
             onClick={() => router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)}
-            className="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-bold text-sm hover:from-indigo-500 hover:to-violet-500 transition-all shadow-lg cursor-pointer"
+            variant="auth"
           >
             Back to Login
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -310,18 +310,20 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
             <PasswordVisibilityToggle visible={showConfirmPassword} onToggle={() => setShowConfirmPassword((p) => !p)} />
           }
         />
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-bold text-sm hover:from-indigo-500 hover:to-violet-500 disabled:opacity-60 transition-all shadow-lg mt-4"
-        >
-          {isLoading ? "Registering..." : "Register Now"}
-        </button>
+        <div className="pt-1">
+          <Button
+            type="submit"
+            variant="auth"
+            isLoading={isLoading}
+            className="mt-4"
+          >
+            Register Now
+          </Button>
+        </div>
       </form>
 
       {/* Divider */}
-      <div className="flex items-center gap-3 my-5">
+      <div className="flex items-center gap-3 my-3">
         <div className="flex-1 h-px bg-slate-700" />
         <span className="text-xs text-slate-500 uppercase tracking-wider">or</span>
         <div className="flex-1 h-px bg-slate-700" />
