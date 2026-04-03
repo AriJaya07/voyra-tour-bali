@@ -91,9 +91,16 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE_URL,
   },
-  verification: {
-    google: GOOGLE_SITE_VERIFICATION,
-  },
+  // Google Search Console HTML verification.
+  // If the env var is empty, we omit the meta tag so it doesn't generate
+  // an invalid verification entry.
+  ...(GOOGLE_SITE_VERIFICATION
+    ? {
+        verification: {
+          google: GOOGLE_SITE_VERIFICATION,
+        },
+      }
+    : {}),
 };
 
 export default async function RootLayout({

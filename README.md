@@ -44,6 +44,10 @@ DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voyra_tourism"
 NEXTAUTH_SECRET="your-super-secret-key-min-32-chars"
 NEXTAUTH_URL="http://localhost:3000"
 
+# Google Search Console (HTML verification)
+# Paste the code you get from Search Console as the value here.
+GOOGLE_SITE_VERIFICATION="google123abcDEF456..."
+
 # Cloudinary
 CLOUDINARY_CLOUD_NAME="your_cloud_name"
 CLOUDINARY_API_KEY="your_api_key"
