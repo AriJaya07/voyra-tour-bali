@@ -16,6 +16,9 @@ import HoldTimer from "@/components/booking/HoldTimer";
 
 const STEPS = ["Contact", "Travelers", "Activity", "Review & Pay"];
 
+/** When false, Viator “additional questions” are not shown, fetched, or validated (FE/BE treat answers as optional). */
+const BOOKING_QUESTIONS_UI_ENABLED = false;
+
 // ── Step Indicator ──────────────────────────────────────────────────
 function StepIndicator({ current, steps }: { current: number; steps: string[] }) {
   return (
@@ -364,6 +367,10 @@ function StepActivity({
   }, []);
 
   useEffect(() => {
+    if (!BOOKING_QUESTIONS_UI_ENABLED) {
+      setIsLoadingQuestions(false);
+      return;
+    }
     const fetchQuestions = async () => {
       try {
         const res = await fetch(`/api/viator/booking-questions?productCode=${store.productCode}`);
@@ -383,6 +390,10 @@ function StepActivity({
   }, [store.productCode]);
 
   const validate = () => {
+    if (!BOOKING_QUESTIONS_UI_ENABLED) {
+      setErrors({});
+      return true;
+    }
     const errs: Record<string, string> = {};
     questions.forEach((q) => {
       if (q.required && !answers[q.questionId]?.trim()) {
@@ -398,9 +409,11 @@ function StepActivity({
     if (!validate()) return;
     store.setMeetingPoint(meetingPoint);
     store.setLanguageGuide(languageGuide);
-    Object.entries(answers).forEach(([qId, ans]) => {
-      store.setBookingQuestionAnswer(qId, ans);
-    });
+    if (BOOKING_QUESTIONS_UI_ENABLED) {
+      Object.entries(answers).forEach(([qId, ans]) => {
+        store.setBookingQuestionAnswer(qId, ans);
+      });
+    }
     onNext();
   };
 
@@ -467,49 +480,50 @@ function StepActivity({
             </div>
           )}
 
-          {/* Dynamic Booking Questions */}
-          {isLoadingQuestions ? (
-            <div className="flex items-center gap-2 py-4">
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#0071CE] border-t-transparent" />
-              <span className="text-sm text-gray-500">Loading activity questions...</span>
-            </div>
-          ) : (
-            questions.length > 0 && (
-              <div className="pt-3 border-t border-gray-100">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Additional Questions</p>
-                <div className="space-y-4">
-                  {questions.map((q) => (
-                    <div key={q.questionId}>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        {q.question} {q.required && <span className="text-red-500">*</span>}
-                      </label>
-                      {q.allowedAnswers && q.allowedAnswers.length > 0 ? (
-                        <select
-                          className={`w-full border ${errors[q.questionId] ? "border-red-400" : "border-gray-200"} rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition bg-white`}
-                          value={answers[q.questionId] || ""}
-                          onChange={(e) => { setAnswers({ ...answers, [q.questionId]: e.target.value }); if (errors[q.questionId]) { setErrors((prev) => { const next = { ...prev }; delete next[q.questionId]; return next; }); } }}
-                        >
-                          <option value="">Select...</option>
-                          {q.allowedAnswers.map((a) => (
-                            <option key={a} value={a}>{a}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          placeholder="Enter your answer"
-                          className={`w-full border ${errors[q.questionId] ? "border-red-400" : "border-gray-200"} rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition`}
-                          value={answers[q.questionId] || ""}
-                          onChange={(e) => { setAnswers({ ...answers, [q.questionId]: e.target.value }); if (errors[q.questionId]) { setErrors((prev) => { const next = { ...prev }; delete next[q.questionId]; return next; }); } }}
-                        />
-                      )}
-                      {errors[q.questionId] && <p className="text-xs text-red-500 mt-1">{errors[q.questionId]}</p>}
-                    </div>
-                  ))}
-                </div>
+          {BOOKING_QUESTIONS_UI_ENABLED &&
+            (isLoadingQuestions ? (
+              <div className="flex items-center gap-2 py-4">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#0071CE] border-t-transparent" />
+                <span className="text-sm text-gray-500">Loading activity questions...</span>
               </div>
-            )
-          )}
+            ) : (
+              questions.length > 0 && (
+                <div className="pt-3 border-t border-gray-100">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Additional Questions</p>
+                  <div className="space-y-4">
+                    {questions.map((q) => (
+                      <div key={q.questionId}>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          {q.question} {q.required && <span className="text-red-500">*</span>}
+                        </label>
+                        {q.allowedAnswers && q.allowedAnswers.length > 0 ? (
+                          <select
+                            className={`w-full border ${errors[q.questionId] ? "border-red-400" : "border-gray-200"} rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition bg-white`}
+                            value={answers[q.questionId] || ""}
+                            onChange={(e) => { setAnswers({ ...answers, [q.questionId]: e.target.value }); if (errors[q.questionId]) { setErrors((prev) => { const next = { ...prev }; delete next[q.questionId]; return next; }); } }}
+                          >
+                            <option value="">Select...</option>
+                            {q.allowedAnswers.map((a) => (
+                              <option key={a} value={a}>{a}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            placeholder="Enter your answer"
+                            className={`w-full border ${errors[q.questionId] ? "border-red-400" : "border-gray-200"} rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition`}
+                            value={answers[q.questionId] || ""}
+                            onChange={(e) => { setAnswers({ ...answers, [q.questionId]: e.target.value }); if (errors[q.questionId]) { setErrors((prev) => { const next = { ...prev }; delete next[q.questionId]; return next; }); } }}
+                          />
+                        )}
+                        {errors[q.questionId] && <p className="text-xs text-red-500 mt-1">{errors[q.questionId]}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            ))}
+
         </div>
       </div>
 
@@ -574,7 +588,9 @@ function StepReview({
     currency: store.currency,
     meetingPoint: store.meetingPoint,
     languageGuide: store.languageGuide,
-    bookingQuestionAnswers: store.bookingQuestionAnswers,
+    ...(BOOKING_QUESTIONS_UI_ENABLED && store.bookingQuestionAnswers.length > 0
+      ? { bookingQuestionAnswers: store.bookingQuestionAnswers }
+      : {}),
   });
 
   // ── Viator: Hold booking ──────────────────────────────────────────
