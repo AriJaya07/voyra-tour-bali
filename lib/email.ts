@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer"
+import { SITE_NAME } from "@/lib/config"
 
 const SITE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000"
-const SITE_NAME = "Voyra Bali Tour"
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -14,6 +14,20 @@ const transporter = nodemailer.createTransport({
 })
 
 const FROM = `${SITE_NAME} <${process.env.SMTP_FROM}>`
+
+// ── Generic send helper ────────────────────────────────────────────────
+
+export async function sendEmail({
+  to,
+  subject,
+  html,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+}) {
+  await transporter.sendMail({ from: FROM, to, subject, html });
+}
 
 // ── Email Verification ──────────────────────────────────────────────────
 
