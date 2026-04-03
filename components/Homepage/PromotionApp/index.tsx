@@ -58,7 +58,7 @@ function ResponsiveViatorBanner() {
 
 export default function PromotionApp() {
     return (
-        <section className="w-full flex flex-col justify-center items-center px-4 md:my-20 my-10">
+        <section className="w-full flex flex-col justify-center items-center px-4 md:py-20 py-10">
 
             {/* ── Viator Banner (responsively scaled) ───────────────────── */}
             <div className="w-full max-w-[728px]">

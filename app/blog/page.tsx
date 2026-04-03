@@ -5,6 +5,7 @@ import CategoryFilter from '@/components/Blog/CategoryFilter';
 import SectionHeader from '@/components/Blog/SectionHeader';
 import ErrorState from '@/components/Blog/ErrorState';
 import BlogPagination from '@/components/Blog/BlogPagination';
+import PromotionApp from '@/components/Homepage/PromotionApp';
 
 export const metadata: Metadata = {
   title: 'Blog & Travel Guide | Bali Travel Now',
@@ -113,11 +114,9 @@ export default async function BlogPage(props: {
                   <BlogCard key={blog.id} blog={blog} />
                 ))}
               </div>
-              <div className="md:pb-20 pb-8">
-                {totalPages > 1 && (
-                    <BlogPagination totalPages={totalPages} />
-                  )}
-              </div>
+              {totalPages > 1 && (
+                <BlogPagination totalPages={totalPages} />
+              )}
             </>
           ) : (
             <div className="py-20 text-center bg-white rounded-3xl border border-gray-100 ">
@@ -133,6 +132,9 @@ export default async function BlogPage(props: {
         </div>
         
       </div>
+
+      <PromotionApp />
+
     </main>
   );
 }

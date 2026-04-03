@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { getAllDestinations, getDestinationDetail, getImageUrl } from '@/lib/newsApi';
 import BlogCard from '@/components/Blog/BlogCard';
 import { HiOutlineCalendarDays, HiOutlineMapPin, HiOutlineChevronLeft } from "react-icons/hi2";
+import PromotionApp from '@/components/Homepage/PromotionApp';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -101,7 +102,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 max-w-4xl py-16">
+      <div className="container mx-auto px-4 max-w-4xl pt-16">
         <div className="text-xl text-gray-600 mb-10 font-medium leading-relaxed border-l-4 border-amber-500 pl-6 py-2">
           {destination.description}
         </div>
@@ -120,9 +121,11 @@ export default async function BlogDetailPage({ params }: PageProps) {
         </div>
       </div>
 
+      <PromotionApp />
+
       {/* Related Posts for Internal Linking / SEO */}
       {relatedPosts.length > 0 && (
-        <div className="container mx-auto px-4 max-w-6xl py-12">
+        <div className="container mx-auto px-4 max-w-6xl pb-12">
           <h3 className="text-2xl font-bold text-gray-900 mb-8">Related Articles</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {relatedPosts.map(post => (
