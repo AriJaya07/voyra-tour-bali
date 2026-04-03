@@ -31,6 +31,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.viator.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'traveller-be.onrender.com',
+      },
     ],
   },
 };

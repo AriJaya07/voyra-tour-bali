@@ -30,7 +30,8 @@ const EXPLORE_LINKS: NavLink[] = [
   { label: "Contact Us",       href: "/contact",            ready: true  },
   { label: "Bali Destinations", href: "/#destinasi",        ready: true  },
   { label: "Tour Packages",    href: "/#paket",             ready: true  },
-  { label: "Blog",             href: "/blog",               ready: false },
+  { label: "Blog",             href: "/blog",               ready: true  },
+  { label: "Events",           href: "/events",             ready: true  },
 ];
 
 const LEGAL_LINKS: NavLink[] = [
