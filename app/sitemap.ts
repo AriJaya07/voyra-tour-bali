@@ -1,8 +1,6 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
-
-const SITE_URL =
-  process.env.NEXTAUTH_URL || "https://voyra-tour-bali.vercel.app";
+import { SITE_URL } from "@/lib/config";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages

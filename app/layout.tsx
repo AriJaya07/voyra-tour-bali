@@ -9,6 +9,22 @@ import { authOptions } from "@/utils/common/auth";
 import LayoutWrapper from "@/components/Wrapper/LayoutWrapper";
 import { Toaster } from "sonner";
 import ExchangeRateProvider from "@/components/providers/ExchangeRateProvider";
+import {
+  SITE_URL,
+  GA_MEASUREMENT_ID,
+  GOOGLE_SITE_VERIFICATION,
+  SITE_NAME,
+  SITE_TITLE_DEFAULT,
+  SITE_TITLE_TEMPLATE,
+  SITE_DESCRIPTION,
+  SITE_SHORT_DESCRIPTION,
+  SITE_KEYWORDS,
+  OG_IMAGE,
+  OG_IMAGE_ALT,
+  OG_IMAGE_WIDTH,
+  OG_IMAGE_HEIGHT,
+  buildOrganizationJsonLd,
+} from "@/lib/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,8 +36,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = process.env.NEXTAUTH_URL || "https://voyra-tour-bali.vercel.app";
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
+// ↑ SITE_URL and GA_MEASUREMENT_ID are imported from @/lib/config
 
 export const viewport = {
   width: "device-width",
@@ -33,48 +48,34 @@ export const viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Voyra Bali Tour — Discover Bali's Best Destinations & Packages",
-    template: "%s | Voyra Bali Tour",
+    default: SITE_TITLE_DEFAULT,
+    template: SITE_TITLE_TEMPLATE,
   },
-  description:
-    "Explore curated Bali destinations, tour packages, and cultural experiences. Book securely with Voyra Tourism — your trusted travel companion for unforgettable Bali adventures.",
-  keywords: [
-    "Bali tour",
-    "Bali travel",
-    "Bali destinations",
-    "Bali tour packages",
-    "Bali tourism",
-    "Voyra Tourism",
-    "Nusa Penida tour",
-    "Ubud tour",
-    "Bali activities",
-    "Bali booking",
-  ],
-  authors: [{ name: "Voyra Tourism" }],
-  creator: "Voyra Tourism",
+  description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
   openGraph: {
     type: "website",
     locale: "en_US",
     url: SITE_URL,
-    siteName: "Voyra Bali Tour",
-    title: "Voyra Bali Tour — Discover Bali's Best Destinations & Packages",
-    description:
-      "Explore curated Bali destinations, tour packages, and cultural experiences. Book securely with Voyra Tourism.",
+    siteName: SITE_NAME,
+    title: SITE_TITLE_DEFAULT,
+    description: SITE_SHORT_DESCRIPTION,
     images: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Voyra Bali Tour",
+        url: OG_IMAGE,
+        width: OG_IMAGE_WIDTH,
+        height: OG_IMAGE_HEIGHT,
+        alt: OG_IMAGE_ALT,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Voyra Bali Tour — Discover Bali's Best Destinations & Packages",
-    description:
-      "Explore curated Bali destinations, tour packages, and cultural experiences.",
-    images: ["/og-image.png"],
+    title: SITE_TITLE_DEFAULT,
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE],
   },
   robots: {
     index: true,
@@ -87,8 +88,11 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  alternates: {
+    canonical: SITE_URL,
+  },
   verification: {
-    google: process.env.GOOGLE_SITE_VERIFICATION || "",
+    google: GOOGLE_SITE_VERIFICATION,
   },
 };
 
@@ -99,25 +103,8 @@ export default async function RootLayout({
 }>) {
   const session = await getServerSession(authOptions);
 
-  // JSON-LD structured data for the website
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "TravelAgency",
-    name: "Voyra Tourism",
-    url: SITE_URL,
-    description:
-      "Curated Bali destinations, tour packages, and cultural experiences.",
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: "Bali",
-      addressCountry: "ID",
-    },
-    areaServed: {
-      "@type": "Place",
-      name: "Bali, Indonesia",
-    },
-    priceRange: "$$",
-  };
+  // JSON-LD structured data — built from global config in @/lib/config
+  const jsonLd = buildOrganizationJsonLd();
 
   return (
     <html lang="en">

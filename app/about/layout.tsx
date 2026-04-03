@@ -1,13 +1,14 @@
 import { Metadata } from "next";
+import { SITE_NAME } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Learn about Voyra Tourism — your trusted Bali travel companion for curated destinations, tour packages, and authentic cultural experiences.",
+    `Learn about ${SITE_NAME} — your trusted Bali travel agency for curated tour packages, authentic cultural experiences, and secure online booking across all of Bali.`,
   openGraph: {
-    title: "About Voyra Tourism",
+    title: `About ${SITE_NAME} — Your Trusted Bali Tour Agency`,
     description:
-      "Discover Bali with Voyra — curated destinations, secure booking, and local expertise.",
+      `Discover Bali with ${SITE_NAME} — curated destinations, expert local guides, secure booking, and personalized Bali travel experiences.`,
   },
 };
 

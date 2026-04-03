@@ -9,6 +9,11 @@ import ExcpectDetail from "@/components/DetailProduct/ExpectDetail";
 import ContentsSection from "@/components/DetailProduct/ContentsSection";
 import LocationSection from "@/components/DetailProduct/LocationSection";
 import PackagesSection from "@/components/DetailProduct/PackagesSection";
+import {
+  SITE_URL,
+  SITE_NAME,
+  buildTouristAttractionJsonLd,
+} from "@/lib/config";
 
 // ── SEO Metadata ────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -27,17 +32,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
         title: `${destination.title} — Tickets & Booking`,
         description,
+        alternates: {
+            canonical: `${SITE_URL}/detail/${slug}`,
+        },
         openGraph: {
-            title: `${destination.title} — Voyra Bali Tour`,
+            title: `${destination.title} — ${SITE_NAME}`,
             description,
             type: "article",
+            url: `${SITE_URL}/detail/${slug}`,
+            siteName: SITE_NAME,
             ...(mainImage && {
                 images: [{ url: mainImage, width: 1200, height: 630, alt: destination.title }],
             }),
         },
         twitter: {
             card: "summary_large_image",
-            title: `${destination.title} — Voyra Bali Tour`,
+            title: `${destination.title} — ${SITE_NAME}`,
             description,
             ...(mainImage && { images: [mainImage] }),
         },
@@ -95,8 +105,21 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
         .flatMap((c) => c.images.map((img) => img.url))
         .slice(0, 3);
 
+    // JSON-LD: TouristAttraction — uses global helper from @/lib/config
+    const touristAttractionJsonLd = buildTouristAttractionJsonLd({
+        name: destination.title,
+        description: destination.description,
+        slug,
+        image: mainImage || undefined,
+        price,
+    });
+
     return (
         <div>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(touristAttractionJsonLd) }}
+            />
             {/* ── Banner ── */}
             <BannerDetail
                 title={destination.title}

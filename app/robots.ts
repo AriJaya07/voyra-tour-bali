@@ -1,7 +1,5 @@
 import { MetadataRoute } from "next";
-
-const SITE_URL =
-  process.env.NEXTAUTH_URL || "https://voyra-tour-bali.vercel.app";
+import { SITE_URL } from "@/lib/config";
 
 export default function robots(): MetadataRoute.Robots {
   return {
