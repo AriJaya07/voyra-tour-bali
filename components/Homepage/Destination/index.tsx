@@ -124,7 +124,7 @@ export default function Destination({ categories }: DestinationProps) {
         title: product.title,
         slug: product.productCode,
         imageUrl: getViatorImageUrl(product.images, 720),
-        href: `/viator/${product.productCode}`,
+        href: `/viator/${product.productCode}${product.pricing?.summary?.fromPrice ? `?price=${product.pricing.summary.fromPrice}&cur=${product.pricing.currency ?? "USD"}` : ""}`,
       }))
     }
     if (!dbDestinations) return []

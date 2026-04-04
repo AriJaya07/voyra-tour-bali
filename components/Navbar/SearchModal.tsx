@@ -71,7 +71,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     const viatorMapped = viatorFiltered.map((v) => ({
       id: `viator-${v.productCode}`,
       title: v.title,
-      href: `/viator/${v.productCode}`,
+      href: `/viator/${v.productCode}${v.pricing?.summary?.fromPrice ? `?price=${v.pricing.summary.fromPrice}&cur=${v.pricing.currency ?? "USD"}` : ""}`,
       imageUrl: getViatorImageUrl(v.images, 200),
       categoryName: "Tour / Activity",
       price: v.pricing?.summary?.fromPrice ?? null,

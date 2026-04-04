@@ -57,6 +57,7 @@ function itemText(item: any): string {
 function ViatorProductContent({ productCode, isMockMode = false }: { productCode: string, isMockMode?: boolean }) {
   const searchParams = useSearchParams()
   const urlPrice = Number(searchParams.get("price")) || 0
+  const urlCurrency = searchParams.get("cur") || "USD"
   const { currency } = useCurrency()
   const { data: product, isLoading, isError } = useViatorProductDetail(productCode, currency)
 
@@ -119,6 +120,7 @@ function ViatorProductContent({ productCode, isMockMode = false }: { productCode
   const rating = product.reviews?.combinedAverageRating
   const reviewCount = product.reviews?.totalReviews || 0
   const price = product.pricing?.summary?.fromPrice || urlPrice
+  const sourceCurrency = product.pricing?.currency || urlCurrency
   const hasFreeCancellation = product.flags?.includes("FREE_CANCELLATION")
   const confirmationType = product.bookingConfirmationSettings?.confirmationType || product.confirmationType
 
@@ -327,7 +329,8 @@ function ViatorProductContent({ productCode, isMockMode = false }: { productCode
                   basePrice={price}
                   title={product.title}
                   productCode={product.productCode}
-                  currency={product.pricing?.currency || "IDR"}
+                  currency={currency}
+                  sourceCurrency={sourceCurrency}
                   productImage={allImages[0]}
                   cancellationPolicy={
                     product.cancellationPolicy?.type === "ALL_SALES_FINAL"

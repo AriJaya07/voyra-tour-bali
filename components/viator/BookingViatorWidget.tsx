@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import type { ViatorProductOption, ViatorLogistics, ViatorLanguageGuide } from "@/utils/hooks/useViator";
 import { useViatorSchedules } from "@/utils/hooks/useViator";
 import { useBookingStore, type AvailabilitySlot } from "@/utils/hooks/useBookingStore";
+import { formatPrice, type CurrencyCode } from "@/utils/formatPrice";
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
 
@@ -27,6 +28,7 @@ interface BookingViatorWidgetProps {
   title: string;
   basePrice: number;
   currency: string;
+  sourceCurrency: string;
   productImage?: string;
   cancellationPolicy?: string;
   ageBands?: Array<{
@@ -49,6 +51,7 @@ export default function BookingViatorWidget({
   title,
   basePrice,
   currency,
+  sourceCurrency,
   productImage,
   cancellationPolicy,
   logistics,
@@ -299,7 +302,7 @@ export default function BookingViatorWidget({
       `Date: ${selectedDate}`,
       isMockMode ? "Travelers: [X people]" : "Travelers:",
       ...(isMockMode ? [] : [travelerLines || "  Not specified"]),
-      ...(displayPrice ? [`Total: ${displayPrice.toLocaleString()} ${currency}`] : [`Total: starting from ${basePrice.toLocaleString()} ${currency}`]),
+      ...(displayPrice ? [`Total: ${displayPrice.toLocaleString()} ${currency}`] : [`Total: starting from ${formatPrice(basePrice, currency as CurrencyCode, sourceCurrency as CurrencyCode)}`]),
       "",
       "Please confirm, thank you!",
     ];
@@ -412,7 +415,7 @@ export default function BookingViatorWidget({
             <div className="flex flex-col mb-4">
               <span className="font-bold text-gray-700 text-sm">Start from</span>
               <span className="font-black text-xl text-gray-900">
-                {basePrice.toLocaleString()} {currency}
+                {formatPrice(basePrice, currency as CurrencyCode, sourceCurrency as CurrencyCode)}
               </span>
             </div>
             <div className="text-sm font-semibold text-green-600 mb-4 bg-green-50 px-3 py-2 rounded-lg text-center">
