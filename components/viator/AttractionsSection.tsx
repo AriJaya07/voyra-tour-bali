@@ -31,21 +31,20 @@ export default function AttractionsSection({ query = "" }: AttractionsSectionPro
         Discover top places visited by travelers
       </p>
 
-      <div className="min-h-[400px]">
-      {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl overflow-hidden animate-pulse">
-              <div className="aspect-[4/3] bg-gray-200" />
-              <div className="p-3 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4" />
-                <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="min-h-[400px] flex flex-col justify-between">
+        {isLoading && attractions.length === 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-xl overflow-hidden animate-pulse">
+                <div className="aspect-[4/3] bg-gray-200" />
+                <div className="p-3 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                  <div className="h-3 bg-gray-200 rounded w-1/2" />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <>
+            ))}
+          </div>
+        ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {attractions.map((attraction) => (
               <div
@@ -93,17 +92,19 @@ export default function AttractionsSection({ query = "" }: AttractionsSectionPro
                 </div>
               </div>
             ))}
-
           </div>
+        )}
 
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            isLoading={isLoading}
-          />
-        </>
-      )}
+        {totalPages > 1 && (
+          <div className="mt-6">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
       </div>
     </section>
   );
