@@ -25,6 +25,7 @@ export async function generateMetadata({
     },
   }
 }
+import { VIATOR_MOCK_BOOKING } from "@/lib/config/viator"
 
 // ── Page (server component → renders client component) ──────────────────
 
@@ -35,5 +36,5 @@ export default async function ViatorProductPage({
 }) {
   const { productCode } = await params
 
-  return <ViatorProductClient productCode={productCode} />
+  return <ViatorProductClient productCode={productCode} isMockMode={VIATOR_MOCK_BOOKING} />
 }

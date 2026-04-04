@@ -5,13 +5,19 @@ import { mockConfirmBooking } from "@/lib/viatorMock";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { sessionToken, paymentAccountId } = body;
+    const { cartReference, paymentToken, items } = body;
+
+    // We also support legacy sessionToken/paymentAccountId so we don't break mock booking tests for a second
+    const sessionToken = body.sessionToken || paymentToken;
+    const paymentAccountId = body.paymentAccountId || paymentToken;
 
     if (!sessionToken || !paymentAccountId) {
-      return NextResponse.json(
-        { error: "Missing required fields: sessionToken, paymentAccountId" },
-        { status: 400 }
-      );
+      if (!cartReference || !paymentToken || !items) {
+        return NextResponse.json(
+          { error: "Missing required fields: cartReference, paymentToken, items" },
+          { status: 400 }
+        );
+      }
     }
 
     // ── Mock mode ────────────────────────────────────────────────────
@@ -21,14 +27,15 @@ export async function POST(req: Request) {
     }
 
     // ── Real Viator API ──────────────────────────────────────────────
+    const payload = cartReference 
+      ? { cartReference, paymentToken, items }
+      : { sessionToken, paymentAccountId };
+
     const viatorRes = await fetch(`${VIATOR_API_URL}/bookings/cart/book`, {
       method: "POST",
       headers: VIATOR_HEADERS,
       signal: viatorSignal(),
-      body: JSON.stringify({
-        sessionToken,
-        paymentAccountId,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await viatorRes.json();

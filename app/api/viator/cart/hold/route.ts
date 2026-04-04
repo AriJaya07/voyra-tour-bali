@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { VIATOR_API_URL, VIATOR_HEADERS, VIATOR_MOCK_BOOKING, viatorSignal } from "@/lib/config/viator";
 import { mockHoldBooking } from "@/lib/viatorMock";
+import crypto from "crypto";
 
 export async function POST(req: Request) {
   try {
@@ -60,11 +61,18 @@ export async function POST(req: Request) {
       cartItem.bookingQuestionAnswers = bookingQuestionAnswers;
     }
 
+    const cartReference = crypto.randomUUID();
+
     const viatorRes = await fetch(`${VIATOR_API_URL}/bookings/cart/hold`, {
       method: "POST",
       headers: VIATOR_HEADERS,
       signal: viatorSignal(),
-      body: JSON.stringify({ cartItems: [cartItem] }),
+      body: JSON.stringify({ 
+        cartReference, 
+        items: [cartItem],
+        paymentDataSubmissionMode: "VIATOR_FORM",
+        currency: currency || "USD" 
+      }),
     });
 
     const data = await viatorRes.json();
@@ -77,7 +85,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
-      sessionToken: data.sessionToken,
+      cartReference,
+      paymentDataSubmissionUrl: data.paymentDataSubmissionUrl,
+      paymentSessionToken: data.paymentSessionToken,
+      sessionToken: data.sessionToken, // fallback
       expiration: data.expiration,
       status: data.status || "HELD",
     });

@@ -54,7 +54,7 @@ function itemText(item: any): string {
 
 // ── Main Content ────────────────────────────────────────────────────────
 
-function ViatorProductContent({ productCode }: { productCode: string }) {
+function ViatorProductContent({ productCode, isMockMode = false }: { productCode: string, isMockMode?: boolean }) {
   const searchParams = useSearchParams()
   const urlPrice = Number(searchParams.get("price")) || 0
   const { currency } = useCurrency()
@@ -338,6 +338,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
                   productOptions={product.productOptions}
                   logistics={product.logistics}
                   languageGuides={product.languageGuides}
+                  isMockMode={isMockMode}
                 />
               </ErrorBoundary>
             </div>
@@ -350,7 +351,7 @@ function ViatorProductContent({ productCode }: { productCode: string }) {
 
 // ── Exported Client Component ───────────────────────────────────────────
 
-export default function ViatorProductClient({ productCode }: { productCode: string }) {
+export default function ViatorProductClient({ productCode, isMockMode = false }: { productCode: string, isMockMode?: boolean }) {
   return (
     <Suspense
       fallback={
@@ -359,7 +360,7 @@ export default function ViatorProductClient({ productCode }: { productCode: stri
         </div>
       }
     >
-      <ViatorProductContent productCode={productCode} />
+      <ViatorProductContent productCode={productCode} isMockMode={isMockMode} />
     </Suspense>
   )
 }

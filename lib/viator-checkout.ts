@@ -91,7 +91,7 @@ export async function viatorBookingFlow(
     const holdRes = await holdBooking(input);
 
     // Step 2: Get available payment methods
-    const paymentMethods = await getPaymentMethods(holdRes.sessionToken);
+    const paymentMethods = await getPaymentMethods(holdRes.sessionToken || holdRes.paymentSessionToken || "");
 
     if (!paymentMethods.length) {
       return {
@@ -106,8 +106,9 @@ export async function viatorBookingFlow(
 
     // Step 3: Confirm the booking
     const booking = await confirmBooking({
-      sessionToken: holdRes.sessionToken,
-      paymentAccountId: selectedPayment.id,
+      cartReference: holdRes.cartReference || "",
+      paymentToken: selectedPayment.id,
+      items: [input] // Passing the input again for the item payload
     });
 
     return {

@@ -556,6 +556,8 @@ function StepReview({
 
   // ── Viator step-by-step state ──────────────────────────────────────
   const [viatorStep, setViatorStep] = useState<ViatorFlowStep>("idle");
+  const [paymentUrl, setPaymentUrl] = useState("");
+  const [cartRef, setCartRef] = useState("");
   const [sessionToken, setSessionToken] = useState("");
   const [expiration, setExpiration] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<ViatorPaymentAccount[]>([]);
@@ -593,6 +595,39 @@ function StepReview({
       : {}),
   });
 
+  // ── Iframe Listening ────────────────────────────────────────────────
+  useEffect(() => {
+    if (viatorStep !== "payment_iframe") return;
+
+    const handleMessage = async (e: MessageEvent) => {
+      // Viator standard for VIATOR_FORM: when payment succeeds or completes
+      // Check event name appropriately
+      if (e.data && (e.data.event === "sessionAccountToken" || e.data.event === "paymentAccountToken") && (e.data.sessionAccountToken || e.data.token)) {
+        const token = e.data.sessionAccountToken || e.data.token;
+        setViatorStep("confirming");
+        try {
+          const booking = await confirmBooking({ 
+            cartReference: cartRef, 
+            paymentToken: token,
+            items: [buildBookingInput()] 
+          });
+          setViatorStep("confirmed");
+          toast.success("Booking confirmed!");
+          router.push(`/booking-success?ref=${encodeURIComponent(booking.bookingRef || "")}`);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Booking confirmation failed";
+          setViatorError(msg);
+          setViatorStep("error");
+          toast.error(msg);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viatorStep, cartRef]);
+
   // ── Viator: Hold booking ──────────────────────────────────────────
   const handleViatorHold = async () => {
     if (!termsAccepted) { toast.warning("Please accept the Terms of Use."); return; }
@@ -602,13 +637,21 @@ function StepReview({
     setViatorError("");
     try {
       const holdRes = await holdBooking(buildBookingInput());
-      setSessionToken(holdRes.sessionToken);
-      setExpiration(holdRes.expiration);
+      setCartRef(holdRes.cartReference || "");
 
-      setViatorStep("selecting_payment");
-      const methods = await getPaymentMethods(holdRes.sessionToken);
-      setPaymentMethods(methods);
-      if (methods.length > 0) setSelectedPaymentId(methods[0].id);
+      if (holdRes.paymentDataSubmissionUrl) {
+        setPaymentUrl(holdRes.paymentDataSubmissionUrl);
+        setExpiration(holdRes.expiration || "");
+        setViatorStep("payment_iframe");
+      } else {
+        // Fallback backward compatibility
+        setSessionToken(holdRes.sessionToken || holdRes.paymentSessionToken || "");
+        setExpiration(holdRes.expiration || "");
+        setViatorStep("selecting_payment" as any); // fallback mapping
+        const methods = await getPaymentMethods(holdRes.sessionToken || "");
+        setPaymentMethods(methods);
+        if (methods.length > 0) setSelectedPaymentId(methods[0].id);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to hold booking";
       setViatorError(msg);
@@ -617,13 +660,17 @@ function StepReview({
     }
   };
 
-  // ── Viator: Confirm booking ───────────────────────────────────────
+  // ── Viator: Confirm booking (Legacy Fallback) ─────────────────────
   const handleViatorConfirm = async () => {
     if (!selectedPaymentId) { toast.warning("Please select a payment method."); return; }
 
     setViatorStep("confirming");
     try {
-      const booking = await confirmBooking({ sessionToken, paymentAccountId: selectedPaymentId });
+      const booking = await confirmBooking({ 
+        cartReference: cartRef || "", 
+        paymentToken: selectedPaymentId,
+        items: [buildBookingInput()] 
+      });
       setViatorStep("confirmed");
       toast.success("Booking confirmed!");
       router.push(`/booking-success?ref=${encodeURIComponent(booking.bookingRef || "")}`);
@@ -779,13 +826,25 @@ function StepReview({
       </div>
 
       {/* Payment Selector — Viator flow, shown after hold */}
-      {isViator && viatorStep === "selecting_payment" && paymentMethods.length > 0 && (
+      {isViator && (viatorStep as any) === "selecting_payment" && paymentMethods.length > 0 && (
         <PaymentSelector
           methods={paymentMethods}
           selectedId={selectedPaymentId}
           onSelect={setSelectedPaymentId}
           disabled={isViatorBusy}
         />
+      )}
+
+      {/* Payment Iframe — Viator v2.0 Form */}
+      {isViator && viatorStep === "payment_iframe" && paymentUrl && (
+        <div className="bg-white rounded-2xl shadow-sm border border-[#F0F0F0] overflow-hidden min-h-[500px] mb-4">
+          <iframe 
+            src={paymentUrl} 
+            className="w-full h-[600px] border-none bg-[#F8F8F8]" 
+            title="Secure Payment"
+            sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-top-navigation-by-user-activation"
+          />
+        </div>
       )}
 
       {/* Error banner */}
@@ -841,29 +900,32 @@ function StepReview({
               </svg>
               Try Again
             </button>
-          ) : viatorStep === "selecting_payment" ? (
+          ) : (viatorStep as any) === "selecting_payment" ? (
             <button
               onClick={handleViatorConfirm}
-              disabled={!selectedPaymentId}
+              disabled={!selectedPaymentId || viatorStep === "confirming"}
               className="flex-[2] bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              {viatorStep === "confirming" as unknown ? (
-                <>
-                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Confirming...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Confirm Booking — {store.totalPrice.toLocaleString()} {store.currency}
-                </>
-              )}
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Confirm Booking — {store.totalPrice.toLocaleString()} {store.currency}
             </button>
+          ) : viatorStep === "payment_iframe" ? (
+             <div className="flex-[2] flex items-center justify-center py-4 bg-blue-50 text-[#0071CE] font-bold rounded-xl">
+               Please complete payment above
+             </div>
+          ) : viatorStep === "confirming" ? (
+             <button
+               disabled={true}
+               className="flex-[2] bg-[#0071CE] disabled:bg-[#0071CE]/70 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2"
+             >
+               <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+               </svg>
+               Confirming Booking...
+             </button>
           ) : (
             <button
               onClick={handleViatorHold}

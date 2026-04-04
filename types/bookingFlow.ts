@@ -66,9 +66,12 @@ export interface BookingResult {
 // ── Viator API Types (used by API routes and mock layer) ───────────
 
 export interface ViatorHoldResponse {
-  sessionToken: string;
-  expiration: string;
-  status: string;
+  paymentDataSubmissionUrl?: string; // v2.0 preferred
+  paymentSessionToken?: string;
+  sessionToken?: string; // fallback/legacy
+  expiration?: string;
+  status?: string;
+  cartReference?: string;
 }
 
 export interface ViatorPaymentAccount {
@@ -79,8 +82,9 @@ export interface ViatorPaymentAccount {
 }
 
 export interface ViatorConfirmInput {
-  sessionToken: string;
-  paymentAccountId: string;
+  cartReference: string;
+  paymentToken: string;
+  items: any[];
 }
 
 export interface ViatorConfirmResponse {
@@ -97,7 +101,7 @@ export type ViatorFlowStep =
   | "idle"
   | "holding"
   | "held"
-  | "selecting_payment"
+  | "payment_iframe" // Using iframe for VIATOR_FORM
   | "confirming"
   | "confirmed"
   | "expired"
