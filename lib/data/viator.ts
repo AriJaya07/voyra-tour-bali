@@ -32,7 +32,6 @@ interface CategoryGroup {
 }
 
 const CATEGORY_GROUPS: CategoryGroup[] = [
-  { name: "Tours",              slug: "tours",            tagIds: [11929, 11930, 21733, 11928, 11926] },
   { name: "Private Tours",      slug: "private-tours",    tagIds: [11941, 11938, 21482] },
   { name: "Culture & Temples",  slug: "culture",          tagIds: [12032, 21521] },
   { name: "Nature",             slug: "nature",           tagIds: [11903, 11906] },
@@ -44,7 +43,9 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
   { name: "Family",             slug: "family",           tagIds: [21491] },
   { name: "Wellness & Spa",     slug: "wellness-and-spa", tagIds: [21510] },
   { name: "Nightlife",          slug: "nightlife",        tagIds: [21514] },
+  { name: "Tours",              slug: "tours",            tagIds: [11929, 11930, 21733, 11928, 11926] },
 ]
+
 
 // ── Fallback display names for ungrouped tags ───────────────────────────
 const TAG_DISPLAY_NAMES: Record<number, string> = {

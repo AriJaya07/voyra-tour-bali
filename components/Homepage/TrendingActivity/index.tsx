@@ -53,11 +53,20 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
   const [viatorPage, setViatorPage] = useState(1)
   const ITEMS_PER_PAGE = 5
 
+  // -- Priority context for backend deduplication --
+  const allCategoryTagIds = useMemo(() =>
+    displayCategories.map(c => c.tagIds || [])
+  , [displayCategories]);
+  
+  const activeCategoryIndex = displayCategories.findIndex(c => c.id === activeId);
+
   const { data: viatorData, isLoading: isViatorLoading, isError } = useViatorProducts(
     isViator ? activeCategory?.tagIds ?? null : null,
     currency,
     viatorPage,
-    ITEMS_PER_PAGE
+    ITEMS_PER_PAGE,
+    activeCategoryIndex,
+    allCategoryTagIds
   )
   const { data: dbDestinations, isLoading: isDBLoading } = useDBDestinations(
     !isViator ? activeCategory?.id ?? null : null

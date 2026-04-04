@@ -88,11 +88,20 @@ export default function Destination({ categories }: DestinationProps) {
   const [viatorPage, setViatorPage] = useState(1)
   const ITEMS_PER_PAGE = 6
 
+  // -- Priority context for backend deduplication --
+  const allCategoryTagIds = useMemo(() =>
+    categories.map(c => c.tagIds || [])
+  , [categories]);
+  
+  const activeCategoryIndex = categories.findIndex(c => c.id === activeId);
+
   const { data: viatorData, isLoading: isViatorLoading } = useViatorProducts(
     isViator ? activeCategory?.tagIds ?? null : null,
     "IDR",
     viatorPage,
-    ITEMS_PER_PAGE
+    ITEMS_PER_PAGE,
+    activeCategoryIndex,
+    allCategoryTagIds
   )
   const { data: dbDestinations, isLoading: isDBLoading } = useDBDestinations(
     !isViator ? activeCategory?.id ?? null : null

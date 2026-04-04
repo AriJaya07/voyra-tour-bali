@@ -14,6 +14,10 @@ const BALI_DESTINATION_ID = 98
 // GET REQUESTS
 // --------------------------------------------------
 
+// ── Simple In-memory Cache ───────────────────────────────────────────
+const streamCache = new Map<string, { products: any[], expires: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -28,6 +32,43 @@ export async function GET(request: Request) {
     if (action === 'products') {
       const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
       const count = Math.min(50, Math.max(1, parseInt(searchParams.get('count') || '50', 10)))
+      const currency = searchParams.get('currency') || 'USD'
+      const tagIdsParam = searchParams.get('tagIds')
+
+      const priorityIndex = parseInt(searchParams.get('priorityIndex') || '-1', 10)
+      const allCategoryTagIdsParam = searchParams.get('allCategoryTagIds')
+      
+      // 1. Check Cache first
+      const cacheKey = `action=products&tags=${tagIdsParam}&priority=${priorityIndex}&allTags=${allCategoryTagIdsParam}&currency=${currency}`
+      const cached = streamCache.get(cacheKey)
+      if (cached && cached.expires > Date.now()) {
+        const start = (page - 1) * count
+        const end = start + count
+        const pageProducts = cached.products.slice(start, end)
+        return NextResponse.json({
+          products: pageProducts,
+          totalCount: cached.products.length, 
+          page,
+          count,
+          hasMore: cached.products.length > end
+        })
+      }
+
+      let allCategoryTagIds: number[][] = []
+      if (allCategoryTagIdsParam) {
+        try {
+          allCategoryTagIds = JSON.parse(allCategoryTagIdsParam)
+        } catch {
+          console.error('[Viator] Failed to parse allCategoryTagIds')
+        }
+      }
+
+      const higherPriorityTagIds = new Set<number>()
+      if (priorityIndex > 0 && allCategoryTagIds.length > 0) {
+        for (let i = 0; i < priorityIndex; i++) {
+          allCategoryTagIds[i]?.forEach(id => higherPriorityTagIds.add(id))
+        }
+      }
 
       if (USE_MOCK_DATA) {
         return NextResponse.json({
@@ -56,47 +97,75 @@ export async function GET(request: Request) {
         })
       }
 
-      const currency = searchParams.get('currency') || 'USD'
-      const tagIdsParam = searchParams.get('tagIds')
+      let currentTagIds: number[] = []
+      if (tagIdsParam) {
+        try { currentTagIds = JSON.parse(tagIdsParam) } catch {}
+      }
 
       const filtering: Record<string, unknown> = {
         destination: BALI_DESTINATION_ID,
       }
-
-      if (tagIdsParam) {
-        try {
-          filtering.tags = JSON.parse(tagIdsParam)
-        } catch {
-          // If parsing fails, ignore the filter
-        }
+      if (currentTagIds.length > 0) {
+        filtering.tags = currentTagIds
       }
 
-      const start = (page - 1) * count + 1
-
+      // -- Optimization: One-Shot Oversampling --
+      // Fetch 300 items at once to avoid consecutive roundtrips
+      const OVERSAMPLE_LIMIT = 300 
       const response = await axios.post(
         `${VIATOR_API_URL}/products/search`,
         {
           filtering,
           currency,
-          pagination: { start, count },
+          pagination: { start: 1, count: OVERSAMPLE_LIMIT },
           sorting: { sort: 'DEFAULT' },
         },
-        {
-          headers: VIATOR_HEADERS,
-          timeout: 120000,
-        }
+        { headers: VIATOR_HEADERS, timeout: 120000 }
       )
 
-      const totalCount = response.data.totalCount || 0
+      const products = response.data.products || []
+      const totalApiCount = response.data.totalCount || 0
+
+      const isClaimedByHigherPriority = (product: any) => {
+        if (higherPriorityTagIds.size === 0) return false
+        return product.tags?.some((tag: any) => {
+          const id = typeof tag === 'number' ? tag : (tag.tagId ?? tag.id)
+          return higherPriorityTagIds.has(id)
+        })
+      }
+
+      // Filter the entire stream
+      let filteredStream = products.filter((p: any) => !isClaimedByHigherPriority(p))
+
+      // -- Safety Fallback: No Empty Tabs --
+      // If filtering hides EVERYTHING (e.g. the category is 100% covered by a higher one),
+      // we show the original results rather than an empty screen.
+      if (filteredStream.length === 0 && products.length > 0) {
+        console.warn(`[Viator] Tab "${tagIdsParam}" was filtered to 0. Falling back to raw results.`)
+        filteredStream = products
+      }
+
+      // Update Cache
+      streamCache.set(cacheKey, {
+        products: filteredStream,
+        expires: Date.now() + CACHE_TTL
+      })
+
+      const start = (page - 1) * count
+      const end = start + count
+      const pageProducts = filteredStream.slice(start, end)
 
       return NextResponse.json({
-        products: response.data.products || [],
-        totalCount,
+        products: pageProducts,
+        totalCount: filteredStream.length, // Accurate count of the current stream
         page,
         count,
-        hasMore: start + count - 1 < totalCount,
+        hasMore: filteredStream.length > end || (products.length === OVERSAMPLE_LIMIT)
       })
     }
+
+
+
 
     // --------------------------------------------------
     // 2. PRODUCT DETAIL

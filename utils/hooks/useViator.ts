@@ -224,10 +224,12 @@ export function useViatorProducts(
   tagIds: number[] | null,
   currency: string = "USD",
   page: number = 1,
-  count: number = 50
+  count: number = 50,
+  priorityIndex: number = -1,
+  allCategoryTagIds: number[][] = []
 ) {
   return useQuery<ViatorPaginatedResponse>({
-    queryKey: ["viator-products", tagIds, currency, page, count],
+    queryKey: ["viator-products", tagIds, currency, page, count, priorityIndex, allCategoryTagIds],
     queryFn: async () => {
       const { data } = await api.get("/viator", {
         params: {
@@ -236,6 +238,8 @@ export function useViatorProducts(
           currency,
           page,
           count,
+          priorityIndex,
+          allCategoryTagIds: allCategoryTagIds.length > 0 ? JSON.stringify(allCategoryTagIds) : undefined,
         },
       });
       return {
@@ -251,6 +255,7 @@ export function useViatorProducts(
     refetchOnWindowFocus: false,
   });
 }
+
 
 // ── Hook: Fetch single Viator product detail ──────────────────────────
 export function useViatorProductDetail(
