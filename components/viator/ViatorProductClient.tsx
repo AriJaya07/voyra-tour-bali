@@ -73,6 +73,11 @@ function ViatorProductContent({ productCode, isMockMode = false }: { productCode
     }
   }, [product])
 
+  // Smooth scroll to top when currency changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [currency])
+
   if (isLoading) {
     return (
       <div className="min-h-screen py-20">
