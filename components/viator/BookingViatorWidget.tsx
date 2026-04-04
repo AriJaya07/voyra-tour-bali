@@ -306,7 +306,11 @@ export default function BookingViatorWidget({
       "",
       "Please confirm, thank you!",
     ];
-    return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;
+    // Normalize phone: remove leading 0 and non-digits
+    const cleanNumber = WA_NUMBER.replace(/\D/g, "");
+    const finalNumber = cleanNumber.startsWith("0") ? `62${cleanNumber.slice(1)}` : cleanNumber;
+
+    return `https://api.whatsapp.com/send?phone=${finalNumber}&text=${encodeURIComponent(lines.join("\n"))}`;
   };
 
   // ── Render ──────────────────────────────────────────────────────────
