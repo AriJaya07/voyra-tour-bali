@@ -239,3 +239,16 @@ model Subscription {
   @@index([email])
   @@index([status])
 }
+
+model MockBooking {
+  id           Int      @id @default(autoincrement())
+  slug         String   @unique
+  productCode  String
+  productTitle String
+  productImage String?
+  price        Float?
+  currency     String   @default("IDR")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

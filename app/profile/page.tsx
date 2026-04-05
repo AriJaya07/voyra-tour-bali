@@ -7,6 +7,7 @@ import Link from "next/link";
 import TicketModal from "@/components/profile/TicketModal";
 import CancelModal from "@/components/profile/CancelModal";
 import { fetchProfile, updateProfile, uploadAvatar, fetchUserBookings } from "@/lib/api/profile";
+import VoryaIcon from "@/components/assets/Icon/VoyraIcon";
 import { BOOKING_STATUS_MAP } from "@/types/booking";
 import type { Booking } from "@/types/booking";
 import type { UserProfile, ProfileFormMessage } from "@/types/profile";
@@ -259,7 +260,7 @@ export default function ProfilePage() {
               <div className="space-y-5">
                 {filteredBookings.map((b) => {
                   const statusInfo = BOOKING_STATUS_MAP[b.status] || { label: b.status || "PENDING", className: "bg-gray-100 text-gray-700" };
-                  const imageUrl = b.productImage || "/images/activity/melasti.png";
+                  const imageUrl = b.productImage
                   const totalPriceUsd = b.totalPriceUsd || b.totalPrice / 15000;
                   const currency = b.currency || "IDR";
                   const time = b.travelTime || "08:00 AM";
@@ -267,8 +268,13 @@ export default function ProfilePage() {
                   return (
                     <div key={b.id} className="border border-gray-200 rounded-2xl overflow-hidden hover:border-[#0071CE]/40 transition bg-white shadow-sm flex flex-col md:flex-row">
                       <div className="w-full md:w-48 h-48 md:h-auto bg-gray-200 relative shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={imageUrl} alt={b.productTitle} className="w-full h-full object-cover" />
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={b.productTitle} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                             <VoryaIcon className="w-24 h-auto opacity-40" />
+                          </div>
+                        )}
                         <div className="absolute top-3 left-3">
                           <span className={`px-3 py-1 rounded-full text-xs font-bold border shadow-sm backdrop-blur-md bg-white/90 ${statusInfo.className}`}>
                             {statusInfo.label}

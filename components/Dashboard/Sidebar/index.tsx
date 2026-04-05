@@ -76,6 +76,12 @@ const BOTTOM_ITEMS = [
     icon: <SubscribersIcon />,
     color: "teal",
   },
+  {
+    label: "Mock Booking",
+    href: "/dashboard/viator-mock",
+    icon: <BookingsIcon />,
+    color: "amber",
+  },
 ];
 
 
