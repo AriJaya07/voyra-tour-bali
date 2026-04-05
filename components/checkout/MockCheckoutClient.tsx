@@ -494,20 +494,20 @@ function StepConfirm({
       .join("\n");
 
     const lines = [
-      "Hello Voyra Bali! 👋",
+      "Hello Voyra Bali!",
       "I would like to confirm my booking:",
       "",
-      `🎯 Tour: ${productTitle}`,
-      `🔖 Product Code: ${productCode}`,
-      `📅 Date: ${dateStr}`,
-      `👥 Travelers:\n${travelerList}`,
-      `📋 Lead Traveler: ${contact.firstName} ${contact.lastName}`,
-      `📞 Phone: ${contact.phone}`,
-      `📧 Email: ${contact.email}`,
-      ...(overridePrice ? [`💰 Estimated Price: from ${overridePrice.toLocaleString()} ${overrideCurrency || "IDR"}`] : []),
-      ...(specialRequest ? [`📝 Notes: ${specialRequest}`] : []),
+      `Tour: ${productTitle}`,
+      `Product Code: ${productCode}`,
+      `Date: ${dateStr}`,
+      `Travelers:\n${travelerList}`,
+      `Lead Traveler: ${contact.firstName} ${contact.lastName}`,
+      `Phone: ${contact.phone}`,
+      `Email: ${contact.email}`,
+      ...(overridePrice ? [`Estimated Price: from ${overridePrice.toLocaleString()} ${overrideCurrency || "IDR"}`] : []),
+      ...(specialRequest ? [`Notes: ${specialRequest}`] : []),
       "",
-      "Please confirm my booking, thank you! 🙏",
+      "Please confirm my booking, thank you!",
     ];
 
     const cleanNumber = WA_NUMBER.replace(/\D/g, "");
