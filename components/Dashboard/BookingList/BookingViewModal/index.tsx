@@ -1,7 +1,9 @@
 "use client";
 
-import { Booking } from "@/utils/service/booking.service";
+import { useState, useRef } from "react";
+import { Booking, bookingService } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
+import { toast } from "sonner";
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: "bg-amber-500/15 text-amber-400 border-amber-500/20",
@@ -48,12 +50,41 @@ interface BookingViewModalProps {
 }
 
 export default function BookingViewModal({
-  booking,
+  booking: initialBooking,
   onClose,
   onUpdateStatus,
   updatingStatus,
 }: BookingViewModalProps) {
+  const [booking, setBooking] = useState(initialBooking);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const transitions = ALLOWED_TRANSITIONS[booking.status] || [];
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const res = await bookingService.uploadTicket(booking.id, file);
+      if (res.success) {
+        setBooking((prev) => ({ ...prev, ticketImageUrl: res.ticketImageUrl }));
+        toast.success("Ticket image uploaded successfully!");
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Failed to upload ticket");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const isConfirmDisabled = (status: string) => {
+    if (status === "CONFIRMED") {
+      return updatingStatus || uploading || !booking.ticketImageUrl;
+    }
+    return updatingStatus || uploading;
+  };
 
   return (
     <>
@@ -134,20 +165,102 @@ export default function BookingViewModal({
 
             {/* Status Actions */}
             {transitions.length > 0 && (
-              <Section title="Update Status">
+              <Section title={booking.status === "PENDING" ? "Ticket & Status" : "Update Status"}>
+                {booking.status === "PENDING" && (
+                  <div className="mb-4 space-y-3">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                      Upload Viator Ticket (Required to Confirm)
+                    </label>
+                    <div className="flex items-center gap-4">
+                      {booking.ticketImageUrl ? (
+                        <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-700 bg-slate-800">
+                          <img
+                            src={booking.ticketImageUrl}
+                            alt="Ticket"
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition text-[10px] text-white font-bold"
+                          >
+                            Change
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploading}
+                          className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-700 hover:border-slate-500 flex flex-col items-center justify-center gap-1 transition text-slate-500 hover:text-slate-400 bg-slate-800/50"
+                        >
+                          <span className="text-xl">📸</span>
+                          <span className="text-[10px] font-bold uppercase">Upload</span>
+                        </button>
+                      )}
+                      <div className="flex-1">
+                        <p className="text-[11px] text-slate-400 leading-relaxed">
+                          Please upload the official Viator/Supplier ticket image. 
+                          This will be visible to the user in their dashboard.
+                        </p>
+                        {uploading && (
+                          <div className="mt-2 flex items-center gap-2 text-violet-400 text-[10px] font-bold uppercase tracking-widest">
+                            <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            Uploading...
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-wrap gap-2">
                   {transitions.map((t) => (
                     <button
                       key={t.status}
                       onClick={() => onUpdateStatus(booking.id, t.status)}
-                      disabled={updatingStatus}
-                      className={`px-4 py-2 ${t.color} text-white text-sm font-bold rounded-xl transition disabled:opacity-40`}
+                      disabled={isConfirmDisabled(t.status)}
+                      className={`px-4 py-2 ${t.color} text-white text-sm font-bold rounded-xl transition disabled:opacity-40 shadow-lg shadow-black/20`}
                     >
                       {updatingStatus ? "Updating..." : t.label}
                     </button>
                   ))}
                 </div>
               </Section>
+            )}
+
+            {/* Ticket Image Preview (if confirmed/completed) */}
+            {(booking.status === "CONFIRMED" || booking.status === "COMPLETED") && booking.ticketImageUrl && (
+               <Section title="Confirmed Ticket">
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-800 group">
+                    <img
+                      src={booking.ticketImageUrl}
+                      alt="Ticket"
+                      className="w-full h-auto max-h-[300px] object-contain"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3">
+                       <a 
+                        href={booking.ticketImageUrl} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="px-4 py-2 bg-white text-black text-xs font-bold rounded-lg hover:bg-gray-100 transition"
+                       >
+                         View Full
+                       </a>
+                       <button
+                         onClick={() => fileInputRef.current?.click()}
+                         className="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-slate-700 transition"
+                       >
+                         Replace
+                       </button>
+                    </div>
+                  </div>
+               </Section>
             )}
           </div>
 

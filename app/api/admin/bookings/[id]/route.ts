@@ -88,6 +88,14 @@ export async function PATCH(
       );
     }
 
+    // New: Check if ticketImageUrl is present before confirming
+    if (status === "CONFIRMED" && !booking.ticketImageUrl) {
+      return NextResponse.json(
+        { error: "Ticket image must be uploaded before confirming." },
+        { status: 422 }
+      );
+    }
+
     const updated = await prisma.booking.update({
       where: { id: Number(id) },
       data: {

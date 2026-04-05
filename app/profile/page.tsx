@@ -13,7 +13,7 @@ import type { Booking } from "@/types/booking";
 import type { UserProfile, ProfileFormMessage } from "@/types/profile";
 import { formatPrice } from "@/utils/formatPrice";
 
-const TABS = ["Upcoming", "Past", "Cancelled"] as const;
+const TABS = ["Upcoming", "Completed", "Cancelled"] as const;
 type Tab = (typeof TABS)[number];
 
 const fmtDate = (d: string) =>
@@ -96,9 +96,17 @@ export default function ProfilePage() {
 
   const filteredBookings = bookings.filter((b) => {
     const isPast = new Date(b.travelDate) < new Date(new Date().setHours(0, 0, 0, 0));
-    if (activeTab === "Upcoming") return b.status !== "CANCELLED" && !isPast;
-    if (activeTab === "Past") return b.status !== "CANCELLED" && isPast;
-    if (activeTab === "Cancelled") return b.status === "CANCELLED";
+    if (activeTab === "Upcoming") {
+      // Show PENDING and CONFIRMED that hasn't happened yet
+      return b.status !== "CANCELLED" && b.status !== "COMPLETED" && !isPast;
+    }
+    if (activeTab === "Completed") {
+      // Show COMPLETED and CONFIRMED that has already happened
+      return b.status === "COMPLETED" || (b.status === "CONFIRMED" && isPast);
+    }
+    if (activeTab === "Cancelled") {
+      return b.status === "CANCELLED";
+    }
     return true;
   });
 
@@ -267,66 +275,78 @@ export default function ProfilePage() {
 
                   return (
                     <div key={b.id} className="border border-gray-200 rounded-2xl overflow-hidden hover:border-[#0071CE]/40 transition bg-white shadow-sm flex flex-col md:flex-row">
-                      <div className="w-full md:w-48 h-48 md:h-auto bg-gray-200 relative shrink-0">
-                        {imageUrl ? (
-                          <img src={imageUrl} alt={b.productTitle} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                             <VoryaIcon className="w-24 h-auto opacity-40" />
-                          </div>
-                        )}
-                        <div className="absolute top-3 left-3">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold border shadow-sm backdrop-blur-md bg-white/90 ${statusInfo.className}`}>
-                            {statusInfo.label}
-                          </span>
-                        </div>
-                      </div>
+                      {(() => {
+                        const isPast = new Date(b.travelDate) < new Date(new Date().setHours(0, 0, 0, 0));
+                        const statusInfo = BOOKING_STATUS_MAP[b.status] || { label: b.status || "PENDING", className: "bg-gray-100 text-gray-700" };
+                        const imageUrl = b.productImage
+                        const totalPriceUsd = b.totalPriceUsd || b.totalPrice / 15000;
+                        const currency = b.currency || "IDR";
+                        const time = b.travelTime || "08:00 AM";
+                        return (
+                          <>
+                            <div className="w-full md:w-48 h-48 md:h-auto bg-gray-200 relative shrink-0">
+                              {imageUrl ? (
+                                <img src={imageUrl} alt={b.productTitle} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                   <VoryaIcon className="w-24 h-auto opacity-40" />
+                                </div>
+                              )}
+                              <div className="absolute top-3 left-3">
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold border shadow-sm backdrop-blur-md bg-white/90 ${statusInfo.className}`}>
+                                  {statusInfo.label}
+                                </span>
+                              </div>
+                            </div>
 
-                      <div className="p-5 flex-1 flex flex-col justify-between">
-                        <div>
-                          <h3 className="font-bold text-lg text-gray-900 leading-tight mb-3">
-                            {b.productTitle}
-                          </h3>
-                          <div className="space-y-2 text-sm text-gray-600">
-                            <div className="flex items-start gap-2">
-                              <span className="shrink-0 mt-0.5">📅</span>
-                              <span>{fmtDate(b.travelDate)} • {time}</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <span className="shrink-0 mt-0.5">👥</span>
-                              <span>
-                                {b.pax} Guest(s)
-                                {b.travelers && b.travelers.length > 0
-                                  ? ` (${b.travelers.map((t) => t.ageBand).join(", ")})`
-                                  : ""}
-                              </span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <span className="shrink-0 mt-0.5">💰</span>
-                              <span className="font-semibold text-gray-900">
-                                {currency} {b.totalPrice.toLocaleString()} {totalPriceUsd ? `/ $${totalPriceUsd.toFixed(2)} USD` : ""}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                            <div className="p-5 flex-1 flex flex-col justify-between">
+                              <div>
+                                <h3 className="font-bold text-lg text-gray-900 leading-tight mb-3">
+                                  {b.productTitle}
+                                </h3>
+                                <div className="space-y-2 text-sm text-gray-600">
+                                  <div className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">📅</span>
+                                    <span>{fmtDate(b.travelDate)} • {time}</span>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">👥</span>
+                                    <span>
+                                      {b.pax} Guest(s)
+                                      {b.travelers && b.travelers.length > 0
+                                        ? ` (${b.travelers.map((t) => t.ageBand).join(", ")})`
+                                        : ""}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">💰</span>
+                                    <span className="font-semibold text-gray-900">
+                                      {currency} {b.totalPrice.toLocaleString()} {totalPriceUsd ? `/ $${totalPriceUsd.toFixed(2)} USD` : ""}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
 
-                        <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
-                          {b.status !== "CANCELLED" && (
-                            <button
-                              onClick={() => setCancellingTicket(b)}
-                              className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition border border-red-100"
-                            >
-                              Cancel
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setSelectedTicket(b)}
-                            className="px-5 py-2 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition shadow-sm"
-                          >
-                            View Ticket
-                          </button>
-                        </div>
-                      </div>
+                              <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                                {b.status !== "CANCELLED" && b.status !== "COMPLETED" && isPast && (
+                                  <button
+                                    onClick={() => setCancellingTicket(b)}
+                                    className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition border border-red-100"
+                                  >
+                                    Cancel
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => setSelectedTicket(b)}
+                                  className="px-5 py-2 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition shadow-sm"
+                                >
+                                  View Ticket
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   );
                 })}

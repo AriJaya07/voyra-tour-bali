@@ -21,6 +21,7 @@ export interface Booking {
   paidAt: string | null;
   userId: number;
   user?: BookingUser;
+  ticketImageUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,6 +53,15 @@ export const bookingService = {
 
   updateStatus: async (id: number, status: string): Promise<Booking> => {
     const { data } = await api.patch(`/admin/bookings/${id}`, { status });
+    return data;
+  },
+
+  uploadTicket: async (id: number, file: File): Promise<{ success: boolean; ticketImageUrl: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post(`/admin/bookings/${id}/ticket`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return data;
   },
 };

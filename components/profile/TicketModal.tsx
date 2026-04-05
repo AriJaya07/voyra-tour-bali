@@ -19,17 +19,19 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
 
   const statusColors = {
     CONFIRMED: "bg-green-500",
+    COMPLETED: "bg-blue-600",
     PENDING: "bg-yellow-500",
     CANCELLED: "bg-red-500",
   } as Record<string, string>;
 
   const statusMessages = {
     CONFIRMED: "CONFIRMED",
+    COMPLETED: "COMPLETED",
     PENDING: "Waiting for supplier confirmation",
     CANCELLED: "This booking is cancelled",
   } as Record<string, string>;
 
-  const qrString = `VOYRA-${booking.bookingRef}-${booking.productCode}-${booking.travelDate}`;
+  const qrString = `https://voyratours.com/ticket/${booking.bookingRef}`;
   const travelers = booking.travelers || [];
   const leadTraveler = travelers.length > 0 ? travelers[0].fullName : "Guest";
   const paxSummary = travelers.map((t) => t.ageBand).reduce((acc: Record<string, number>, curr: string) => {
@@ -38,6 +40,16 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
   }, {});
 
   const includedItems = ["Professional Guide", "Air-conditioned vehicle", "All taxes and fees"]; // Placeholder for now
+
+  const handleDownloadTicket = () => {
+    if (booking.ticketImageUrl) {
+      const link = document.createElement("a");
+      link.href = booking.ticketImageUrl;
+      link.download = `voyra-ticket-${booking.bookingRef}.jpg`;
+      link.target = "_blank";
+      link.click();
+    }
+  };
 
   const handleSaveImage = async () => {
     if (ticketRef.current) {
@@ -52,7 +64,7 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
           },
         });
         const link = document.createElement("a");
-        link.download = `voyra-ticket-${booking.bookingRef}.png`;
+        link.download = `voyra-ticket-capture-${booking.bookingRef}.png`;
         link.href = dataUrl;
         link.click();
       } catch (err) {
@@ -82,6 +94,8 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
       setSendingEmail(false);
     }
   };
+
+  const isConfirmed = booking.status === "CONFIRMED" || booking.status === "COMPLETED";
 
   return (
     <AnimatePresence>
@@ -130,44 +144,72 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
 
           {/* Status Banner */}
           <div className={`p-3 text-center text-white font-bold text-sm ${statusColors[booking.status] || "bg-gray-500"} print-hide`}>
-            {booking.status === "CONFIRMED" ? "✅ " : booking.status === "CANCELLED" ? "❌ " : "⏳ "}
+            {isConfirmed ? "✅ " : booking.status === "CANCELLED" ? "❌ " : "⏳ "}
             {statusMessages[booking.status] || booking.status}
           </div>
 
           <div className="p-6 bg-white space-y-6 shrink-0 grow">
-            {/* QR Code Section */}
-            <div className="flex flex-col items-center justify-center bg-gray-50 p-6 rounded-2xl border border-gray-100 print:bg-white print:border-none">
-              {booking.status === "CONFIRMED" ? (
+            {/* Main Content Section (Image or QR) */}
+            <div className="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-2xl border border-gray-100 print:bg-white print:border-none">
+              {isConfirmed ? (
                 <>
-                  <div className="bg-white p-3 rounded-xl shadow-sm mb-4 print:shadow-none">
-                    <QRCodeSVG
-                      value={qrString}
-                      size={200}
-                      level="H"
-                      includeMargin={false}
-                    />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 font-medium mb-1">BOOKING REF</p>
-                    <p className="text-2xl font-black text-gray-900 tracking-wider">
-                      {booking.bookingRef}
-                    </p>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-4 font-medium px-4 text-center bg-blue-50 text-blue-700 py-2 rounded-lg print:bg-transparent print:border print:border-gray-200">
-                    Show this QR code to your tour guide
+                  {booking.ticketImageUrl ? (
+                    <div className="w-full space-y-4">
+                      <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white">
+                        <img 
+                          src={booking.ticketImageUrl} 
+                          alt="Official Ticket" 
+                          className="w-full h-auto object-contain"
+                        />
+                      </div>
+                      <div className="flex flex-col items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
+                         <QRCodeSVG
+                          value={qrString}
+                          size={100}
+                          level="H"
+                          includeMargin={false}
+                        />
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Digital Verification</p>
+                          <p className="text-sm font-black text-gray-900 tracking-wider">
+                            {booking.bookingRef}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="bg-white p-3 rounded-xl shadow-sm mb-4 print:shadow-none">
+                        <QRCodeSVG
+                          value={qrString}
+                          size={200}
+                          level="H"
+                          includeMargin={false}
+                        />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-gray-500 font-medium mb-1">BOOKING REF</p>
+                        <p className="text-2xl font-black text-gray-900 tracking-wider">
+                          {booking.bookingRef}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  <p className="text-[10px] text-gray-500 mt-4 font-bold px-4 text-center bg-blue-50 text-blue-700 py-2 rounded-lg print:bg-transparent print:border print:border-gray-200 uppercase tracking-widest">
+                    Show this {booking.ticketImageUrl ? "voucher & QR" : "QR code"} to your guide
                   </p>
                 </>
               ) : booking.status === "PENDING" ? (
                 <div className="text-center py-8">
                   <div className="text-5xl mb-4">⏳</div>
-                  <p className="text-gray-900 font-bold">QR Generation Pending</p>
-                  <p className="text-sm text-gray-500 mt-2">QR will appear once supplier confirms your booking</p>
+                  <p className="text-gray-900 font-bold">Confirmation Pending</p>
+                  <p className="text-sm text-gray-500 mt-2">Your ticket will appear once confirmed by admin</p>
                 </div>
               ) : (
                 <div className="text-center py-8 opacity-50 relative print:opacity-100">
                   <div className="text-5xl mb-4">❌</div>
                   <p className="text-gray-900 font-bold">Booking Cancelled</p>
-                  <p className="text-sm text-gray-500 mt-2">QR code is disabled</p>
+                  <p className="text-sm text-gray-500 mt-2">This ticket is no longer valid</p>
                 </div>
               )}
             </div>
@@ -217,21 +259,6 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
 
             <hr className="border-dashed border-gray-200" />
 
-            {/* What's Included */}
-            <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Included</h3>
-              <ul className="space-y-2">
-                {includedItems.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="text-green-500 font-bold shrink-0">✓</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <hr className="border-dashed border-gray-200" />
-
             {/* Cancellation Policy */}
             <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 print:bg-white print:border-gray-300">
               <h3 className="text-xs font-bold text-orange-800 uppercase tracking-wider mb-2 print:text-gray-600">Cancellation Policy</h3>
@@ -244,12 +271,27 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
           {/* Footer & Actions */}
           <div className="bg-gray-900 p-6 flex-shrink-0 print-hide">
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <button onClick={() => window.print()} className="py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2">
+              <button 
+                onClick={() => window.print()} 
+                className="py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2"
+              >
                 🖨️ Print
               </button>
-              <button onClick={handleSaveImage} className="py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2">
-                📱 Save
-              </button>
+              {booking.ticketImageUrl ? (
+                <button 
+                  onClick={handleDownloadTicket} 
+                  className="py-3 px-4 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                >
+                  ⬇️ Download
+                </button>
+              ) : (
+                <button 
+                  onClick={handleSaveImage} 
+                  className="py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2"
+                >
+                  📱 Save
+                </button>
+              )}
               <button
                 onClick={handleResendEmail}
                 disabled={sendingEmail}

@@ -21,6 +21,7 @@ export interface Booking {
   createdAt: string;
   paymentId?: string;
   ticketToken?: string;
+  ticketImageUrl?: string;
   meetingPoint?: string;
   travelers?: BookingTraveler[];
 }

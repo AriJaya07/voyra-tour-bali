@@ -190,6 +190,7 @@ model Booking {
   viatorRetryCount   Int       @default(0)
 
   ticketToken    String?     @unique
+  ticketImageUrl String? // Uploaded Viator ticket image (required before confirming)
 
   userId Int
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
