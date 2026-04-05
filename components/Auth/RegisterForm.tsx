@@ -155,7 +155,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
           name,
           email: email.toLowerCase().trim(),
           password,
-          callbackUrl,
+          callbackUrl: "/",
         }),
       });
 
@@ -229,7 +229,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
           </Button>
           
           <Button
-            onClick={() => router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)}
+            onClick={() => router.push("/login")}
             variant="auth"
           >
             Back to Login
@@ -330,7 +330,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
       </div>
 
       {/* Google Sign-Up */}
-      <GoogleSignInButton callbackUrl={callbackUrl} label="Sign up with Google" />
+      <GoogleSignInButton callbackUrl="/" label="Sign up with Google" />
     </>
   );
 }

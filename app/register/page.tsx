@@ -5,8 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { AuthLayout, RegisterForm } from "@/components/Auth";
 
 function RegisterPageContent() {
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = "/";
 
   return (
     <AuthLayout

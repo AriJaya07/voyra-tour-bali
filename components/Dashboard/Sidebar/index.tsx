@@ -121,14 +121,16 @@ export default function Sidebar() {
     <>
       {/* ── Mobile top bar ───────────────────────────────── */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-700/60">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-            </svg>
+        <Link href={'/'} target="_self">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+              </svg>
+            </div>
+            <span className="text-white font-bold text-sm">TravelAdmin</span>
           </div>
-          <span className="text-white font-bold text-sm">TravelAdmin</span>
-        </div>
+        </Link>
         <button
           onClick={() => setMobileOpen(true)}
           className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/60 transition-colors"
@@ -229,20 +231,20 @@ function SidebarContent({
       </div>
       {/* Logo */}
       <div className={`flex items-center justify-between pb-5 px-4 border-b border-slate-700/60 ${collapsed ? "px-3 justify-center" : ""}`}>
-        <div className="flex items-center gap-3 min-w-0">
-          <Link href={"/"} target="_self" className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-900/40">
+        <Link href={"/"} target="_self" className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-900/40">
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
             </svg>
-          </Link>
+          </div>
           {!collapsed && (
             <div className="min-w-0">
               <p className="text-white font-bold text-sm leading-none">TravelAdmin</p>
               <p className="text-slate-500 text-xs mt-0.5">Dashboard</p>
             </div>
           )}
-        </div>
+        </Link>
 
         {/* Close (mobile) / Collapse (desktop) */}
         {onClose && (

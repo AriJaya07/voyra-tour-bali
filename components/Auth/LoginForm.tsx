@@ -24,7 +24,6 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const getRedirectUrl = (role: string | undefined) => {
-    if (callbackUrl && !callbackUrl.startsWith("/dashboard")) return callbackUrl;
     if (role === "ADMIN") return "/dashboard";
     return "/";
   };

@@ -334,10 +334,7 @@ export default function BookingViatorWidget({
             Please login to check availability, see prices, and book your tour.
           </p>
           <button
-            onClick={() => {
-              const currentUrl = typeof window !== "undefined" ? window.location.pathname : "/";
-              router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
-            }}
+            onClick={() => router.push("/login")}
             className="w-full max-w-[260px] py-4 bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold rounded-xl transition shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
           >
             <LoginRequiredIcon className="w-5 h-5" />

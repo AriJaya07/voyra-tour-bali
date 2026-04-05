@@ -15,7 +15,6 @@ export default function LoginDash() {
   const toastShown = useRef(false);
 
   const getRedirectUrl = (role: string | undefined) => {
-    if (callbackUrl && !callbackUrl.startsWith("/dashboard")) return callbackUrl;
     if (role === "ADMIN") return "/dashboard";
     return "/";
   };
