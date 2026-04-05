@@ -31,7 +31,8 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
     CANCELLED: "This booking is cancelled",
   } as Record<string, string>;
 
-  const qrString = `https://voyratours.com/ticket/${booking.bookingRef}`;
+  const isConfirmed = booking.status === "CONFIRMED" || booking.status === "COMPLETED";
+  const qrString = booking.ticketImageUrl || `https://voyratours.com/ticket/${booking.bookingRef}`;
   const travelers = booking.travelers || [];
   const leadTraveler = travelers.length > 0 ? travelers[0].fullName : "Guest";
   const paxSummary = travelers.map((t) => t.ageBand).reduce((acc: Record<string, number>, curr: string) => {
@@ -41,13 +42,30 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
 
   const includedItems = ["Professional Guide", "Air-conditioned vehicle", "All taxes and fees"]; // Placeholder for now
 
-  const handleDownloadTicket = () => {
-    if (booking.ticketImageUrl) {
+  const handleDownloadTicket = async () => {
+    if (!booking.ticketImageUrl) return;
+    
+    try {
+      const proxyUrl = `/api/proxy-download?url=${encodeURIComponent(booking.ticketImageUrl)}`;
+      const response = await fetch(proxyUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = booking.ticketImageUrl;
+      link.href = url;
       link.download = `voyra-ticket-${booking.bookingRef}.jpg`;
-      link.target = "_blank";
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed", err);
+      window.open(booking.ticketImageUrl, "_blank");
+    }
+  };
+
+  const handleViewVoucher = () => {
+    if (booking.ticketImageUrl) {
+      window.open(booking.ticketImageUrl, "_blank");
     }
   };
 
@@ -94,8 +112,6 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
       setSendingEmail(false);
     }
   };
-
-  const isConfirmed = booking.status === "CONFIRMED" || booking.status === "COMPLETED";
 
   return (
     <AnimatePresence>
@@ -155,26 +171,18 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                 <>
                   {booking.ticketImageUrl ? (
                     <div className="w-full space-y-4">
-                      <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white">
+                      {/* Hero Image - The Official Ticket */}
+                      <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
                         <img 
                           src={booking.ticketImageUrl} 
                           alt="Official Ticket" 
-                          className="w-full h-auto object-contain"
+                          className="w-full h-auto object-contain cursor-pointer"
+                          onClick={handleViewVoucher}
                         />
                       </div>
-                      <div className="flex flex-col items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
-                         <QRCodeSVG
-                          value={qrString}
-                          size={100}
-                          level="H"
-                          includeMargin={false}
-                        />
-                        <div className="text-center">
-                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Digital Verification</p>
-                          <p className="text-sm font-black text-gray-900 tracking-wider">
-                            {booking.bookingRef}
-                          </p>
-                        </div>
+                      
+                      <div className="text-center py-2 px-4 bg-white rounded-xl border border-gray-100 italic text-gray-500 text-[10px]">
+                        Scan the QR/Bar code on the ticket above to verify with your guide
                       </div>
                     </div>
                   ) : (
@@ -188,16 +196,14 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                         />
                       </div>
                       <div className="text-center">
-                        <p className="text-xs text-gray-500 font-medium mb-1">BOOKING REF</p>
+                        <p className="text-xs text-gray-500 font-medium mb-1 uppercase tracking-widest">Digital Verification</p>
                         <p className="text-2xl font-black text-gray-900 tracking-wider">
                           {booking.bookingRef}
                         </p>
+                        <p className="text-[10px] text-gray-400 mt-2">Scan to verify this booking</p>
                       </div>
                     </>
                   )}
-                  <p className="text-[10px] text-gray-500 mt-4 font-bold px-4 text-center bg-blue-50 text-blue-700 py-2 rounded-lg print:bg-transparent print:border print:border-gray-200 uppercase tracking-widest">
-                    Show this {booking.ticketImageUrl ? "voucher & QR" : "QR code"} to your guide
-                  </p>
                 </>
               ) : booking.status === "PENDING" ? (
                 <div className="text-center py-8">
@@ -278,12 +284,14 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                 🖨️ Print
               </button>
               {booking.ticketImageUrl ? (
-                <button 
-                  onClick={handleDownloadTicket} 
-                  className="py-3 px-4 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                >
-                  ⬇️ Download
-                </button>
+                <>
+                  <button 
+                    onClick={handleDownloadTicket} 
+                    className="py-3 px-4 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                  >
+                    ⬇️ Download
+                  </button>
+                </>
               ) : (
                 <button 
                   onClick={handleSaveImage} 
