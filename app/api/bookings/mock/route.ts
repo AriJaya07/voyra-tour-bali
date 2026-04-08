@@ -30,6 +30,7 @@ export async function POST(req: Request) {
       meetingPoint,
       languageGuide,
       bookingQuestionAnswers,
+      promoCode,
     } = body;
 
     // Generate a mock booking reference
@@ -50,6 +51,8 @@ export async function POST(req: Request) {
         meetingPoint,
         pax: totalPax,
         status: "PENDING", // Keep it pending as it's a mock/WhatsApp booking
+        isMockMode: true,
+        promoCode: promoCode || null,
         productOptionCode,
         tourGradeCode,
         startTime,

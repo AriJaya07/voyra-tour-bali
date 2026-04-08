@@ -10,10 +10,12 @@ export const metadata = {
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ promoCode?: string }>;
 }
 
-export default async function MockBookingPage({ params }: PageProps) {
+export default async function MockBookingPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const { promoCode } = await searchParams;
 
   // Fetch MockBooking by slug — show friendly UI on miss, not a crash
   let mockBooking = null;
@@ -41,6 +43,7 @@ export default async function MockBookingPage({ params }: PageProps) {
           overrideTitle={mockBooking.productTitle}
           overridePrice={mockBooking.price}
           overrideCurrency={mockBooking.currency}
+          promoCode={promoCode || mockBooking.promoCode || null}
         />
       </div>
     </div>

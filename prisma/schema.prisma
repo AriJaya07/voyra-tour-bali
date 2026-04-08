@@ -192,6 +192,12 @@ model Booking {
   ticketToken    String?     @unique
   ticketImageUrl String? // Uploaded Viator ticket image (required before confirming)
 
+  // Mock/manual booking fields
+  isMockMode    Boolean     @default(false)
+  manualPrice   Float?
+  promoCode     String?
+  documentsJson Json?
+
   userId Int
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -249,6 +255,8 @@ model MockBooking {
   productImage String?
   price        Float?
   currency     String   @default("IDR")
+  username     String?
+  promoCode    String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -233,8 +233,13 @@ export async function POST(request: Request) {
 
     // ── CRITICAL: After payment success, confirm with Viator ──
     if (isNewConfirmation) {
-      // Prevent duplicate Viator bookings
-      if (booking.viatorBookingRef) {
+      // Skip Viator API for manual/mock bookings — admin handles fulfillment
+      if (booking.isMockMode) {
+        console.log(
+          `[Viator] Mock booking ${order_id} — skipping Viator confirmation, admin handles fulfillment`
+        );
+      } else if (booking.viatorBookingRef) {
+        // Prevent duplicate Viator bookings
         console.log(
           `[Viator] Already booked: ${booking.viatorBookingRef}, skipping`
         );

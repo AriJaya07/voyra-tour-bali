@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { Booking, bookingService } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
 import { toast } from "sonner";
+import { FaCopy } from "react-icons/fa";
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: "bg-amber-500/15 text-amber-400 border-amber-500/20",
@@ -58,6 +59,10 @@ export default function BookingViewModal({
   const [booking, setBooking] = useState(initialBooking);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [manualPriceInput, setManualPriceInput] = useState(
+    booking.manualPrice ? String(booking.manualPrice) : ""
+  );
+  const [savingPrice, setSavingPrice] = useState(false);
 
   const transitions = ALLOWED_TRANSITIONS[booking.status] || [];
 
@@ -77,6 +82,38 @@ export default function BookingViewModal({
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleSetManualPrice = async () => {
+    const price = parseFloat(manualPriceInput);
+    if (isNaN(price) || price <= 0) {
+      toast.error("Please enter a valid price.");
+      return;
+    }
+    setSavingPrice(true);
+    try {
+      const res = await fetch(`/api/admin/bookings/${booking.id}/set-manual-price`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ manualPrice: price }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to set price");
+      }
+      setBooking((prev) => ({ ...prev, manualPrice: price }));
+      toast.success("Manual price saved!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save price");
+    } finally {
+      setSavingPrice(false);
+    }
+  };
+
+  const handleCopyPaymentLink = () => {
+    const url = `${window.location.origin}/payment/manual/${booking.bookingRef}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Payment link copied!");
   };
 
   const isConfirmDisabled = (status: string) => {
@@ -162,6 +199,45 @@ export default function BookingViewModal({
                 value={booking.paidAt ? fmtDateTime(booking.paidAt) : "Not yet paid"}
               />
             </Section>
+
+            {/* Manual Price (mock bookings only) */}
+            {booking.isMockMode && (
+              <Section title="Admin Price">
+                {booking.promoCode && (
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-xs text-slate-400">Promo Code:</span>
+                    <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-xs font-mono rounded border border-indigo-500/20">
+                      {booking.promoCode}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="number"
+                    value={manualPriceInput}
+                    onChange={(e) => setManualPriceInput(e.target.value)}
+                    placeholder="Enter price (IDR)"
+                    className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                  />
+                  <button
+                    onClick={handleSetManualPrice}
+                    disabled={savingPrice}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition"
+                  >
+                    {savingPrice ? "Saving..." : "Save"}
+                  </button>
+                </div>
+                {booking.manualPrice && booking.bookingRef && (
+                  <button
+                    onClick={handleCopyPaymentLink}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-sm font-bold rounded-xl border border-emerald-600/30 transition"
+                  >
+                    <FaCopy className="w-3.5 h-3.5" />
+                    Copy Payment Link
+                  </button>
+                )}
+              </Section>
+            )}
 
             {/* Status Actions */}
             {transitions.length > 0 && (

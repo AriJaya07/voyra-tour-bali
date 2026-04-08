@@ -15,6 +15,8 @@ interface MockBooking {
   productImage: string | null;
   price: number | null;
   currency: string;
+  username: string | null;
+  promoCode: string | null;
   createdAt: string;
 }
 
@@ -82,6 +84,8 @@ export default function ViatorMockAdminPage() {
               <tr className="bg-slate-800/50 text-slate-400 text-xs uppercase tracking-wider">
                 <th className="p-4 font-semibold">Tours</th>
                 <th className="p-4 font-semibold">Slug (Path)</th>
+                <th className="p-4 font-semibold">Username</th>
+                <th className="p-4 font-semibold">Promo</th>
                 <th className="p-4 font-semibold">Price</th>
                 <th className="p-4 font-semibold">Created</th>
                 <th className="p-4 font-semibold text-right">Actions</th>
@@ -90,14 +94,14 @@ export default function ViatorMockAdminPage() {
             <tbody className="divide-y divide-slate-800">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500">
+                  <td colSpan={7} className="p-8 text-center text-slate-500">
                     <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
                     Loading mock bookings...
                   </td>
                 </tr>
               ) : bookings.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500 text-sm">
+                  <td colSpan={7} className="p-8 text-center text-slate-500 text-sm">
                     No mock booking links found. Create one.
                   </td>
                 </tr>
@@ -130,6 +134,20 @@ export default function ViatorMockAdminPage() {
                       <span className="px-2 py-1 bg-slate-800 text-slate-300 text-xs font-mono rounded-md border border-slate-700">
                         /v/{booking.slug}
                       </span>
+                    </td>
+                    <td className="p-4">
+                      <span className="text-xs text-slate-400">
+                        {booking.username || "—"}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      {booking.promoCode ? (
+                        <span className="px-2 py-1 bg-indigo-500/10 text-indigo-400 text-xs font-mono rounded border border-indigo-500/20">
+                          {booking.promoCode}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-600">—</span>
+                      )}
                     </td>
                     <td className="p-4">
                       <span className="text-sm font-medium text-slate-300">

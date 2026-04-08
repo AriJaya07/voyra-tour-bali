@@ -12,6 +12,7 @@ export interface Booking {
   bookingRef: string;
   productCode: string;
   productTitle: string;
+  productImage: string | null;
   totalPrice: number;
   travelDate: string;
   pax: number;
@@ -22,6 +23,9 @@ export interface Booking {
   userId: number;
   user?: BookingUser;
   ticketImageUrl: string | null;
+  isMockMode: boolean;
+  manualPrice: number | null;
+  promoCode: string | null;
   createdAt: string;
   updatedAt: string;
 }
