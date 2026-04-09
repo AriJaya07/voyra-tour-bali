@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, ReactNode } from "react"
 import Image, { type ImageProps } from "next/image"
+import VoryaIcon from "../assets/Icon/VoyraIcon"
 
-const DEFAULT_FALLBACK = "/images/destinations/gwk.png"
+const DEFAULT_FALLBACK = <VoryaIcon className="w-16 h-16 opacity-20" />
 
 interface OptimizedImageProps extends Omit<ImageProps, "onError" | "onLoad"> {
-  fallbackSrc?: string
+  fallbackSrc?: ReactNode
 }
 
 export default function OptimizedImage({
@@ -23,24 +24,31 @@ export default function OptimizedImage({
   }, [])
 
   const handleError = useCallback(() => {
-    if (!hasError) {
-      setHasError(true)
-      setIsLoaded(true)
-    }
-  }, [hasError])
+    setHasError(true)
+    setIsLoaded(true)
+  }, [])
 
-  const src = hasError ? fallbackSrc : props.src
+  // If there is an error or the src is missing, render the fallback component (Icon)
+  if (!props.src || hasError) {
+    return (
+      <div
+        className={`flex items-center justify-center bg-gray-100 rounded-[inherit] overflow-hidden ${className} ${props.fill ? 'absolute inset-0' : ''}`}
+        style={!props.fill ? { width: props.width, height: props.height } : {}}
+      >
+        {fallbackSrc}
+      </div>
+    )
+  }
 
   return (
     <>
-      {/* Skeleton placeholder — visible until image loads */}
       {!isLoaded && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-[inherit]" />
+        <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-[inherit] z-10" />
       )}
 
       <Image
+        loading={props.priority ? undefined : "lazy"}
         {...props}
-        src={src}
         alt={alt}
         className={`${className} transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
         onLoad={handleLoad}

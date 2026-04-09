@@ -13,8 +13,8 @@ import { formatPrice, type CurrencyCode } from "@/utils/formatPrice";
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
 
-import LoginRequiredIcon from "@/components/assets/Icon/LoginRequiredIcon";
 import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon";
+import VoryaIcon from "../assets/Icon/VoyraIcon";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -330,7 +330,7 @@ export default function BookingViatorWidget({
         /* Clean Flow Login Prompt */
         <div className="flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300 h-[350px]">
           <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-5">
-            <LoginRequiredIcon className="w-8 h-8 text-[#0071CE]" />
+            <VoryaIcon className="w-12 h-12" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-3 text-center">Login Required</h3>
           <p className="text-sm text-gray-500 mb-8 text-center italic max-w-[240px] mx-auto leading-relaxed">
@@ -340,7 +340,6 @@ export default function BookingViatorWidget({
             onClick={() => router.push("/login")}
             className="w-full max-w-[260px] py-4 bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold rounded-xl transition shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
           >
-            <LoginRequiredIcon className="w-5 h-5" />
             Login to Continue
           </button>
         </div>

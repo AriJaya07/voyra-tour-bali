@@ -7,6 +7,7 @@ import { Field, inputClass } from "@/components/common/InputForm";
 import CloseIcon from "@/components/assets/dashboard/CloseIcon";
 import LinkIcon from "@/components/assets/dashboard/LinkIcon";
 import { useImages } from "@/utils/hooks/useImages";
+import SpinnerIcon from "@/components/assets/dashboard/SpinnerIcon";
 
 interface FormData {
   title: string;
@@ -75,10 +76,10 @@ export default function LocationForm({
 
   const handleChange =
     (field: keyof FormData) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      setFormData((p) => ({ ...p, [field]: e.target.value }));
-      if (errors[field]) setErrors((p) => ({ ...p, [field]: undefined }));
-    };
+      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        setFormData((p) => ({ ...p, [field]: e.target.value }));
+        if (errors[field]) setErrors((p) => ({ ...p, [field]: undefined }));
+      };
 
   const validate = () => {
     const e: Partial<FormData> = {};
@@ -96,10 +97,10 @@ export default function LocationForm({
     if (!fileArray.length) return;
 
     const newImages = [...formData.images];
-    
+
     for (let i = 0; i < fileArray.length; i++) {
       const file = fileArray[i];
-      
+
       // Add temporary image entry
       newImages.push({
         url: URL.createObjectURL(file),
@@ -108,12 +109,12 @@ export default function LocationForm({
         isMain: newImages.length === 0,
         order: newImages.length,
       });
-      
+
       setFormData(prev => ({ ...prev, images: newImages }));
 
       try {
         const result = await uploadImageAsync({ file });
-        
+
         // Update the image with the actual data
         const updatedImages = [...newImages];
         const imageIndex = updatedImages.length - fileArray.length + i;
@@ -123,7 +124,7 @@ export default function LocationForm({
           url: result.url,
           key: result.key,
         };
-        
+
         setFormData(prev => ({ ...prev, images: updatedImages }));
       } catch (error) {
         console.error("Failed to upload image:", error);
@@ -187,7 +188,7 @@ export default function LocationForm({
           <input
             type="text"
             value={formData.title}
-            placeholder="Title..." 
+            placeholder="Title..."
             onChange={handleChange("title")}
             className={inputClass(!!errors.title)}
           />
@@ -255,7 +256,7 @@ export default function LocationForm({
               </button>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {formData.images.map((image, index) => (
               <div key={index} className="relative group">
@@ -269,9 +270,8 @@ export default function LocationForm({
                     <button
                       type="button"
                       onClick={() => handleSetMainImage(index)}
-                      className={`px-2 py-1 text-xs rounded ${
-                        image.isMain ? 'bg-green-500 text-white' : 'bg-white text-slate-800'
-                      }`}
+                      className={`px-2 py-1 text-xs rounded ${image.isMain ? 'bg-green-500 text-white' : 'bg-white text-slate-800'
+                        }`}
                     >
                       {image.isMain ? 'Main' : 'Set Main'}
                     </button>
@@ -303,10 +303,7 @@ export default function LocationForm({
             className="py-2.5 bg-sky-600 text-white rounded-xl hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-semibold flex items-center justify-center w-[150px]"
           >
             {isLoading && (
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+              <SpinnerIcon className="w-4 h-4" />
             )}
             {mode === "create" ? "Add Location" : "Save Changes"}
           </button>

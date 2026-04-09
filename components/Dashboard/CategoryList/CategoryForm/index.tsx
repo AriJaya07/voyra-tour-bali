@@ -176,7 +176,7 @@ export default function CategoryForm({ mode, initialData, onSubmit, onCancel, is
             disabled={isLoading || uploading}
             className="py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-60 transition-colors text-sm font-medium flex items-center justify-center gap-2 w-[150px]"
           >
-            {(isLoading || uploading) && <SpinnerIcon />}
+            {(isLoading || uploading) && <SpinnerIcon className="w-4 h-4" />}
             {mode === "create" ? "Create" : "Save"}
           </button>
         </div>

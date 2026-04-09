@@ -10,9 +10,9 @@ import ContentsSection from "@/components/DetailProduct/ContentsSection";
 import LocationSection from "@/components/DetailProduct/LocationSection";
 import PackagesSection from "@/components/DetailProduct/PackagesSection";
 import {
-  SITE_URL,
-  SITE_NAME,
-  buildTouristAttractionJsonLd,
+    SITE_URL,
+    SITE_NAME,
+    buildTouristAttractionJsonLd,
 } from "@/lib/config";
 
 // ── SEO Metadata ────────────────────────────────────────────────────────
@@ -142,7 +142,7 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
                             packages={destination.packages}
                             destinationTitle={destination.title}
                         />
-                        <ExcpectDetail images={contentImages.length > 0 ? contentImages : undefined} />
+                        <ExcpectDetail images={destination.images} />
                     </div>
 
                     {/* ── Right: Sticky booking card ── */}

@@ -19,11 +19,11 @@ export default function BannerDetail({ title, description, images, categoryName 
         return 0;
     });
 
-    const img1 = sortedImages[0]?.url || "/images/detail/banner-1.png";
-    const img2 = sortedImages[1]?.url || "/images/detail/banner-2.png";
-    const img3 = sortedImages[2]?.url || "/images/detail/banner-3.png";
-    const img4 = sortedImages[3]?.url || "/images/detail/banner-4.png";
-    const img5 = sortedImages[4]?.url || "/images/detail/banner-5.png";
+    const img1 = sortedImages[0]?.url;
+    const img2 = sortedImages[1]?.url;
+    const img3 = sortedImages[2]?.url;
+    const img4 = sortedImages[3]?.url;
+    const img5 = sortedImages[4]?.url;
 
     return (
         <div className="">

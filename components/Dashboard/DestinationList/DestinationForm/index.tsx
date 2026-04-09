@@ -125,10 +125,10 @@ export default function DestinationForm({
     if (!fileArray.length) return;
 
     const newImages = [...formData.images];
-    
+
     for (let i = 0; i < fileArray.length; i++) {
       const file = fileArray[i];
-      
+
       // Add temporary image entry
       newImages.push({
         url: URL.createObjectURL(file),
@@ -137,12 +137,12 @@ export default function DestinationForm({
         isMain: newImages.length === 0,
         order: newImages.length,
       });
-      
+
       setFormData(prev => ({ ...prev, images: newImages }));
 
       try {
         const result = await uploadImageAsync({ file });
-        
+
         // Update the image with the actual data
         const updatedImages = [...newImages];
         const imageIndex = updatedImages.length - fileArray.length + i;
@@ -152,7 +152,7 @@ export default function DestinationForm({
           url: result.url,
           key: result.key,
         };
-        
+
         setFormData(prev => ({ ...prev, images: updatedImages }));
       } catch (error) {
         console.error("Failed to upload image:", error);
@@ -356,7 +356,7 @@ export default function DestinationForm({
               </button>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {formData.images.map((image, index) => (
               <div key={index} className="relative group">
@@ -370,9 +370,8 @@ export default function DestinationForm({
                     <button
                       type="button"
                       onClick={() => handleSetMainImage(index)}
-                      className={`px-2 py-1 text-xs rounded ${
-                        image.isMain ? 'bg-green-500 text-white' : 'bg-white text-slate-800'
-                      }`}
+                      className={`px-2 py-1 text-xs rounded ${image.isMain ? 'bg-green-500 text-white' : 'bg-white text-slate-800'
+                        }`}
                     >
                       {image.isMain ? 'Main' : 'Set Main'}
                     </button>
@@ -409,7 +408,7 @@ export default function DestinationForm({
               Add Content
             </button>
           </div>
-          
+
           {formData.contents.map((content, contentIndex) => (
             <div key={contentIndex} className="border border-slate-200 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between mb-4">
@@ -422,7 +421,7 @@ export default function DestinationForm({
                   Remove
                 </button>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <Field label="Title" required>
                   <input
@@ -441,7 +440,7 @@ export default function DestinationForm({
                   />
                 </Field>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <Field label="Date Available" required>
                   <input
@@ -462,7 +461,7 @@ export default function DestinationForm({
                   </select>
                 </Field>
               </div>
-              
+
               <Field label="Description" required>
                 <textarea
                   rows={3}
@@ -487,7 +486,7 @@ export default function DestinationForm({
               Add Location
             </button>
           </div>
-          
+
           {formData.locations.map((location, locationIndex) => (
             <div key={locationIndex} className="border border-slate-200 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between mb-4">
@@ -500,7 +499,7 @@ export default function DestinationForm({
                   Remove
                 </button>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <Field label="Title" required>
                   <input
@@ -519,7 +518,7 @@ export default function DestinationForm({
                   />
                 </Field>
               </div>
-              
+
               <Field label="Link URL">
                 <input
                   type="url"
@@ -539,7 +538,7 @@ export default function DestinationForm({
             disabled={isLoading}
             className="py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-800 disabled:opacity-60 transition-colors text-sm font-medium flex items-center justify-center gap-2 w-[150px]"
           >
-            {isLoading && <SpinnerIcon />}
+            {isLoading && <SpinnerIcon className="w-4 h-4" />}
             {mode === "create" ? "Create" : "Save"}
           </button>
         </div>

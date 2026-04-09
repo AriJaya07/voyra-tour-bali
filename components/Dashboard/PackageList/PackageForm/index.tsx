@@ -100,10 +100,10 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
     if (!fileArray.length) return;
 
     const newImages = [...formData.images];
-    
+
     for (let i = 0; i < fileArray.length; i++) {
       const file = fileArray[i];
-      
+
       // Add temporary image entry
       newImages.push({
         url: URL.createObjectURL(file),
@@ -112,12 +112,12 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
         isMain: newImages.length === 0,
         order: newImages.length,
       });
-      
+
       setFormData(prev => ({ ...prev, images: newImages }));
 
       try {
         const result = await uploadImageAsync({ file });
-        
+
         // Update the image with the actual data
         const updatedImages = [...newImages];
         const imageIndex = updatedImages.length - fileArray.length + i;
@@ -127,7 +127,7 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
           url: result.url,
           key: result.key,
         };
-        
+
         setFormData(prev => ({ ...prev, images: updatedImages }));
       } catch (error) {
         console.error("Failed to upload image:", error);
@@ -179,9 +179,9 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
       <form onSubmit={handleSubmit} noValidate className="p-6 space-y-6">
         <Field label="Title" error={errors.title} required>
           <input
-            type="text" 
-            placeholder="e.g. 7-Day Bali Explorer" 
-            value={formData.title} 
+            type="text"
+            placeholder="e.g. 7-Day Bali Explorer"
+            value={formData.title}
             onChange={handleChange("title")}
             className={inputClass(!!errors.title)}
           />
@@ -189,19 +189,19 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
 
         <Field label="Slug" error={errors.slug} required>
           <input
-            type="text" 
-            placeholder="Slug..." 
-            value={formData.slug} 
+            type="text"
+            placeholder="Slug..."
+            value={formData.slug}
             onChange={handleChange("slug")}
             className={inputClass(!!errors.slug)}
           />
         </Field>
 
         <Field label="Description" error={errors.description} required>
-           <textarea 
-            placeholder="Describe what's included in this package..." 
-            value={formData.description} 
-            onChange={handleChange("description")} 
+          <textarea
+            placeholder="Describe what's included in this package..."
+            value={formData.description}
+            onChange={handleChange("description")}
             rows={3}
             className={inputClass(!!errors.description)}
           />
@@ -248,7 +248,7 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
             </select>
           </Field>
         </div>
-        
+
         <div className="border-b border-slate-200 w-full">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-800">Images</h3>
@@ -270,7 +270,7 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
               </button>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {formData.images.map((image, index) => (
               <div key={index} className="relative group">
@@ -284,9 +284,8 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
                     <button
                       type="button"
                       onClick={() => handleSetMainImage(index)}
-                      className={`px-2 py-1 text-xs rounded ${
-                        image.isMain ? 'bg-green-500 text-white' : 'bg-white text-slate-800'
-                      }`}
+                      className={`px-2 py-1 text-xs rounded ${image.isMain ? 'bg-green-500 text-white' : 'bg-white text-slate-800'
+                        }`}
                     >
                       {image.isMain ? 'Main' : 'Set Main'}
                     </button>
@@ -318,7 +317,7 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
             className="py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-60 transition-colors text-sm font-medium flex items-center justify-center gap-2 w-[150px]"
           >
             {isLoading && (
-              <SpinnerIcon />
+              <SpinnerIcon className="w-4 h-4" />
             )}
             {mode === "create" ? "Create" : "Save"}
           </button>
