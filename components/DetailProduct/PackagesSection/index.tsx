@@ -3,12 +3,12 @@
 import { useState } from "react"
 import { Package, Category, Image as PrismaImage } from "@prisma/client"
 import OptimizedImage from "@/components/common/OptimizedImage"
-import WhatappIcon from "../../assets/sosmed/WhatappIcon"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useCreatePayment } from "@/utils/hooks/usePayment"
 import { formatPrice } from "@/utils/formatPrice"
 import { toast } from "sonner"
+import WhatsAppIcon from "../../assets/sosmed/WhatsAppIcon"
 
 // Types
 type PackageWithRelations = Package & {
@@ -152,7 +152,7 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
                       rel="noopener noreferrer"
                       className="flex justify-center items-center gap-2 py-2.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white text-sm font-bold rounded-xl transition-colors shadow-sm w-full"
                     >
-                      <WhatappIcon />
+                      <WhatsAppIcon className="w-5 h-5" />
                       Ask via WhatsApp
                     </a>
                   </div>

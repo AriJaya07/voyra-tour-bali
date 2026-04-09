@@ -14,7 +14,7 @@ import {
 } from "@/lib/api/viator-client";
 import { VIATOR_MOCK_BOOKING } from "@/lib/config/viator";
 import { buildWhatsAppUrl } from "@/lib/config";
-import WhatappIcon from "@/components/assets/sosmed/WhatappIcon";
+import WhatsAppIcon from "@/components/assets/sosmed/WhatsAppIcon";
 
 // ── Mock fallback reasons (used when VIATOR_MOCK_BOOKING is true) ────────────
 
@@ -141,7 +141,7 @@ export default function CancelModal({ booking, onClose, onSuccess }: CancelModal
     try {
       const data = await cancelBooking(booking.bookingRef, selectedReason);
       if (data.status) {
-        await updateBookingStatus(booking.bookingRef, "CANCELLED").catch(() => {});
+        await updateBookingStatus(booking.bookingRef, "CANCELLED").catch(() => { });
         onSuccess();
       } else {
         toast.error("Failed to cancel this booking.");
@@ -272,8 +272,7 @@ export default function CancelModal({ booking, onClose, onSuccess }: CancelModal
                   disabled={waDisabled}
                   className="w-full py-4 bg-[#25D366] text-white font-black rounded-xl hover:bg-[#1ebe5d] active:scale-[0.98] transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-3"
                 >
-                  {/* Global WhatsApp icon from @/components/assets/sosmed/WhatappIcon */}
-                  <WhatappIcon className="h-5 w-auto shrink-0" />
+                  <WhatsAppIcon className="h-5 w-auto shrink-0" />
                   <span>Request Cancellation</span>
                 </button>
               ) : (
