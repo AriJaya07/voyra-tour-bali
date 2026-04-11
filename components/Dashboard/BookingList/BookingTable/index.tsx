@@ -28,7 +28,7 @@ interface BookingTableProps {
   bookings: Booking[];
   isLoading: boolean;
   onView: (booking: Booking) => void;
-  onUpdateStatus: (id: number, status: string) => void;
+  onUpdateStatus: (id: number, status: string, payload?: any) => void;
   updatingStatus: boolean;
 }
 
@@ -156,7 +156,7 @@ export default function BookingTable({
 
                       {nextAction && (
                         <button
-                          onClick={() => onUpdateStatus(b.id, nextAction.status)}
+                          onClick={() => onView(b)}
                           disabled={updatingStatus}
                           className="px-2.5 py-1 rounded-lg bg-violet-500/15 text-violet-400 text-xs font-semibold hover:bg-violet-500/25 transition disabled:opacity-40"
                         >

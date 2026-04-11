@@ -138,7 +138,7 @@ export default function BookingList() {
         bookings={bookings}
         isLoading={isLoading}
         onView={setViewBooking}
-        onUpdateStatus={(id, status) => updateStatus({ id, status })}
+        onUpdateStatus={(id: number, status: string, payload?: any) => updateStatus({ id, status, payload })}
         updatingStatus={updatingStatus}
       />
 
@@ -172,9 +172,9 @@ export default function BookingList() {
         <BookingViewModal
           booking={viewBooking}
           onClose={() => setViewBooking(null)}
-          onUpdateStatus={(id, status) => {
+          onUpdateStatus={(id: number, status: string, payload?: any) => {
             updateStatus(
-              { id, status },
+              { id, status, payload },
               { onSuccess: () => setViewBooking(null) }
             );
           }}

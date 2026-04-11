@@ -14,8 +14,8 @@ export function useBookings(filters?: BookingFilters) {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
-      bookingService.updateStatus(id, status),
+    mutationFn: ({ id, status, payload }: { id: number; status: string; payload?: { manualPrice?: number; travelTime?: string } }) =>
+      bookingService.updateStatus(id, status, payload),
     onSuccess: invalidate,
   });
 

@@ -25,7 +25,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { manualPrice } = body;
+    const { manualPrice, travelTime } = body;
 
     if (!manualPrice || typeof manualPrice !== "number" || manualPrice <= 0) {
       return NextResponse.json({ error: "Invalid price" }, { status: 400 });
@@ -43,6 +43,7 @@ export async function PATCH(
       where: { id: bookingId },
       data: {
         manualPrice,
+        travelTime: travelTime || booking.travelTime,
         status: "PENDING",
       },
     });

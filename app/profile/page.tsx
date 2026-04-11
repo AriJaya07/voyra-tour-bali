@@ -279,9 +279,10 @@ export default function ProfilePage() {
                         const isPast = new Date(b.travelDate) < new Date(new Date().setHours(0, 0, 0, 0));
                         const statusInfo = BOOKING_STATUS_MAP[b.status] || { label: b.status || "PENDING", className: "bg-gray-100 text-gray-700" };
                         const imageUrl = b.productImage
-                        const totalPriceUsd = b.totalPriceUsd || b.totalPrice / 15000;
+                        const displayPrice = b.manualPrice || b.totalPrice;
+                        const totalPriceUsd = !b.manualPrice ? (b.totalPriceUsd || b.totalPrice / 15000) : null;
                         const currency = b.currency || "IDR";
-                        const time = b.travelTime || "08:00 AM";
+                        const time = b.travelTime || "Pending Confirmation";
                         return (
                           <>
                             <div className="w-full md:w-48 h-48 md:h-auto bg-gray-200 relative shrink-0">
@@ -321,7 +322,7 @@ export default function ProfilePage() {
                                   <div className="flex items-start gap-2">
                                     <span className="shrink-0 mt-0.5">💰</span>
                                     <span className="font-semibold text-gray-900">
-                                      {currency} {b.totalPrice.toLocaleString()} {totalPriceUsd ? `/ $${totalPriceUsd.toFixed(2)} USD` : ""}
+                                      {currency} {displayPrice.toLocaleString()} {totalPriceUsd ? `/ $${totalPriceUsd.toFixed(2)} USD` : ""}
                                     </span>
                                   </div>
                                 </div>

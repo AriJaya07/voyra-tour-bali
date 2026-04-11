@@ -4,7 +4,7 @@ import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  PENDING: ["CONFIRMED", "CANCELLED"],
+  PENDING: ["CONFIRMED", "COMPLETED", "CANCELLED"],
   CONFIRMED: ["COMPLETED", "CANCELLED"],
   COMPLETED: [],
   CANCELLED: [],
@@ -88,10 +88,10 @@ export async function PATCH(
       );
     }
 
-    // New: Check if ticketImageUrl is present before confirming
-    if (status === "CONFIRMED" && !booking.ticketImageUrl) {
+    // Validate requirements for completing
+    if (status === "COMPLETED" && !booking.ticketImageUrl) {
       return NextResponse.json(
-        { error: "Ticket image must be uploaded before confirming." },
+        { error: "Ticket image must be uploaded before completing." },
         { status: 422 }
       );
     }

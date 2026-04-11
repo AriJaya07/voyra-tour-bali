@@ -24,6 +24,7 @@ export interface Booking {
   ticketImageUrl?: string;
   meetingPoint?: string;
   travelers?: BookingTraveler[];
+  manualPrice?: number;
 }
 
 export interface BookingStatusConfig {

@@ -12,7 +12,7 @@ import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon";
 // ── Config ─────────────────────────────────────────────────────────────────
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
-const STEPS = ["Contact", "Travelers", "Notes", "Confirm"];
+const STEPS = ["Contact", "Travelers", "Logistics", "Notes", "Confirm"];
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -52,7 +52,9 @@ function buildWaUrl(
   travelDate: Date,
   paxMix: PaxMixItem[],
   contact: ContactInfo,
-  specialRequest: string
+  specialRequest: string,
+  wantsPickup: boolean,
+  pickupLocation: string
 ): string {
   const dateStr = travelDate.toLocaleDateString("en-US", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
@@ -72,6 +74,7 @@ function buildWaUrl(
     `Lead Traveler: ${contact.firstName} ${contact.lastName}`,
     `Phone: ${contact.phone}`,
     `Email: ${contact.email}`,
+    ...(wantsPickup && pickupLocation ? [`Pickup Location: ${pickupLocation}`] : []),
     ...(specialRequest ? [`Notes: ${specialRequest}`] : []),
     "",
     "Please confirm my booking, thank you!",
@@ -445,7 +448,182 @@ function StepTravelers({
   );
 }
 
-// ── Step 2: Notes ──────────────────────────────────────────────────────────
+// ── Step 2: Logistics ──────────────────────────────────────────────────────
+
+function StepLogistics({
+  onNext,
+  onBack,
+  wantsPickup,
+  setWantsPickup,
+  pickupLocation,
+  setPickupLocation,
+  productCode,
+}: {
+  onNext: () => void;
+  onBack: () => void;
+  wantsPickup: boolean;
+  setWantsPickup: (v: boolean) => void;
+  pickupLocation: string;
+  setPickupLocation: (v: string) => void;
+  productCode: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  useEffect(() => {
+    if (!wantsPickup) {
+      setPickupLocation("");
+      setQuery("");
+      setResults([]);
+      setSearched(false);
+    }
+  }, [wantsPickup, setPickupLocation]);
+
+  useEffect(() => {
+    // Only search automatically if they want pickup
+    if (!wantsPickup) return;
+
+    // Debounce the search
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      setSearched(true);
+      try {
+        const urlParams = new URLSearchParams({
+          query: query,
+          productCode: productCode
+        });
+        const res = await fetch(`/api/viator/logistics/location/search?${urlParams.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data.locations || []);
+        }
+      } catch (e) {
+        toast.error("Failed to fetch locations");
+      } finally {
+        setLoading(false);
+      }
+    }, 400); // 400ms delay
+
+    return () => clearTimeout(timer);
+  }, [query, wantsPickup]);
+
+  const validate = () => {
+    if (wantsPickup && !pickupLocation) {
+      toast.error("Please select a pickup location");
+      return false;
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (!validate()) return;
+    onNext();
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
+        <SectionHeader
+          icon="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z"
+          title="Pickup point"
+        />
+        <p className="text-gray-600 text-sm mb-5 leading-relaxed">
+          Tell us where you’d like to be picked up from. If you're not sure, you can decide later.
+        </p>
+        
+        <div className="space-y-3 mb-2">
+          <label className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition ${wantsPickup ? 'border-[#0071CE] bg-blue-50/30' : 'border-gray-200 hover:border-[#0071CE]/30'}`}>
+            <input 
+              type="radio"
+              name="pickupChoice"
+              checked={wantsPickup === true}
+              onChange={() => setWantsPickup(true)}
+              className="w-5 h-5 border-gray-300 text-[#0071CE] focus:ring-[#0071CE]"
+            />
+            <span className="text-sm font-bold text-gray-900">I'd like to be picked up</span>
+          </label>
+
+          <label className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition ${!wantsPickup ? 'border-[#0071CE] bg-blue-50/30' : 'border-gray-200 hover:border-[#0071CE]/30'}`}>
+            <input 
+              type="radio"
+              name="pickupChoice"
+              checked={wantsPickup === false}
+              onChange={() => setWantsPickup(false)}
+              className="w-5 h-5 border-gray-300 text-[#0071CE] focus:ring-[#0071CE]"
+            />
+            <span className="text-sm font-bold text-gray-900">I'll decide later</span>
+          </label>
+        </div>
+
+        {wantsPickup && (
+          <div className="space-y-4 pt-4 mt-2 border-t border-gray-100">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Search Location / Hotel *</label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => setIsInputFocused(true)}
+                  // We delay setting focused to false so clicks on the dropdown list can register first
+                  onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
+                  placeholder="e.g. Seminyak, St. Regis..."
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition"
+                />
+                {loading && (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-[2px] border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {searched && !loading && results.length === 0 && (
+              <p className="text-sm text-gray-500 italic px-2">No locations found.</p>
+            )}
+
+            {isInputFocused && results.length > 0 && (
+              <div className="border border-gray-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto shadow-sm">
+                {results.map((loc, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setPickupLocation(loc);
+                      setQuery(loc); // Auto-fill the input with the selected location name
+                    }}
+                    className={`block w-full text-left px-4 py-3 text-sm transition ${pickupLocation === loc ? 'bg-blue-50 text-[#0071CE] font-bold' : 'hover:bg-gray-50 text-gray-700 border-b border-gray-100 last:border-0'}`}
+                  >
+                    {loc}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {pickupLocation && !isInputFocused && (
+              <div className="p-3 bg-green-50 text-green-800 rounded-xl text-sm font-medium flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Selected: {pickupLocation}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-3">
+        <button type="button" onClick={onBack} className="flex-1 py-4 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">Back</button>
+        <button type="button" onClick={handleNext} className="flex-[2] bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98]">Continue</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 3: Notes ──────────────────────────────────────────────────────────
 
 function StepDetails({
   onNext,
@@ -495,7 +673,7 @@ function StepDetails({
   );
 }
 
-// ── Step 3: Confirm ────────────────────────────────────────────────────────
+// ── Step 4: Confirm ────────────────────────────────────────────────────────
 
 function StepConfirm({
   onBack,
@@ -509,6 +687,8 @@ function StepConfirm({
   paxMix,
   travelDate,
   specialRequest,
+  wantsPickup,
+  pickupLocation,
   promoCode,
 }: {
   onBack: () => void;
@@ -522,6 +702,8 @@ function StepConfirm({
   paxMix: PaxMixItem[];
   travelDate: Date;
   specialRequest: string;
+  wantsPickup: boolean;
+  pickupLocation: string;
   promoCode?: string | null;
 }) {
   const { data: session } = useSession();
@@ -539,20 +721,12 @@ function StepConfirm({
   /**
    * Flow:
    * 1. Show loading spinner while /api/bookings/mock is in progress.
-   * 2. On success → open WhatsApp automatically (no second click needed).
-   *
-   * Popup-blocker trick: open a blank tab synchronously on click, then
-   * navigate it to the WA URL after the await resolves. Since the tab was
-   * opened inside the original click event, browsers allow it.
+   * 2. On success → try to open WhatsApp automatically.
+   * 3. If a popup blocker prevents it, the fallback UI displays a big green WhatsApp button.
    */
   const handleConfirm = async () => {
     if (!termsAccepted) { toast.warning("Please accept the terms to continue."); return; }
     if (!session?.user?.id) { toast.error("Please login to continue."); return; }
-
-    // Open a blank tab immediately (synchronous part of click handler).
-    // Popup blockers allow this because it's inside the user's click event.
-    // We'll navigate it to WA once the booking is confirmed.
-    const waWindowRef = window.open("", "_blank", "noopener,noreferrer");
 
     setIsSubmitting(true);
     try {
@@ -580,9 +754,10 @@ function StepConfirm({
           },
           totalPrice: overridePrice || 0,
           currency: overrideCurrency || "IDR",
-          bookingQuestionAnswers: specialRequest
-            ? [{ questionId: "specialRequest", answer: specialRequest }]
-            : [],
+          bookingQuestionAnswers: [
+            ...(specialRequest ? [{ questionId: "specialRequest", answer: specialRequest }] : []),
+            ...(wantsPickup && pickupLocation ? [{ questionId: "pickupLocation", answer: pickupLocation }] : [])
+          ],
           promoCode: promoCode || null,
         }),
       });
@@ -592,21 +767,15 @@ function StepConfirm({
         throw new Error(err.error || "Failed to save booking");
       }
 
-      // ── Booking saved ── navigate the pre-opened tab to WhatsApp ──────────
-      const url = buildWaUrl(productTitle, productCode, travelDate, paxMix, contact, specialRequest);
+      // ── Booking saved ── attempt to open WhatsApp ──────────
+      const url = buildWaUrl(productTitle, productCode, travelDate, paxMix, contact, specialRequest, wantsPickup, pickupLocation);
       setWaUrl(url);
 
-      if (waWindowRef && !waWindowRef.closed) {
-        waWindowRef.location.href = url;
-      } else {
-        // Fallback: tab was blocked — show the manual button below
-        window.open(url, "_blank", "noopener,noreferrer");
-      }
+      // Attempt to open immediately; if blocked, the fallback UI handles it gracefully
+      window.open(url, "_blank", "noopener,noreferrer");
 
       setBookingSaved(true);
     } catch (error: any) {
-      // API failed — close the blank tab so the user isn't left with an empty tab
-      waWindowRef?.close();
       toast.error(error.message || "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -677,6 +846,7 @@ function StepConfirm({
         <div className="space-y-4 text-sm">
           <Row label="Experience" value={productTitle} bold />
           <Row label="Travel Date" value={dateStr} bold />
+          {wantsPickup && pickupLocation && <Row label="Pickup" value={pickupLocation} />}
           <Row label="Contact" value={`${contact.firstName} ${contact.lastName} · ${contact.phone}`} />
           <div className="py-3 border-t border-gray-100">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
@@ -869,6 +1039,8 @@ export default function MockCheckoutClient({
   const [travelers, setTravelers] = useState<TravelerInfo[]>([]);
   // Default to today — lazy initializer avoids re-creating Date on each render
   const [travelDate, setTravelDate] = useState<Date>(() => new Date());
+  const [wantsPickup, setWantsPickup] = useState(false);
+  const [pickupLocation, setPickupLocation] = useState("");
   const [specialRequest, setSpecialRequest] = useState("");
 
   const productTitle = overrideTitle || initialProductCode;
@@ -970,16 +1142,27 @@ export default function MockCheckoutClient({
               />
             )}
             {step === 2 && (
-              <StepDetails
+              <StepLogistics
                 onNext={() => setStep(3)}
                 onBack={() => setStep(1)}
+                wantsPickup={wantsPickup}
+                setWantsPickup={setWantsPickup}
+                pickupLocation={pickupLocation}
+                setPickupLocation={setPickupLocation}
+                productCode={initialProductCode}
+              />
+            )}
+            {step === 3 && (
+              <StepDetails
+                onNext={() => setStep(4)}
+                onBack={() => setStep(2)}
                 specialRequest={specialRequest}
                 setSpecialRequest={setSpecialRequest}
               />
             )}
-            {step === 3 && (
+            {step === 4 && (
               <StepConfirm
-                onBack={() => setStep(2)}
+                onBack={() => setStep(3)}
                 productCode={initialProductCode}
                 productTitle={productTitle}
                 overridePrice={overridePrice}
@@ -989,6 +1172,8 @@ export default function MockCheckoutClient({
                 paxMix={paxMix}
                 travelDate={travelDate}
                 specialRequest={specialRequest}
+                wantsPickup={wantsPickup}
+                pickupLocation={pickupLocation}
                 promoCode={promoCode}
               />
             )}

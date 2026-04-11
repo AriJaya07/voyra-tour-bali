@@ -234,7 +234,7 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                   </div>
                   <div className="bg-gray-50 p-3 rounded-xl print:border print:border-gray-200">
                     <p className="text-xs text-gray-500 font-medium mb-1">Time</p>
-                    <p className="font-bold text-gray-900">{booking.travelTime || "08:00 AM"}</p>
+                    <p className="font-bold text-gray-900">{booking.travelTime || "Pending Confirmation"}</p>
                   </div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-xl text-sm print:border print:border-gray-200">

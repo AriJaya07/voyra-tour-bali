@@ -15,6 +15,7 @@ export interface Booking {
   productImage: string | null;
   totalPrice: number;
   travelDate: string;
+  travelTime: string | null;
   pax: number;
   status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
   paymentId: string | null;
@@ -55,8 +56,12 @@ export const bookingService = {
     return data;
   },
 
-  updateStatus: async (id: number, status: string): Promise<Booking> => {
-    const { data } = await api.patch(`/admin/bookings/${id}`, { status });
+  updateStatus: async (
+    id: number,
+    status: string,
+    payload?: { manualPrice?: number; travelTime?: string }
+  ): Promise<Booking> => {
+    const { data } = await api.patch(`/admin/bookings/${id}`, { status, ...payload });
     return data;
   },
 

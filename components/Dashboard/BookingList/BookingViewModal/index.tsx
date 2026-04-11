@@ -16,6 +16,7 @@ const STATUS_STYLES: Record<string, string> = {
 const ALLOWED_TRANSITIONS: Record<string, { label: string; status: string; color: string }[]> = {
   PENDING: [
     { label: "Confirm Booking", status: "CONFIRMED", color: "bg-blue-600 hover:bg-blue-700" },
+    { label: "Mark Completed (Direct)", status: "COMPLETED", color: "bg-green-600 hover:bg-green-700" },
     { label: "Cancel Booking", status: "CANCELLED", color: "bg-red-600 hover:bg-red-700" },
   ],
   CONFIRMED: [
@@ -46,7 +47,7 @@ const fmtDateTime = (s: string) =>
 interface BookingViewModalProps {
   booking: Booking;
   onClose: () => void;
-  onUpdateStatus: (id: number, status: string) => void;
+  onUpdateStatus: (id: number, status: string, payload?: { manualPrice?: number; travelTime?: string }) => void;
   updatingStatus: boolean;
 }
 
@@ -61,6 +62,9 @@ export default function BookingViewModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [manualPriceInput, setManualPriceInput] = useState(
     booking.manualPrice ? String(booking.manualPrice) : ""
+  );
+  const [manualTimeInput, setManualTimeInput] = useState(
+    booking.travelTime || ""
   );
   const [savingPrice, setSavingPrice] = useState(false);
 
@@ -90,21 +94,32 @@ export default function BookingViewModal({
       toast.error("Please enter a valid price.");
       return;
     }
+    if (!manualTimeInput) {
+      toast.error("Please explicitly enter a travel time (O'clock).");
+      return;
+    }
     setSavingPrice(true);
     try {
       const res = await fetch(`/api/admin/bookings/${booking.id}/set-manual-price`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ manualPrice: price }),
+        body: JSON.stringify({ 
+          manualPrice: price,
+          travelTime: manualTimeInput 
+        }),
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed to set price");
+        throw new Error(err.error || "Failed to set price/time");
       }
-      setBooking((prev) => ({ ...prev, manualPrice: price }));
-      toast.success("Manual price saved!");
+      setBooking((prev) => ({ 
+        ...prev, 
+        manualPrice: price,
+        travelTime: manualTimeInput 
+      }));
+      toast.success("Price and time saved!");
     } catch (error: any) {
-      toast.error(error.message || "Failed to save price");
+      toast.error(error.message || "Failed to save details");
     } finally {
       setSavingPrice(false);
     }
@@ -117,7 +132,7 @@ export default function BookingViewModal({
   };
 
   const isConfirmDisabled = (status: string) => {
-    if (status === "CONFIRMED") {
+    if (status === "COMPLETED") {
       return updatingStatus || uploading || !booking.ticketImageUrl;
     }
     return updatingStatus || uploading;
@@ -200,9 +215,9 @@ export default function BookingViewModal({
               />
             </Section>
 
-            {/* Manual Price (mock bookings only) */}
+            {/* Manual Price & Time (mock bookings only) */}
             {booking.isMockMode && (
-              <Section title="Admin Price">
+              <Section title="Admin Price & O'clock">
                 {booking.promoCode && (
                   <div className="mb-3 flex items-center gap-2">
                     <span className="text-xs text-slate-400">Promo Code:</span>
@@ -211,22 +226,37 @@ export default function BookingViewModal({
                     </span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 mb-3">
-                  <input
-                    type="number"
-                    value={manualPriceInput}
-                    onChange={(e) => setManualPriceInput(e.target.value)}
-                    placeholder="Enter price (IDR)"
-                    className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
-                  />
-                  <button
-                    onClick={handleSetManualPrice}
-                    disabled={savingPrice}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition"
-                  >
-                    {savingPrice ? "Saving..." : "Save"}
-                  </button>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Set Price (IDR)</label>
+                    <input
+                      type="number"
+                      value={manualPriceInput}
+                      onChange={(e) => setManualPriceInput(e.target.value)}
+                      placeholder="e.g. 1500000"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Set O'clock (Time)</label>
+                    <input
+                      type="time"
+                      value={manualTimeInput}
+                      onChange={(e) => setManualTimeInput(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition"
+                    />
+                  </div>
                 </div>
+
+                <button
+                  onClick={handleSetManualPrice}
+                  disabled={savingPrice}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition mb-3"
+                >
+                  {savingPrice ? "Saving..." : "Save Price & Time"}
+                </button>
+
                 {booking.manualPrice && booking.bookingRef && (
                   <button
                     onClick={handleCopyPaymentLink}
@@ -241,11 +271,11 @@ export default function BookingViewModal({
 
             {/* Status Actions */}
             {transitions.length > 0 && (
-              <Section title={booking.status === "PENDING" ? "Ticket & Status" : "Update Status"}>
-                {booking.status === "PENDING" && (
+              <Section title={booking.status === "CONFIRMED" ? "Upload Ticket & Complete" : "Update Status"}>
+                {transitions.some(t => t.status === "COMPLETED") && (
                   <div className="mb-4 space-y-3">
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">
-                      Upload Viator Ticket (Required to Confirm)
+                      Upload Viator/Supplier Ticket (Required to Complete)
                     </label>
                     <div className="flex items-center gap-4">
                       {booking.ticketImageUrl ? (
@@ -274,8 +304,7 @@ export default function BookingViewModal({
                       )}
                       <div className="flex-1">
                         <p className="text-[11px] text-slate-400 leading-relaxed">
-                          Please upload the official Viator/Supplier ticket image. 
-                          This will be visible to the user in their dashboard.
+                          A ticket must be uploaded before completing the order.
                         </p>
                         {uploading && (
                           <div className="mt-2 flex items-center gap-2 text-violet-400 text-[10px] font-bold uppercase tracking-widest">
