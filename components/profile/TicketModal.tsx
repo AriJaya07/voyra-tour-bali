@@ -274,6 +274,14 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                   <p className="text-xs text-gray-500 font-medium mb-1">Meeting Point</p>
                   <p className="font-bold text-gray-900">{booking.meetingPoint || "Hotel Lobby / Specified Pickup Location"}</p>
                 </div>
+                {booking.languageGuide && (
+                  <div className="bg-gray-50 p-3 rounded-xl text-sm print:border print:border-gray-200">
+                    <p className="text-xs text-gray-500 font-medium mb-1">Language</p>
+                    <p className="font-bold text-gray-900">
+                      {booking.languageGuide.charAt(0).toUpperCase() + booking.languageGuide.slice(1)}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

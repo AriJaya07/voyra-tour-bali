@@ -135,7 +135,7 @@ function StepContact({
           </div>
           <div className="sm:col-span-2">
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Phone Number *</label>
-            <input type="tel" placeholder="+62 812 3456 7890" className={inputCls("phone")} value={form.phone} onChange={(e) => updateField("phone", e.target.value)} />
+            <input type="tel" inputMode="numeric" pattern="[0-9+\-\s]*" placeholder="+62 812 3456 7890" className={inputCls("phone")} value={form.phone} onChange={(e) => { const val = e.target.value.replace(/[^0-9+\-\s]/g, ""); updateField("phone", val); }} />
             {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
           </div>
         </div>
@@ -455,20 +455,24 @@ function StepActivity({
           {store.availableLanguageGuides.length > 0 && (
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                Preferred Language
+                Preferred Language *
               </label>
               <select
+                required
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition bg-white"
                 value={languageGuide}
                 onChange={(e) => setLanguageGuide(e.target.value)}
               >
-                <option value="">Select language</option>
-                {store.availableLanguageGuides.map((g, i) => (
-                  <option key={i} value={g.language}>
-                    {g.language.charAt(0).toUpperCase() + g.language.slice(1)}
-                    {g.type === "GUIDE" ? " (Guide)" : g.type === "AUDIO" ? " (Audio)" : ""}
-                  </option>
-                ))}
+                {store.availableLanguageGuides.map((g, i) => {
+                  const label = g.language.charAt(0).toUpperCase() + g.language.slice(1);
+                  const typeLabel = g.type === "GUIDE" ? "Live Guide" : g.type === "AUDIO" ? "Audio Guide" : g.type === "WRITTEN" ? "Written Guide" : g.type;
+                  const value = `${label} (${typeLabel})`;
+                  return (
+                    <option key={i} value={value}>
+                      {label} — {typeLabel}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           )}

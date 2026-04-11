@@ -239,11 +239,15 @@ export default function BookingWidget({
       }
     }
 
-    // Extract language guides
+    // Extract language guides & default to English
     const langGuides = (languageGuides || []).map((g) => ({
       type: g.type,
       language: g.language,
     }));
+    const defaultLang = langGuides.find((g) => g.language.toLowerCase() === "english" || g.language.toLowerCase() === "en") || langGuides[0];
+    const defaultLangValue = defaultLang
+      ? `${defaultLang.language.charAt(0).toUpperCase() + defaultLang.language.slice(1)} (${defaultLang.type === "GUIDE" ? "Live Guide" : defaultLang.type === "AUDIO" ? "Audio Guide" : defaultLang.type === "WRITTEN" ? "Written Guide" : defaultLang.type})`
+      : "";
 
     // Store all selection data in Zustand (LOCAL products only reach here)
     setProductSelection({
@@ -262,6 +266,7 @@ export default function BookingWidget({
       cancellationPolicy: cancellationPolicy || "",
       availablePickupLocations: pickupLocations,
       availableLanguageGuides: langGuides,
+      languageGuide: defaultLangValue,
       pickupType,
       allowCustomPickup,
       currentStep: 0,

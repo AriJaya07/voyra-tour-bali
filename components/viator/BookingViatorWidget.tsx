@@ -262,6 +262,10 @@ export default function BookingViatorWidget({
       type: g.type,
       language: g.language,
     }));
+    const defaultLang = langGuides.find((g) => g.language.toLowerCase() === "english" || g.language.toLowerCase() === "en") || langGuides[0];
+    const defaultLangValue = defaultLang
+      ? `${defaultLang.language.charAt(0).toUpperCase() + defaultLang.language.slice(1)} (${defaultLang.type === "GUIDE" ? "Live Guide" : defaultLang.type === "AUDIO" ? "Audio Guide" : defaultLang.type === "WRITTEN" ? "Written Guide" : defaultLang.type})`
+      : "";
 
     setProductSelection({
       source: "VIATOR",
@@ -279,6 +283,7 @@ export default function BookingViatorWidget({
       cancellationPolicy: cancellationPolicy || "",
       availablePickupLocations: pickupLocations,
       availableLanguageGuides: langGuides,
+      languageGuide: defaultLangValue,
       pickupType,
       allowCustomPickup,
       currentStep: 0,

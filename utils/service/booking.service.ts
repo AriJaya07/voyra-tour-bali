@@ -26,6 +26,7 @@ export interface Booking {
   userId: number;
   user?: BookingUser;
   ticketImageUrl: string | null;
+  languageGuide: string | null;
   isMockMode: boolean;
   manualPrice: number | null;
   promoCode: string | null;

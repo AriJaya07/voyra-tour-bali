@@ -30,6 +30,7 @@ export { default as RefreshIcon } from "./RefreshIcon";
 export { default as ShieldIcon } from "./ShieldIcon";
 export { default as StarIcon } from "./StarIcon";
 export { default as SunIcon } from "./SunIcon";
+export { default as TranslateIcon } from "./TranslateIcon";
 export { default as UserIcon } from "./UserIcon";
 
 // Re-export existing icons that are commonly used

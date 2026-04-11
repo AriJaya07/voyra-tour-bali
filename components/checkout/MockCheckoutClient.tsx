@@ -8,9 +8,9 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import Container from "@/components/Container";
 import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon";
-import { CheckmarkIcon, CalendarIcon, ClockIcon, PeopleIcon, UserIcon, ClipboardIcon, ShieldIcon, LightningIcon, CloseIcon, SpinnerIcon, MapPinIcon, InfoIcon, ChatIcon } from "@/components/assets/Icon/shared";
+import { CheckmarkIcon, CalendarIcon, ClockIcon, PeopleIcon, UserIcon, ClipboardIcon, ShieldIcon, LightningIcon, CloseIcon, SpinnerIcon, MapPinIcon, InfoIcon, ChatIcon, GlobeIcon, TranslateIcon } from "@/components/assets/Icon/shared";
 import { useViatorProductDetail } from "@/utils/hooks/useViator";
-import type { ViatorProductOption } from "@/utils/hooks/useViator";
+import type { ViatorProductOption, ViatorLanguageGuide } from "@/utils/hooks/useViator";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -44,6 +44,51 @@ const DEFAULT_PAX: PaxMixItem[] = [
   { ageBand: "CHILD", label: "Child (4-17)", numberOfTravelers: 0 },
 ];
 
+// ── Language helpers ──────────────────────────────────────────────────────
+const LANGUAGE_DISPLAY: Record<string, string> = {
+  en: "English", english: "English",
+  es: "Spanish", spanish: "Spanish",
+  fr: "French", french: "French",
+  de: "German", german: "German",
+  it: "Italian", italian: "Italian",
+  pt: "Portuguese", portuguese: "Portuguese",
+  ja: "Japanese", japanese: "Japanese",
+  ko: "Korean", korean: "Korean",
+  zh: "Chinese", chinese: "Chinese",
+  id: "Indonesian", indonesian: "Indonesian",
+  th: "Thai", thai: "Thai",
+  vi: "Vietnamese", vietnamese: "Vietnamese",
+  ru: "Russian", russian: "Russian",
+  ar: "Arabic", arabic: "Arabic",
+  nl: "Dutch", dutch: "Dutch",
+  sv: "Swedish", swedish: "Swedish",
+  pl: "Polish", polish: "Polish",
+  tr: "Turkish", turkish: "Turkish",
+  hi: "Hindi", hindi: "Hindi",
+  ms: "Malay", malay: "Malay",
+};
+
+function getLanguageLabel(lang: string): string {
+  return LANGUAGE_DISPLAY[lang.toLowerCase()] || lang.charAt(0).toUpperCase() + lang.slice(1);
+}
+
+function getGuideTypeLabel(type: string): string {
+  switch (type) {
+    case "GUIDE": return "Live Guide";
+    case "AUDIO": return "Audio Guide";
+    case "WRITTEN": return "Written Guide";
+    default: return type;
+  }
+}
+
+/** Parse stored "language|TYPE" value into display strings */
+function formatLanguageGuide(value: string): { language: string; type: string; full: string } {
+  const [lang, type] = value.split("|");
+  const language = getLanguageLabel(lang);
+  const guideType = getGuideTypeLabel(type || "");
+  return { language, type: guideType, full: `${language} (${guideType})` };
+}
+
 // ── Pure helpers (outside component = no re-creation on render) ─────────────
 
 const inputCls = (hasError: boolean) =>
@@ -57,7 +102,8 @@ function buildWaUrl(
   contact: ContactInfo,
   specialRequest: string,
   wantsPickup: boolean,
-  pickupLocation: string
+  pickupLocation: string,
+  languageGuide?: string
 ): string {
   const dateStr = travelDate.toLocaleDateString("en-US", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
@@ -77,6 +123,7 @@ function buildWaUrl(
     `Lead Traveler: ${contact.firstName} ${contact.lastName}`,
     `Phone: ${contact.phone}`,
     `Email: ${contact.email}`,
+    ...(languageGuide ? [`Language: ${formatLanguageGuide(languageGuide).full}`] : []),
     ...(wantsPickup && pickupLocation ? [`Pickup Location: ${pickupLocation}`] : []),
     ...(specialRequest ? [`Notes: ${specialRequest}`] : []),
     "",
@@ -146,16 +193,44 @@ function StepOptions({
   productCode,
   selectedOptionCode,
   setSelectedOption,
+  onLanguageGuidesLoaded,
 }: {
   onNext: () => void;
   productCode: string;
   selectedOptionCode: string;
   setSelectedOption: (code: string, title: string) => void;
+  onLanguageGuidesLoaded: (guides: ViatorLanguageGuide[]) => void;
 }) {
   const { data: product, isLoading } = useViatorProductDetail(productCode);
   const productOptions = product?.productOptions;
   const hasOptions = productOptions && productOptions.length > 0;
   const [detailOption, setDetailOption] = useState<ViatorProductOption | null>(null);
+
+  // Pass language guides to parent from selected option or product level
+  useEffect(() => {
+    if (!isLoading && product) {
+      const guides: ViatorLanguageGuide[] = [];
+      const seen = new Set<string>();
+      const addGuides = (list?: ViatorLanguageGuide[]) => {
+        list?.forEach((g) => {
+          const key = `${g.type}:${g.language}`;
+          if (!seen.has(key)) { seen.add(key); guides.push(g); }
+        });
+      };
+
+      // Per Viator API: languageGuides are per productOption
+      if (selectedOptionCode && productOptions) {
+        const selectedOpt = productOptions.find((o) => o.productOptionCode === selectedOptionCode);
+        addGuides(selectedOpt?.languageGuides);
+      }
+      // Fallback to product-level guides if no option selected or option has none
+      if (guides.length === 0) {
+        addGuides(product.languageGuides);
+      }
+      onLanguageGuidesLoaded(guides);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, product, selectedOptionCode]);
 
   // If the product has no options, auto-skip this step after loading
   useEffect(() => {
@@ -345,10 +420,15 @@ function StepContact({
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Phone *</label>
             <input
               type="tel"
+              inputMode="numeric"
+              pattern="[0-9+\-\s]*"
               placeholder="+62 812 3456 7890"
               className={inputCls(!!errors.phone)}
               value={form.phone}
-              onChange={(e) => updateField("phone", e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9+\-\s]/g, "");
+                updateField("phone", val);
+              }}
               autoComplete="tel"
             />
             {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
@@ -732,14 +812,46 @@ function StepDetails({
   onBack,
   specialRequest,
   setSpecialRequest,
+  languageGuide,
+  setLanguageGuide,
+  availableLanguageGuides,
 }: {
   onNext: () => void;
   onBack: () => void;
   specialRequest: string;
   setSpecialRequest: (v: string) => void;
+  languageGuide: string;
+  setLanguageGuide: (v: string) => void;
+  availableLanguageGuides: ViatorLanguageGuide[];
 }) {
   return (
     <div className="space-y-5">
+      {/* Language Guide Selection */}
+      {availableLanguageGuides.length > 0 && (
+        <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
+          <SectionHeader
+            icon={<TranslateIcon className="w-4 h-4 text-[#0071CE]" />}
+            title="Preferred Language"
+          />
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+            Tour Language *
+          </label>
+          <select
+            required
+            value={languageGuide}
+            onChange={(e) => setLanguageGuide(e.target.value)}
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition bg-white appearance-none"
+          >
+            {availableLanguageGuides.map((g, i) => (
+              <option key={i} value={`${g.language}|${g.type}`}>
+                {getLanguageLabel(g.language)} — {getGuideTypeLabel(g.type)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Special Requests */}
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <SectionHeader
           icon={<ClipboardIcon className="w-4 h-4 text-[#0071CE]" />}
@@ -767,7 +879,19 @@ function StepDetails({
       </div>
       <div className="flex gap-3">
         <button type="button" onClick={onBack} className="flex-1 py-4 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">Back</button>
-        <button type="button" onClick={onNext} className="flex-[2] bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98]">Review Booking</button>
+        <button
+          type="button"
+          onClick={() => {
+            if (availableLanguageGuides.length > 0 && !languageGuide) {
+              toast.error("Please select a tour language.");
+              return;
+            }
+            onNext();
+          }}
+          className="flex-[2] bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98]"
+        >
+          Review Booking
+        </button>
       </div>
     </div>
   );
@@ -792,6 +916,7 @@ function StepConfirm({
   promoCode,
   productOptionCode,
   productOptionTitle,
+  languageGuide,
 }: {
   onBack: () => void;
   productCode: string;
@@ -809,6 +934,7 @@ function StepConfirm({
   promoCode?: string | null;
   productOptionCode?: string | null;
   productOptionTitle?: string | null;
+  languageGuide?: string;
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -865,6 +991,7 @@ function StepConfirm({
           promoCode: promoCode || null,
           productOptionCode: productOptionCode || null,
           productOptionTitle: productOptionTitle || null,
+          languageGuide: languageGuide ? formatLanguageGuide(languageGuide).full : null,
         }),
       });
 
@@ -874,7 +1001,7 @@ function StepConfirm({
       }
 
       // ── Booking saved ── attempt to open WhatsApp ──────────
-      const url = buildWaUrl(productTitle, productCode, travelDate, paxMix, contact, specialRequest, wantsPickup, pickupLocation);
+      const url = buildWaUrl(productTitle, productCode, travelDate, paxMix, contact, specialRequest, wantsPickup, pickupLocation, languageGuide);
       setWaUrl(url);
 
       // Attempt to open immediately; if blocked, the fallback UI handles it gracefully
@@ -951,6 +1078,9 @@ function StepConfirm({
           <Row label="Experience" value={productTitle} bold />
           <Row label="Travel Date" value={dateStr} bold />
           {wantsPickup && pickupLocation && <Row label="Pickup" value={pickupLocation} />}
+          {languageGuide && (
+            <Row label="Language" value={formatLanguageGuide(languageGuide).full} />
+          )}
           <Row label="Contact" value={`${contact.firstName} ${contact.lastName} · ${contact.phone}`} />
           <div className="py-3 border-t border-gray-100">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
@@ -1032,12 +1162,14 @@ const MockBookingSidebar = memo(function MockBookingSidebar({
   travelDate,
   paxMix,
   productOptionTitle,
+  languageGuide,
 }: {
   productTitle: string;
   productImage?: string | null;
   travelDate: Date;
   paxMix: PaxMixItem[];
   productOptionTitle?: string | null;
+  languageGuide?: string;
 }) {
   const totalPax = paxMix.reduce((acc, p) => acc + p.numberOfTravelers, 0);
 
@@ -1081,6 +1213,17 @@ const MockBookingSidebar = memo(function MockBookingSidebar({
                   Travelers
                 </span>
                 <span className="font-bold text-gray-900">{totalPax} pax</span>
+              </div>
+            )}
+            {languageGuide && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500 flex items-center gap-1.5">
+                  <GlobeIcon className="w-4 h-4" />
+                  Language
+                </span>
+                <span className="font-bold text-gray-900">
+                  {formatLanguageGuide(languageGuide).language}
+                </span>
               </div>
             )}
           </div>
@@ -1151,6 +1294,8 @@ export default function MockCheckoutClient({
 
   const [selectedOptionCode, setSelectedOptionCode] = useState(initialProductOptionCode || "");
   const [selectedOptionTitle, setSelectedOptionTitle] = useState(initialProductOptionTitle || "");
+  const [languageGuide, setLanguageGuide] = useState("");
+  const [availableLanguageGuides, setAvailableLanguageGuides] = useState<ViatorLanguageGuide[]>([]);
 
   const productTitle = overrideTitle || initialProductCode;
 
@@ -1237,6 +1382,15 @@ export default function MockCheckoutClient({
                   setSelectedOptionCode(code);
                   setSelectedOptionTitle(title);
                 }}
+                onLanguageGuidesLoaded={(guides) => {
+                  setAvailableLanguageGuides(guides);
+                  // Default to first English guide, or first available
+                  if (guides.length > 0 && !languageGuide) {
+                    const english = guides.find((g) => g.language.toLowerCase() === "english" || g.language.toLowerCase() === "en");
+                    const pick = english || guides[0];
+                    setLanguageGuide(`${pick.language}|${pick.type}`);
+                  }
+                }}
               />
             )}
             {step === 1 && (
@@ -1276,6 +1430,9 @@ export default function MockCheckoutClient({
                 onBack={() => setStep(3)}
                 specialRequest={specialRequest}
                 setSpecialRequest={setSpecialRequest}
+                languageGuide={languageGuide}
+                setLanguageGuide={setLanguageGuide}
+                availableLanguageGuides={availableLanguageGuides}
               />
             )}
             {step === 5 && (
@@ -1296,6 +1453,7 @@ export default function MockCheckoutClient({
                 promoCode={promoCode}
                 productOptionCode={selectedOptionCode}
                 productOptionTitle={selectedOptionTitle}
+                languageGuide={languageGuide}
               />
             )}
           </div>
@@ -1307,6 +1465,7 @@ export default function MockCheckoutClient({
               travelDate={travelDate}
               paxMix={paxMix}
               productOptionTitle={selectedOptionTitle}
+              languageGuide={languageGuide}
             />
           </div>
         </div>

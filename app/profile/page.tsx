@@ -326,6 +326,12 @@ export default function ProfilePage() {
                                   : ""}
                               </span>
                             </div>
+                            {b.languageGuide && (
+                              <div className="flex items-start gap-2">
+                                <span className="shrink-0 mt-0.5">🗣️</span>
+                                <span>{b.languageGuide}</span>
+                              </div>
+                            )}
                             <div className="flex items-start gap-2">
                               <span className="shrink-0 mt-0.5">💰</span>
                               <span className="font-semibold text-gray-900">

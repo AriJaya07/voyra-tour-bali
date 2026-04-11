@@ -201,6 +201,9 @@ export default function BookingViewModal({
               <InfoRow label="Travel Date" value={fmtDate(booking.travelDate)} />
               <InfoRow label="Time" value={booking.travelTime || "Not set yet"} />
               <InfoRow label="Guests" value={`${booking.pax} person(s)`} />
+              {booking.languageGuide && (
+                <InfoRow label="Language" value={booking.languageGuide} />
+              )}
               <InfoRow label="Total Price" value={formatPrice(booking.totalPrice)} highlight />
               {booking.manualPrice && (
                 <InfoRow label="Admin Price" value={formatPrice(booking.manualPrice)} highlight />
@@ -321,6 +324,12 @@ export default function BookingViewModal({
                     <InfoRow label="Guests" value={`${booking.pax} person(s)`} />
                     {booking.productOptionTitle && (
                       <InfoRow label="Option" value={booking.productOptionTitle} />
+                    )}
+                    {booking.languageGuide && (
+                      <InfoRow
+                        label="Language"
+                        value={booking.languageGuide.charAt(0).toUpperCase() + booking.languageGuide.slice(1)}
+                      />
                     )}
 
                     {/* Pax Mix */}

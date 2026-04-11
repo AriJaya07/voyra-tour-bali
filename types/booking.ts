@@ -26,6 +26,7 @@ export interface Booking {
   ticketToken?: string;
   ticketImageUrl?: string;
   meetingPoint?: string;
+  languageGuide?: string;
   travelers?: BookingTraveler[];
   manualPrice?: number;
   isMockMode?: boolean;
