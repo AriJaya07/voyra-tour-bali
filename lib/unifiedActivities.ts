@@ -8,7 +8,7 @@ import { getViatorImageUrl, formatDuration } from "@/utils/hooks/useViator"
 export function mapDestinationToActivity(dest: DestinationWithImages): UnifiedActivity {
   const mainImage = dest.images.find(img => img.isMain)?.url
     || dest.images[0]?.url
-    || "/images/destinations/gwk.png"
+    || ""
 
   return {
     id: `db-${dest.id}`,

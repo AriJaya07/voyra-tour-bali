@@ -86,10 +86,10 @@ function slugify(name: string): string {
 }
 
 function getBestImageUrl(images: any[], preferredWidth = 720): string {
-  if (!images || images.length === 0) return "/images/destinations/gwk.png"
+  if (!images || images.length === 0) return ""
   const cover = images.find((img: any) => img.isCover) || images[0]
   const variants = cover?.variants
-  if (!variants || variants.length === 0) return "/images/destinations/gwk.png"
+  if (!variants || variants.length === 0) return ""
   const sorted = [...variants].sort(
     (a: any, b: any) => Math.abs(a.width - preferredWidth) - Math.abs(b.width - preferredWidth)
   )
@@ -103,14 +103,13 @@ function resolveTagId(tag: any): number | null {
 }
 
 function viatorProductToDestination(product: any, categoryId: string): DestinationWithImages {
-  const imageUrl = getBestImageUrl(product.images)
-  const images: DestinationImage[] = [{ url: imageUrl, isMain: true }]
+  const images: DestinationImage[] = []
 
-  if (product.images?.length > 1) {
-    for (let i = 1; i < Math.min(product.images.length, 5); i++) {
+  if (product.images?.length > 0) {
+    for (let i = 0; i < Math.min(product.images.length, 5); i++) {
       const url = getBestImageUrl([product.images[i]])
-      if (url !== "/images/destinations/gwk.png") {
-        images.push({ url, isMain: false })
+      if (url) {
+        images.push({ url, isMain: images.length === 0 })
       }
     }
   }
@@ -166,7 +165,10 @@ async function fetchBaliProductTags(): Promise<Map<number, DiscoveredTag>> {
         if (tagId == null) continue
 
         if (tagMap.has(tagId)) {
-          tagMap.get(tagId)!.productCount++
+          const existing = tagMap.get(tagId)!
+          existing.productCount++
+          // Keep the first valid image we find
+          if (!existing.image && productImage) existing.image = productImage
         } else {
           tagMap.set(tagId, { id: tagId, image: productImage, productCount: 1 })
         }
@@ -262,12 +264,12 @@ export async function getCategoriesFromViator(): Promise<Category[]> {
     const matchingIds = group.tagIds.filter((id) => validTagIds.has(id))
     if (matchingIds.length === 0) continue
 
-    // Pick the best image (from the tag with the most products)
-    let bestImage = "/images/destinations/gwk.png"
+    // Pick the best image (from the tag with the most products, skip empty)
+    let bestImage = ""
     let bestCount = 0
     for (const id of matchingIds) {
       const tag = baliTags.get(id)
-      if (tag && tag.productCount > bestCount) {
+      if (tag && tag.image && tag.productCount > bestCount) {
         bestCount = tag.productCount
         bestImage = tag.image
       }

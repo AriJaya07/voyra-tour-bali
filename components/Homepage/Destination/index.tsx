@@ -131,7 +131,7 @@ export default function Destination({ categories }: DestinationProps) {
     return dbDestinations.map((dest) => {
       const mainImage = dest.images?.find((img) => img.isMain)?.url
         || dest.images?.[0]?.url
-        || "/images/destinations/gwk.png"
+        || ""
       return {
         id: String(dest.id),
         title: dest.title,

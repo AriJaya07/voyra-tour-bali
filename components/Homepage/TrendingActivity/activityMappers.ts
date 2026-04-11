@@ -25,7 +25,7 @@ export function mapViatorToActivity(product: any): UnifiedActivity {
 export function mapDBToActivity(dest: any): UnifiedActivity {
   const mainImage = dest.images?.find((img: any) => img.isMain)?.url
     || dest.images?.[0]?.url
-    || "/images/destinations/gwk.png"
+    || ""
 
   return {
     id: `db-${dest.id}`,
