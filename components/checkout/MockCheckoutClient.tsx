@@ -1141,6 +1141,7 @@ const MockBookingSidebar = memo(function MockBookingSidebar({
 export default function MockCheckoutClient({
   initialProductCode,
   overrideTitle,
+  overrideImage,
   overridePrice,
   overrideCurrency,
   promoCode,
@@ -1149,6 +1150,7 @@ export default function MockCheckoutClient({
 }: {
   initialProductCode: string;
   overrideTitle?: string | null;
+  overrideImage?: string | null;
   overridePrice?: number | null;
   overrideCurrency?: string | null;
   promoCode?: string | null;
@@ -1306,6 +1308,7 @@ export default function MockCheckoutClient({
                 onBack={() => setStep(4)}
                 productCode={initialProductCode}
                 productTitle={productTitle}
+                productImage={overrideImage}
                 overridePrice={overridePrice}
                 overrideCurrency={overrideCurrency || "IDR"}
                 contact={contact}

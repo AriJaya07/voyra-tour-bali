@@ -41,6 +41,7 @@ export default async function MockBookingPage({ params, searchParams }: PageProp
         <MockCheckoutClient
           initialProductCode={mockBooking.productCode}
           overrideTitle={mockBooking.productTitle}
+          overrideImage={mockBooking.productImage}
           overridePrice={mockBooking.price}
           overrideCurrency={mockBooking.currency}
           promoCode={promoCode || mockBooking.promoCode || null}
