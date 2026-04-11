@@ -19,6 +19,7 @@ export default function TermsPage() {
         title="Terms & Conditions"
         subtitle="Please read these terms carefully before booking any tour or activity through Bali Travel Now."
         lastUpdated="1 April 2025"
+        bannerImage="/images/terms-conditions/banner-terms.png"
       />
 
       <Container>

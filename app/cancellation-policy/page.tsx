@@ -19,6 +19,7 @@ export default function CancellationPolicyPage() {
         title="Cancellation Policy"
         subtitle="We understand that plans can change. Learn about our cancellation and refund rules before you book."
         lastUpdated="1 April 2025"
+        bannerImage="/images/cancel-policy/banner-cancel.png"
       />
 
       <Container>

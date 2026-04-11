@@ -19,6 +19,7 @@ export default function PrivacyPolicyPage() {
         title="Privacy Policy"
         subtitle="Your privacy is important to us. This policy explains how we collect, use, and protect your personal information."
         lastUpdated="1 April 2025"
+        bannerImage="/images/privacy-policy/banner-privacy.png"
       />
 
       <Container>

@@ -79,6 +79,7 @@ export default function ContactPage() {
         badge="Contact"
         title="We'd Love to Hear From You"
         subtitle="Have a question about a tour, need help with a booking, or just want to say hello? We're here for you."
+        bannerImage="/images/contact/banner-contact.png"
       />
 
       <Container>

@@ -37,7 +37,7 @@ const LEGAL_LINKS: NavLink[] = [
   { label: "Privacy Policy",      href: "/privacy",             ready: true  },
   { label: "Cancellation Policy", href: "/cancellation-policy", ready: true  },
   { label: "FAQ",                 href: "/about#faq",           ready: true  },
-  { label: "How to Book",         href: "/how-to-book",         ready: false },
+  { label: "How to Book",         href: "/how-to-book",         ready: true  },
 ];
 
 const ACCOUNT_LINKS: NavLink[] = [
@@ -45,11 +45,11 @@ const ACCOUNT_LINKS: NavLink[] = [
 ];
 
 const SOCIAL_LINKS = [
-  { name: "Facebook",  icon: FacebookIcon,  href: "https://facebook.com/balitravelnow",  hoverClass: "hover:text-blue-400"  },
-  { name: "Instagram", icon: InstagramIcon, href: "https://instagram.com/balitravelnow", hoverClass: "hover:text-pink-400"  },
-  { name: "TikTok",    icon: TiktokIcon,    href: "https://tiktok.com/@balitravelnow",   hoverClass: "hover:text-white"     },
-  { name: "YouTube",   icon: YoutubeIcon,   href: "https://youtube.com/@balitravelnow",  hoverClass: "hover:text-red-400"   },
-  { name: "Twitter",   icon: TwitterIcon,   href: "https://twitter.com/balitravelnow",   hoverClass: "hover:text-sky-400"   },
+  // { name: "Facebook",  icon: FacebookIcon,  href: "https://facebook.com/balitravelnow",  hoverClass: "hover:text-blue-400"  },
+  { name: "Instagram", icon: InstagramIcon, href: "https://www.instagram.com/voyra_bali_adventure", hoverClass: "hover:text-pink-400"  },
+  // { name: "TikTok",    icon: TiktokIcon,    href: "https://tiktok.com/@balitravelnow",   hoverClass: "hover:text-white"  },
+  // { name: "YouTube",   icon: YoutubeIcon,   href: "https://youtube.com/@balitravelnow",  hoverClass: "hover:text-red-400"   },
+  // { name: "Twitter",   icon: TwitterIcon,   href: "https://twitter.com/balitravelnow",   hoverClass: "hover:text-sky-400"   },   
 ];
 
 const WHATSAPP_URL = buildWhatsAppUrl();

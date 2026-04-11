@@ -1,13 +1,31 @@
+import Image from "next/image";
+
 interface PageHeroProps {
   badge: string;
   title: string;
   subtitle: string;
   lastUpdated?: string;
+  bannerImage?: string;
 }
 
-export default function PageHero({ badge, title, subtitle, lastUpdated }: PageHeroProps) {
+export default function PageHero({ badge, title, subtitle, lastUpdated, bannerImage }: PageHeroProps) {
   return (
     <section className="relative bg-gradient-to-br from-[#0071CE] via-[#005bb5] to-[#003d80] text-white overflow-hidden">
+      {/* Banner image */}
+      {bannerImage && (
+        <Image
+          src={bannerImage}
+          alt=""
+          fill
+          className="object-cover"
+          priority
+          sizes="100vw"
+        />
+      )}
+
+      {/* Overlay — stronger when image is present for text contrast */}
+      <div className={`absolute inset-0 ${bannerImage ? "bg-gradient-to-b from-[#0071CE]/75 via-[#004a8a]/65 to-[#003060]/80" : ""}`} />
+
       {/* Decorative blobs */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div className="absolute -top-20 -left-20 w-96 h-96 bg-white rounded-full blur-3xl" />
