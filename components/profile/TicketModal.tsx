@@ -1,10 +1,12 @@
 import React, { useRef } from "react";
+import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
-import type { Booking } from "@/types/booking";
+import type { Booking, BookingStatus } from "@/types/booking";
+import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 
 interface TicketModalProps {
   booking: Booking;
@@ -17,21 +19,25 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
 
   if (!booking) return null;
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     CONFIRMED: "bg-green-500",
     COMPLETED: "bg-blue-600",
     PENDING: "bg-yellow-500",
+    PAYMENT: "bg-orange-500",
     CANCELLED: "bg-red-500",
-  } as Record<string, string>;
+  };
 
-  const statusMessages = {
-    CONFIRMED: "CONFIRMED",
-    COMPLETED: "COMPLETED",
-    PENDING: "Waiting for supplier confirmation",
+  const statusMessages: Record<string, string> = {
+    COMPLETED: "Your ticket is ready!",
+    CONFIRMED: "Payment received — booking in progress",
+    PENDING: "Booking submitted",
+    PAYMENT: "Waiting for your payment",
     CANCELLED: "This booking is cancelled",
-  } as Record<string, string>;
+  };
 
-  const isConfirmed = booking.status === "CONFIRMED" || booking.status === "COMPLETED";
+  const isCompleted = booking.status === "COMPLETED";
+  const isConfirmed = booking.status === "CONFIRMED";
+  const isPayment = booking.status === "PAYMENT";
   const qrString = booking.ticketImageUrl || `https://voyratours.com/ticket/${booking.bookingRef}`;
   const travelers = booking.travelers || [];
   const leadTraveler = travelers.length > 0 ? travelers[0].fullName : "Guest";
@@ -40,11 +46,9 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
     return acc;
   }, {});
 
-  const includedItems = ["Professional Guide", "Air-conditioned vehicle", "All taxes and fees"]; // Placeholder for now
-
   const handleDownloadTicket = async () => {
     if (!booking.ticketImageUrl) return;
-    
+
     try {
       const proxyUrl = `/api/proxy-download?url=${encodeURIComponent(booking.ticketImageUrl)}`;
       const response = await fetch(proxyUrl);
@@ -145,7 +149,6 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                 background: white;
                 overflow: visible;
               }
-              /* Hide UI buttons during print */
               .print-hide { display: none !important; }
             }
           `}} />
@@ -154,33 +157,39 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
           <div className="bg-white p-6 text-center border-b-2 border-dashed border-gray-200 shrink-0">
             <h1 className="text-2xl font-black tracking-tight text-[#0071CE] uppercase">Voyra</h1>
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
-              Official Booking Ticket
+              {isCompleted ? "Official Booking Ticket" : "Booking Details"}
             </p>
           </div>
 
           {/* Status Banner */}
           <div className={`p-3 text-center text-white font-bold text-sm ${statusColors[booking.status] || "bg-gray-500"} print-hide`}>
-            {isConfirmed ? "✅ " : booking.status === "CANCELLED" ? "❌ " : "⏳ "}
+            {isCompleted ? "🎉 " : isConfirmed ? "✅ " : booking.status === "CANCELLED" ? "❌ " : isPayment ? "💳 " : "📝 "}
             {statusMessages[booking.status] || booking.status}
           </div>
 
+          {/* Flow Steps */}
+          <div className="px-6 pt-4 print-hide">
+            <BookingFlowSteps
+              currentStatus={booking.status as BookingStatus}
+              variant="light"
+            />
+          </div>
+
           <div className="p-6 bg-white space-y-6 shrink-0 grow">
-            {/* Main Content Section (Image or QR) */}
+            {/* Main Content Section */}
             <div className="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-2xl border border-gray-100 print:bg-white print:border-none">
-              {isConfirmed ? (
+              {isCompleted ? (
                 <>
                   {booking.ticketImageUrl ? (
                     <div className="w-full space-y-4">
-                      {/* Hero Image - The Official Ticket */}
                       <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
-                        <img 
-                          src={booking.ticketImageUrl} 
-                          alt="Official Ticket" 
+                        <img
+                          src={booking.ticketImageUrl}
+                          alt="Official Ticket"
                           className="w-full h-auto object-contain cursor-pointer"
                           onClick={handleViewVoucher}
                         />
                       </div>
-                      
                       <div className="text-center py-2 px-4 bg-white rounded-xl border border-gray-100 italic text-gray-500 text-[10px]">
                         Scan the QR/Bar code on the ticket above to verify with your guide
                       </div>
@@ -205,17 +214,55 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                     </>
                   )}
                 </>
-              ) : booking.status === "PENDING" ? (
+              ) : isConfirmed ? (
                 <div className="text-center py-8">
-                  <div className="text-5xl mb-4">⏳</div>
-                  <p className="text-gray-900 font-bold">Confirmation Pending</p>
-                  <p className="text-sm text-gray-500 mt-2">Your ticket will appear once confirmed by admin</p>
+                  <div className="text-5xl mb-4">✅</div>
+                  <p className="text-gray-900 font-bold">Payment Received</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    We are processing your booking with the supplier. Your ticket will appear here once ready.
+                  </p>
                 </div>
-              ) : (
+              ) : isPayment ? (
+                <div className="text-center py-6">
+                  <div className="text-5xl mb-4">💳</div>
+                  {booking.manualPrice ? (
+                    <>
+                      <p className="text-gray-900 font-bold text-lg">Payment Required</p>
+                      <div className="mt-4 mb-4 px-5 py-4 bg-orange-50 rounded-xl border border-orange-200 inline-block">
+                        <p className="text-xs text-orange-600 font-bold uppercase tracking-wider mb-1">Amount Due</p>
+                        <p className="text-2xl font-black text-orange-700">
+                          {booking.currency || "IDR"} {booking.manualPrice.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="mt-2">
+                        <Link
+                          href={`/payment/manual/${booking.bookingRef}`}
+                          className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold text-base rounded-xl transition shadow-lg shadow-blue-200 active:scale-[0.98]"
+                        >
+                          <span>💳</span> Pay Now
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-gray-900 font-bold">Awaiting Price</p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Our team is preparing your booking. You will be notified via WhatsApp once it's ready.
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : booking.status === "CANCELLED" ? (
                 <div className="text-center py-8 opacity-50 relative print:opacity-100">
                   <div className="text-5xl mb-4">❌</div>
                   <p className="text-gray-900 font-bold">Booking Cancelled</p>
                   <p className="text-sm text-gray-500 mt-2">This ticket is no longer valid</p>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-5xl mb-4">📝</div>
+                  <p className="text-gray-900 font-bold">Booking Submitted</p>
+                  <p className="text-sm text-gray-500 mt-2">Your booking is being processed.</p>
                 </div>
               )}
             </div>
@@ -281,44 +328,58 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
 
           {/* Footer & Actions */}
           <div className="bg-gray-900 p-6 flex-shrink-0 print-hide">
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <button 
-                onClick={() => window.print()} 
-                className="py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2"
-              >
-                🖨️ Print
-              </button>
-              {booking.ticketImageUrl ? (
-                <>
-                  <button 
-                    onClick={handleDownloadTicket} 
+            {isCompleted ? (
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <button
+                  onClick={() => window.print()}
+                  className="py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2"
+                >
+                  🖨️ Print
+                </button>
+                {booking.ticketImageUrl ? (
+                  <button
+                    onClick={handleDownloadTicket}
                     className="py-3 px-4 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
                   >
                     ⬇️ Download
                   </button>
-                </>
-              ) : (
-                <button 
-                  onClick={handleSaveImage} 
-                  className="py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2"
+                ) : (
+                  <button
+                    onClick={handleSaveImage}
+                    className="py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2"
+                  >
+                    📱 Save
+                  </button>
+                )}
+                <button
+                  onClick={handleResendEmail}
+                  disabled={sendingEmail}
+                  className="col-span-2 py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  📱 Save
+                  ✉️ {sendingEmail ? "Sending..." : "Resend to Email"}
                 </button>
-              )}
-              <button
-                onClick={handleResendEmail}
-                disabled={sendingEmail}
-                className="col-span-2 py-3 px-4 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                ✉️ {sendingEmail ? "Sending..." : "Resend to Email"}
-              </button>
-            </div>
+              </div>
+            ) : isConfirmed ? (
+              <div className="mb-6 text-center">
+                <p className="text-sm text-gray-400">
+                  Your booking is being processed. Your ticket will appear here once ready.
+                </p>
+              </div>
+            ) : isPayment ? (
+              <div className="mb-6 text-center">
+                <p className="text-sm text-gray-400">
+                  {booking.manualPrice
+                    ? "Complete your payment above. Your ticket will appear here after we process your booking."
+                    : "Our team will set your price soon. You'll be notified via WhatsApp."}
+                </p>
+              </div>
+            ) : null}
 
             <button
               onClick={onClose}
               className="w-full py-3 bg-red-600 text-white rounded-xl text-sm font-black uppercase tracking-wider hover:bg-red-700 transition mb-4"
             >
-              ✕ Close Ticket
+              ✕ Close
             </button>
 
             <div className="text-center opacity-60">

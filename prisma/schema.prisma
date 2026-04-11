@@ -225,6 +225,7 @@ model BookingTraveler {
 
 enum BookingStatus {
   PENDING
+  PAYMENT
   CONFIRMED
   COMPLETED
   CANCELLED

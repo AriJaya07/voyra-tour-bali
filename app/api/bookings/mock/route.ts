@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         travelTime: startTime,
         meetingPoint,
         pax: totalPax,
-        status: "PENDING", // Keep it pending as it's a mock/WhatsApp booking
+        status: "PAYMENT", // Mock booking starts at PAYMENT — admin sets price & sends payment link
         isMockMode: true,
         promoCode: promoCode || null,
         productOptionCode,

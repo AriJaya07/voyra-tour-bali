@@ -9,10 +9,11 @@ import BookingViewModal from "./BookingViewModal";
 
 const STATUS_TABS = [
   { key: "ALL", label: "All" },
-  { key: "PENDING", label: "Pending", color: "amber" },
-  { key: "CONFIRMED", label: "Confirmed", color: "blue" },
-  { key: "COMPLETED", label: "Completed", color: "green" },
-  { key: "CANCELLED", label: "Cancelled", color: "gray" },
+  { key: "PENDING", label: "Pending" },
+  { key: "PAYMENT", label: "Payment" },
+  { key: "CONFIRMED", label: "Confirmed" },
+  { key: "COMPLETED", label: "Completed" },
+  { key: "CANCELLED", label: "Cancelled" },
 ];
 
 export default function BookingList() {
@@ -37,7 +38,7 @@ export default function BookingList() {
   });
 
   // Stats
-  const pendingCount = bookings.filter((b) => b.status === "PENDING").length;
+  const pendingCount = bookings.filter((b) => b.status === "PENDING" || b.status === "PAYMENT").length;
   const confirmedCount = bookings.filter((b) => b.status === "CONFIRMED").length;
   const revenue = bookings
     .filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED")

@@ -3,9 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 
+// Admin manual transitions.
+// PAYMENT → CONFIRMED happens automatically via Midtrans webhook when user pays.
+// Admin can only: cancel from PAYMENT, or complete from CONFIRMED (after uploading ticket).
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  PENDING: ["CONFIRMED", "COMPLETED", "CANCELLED"],
-  CONFIRMED: ["COMPLETED", "CANCELLED"],
+  PENDING: ["CANCELLED"],
+  PAYMENT: ["CANCELLED"],
+  CONFIRMED: ["COMPLETED"],
   COMPLETED: [],
   CANCELLED: [],
 };
@@ -88,10 +92,10 @@ export async function PATCH(
       );
     }
 
-    // Validate requirements for completing
+    // Ticket image must be uploaded before completing (admin uploads after Viator booking)
     if (status === "COMPLETED" && !booking.ticketImageUrl) {
       return NextResponse.json(
-        { error: "Ticket image must be uploaded before completing." },
+        { error: "Ticket image must be uploaded before marking as completed." },
         { status: 422 }
       );
     }

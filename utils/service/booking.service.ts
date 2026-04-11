@@ -19,7 +19,7 @@ export interface Booking {
   travelDate: string;
   travelTime: string | null;
   pax: number;
-  status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
+  status: "PENDING" | "PAYMENT" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
   paymentId: string | null;
   snapToken: string | null;
   paidAt: string | null;

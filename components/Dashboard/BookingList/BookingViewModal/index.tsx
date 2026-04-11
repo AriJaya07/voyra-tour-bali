@@ -5,27 +5,10 @@ import { Booking, bookingService } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
 import { toast } from "sonner";
 import { FaCopy } from "react-icons/fa";
-
-const STATUS_STYLES: Record<string, string> = {
-  PENDING: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-  CONFIRMED: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  COMPLETED: "bg-green-500/15 text-green-400 border-green-500/20",
-  CANCELLED: "bg-slate-600/20 text-slate-400 border-slate-600/30",
-};
-
-const ALLOWED_TRANSITIONS: Record<string, { label: string; status: string; color: string }[]> = {
-  PENDING: [
-    { label: "Confirm Booking", status: "CONFIRMED", color: "bg-blue-600 hover:bg-blue-700" },
-    { label: "Mark Completed (Direct)", status: "COMPLETED", color: "bg-green-600 hover:bg-green-700" },
-    { label: "Cancel Booking", status: "CANCELLED", color: "bg-red-600 hover:bg-red-700" },
-  ],
-  CONFIRMED: [
-    { label: "Mark Completed", status: "COMPLETED", color: "bg-green-600 hover:bg-green-700" },
-    { label: "Cancel Booking", status: "CANCELLED", color: "bg-red-600 hover:bg-red-700" },
-  ],
-  COMPLETED: [],
-  CANCELLED: [],
-};
+import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
+import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
+import { ADMIN_ALLOWED_TRANSITIONS } from "@/types/booking";
+import type { BookingStatus } from "@/types/booking";
 
 const fmtDate = (s: string) =>
   new Date(s).toLocaleDateString("en-US", {
@@ -68,7 +51,7 @@ export default function BookingViewModal({
   );
   const [savingPrice, setSavingPrice] = useState(false);
 
-  const transitions = ALLOWED_TRANSITIONS[booking.status] || [];
+  const transitions = ADMIN_ALLOWED_TRANSITIONS[booking.status] || [];
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -95,7 +78,7 @@ export default function BookingViewModal({
       return;
     }
     if (!manualTimeInput) {
-      toast.error("Please explicitly enter a travel time (O'clock).");
+      toast.error("Please enter a travel time.");
       return;
     }
     setSavingPrice(true);
@@ -103,19 +86,19 @@ export default function BookingViewModal({
       const res = await fetch(`/api/admin/bookings/${booking.id}/set-manual-price`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           manualPrice: price,
-          travelTime: manualTimeInput 
+          travelTime: manualTimeInput,
         }),
       });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || "Failed to set price/time");
       }
-      setBooking((prev) => ({ 
-        ...prev, 
+      setBooking((prev) => ({
+        ...prev,
         manualPrice: price,
-        travelTime: manualTimeInput 
+        travelTime: manualTimeInput,
       }));
       toast.success("Price and time saved!");
     } catch (error: any) {
@@ -128,15 +111,19 @@ export default function BookingViewModal({
   const handleCopyPaymentLink = () => {
     const url = `${window.location.origin}/payment/manual/${booking.bookingRef}`;
     navigator.clipboard.writeText(url);
-    toast.success("Payment link copied!");
+    toast.success("Payment link copied to clipboard!");
   };
 
-  const isConfirmDisabled = (status: string) => {
-    if (status === "COMPLETED") {
+  const isActionDisabled = (targetStatus: string) => {
+    if (targetStatus === "COMPLETED") {
       return updatingStatus || uploading || !booking.ticketImageUrl;
     }
     return updatingStatus || uploading;
   };
+
+  // Travelers data for admin to copy for Viator manual booking
+  const travelersJson = (booking as any).travelersJson as any[] | null;
+  const paxMixJson = (booking as any).paxMixJson as any[] | null;
 
   return (
     <>
@@ -155,13 +142,7 @@ export default function BookingViewModal({
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                  STATUS_STYLES[booking.status]
-                }`}
-              >
-                {booking.status}
-              </span>
+              <BookingStatusBadge status={booking.status} variant="dark" size="md" showIcon />
               <button
                 onClick={onClose}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition"
@@ -174,7 +155,18 @@ export default function BookingViewModal({
           </div>
 
           {/* Body */}
-          <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-y-auto">
+          <div className="px-6 py-5 space-y-5 max-h-[65vh] overflow-y-auto">
+            {/* Flow Steps */}
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+                Booking Flow
+              </p>
+              <BookingFlowSteps
+                currentStatus={booking.status as BookingStatus}
+                variant="dark"
+              />
+            </div>
+
             {/* Customer */}
             <Section title="Customer">
               <div className="flex items-center gap-3">
@@ -197,7 +189,7 @@ export default function BookingViewModal({
               <InfoRow label="Title" value={booking.productTitle} />
               <InfoRow label="Product Code" value={booking.productCode} mono />
               {booking.productOptionTitle && (
-                <InfoRow label="Selected Option" value={booking.productOptionTitle} />
+                <InfoRow label="Option" value={booking.productOptionTitle} />
               )}
               {booking.productOptionCode && !booking.productOptionTitle && (
                 <InfoRow label="Option Code" value={booking.productOptionCode} mono />
@@ -207,8 +199,12 @@ export default function BookingViewModal({
             {/* Booking Info */}
             <Section title="Booking Info">
               <InfoRow label="Travel Date" value={fmtDate(booking.travelDate)} />
+              <InfoRow label="Time" value={booking.travelTime || "Not set yet"} />
               <InfoRow label="Guests" value={`${booking.pax} person(s)`} />
               <InfoRow label="Total Price" value={formatPrice(booking.totalPrice)} highlight />
+              {booking.manualPrice && (
+                <InfoRow label="Admin Price" value={formatPrice(booking.manualPrice)} highlight />
+              )}
               <InfoRow label="Booked At" value={fmtDateTime(booking.createdAt)} />
             </Section>
 
@@ -221,9 +217,19 @@ export default function BookingViewModal({
               />
             </Section>
 
-            {/* Manual Price & Time (mock bookings only) */}
-            {booking.isMockMode && (
-              <Section title="Admin Price & O'clock">
+            {/* ────────────────────────────────────────────────────── */}
+            {/* PENDING/PAYMENT: Set price & time, get payment link   */}
+            {/* Admin CANNOT change status — it auto-changes on pay   */}
+            {/* ────────────────────────────────────────────────────── */}
+            {(booking.status === "PAYMENT" || booking.status === "PENDING") && (
+              <Section title="Set Price & Payment Link">
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-3">
+                  <p className="text-[11px] text-amber-300 font-semibold leading-relaxed">
+                    Set the price and time below, then copy the payment link to send to the customer via WhatsApp.
+                    Status will <strong>automatically change to Confirmed</strong> once the customer completes payment.
+                  </p>
+                </div>
+
                 {booking.promoCode && (
                   <div className="mb-3 flex items-center gap-2">
                     <span className="text-xs text-slate-400">Promo Code:</span>
@@ -232,25 +238,29 @@ export default function BookingViewModal({
                     </span>
                   </div>
                 )}
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Set Price (IDR)</label>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                      Price (IDR)
+                    </label>
                     <input
                       type="number"
                       value={manualPriceInput}
                       onChange={(e) => setManualPriceInput(e.target.value)}
                       placeholder="e.g. 1500000"
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500 transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Set O'clock (Time)</label>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                      O'clock (Time)
+                    </label>
                     <input
                       type="time"
                       value={manualTimeInput}
                       onChange={(e) => setManualTimeInput(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500 transition"
                     />
                   </div>
                 </div>
@@ -258,120 +268,182 @@ export default function BookingViewModal({
                 <button
                   onClick={handleSetManualPrice}
                   disabled={savingPrice}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition mb-3"
+                  className="w-full py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition mb-2"
                 >
-                  {savingPrice ? "Saving..." : "Save Price & Time"}
+                  {savingPrice ? "Saving..." : booking.manualPrice ? "Update Price & Time" : "Save Price & Time"}
                 </button>
 
-                {booking.manualPrice && booking.bookingRef && (
+                {booking.manualPrice && (
+                  <p className="text-[10px] text-slate-400 text-center mb-3">
+                    You can update the price anytime before the customer pays.
+                  </p>
+                )}
+
+                {booking.manualPrice && booking.bookingRef ? (
                   <button
                     onClick={handleCopyPaymentLink}
                     className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-sm font-bold rounded-xl border border-emerald-600/30 transition"
                   >
                     <FaCopy className="w-3.5 h-3.5" />
-                    Copy Payment Link
+                    Copy Payment Link for Customer
                   </button>
+                ) : (
+                  <p className="text-[10px] text-slate-500 text-center">
+                    Save the price first to get the payment link.
+                  </p>
                 )}
               </Section>
             )}
 
-            {/* Status Actions */}
-            {transitions.length > 0 && (
-              <Section title={booking.status === "CONFIRMED" ? "Upload Ticket & Complete" : "Update Status"}>
-                {transitions.some(t => t.status === "COMPLETED") && (
-                  <div className="mb-4 space-y-3">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">
-                      Upload Viator/Supplier Ticket (Required to Complete)
-                    </label>
-                    <div className="flex items-center gap-4">
-                      {booking.ticketImageUrl ? (
-                        <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-700 bg-slate-800">
-                          <img
-                            src={booking.ticketImageUrl}
-                            alt="Ticket"
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition text-[10px] text-white font-bold"
-                          >
-                            Change
-                          </button>
-                        </div>
-                      ) : (
+            {/* ────────────────────────────────────────────────────── */}
+            {/* CONFIRMED STATUS: User paid → Admin books on Viator   */}
+            {/* then uploads ticket image → Mark Completed            */}
+            {/* ────────────────────────────────────────────────────── */}
+            {booking.status === "CONFIRMED" && (
+              <>
+                {/* Success alert */}
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-base">✅</span>
+                    <p className="text-[12px] text-emerald-400 font-bold">Customer has paid!</p>
+                  </div>
+                  <p className="text-[11px] text-emerald-400/80 leading-relaxed">
+                    Now book manually on Viator using the customer data below, then upload the ticket image and mark as completed.
+                  </p>
+                </div>
+
+                {/* Customer Data for Viator Booking */}
+                <Section title="Data for Viator Booking">
+                  <div className="bg-slate-800/80 rounded-xl p-4 space-y-2 border border-slate-700/50">
+                    <InfoRow label="Product Code" value={booking.productCode} mono />
+                    <InfoRow label="Travel Date" value={fmtDate(booking.travelDate)} />
+                    <InfoRow label="Time" value={booking.travelTime || "—"} />
+                    <InfoRow label="Guests" value={`${booking.pax} person(s)`} />
+                    {booking.productOptionTitle && (
+                      <InfoRow label="Option" value={booking.productOptionTitle} />
+                    )}
+
+                    {/* Pax Mix */}
+                    {paxMixJson && paxMixJson.length > 0 && (
+                      <div className="pt-2 border-t border-slate-700/50">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Pax Mix</p>
+                        {paxMixJson.map((p: any, i: number) => (
+                          <p key={i} className="text-xs text-white">
+                            {p.numberOfTravelers}x {p.ageBand}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Travelers */}
+                    {travelersJson && travelersJson.length > 0 && (
+                      <div className="pt-2 border-t border-slate-700/50">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Travelers</p>
+                        {travelersJson.map((t: any, i: number) => (
+                          <p key={i} className="text-xs text-white">
+                            {t.firstName} {t.lastName} ({t.ageBand})
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </Section>
+
+                {/* Upload Ticket */}
+                <Section title="Upload Ticket Image">
+                  <div className="flex items-center gap-4">
+                    {booking.ticketImageUrl ? (
+                      <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-700 bg-slate-800 shrink-0">
+                        <img
+                          src={booking.ticketImageUrl}
+                          alt="Ticket"
+                          className="w-full h-full object-cover"
+                        />
                         <button
                           onClick={() => fileInputRef.current?.click()}
-                          disabled={uploading}
-                          className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-700 hover:border-slate-500 flex flex-col items-center justify-center gap-1 transition text-slate-500 hover:text-slate-400 bg-slate-800/50"
+                          className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition text-[10px] text-white font-bold"
                         >
-                          <span className="text-xl">📸</span>
-                          <span className="text-[10px] font-bold uppercase">Upload</span>
+                          Change
                         </button>
-                      )}
-                      <div className="flex-1">
-                        <p className="text-[11px] text-slate-400 leading-relaxed">
-                          A ticket must be uploaded before completing the order.
-                        </p>
-                        {uploading && (
-                          <div className="mt-2 flex items-center gap-2 text-violet-400 text-[10px] font-bold uppercase tracking-widest">
-                            <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            Uploading...
-                          </div>
-                        )}
                       </div>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                      />
+                    ) : (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-700 hover:border-violet-500 flex flex-col items-center justify-center gap-1 transition text-slate-500 hover:text-violet-400 bg-slate-800/50 shrink-0"
+                      >
+                        <span className="text-xl">📸</span>
+                        <span className="text-[10px] font-bold uppercase">Upload</span>
+                      </button>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Upload the Viator ticket/voucher image. Customer will see this in their profile.
+                      </p>
+                      {uploading && (
+                        <div className="mt-2 flex items-center gap-2 text-violet-400 text-[10px] font-bold uppercase tracking-widest">
+                          <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          Uploading...
+                        </div>
+                      )}
                     </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
                   </div>
-                )}
 
+                  {!booking.ticketImageUrl && (
+                    <p className="text-[10px] text-amber-400 mt-2">
+                      You must upload the ticket image before marking as completed.
+                    </p>
+                  )}
+                </Section>
+              </>
+            )}
+
+            {/* Ticket Image Preview (completed) */}
+            {booking.status === "COMPLETED" && booking.ticketImageUrl && (
+              <Section title="Ticket">
+                <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-800 group">
+                  <img
+                    src={booking.ticketImageUrl}
+                    alt="Ticket"
+                    className="w-full h-auto max-h-[300px] object-contain"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3">
+                    <a
+                      href={booking.ticketImageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2 bg-white text-black text-xs font-bold rounded-lg hover:bg-gray-100 transition"
+                    >
+                      View Full
+                    </a>
+                  </div>
+                </div>
+              </Section>
+            )}
+
+            {/* Status Actions (Cancel or Mark Completed) */}
+            {transitions.length > 0 && (
+              <Section title="Actions">
                 <div className="flex flex-wrap gap-2">
                   {transitions.map((t) => (
                     <button
                       key={t.status}
                       onClick={() => onUpdateStatus(booking.id, t.status)}
-                      disabled={isConfirmDisabled(t.status)}
-                      className={`px-4 py-2 ${t.color} text-white text-sm font-bold rounded-xl transition disabled:opacity-40 shadow-lg shadow-black/20`}
+                      disabled={isActionDisabled(t.status)}
+                      className={`px-4 py-2.5 ${t.color} text-white text-sm font-bold rounded-xl transition disabled:opacity-40 shadow-lg shadow-black/20`}
                     >
                       {updatingStatus ? "Updating..." : t.label}
                     </button>
                   ))}
                 </div>
               </Section>
-            )}
-
-            {/* Ticket Image Preview (if confirmed/completed) */}
-            {(booking.status === "CONFIRMED" || booking.status === "COMPLETED") && booking.ticketImageUrl && (
-               <Section title="Confirmed Ticket">
-                  <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-800 group">
-                    <img
-                      src={booking.ticketImageUrl}
-                      alt="Ticket"
-                      className="w-full h-auto max-h-[300px] object-contain"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3">
-                       <a 
-                        href={booking.ticketImageUrl} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="px-4 py-2 bg-white text-black text-xs font-bold rounded-lg hover:bg-gray-100 transition"
-                       >
-                         View Full
-                       </a>
-                       <button
-                         onClick={() => fileInputRef.current?.click()}
-                         className="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-slate-700 transition"
-                       >
-                         Replace
-                       </button>
-                    </div>
-                  </div>
-               </Section>
             )}
           </div>
 
@@ -413,10 +485,10 @@ function InfoRow({
   highlight?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-slate-500 text-sm">{label}</span>
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-slate-500 text-sm shrink-0">{label}</span>
       <span
-        className={`text-sm font-medium ${
+        className={`text-sm font-medium text-right truncate ${
           highlight ? "text-violet-400 font-bold" : "text-white"
         } ${mono ? "font-mono" : ""}`}
       >

@@ -2,17 +2,13 @@
 
 import { Booking } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
+import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
 
-const STATUS_STYLES: Record<string, string> = {
-  PENDING: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-  CONFIRMED: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  COMPLETED: "bg-green-500/15 text-green-400 border-green-500/20",
-  CANCELLED: "bg-slate-600/20 text-slate-400 border-slate-600/30",
-};
-
-const NEXT_STATUS: Record<string, { label: string; status: string } | null> = {
-  PENDING: { label: "Confirm", status: "CONFIRMED" },
-  CONFIRMED: { label: "Complete", status: "COMPLETED" },
+// Table quick-action labels.
+const NEXT_STATUS: Record<string, { label: string; actionable: boolean } | null> = {
+  PENDING: { label: "Set Price", actionable: true },
+  PAYMENT: { label: "Set Price", actionable: true },
+  CONFIRMED: { label: "Complete", actionable: true },
   COMPLETED: null,
   CANCELLED: null,
 };
@@ -118,19 +114,14 @@ export default function BookingTable({
                     </span>
                   </td>
                   <td className="px-5 py-3">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                        STATUS_STYLES[b.status] || STATUS_STYLES.PENDING
-                      }`}
-                    >
-                      {b.status}
-                    </span>
+                    <BookingStatusBadge status={b.status} variant="dark" />
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
+                      {/* View button - view only, no actions */}
                       <button
                         onClick={() => onView(b)}
-                        title="View"
+                        title="View Details"
                         className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition"
                       >
                         <svg
@@ -154,17 +145,20 @@ export default function BookingTable({
                         </svg>
                       </button>
 
-                      {nextAction && (
+                      {/* Quick action button */}
+                      {nextAction && nextAction.actionable && (
                         <button
                           onClick={() => onView(b)}
                           disabled={updatingStatus}
+                          title={nextAction.label}
                           className="px-2.5 py-1 rounded-lg bg-violet-500/15 text-violet-400 text-xs font-semibold hover:bg-violet-500/25 transition disabled:opacity-40"
                         >
                           {nextAction.label}
                         </button>
                       )}
 
-                      {b.status === "PENDING" && (
+                      {/* Cancel only from PENDING or PAYMENT */}
+                      {(b.status === "PENDING" || b.status === "PAYMENT") && (
                         <button
                           onClick={() => onUpdateStatus(b.id, "CANCELLED")}
                           disabled={updatingStatus}

@@ -211,16 +211,21 @@ export default function ManualPaymentPage() {
         </div>
 
         {/* Pay Button */}
-        {booking.status === "CONFIRMED" ? (
+        {booking.status === "CONFIRMED" || booking.status === "COMPLETED" ? (
           <div className="p-4 bg-green-50 rounded-2xl border border-green-200 text-center">
-            <p className="text-sm font-bold text-green-800">Payment Already Confirmed</p>
-            <p className="text-xs text-green-600 mt-1">Your booking has been paid and confirmed.</p>
+            <p className="text-sm font-bold text-green-800">Payment Completed</p>
+            <p className="text-xs text-green-600 mt-1">Your booking has been paid successfully. Check your profile for updates.</p>
+          </div>
+        ) : booking.status === "CANCELLED" ? (
+          <div className="p-4 bg-red-50 rounded-2xl border border-red-200 text-center">
+            <p className="text-sm font-bold text-red-800">Booking Cancelled</p>
+            <p className="text-xs text-red-600 mt-1">This booking has been cancelled.</p>
           </div>
         ) : (
           <button
             onClick={handlePay}
             disabled={isPaying || !session}
-            className="w-full py-4 bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-base rounded-2xl transition-all shadow-lg shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full py-4 bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-lg rounded-2xl transition-all shadow-lg shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-3"
           >
             {isPaying ? (
               <>
@@ -231,13 +236,16 @@ export default function ManualPaymentPage() {
                 Processing...
               </>
             ) : (
-              "Secure Checkout with Midtrans"
+              <>
+                <span>💳</span>
+                Pay Now
+              </>
             )}
           </button>
         )}
         {!session && (
           <p className="text-center text-xs text-red-500 mt-3">
-            Please login to complete your payment.
+            Please sign in to complete your payment.
           </p>
         )}
       </div>

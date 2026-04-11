@@ -26,7 +26,7 @@ function verifySignature(
 function mapStatus(
   transactionStatus: string,
   fraudStatus?: string
-): "PENDING" | "CONFIRMED" | "CANCELLED" | null {
+): "PENDING" | "PAYMENT" | "CONFIRMED" | "CANCELLED" | null {
   switch (transactionStatus) {
     case "capture":
       return fraudStatus === "accept" ? "CONFIRMED" : "PENDING";
@@ -210,6 +210,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Booking already finalized" });
     }
 
+    // For both mock and non-mock: payment success → CONFIRMED.
+    // Mock flow: PAYMENT → (user pays) → CONFIRMED → (admin books Viator + uploads ticket) → COMPLETED
+    const effectiveStatus = newStatus;
+
     // Check for idempotency — don't re-process if already confirmed
     const isNewConfirmation =
       newStatus === "CONFIRMED" && booking.status !== "CONFIRMED";
@@ -217,18 +221,18 @@ export async function POST(request: Request) {
       ? generateTicketToken()
       : booking.ticketToken;
 
-    // Update payment status
+    // Update booking
     await prisma.booking.update({
       where: { paymentId: order_id },
       data: {
-        status: newStatus,
+        status: effectiveStatus,
         paidAt: newStatus === "CONFIRMED" ? new Date() : booking.paidAt,
         ticketToken,
       },
     });
 
     console.log(
-      `Midtrans webhook: ${order_id} → ${newStatus} (was ${booking.status})`
+      `Midtrans webhook: ${order_id} → ${effectiveStatus} (was ${booking.status}${booking.isMockMode ? ", mock mode" : ""})`
     );
 
     // ── CRITICAL: After payment success, confirm with Viator ──
