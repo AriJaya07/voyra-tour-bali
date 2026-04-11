@@ -6,6 +6,7 @@ import api from "@/lib/axios";
 interface PaymentPayload {
   productCode: string;
   productTitle: string;
+  productImage?: string;
   travelDate: string;
   pax: number;
   totalPrice: number;

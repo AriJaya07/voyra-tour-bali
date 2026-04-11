@@ -8,6 +8,7 @@ import TicketModal from "@/components/profile/TicketModal";
 import CancelModal from "@/components/profile/CancelModal";
 import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
 import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
+import PayNowButton from "@/components/Global/booking/PayNowButton";
 import { fetchProfile, updateProfile, uploadAvatar, fetchUserBookings } from "@/lib/api/profile";
 import VoryaIcon from "@/components/assets/Icon/VoyraIcon";
 import { BOOKING_STATUS_MAP } from "@/types/booking";
@@ -333,28 +334,14 @@ export default function ProfilePage() {
                             </div>
                           </div>
 
-                          {/* Pay Now button — for PENDING or PAYMENT with price set */}
-                          {(b.status === "PAYMENT" || b.status === "PENDING") && b.manualPrice && (
-                            <Link
-                              href={`/payment/manual/${b.bookingRef}`}
-                              className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm rounded-lg transition shadow-sm active:scale-[0.98]"
-                            >
-                              💳 Pay Now — {currency} {b.manualPrice.toLocaleString()}
-                            </Link>
-                          )}
+                          {/* Pay Now button — handles both local (Midtrans Snap) and mock (manual link) */}
+                          <PayNowButton booking={b} className="mt-3 w-full" />
 
                           {/* Status-specific messages */}
-                          {(b.status === "PAYMENT" || b.status === "PENDING") && !b.manualPrice && (
+                          {(b.status === "PAYMENT" || b.status === "PENDING") && !b.manualPrice && !b.snapToken && (
                             <div className="mt-3 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100">
                               <p className="text-xs text-amber-700 font-medium">
                                 Our team is preparing your booking. You will be notified via WhatsApp once it's ready.
-                              </p>
-                            </div>
-                          )}
-                          {(b.status === "PAYMENT" || b.status === "PENDING") && b.manualPrice && (
-                            <div className="mt-3 px-4 py-2 bg-orange-50 rounded-lg border border-orange-200">
-                              <p className="text-[11px] text-orange-600">
-                                Price has been set. Tap <strong>Pay Now</strong> above to complete your payment.
                               </p>
                             </div>
                           )}

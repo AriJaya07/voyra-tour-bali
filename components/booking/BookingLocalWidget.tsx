@@ -161,7 +161,7 @@ export default function BookingLocalWidget({
     trackBeginCheckout({ productCode, title, price: totalPrice, currency: pricingCurrency, travelers: totalTravelers })
 
     paymentMutation.mutate(
-      { productCode, productTitle: title, travelDate: toISODate(date!), pax: totalTravelers, totalPrice },
+      { productCode, productTitle: title, productImage: image, travelDate: toISODate(date!), pax: totalTravelers, totalPrice },
       {
         onSuccess: (data) => {
           trackPurchase({ transactionId: data.orderId || `txn-${Date.now()}`, productCode, title, price: totalPrice, currency: pricingCurrency, travelers: totalTravelers })
@@ -240,6 +240,7 @@ export default function BookingLocalWidget({
                 onChange={(val) => setDate(val as Date)}
                 value={date}
                 minDate={new Date()}
+                locale="en-US"
                 className="local-widget-cal"
               />
             </div>

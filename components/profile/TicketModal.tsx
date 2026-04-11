@@ -1,5 +1,4 @@
 import React, { useRef } from "react";
-import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,6 +6,7 @@ import { toPng } from "html-to-image";
 import { toast } from "sonner";
 import type { Booking, BookingStatus } from "@/types/booking";
 import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
+import PayNowButton from "@/components/Global/booking/PayNowButton";
 
 interface TicketModalProps {
   booking: Booking;
@@ -222,34 +222,15 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                     We are processing your booking with the supplier. Your ticket will appear here once ready.
                   </p>
                 </div>
-              ) : isPayment ? (
+              ) : isPayment || (booking.status === "PENDING" && booking.snapToken) ? (
                 <div className="text-center py-6">
                   <div className="text-5xl mb-4">💳</div>
-                  {booking.manualPrice ? (
-                    <>
-                      <p className="text-gray-900 font-bold text-lg">Payment Required</p>
-                      <div className="mt-4 mb-4 px-5 py-4 bg-orange-50 rounded-xl border border-orange-200 inline-block">
-                        <p className="text-xs text-orange-600 font-bold uppercase tracking-wider mb-1">Amount Due</p>
-                        <p className="text-2xl font-black text-orange-700">
-                          {booking.currency || "IDR"} {booking.manualPrice.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="mt-2">
-                        <Link
-                          href={`/payment/manual/${booking.bookingRef}`}
-                          className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold text-base rounded-xl transition shadow-lg shadow-blue-200 active:scale-[0.98]"
-                        >
-                          <span>💳</span> Pay Now
-                        </Link>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-gray-900 font-bold">Awaiting Price</p>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Our team is preparing your booking. You will be notified via WhatsApp once it's ready.
-                      </p>
-                    </>
+                  <p className="text-gray-900 font-bold text-lg mb-4">Payment Required</p>
+                  <PayNowButton booking={booking} className="inline-flex px-8 py-3.5 text-base rounded-xl shadow-lg shadow-blue-200" />
+                  {!booking.manualPrice && !booking.snapToken && (
+                    <p className="text-sm text-gray-500 mt-4">
+                      Our team is preparing your booking. You will be notified via WhatsApp once it's ready.
+                    </p>
                   )}
                 </div>
               ) : booking.status === "CANCELLED" ? (
@@ -262,7 +243,7 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                 <div className="text-center py-8">
                   <div className="text-5xl mb-4">📝</div>
                   <p className="text-gray-900 font-bold">Booking Submitted</p>
-                  <p className="text-sm text-gray-500 mt-2">Your booking is being processed.</p>
+                  <p className="text-sm text-gray-500 mt-2">Our team is preparing your booking.</p>
                 </div>
               )}
             </div>

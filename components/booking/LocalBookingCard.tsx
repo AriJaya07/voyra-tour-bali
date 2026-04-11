@@ -184,6 +184,7 @@ export default function LocalBookingCard({
       {
         productCode,
         productTitle: title,
+        productImage: image,
         travelDate: toISODate(date!),
         pax: totalTravelers,
         totalPrice,
@@ -257,6 +258,7 @@ export default function LocalBookingCard({
             onChange={(val) => setDate(val as Date)}
             value={date}
             minDate={new Date()}
+            locale="en-US"
             className="local-booking-cal"
           />
         </div>

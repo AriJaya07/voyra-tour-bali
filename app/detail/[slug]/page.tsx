@@ -152,6 +152,7 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
                                 price={price}
                                 title={destination.title}
                                 image={mainImage}
+                                productCode={`LOCAL-${slug}`}
                                 pricingCurrency="IDR"
                             />
                         </div>

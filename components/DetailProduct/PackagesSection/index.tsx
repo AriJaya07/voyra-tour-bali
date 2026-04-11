@@ -54,10 +54,12 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
 
     setBookingPkgId(pkg.id)
 
+    const pkgImage = pkg.images?.find((img: any) => img.isMain)?.url || pkg.images?.[0]?.url;
     paymentMutation.mutate(
       {
         productCode: `VTR-PKG-${pkg.id}`,
         productTitle: pkg.title,
+        productImage: pkgImage,
         travelDate: new Date().toISOString().split('T')[0],
         pax: 1,
         totalPrice: pkg.price,

@@ -22,11 +22,14 @@ export interface Booking {
   status: BookingStatus;
   createdAt: string;
   paymentId?: string;
+  snapToken?: string;
   ticketToken?: string;
   ticketImageUrl?: string;
   meetingPoint?: string;
   travelers?: BookingTraveler[];
   manualPrice?: number;
+  isMockMode?: boolean;
+  paidAt?: string;
 }
 
 export interface BookingStatusConfig {

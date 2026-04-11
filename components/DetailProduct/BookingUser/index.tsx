@@ -36,6 +36,7 @@ interface BookingUserProps {
   price: number
   title: string
   productCode?: string
+  productImage?: string
   ageBands?: ViatorAgeBand[]
   pricingCurrency?: string
   /** Product source — "VIATOR" shows redirect button, "LOCAL" shows full booking */
@@ -167,6 +168,7 @@ export default function BookingUser({
   price,
   title,
   productCode = 'VTR-BALI-1',
+  productImage,
   ageBands,
   pricingCurrency = "IDR",
   source = "LOCAL",
@@ -297,6 +299,7 @@ export default function BookingUser({
       {
         productCode,
         productTitle: title,
+        productImage,
         travelDate: date!.toISOString().split('T')[0],
         pax: totalTravelers,
         totalPrice,
@@ -434,6 +437,7 @@ export default function BookingUser({
           onChange={(val) => setDate(val as Date)}
           value={date}
           minDate={new Date()}
+          locale="en-US"
           className="booking-cal"
         />
       </div>
