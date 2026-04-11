@@ -44,6 +44,8 @@ export default async function MockBookingPage({ params, searchParams }: PageProp
           overridePrice={mockBooking.price}
           overrideCurrency={mockBooking.currency}
           promoCode={promoCode || mockBooking.promoCode || null}
+          initialProductOptionCode={mockBooking.productOptionCode}
+          initialProductOptionTitle={mockBooking.productOptionTitle}
         />
       </div>
     </div>

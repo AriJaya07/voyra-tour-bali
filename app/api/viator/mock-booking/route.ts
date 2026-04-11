@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { productCode, productTitle, productImage, price, currency, promoCode } = body;
+    const { productCode, productTitle, productImage, price, currency, promoCode, productOptionCode, productOptionTitle } = body;
 
     if (!productCode || !productTitle) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -42,6 +42,8 @@ export async function POST(req: Request) {
         currency: currency || "IDR",
         username: session.user.name || session.user.email || null,
         promoCode: promoCode || null,
+        productOptionCode: productOptionCode || null,
+        productOptionTitle: productOptionTitle || null,
       },
     });
 

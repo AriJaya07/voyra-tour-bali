@@ -301,10 +301,16 @@ export default function ProfilePage() {
                             </div>
 
                             <div className="p-5 flex-1 flex flex-col justify-between">
-                              <div>
-                                <h3 className="font-bold text-lg text-gray-900 leading-tight mb-3">
-                                  {b.productTitle}
-                                </h3>
+                                <div>
+                                  <h3 className="font-bold text-lg text-gray-900 leading-tight mb-1">
+                                    {b.productTitle}
+                                  </h3>
+                                  {b.productOptionTitle && (
+                                    <span className="inline-block text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full mb-2">
+                                      {b.productOptionTitle}
+                                    </span>
+                                  )}
+                                </div>
                                 <div className="space-y-2 text-sm text-gray-600">
                                   <div className="flex items-start gap-2">
                                     <span className="shrink-0 mt-0.5">📅</span>
@@ -326,7 +332,6 @@ export default function ProfilePage() {
                                     </span>
                                   </div>
                                 </div>
-                              </div>
 
                               <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
                                 {b.status !== "CANCELLED" && b.status !== "COMPLETED" && isPast && (

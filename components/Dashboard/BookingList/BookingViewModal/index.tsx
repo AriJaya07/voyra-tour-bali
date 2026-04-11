@@ -196,6 +196,12 @@ export default function BookingViewModal({
             <Section title="Product">
               <InfoRow label="Title" value={booking.productTitle} />
               <InfoRow label="Product Code" value={booking.productCode} mono />
+              {booking.productOptionTitle && (
+                <InfoRow label="Selected Option" value={booking.productOptionTitle} />
+              )}
+              {booking.productOptionCode && !booking.productOptionTitle && (
+                <InfoRow label="Option Code" value={booking.productOptionCode} mono />
+              )}
             </Section>
 
             {/* Booking Info */}

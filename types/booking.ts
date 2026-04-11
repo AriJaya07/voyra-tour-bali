@@ -10,6 +10,8 @@ export interface Booking {
   bookingRef: string;
   productCode: string;
   productTitle: string;
+  productOptionCode?: string | null;
+  productOptionTitle?: string | null;
   productImage?: string;
   totalPrice: number;
   totalPriceUsd?: number;

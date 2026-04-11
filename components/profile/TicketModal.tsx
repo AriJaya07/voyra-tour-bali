@@ -227,6 +227,11 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                 <p className="font-bold text-lg text-gray-900 leading-tight">
                   {booking.productTitle}
                 </p>
+                {booking.productOptionTitle && (
+                  <span className="inline-block text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                    {booking.productOptionTitle}
+                  </span>
+                )}
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-gray-50 p-3 rounded-xl print:border print:border-gray-200">
                     <p className="text-xs text-gray-500 font-medium mb-1">Date</p>

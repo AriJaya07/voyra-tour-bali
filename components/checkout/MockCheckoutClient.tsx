@@ -8,11 +8,13 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import Container from "@/components/Container";
 import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon";
+import { useViatorProductDetail } from "@/utils/hooks/useViator";
+import type { ViatorProductOption } from "@/utils/hooks/useViator";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
-const STEPS = ["Contact", "Travelers", "Logistics", "Notes", "Confirm"];
+const STEPS = ["Options", "Contact", "Travelers", "Logistics", "Notes", "Confirm"];
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -141,7 +143,116 @@ const StepIndicator = memo(function StepIndicator({
   );
 });
 
-// ── Step 0: Contact ────────────────────────────────────────────────────────
+// ── Step 0: Options ────────────────────────────────────────────────────────
+function StepOptions({
+  onNext,
+  productCode,
+  selectedOptionCode,
+  setSelectedOption,
+}: {
+  onNext: () => void;
+  productCode: string;
+  selectedOptionCode: string;
+  setSelectedOption: (code: string, title: string) => void;
+}) {
+  const { data: product, isLoading } = useViatorProductDetail(productCode);
+  const productOptions = product?.productOptions;
+  const hasOptions = productOptions && productOptions.length > 0;
+  const [detailOption, setDetailOption] = useState<ViatorProductOption | null>(null);
+
+  // If the product has no options, auto-skip this step after loading
+  useEffect(() => {
+    if (!isLoading && !hasOptions) {
+      onNext();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, hasOptions]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white p-8 rounded-2xl border border-[#F0F0F0] shadow-sm flex flex-col items-center gap-5 text-center">
+        <div className="w-14 h-14 border-[3px] border-[#0071CE] border-t-transparent rounded-full animate-spin" />
+        <p className="text-base font-bold text-gray-900">Loading options…</p>
+      </div>
+    );
+  }
+
+  // While waiting for useEffect to fire skip, show nothing
+  if (!hasOptions) return null;
+
+  return (
+    <div className="space-y-5 relative">
+      <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
+        <SectionHeader
+          icon="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+          title="Select Your Tour Option"
+        />
+        <div className="space-y-3">
+          {productOptions!.map((opt) => {
+            const isSelected = selectedOptionCode === opt.productOptionCode;
+            return (
+              <button
+                key={opt.productOptionCode}
+                type="button"
+                onClick={() => setSelectedOption(opt.productOptionCode, opt.title)}
+                className={`w-full text-left p-4 rounded-xl border-2 transition ${isSelected ? "border-[#0071CE] bg-blue-50/50" : "border-gray-200 hover:border-gray-300 bg-white"
+                  }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#0071CE]" : "border-gray-300"}`}>
+                    {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#0071CE]" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-bold truncate ${isSelected ? "text-[#0071CE]" : "text-gray-900"}`}>
+                      {opt.title}
+                    </p>
+                  </div>
+                  {opt.description && (
+                    <span
+                      onClick={(e) => { e.stopPropagation(); setDetailOption(opt); }}
+                      className="text-xs font-semibold text-[#0071CE] hover:underline shrink-0 px-2 py-1 bg-blue-50 rounded-lg"
+                    >
+                      Details
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          type="button"
+          disabled={!selectedOptionCode}
+          onClick={onNext}
+          className="w-full bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98]"
+        >
+          Continue
+        </button>
+      </div>
+
+      {detailOption && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 rounded-2xl" onClick={() => setDetailOption(null)}>
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden max-h-full flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900">{detailOption.title}</h3>
+              <button onClick={() => setDetailOption(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-400">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-5 py-4 overflow-y-auto space-y-4">
+              {detailOption.description && (<div className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: detailOption.description }} />)}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Step 1: Contact ────────────────────────────────────────────────────────
 
 function StepContact({
   onNext,
@@ -690,6 +801,8 @@ function StepConfirm({
   wantsPickup,
   pickupLocation,
   promoCode,
+  productOptionCode,
+  productOptionTitle,
 }: {
   onBack: () => void;
   productCode: string;
@@ -705,6 +818,8 @@ function StepConfirm({
   wantsPickup: boolean;
   pickupLocation: string;
   promoCode?: string | null;
+  productOptionCode?: string | null;
+  productOptionTitle?: string | null;
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -759,6 +874,8 @@ function StepConfirm({
             ...(wantsPickup && pickupLocation ? [{ questionId: "pickupLocation", answer: pickupLocation }] : [])
           ],
           promoCode: promoCode || null,
+          productOptionCode: productOptionCode || null,
+          productOptionTitle: productOptionTitle || null,
         }),
       });
 
@@ -929,11 +1046,13 @@ const MockBookingSidebar = memo(function MockBookingSidebar({
   productImage,
   travelDate,
   paxMix,
+  productOptionTitle,
 }: {
   productTitle: string;
   productImage?: string | null;
   travelDate: Date;
   paxMix: PaxMixItem[];
+  productOptionTitle?: string | null;
 }) {
   const totalPax = paxMix.reduce((acc, p) => acc + p.numberOfTravelers, 0);
 
@@ -956,7 +1075,11 @@ const MockBookingSidebar = memo(function MockBookingSidebar({
             </div>
           )}
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Experience</p>
-          <p className="text-sm font-bold text-gray-900 leading-snug mb-4 pb-4 border-b border-gray-100">{productTitle}</p>
+          <p className="text-sm font-bold text-gray-900 leading-snug mb-2">{productTitle}</p>
+          {productOptionTitle && (
+            <p className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded inline-block mb-4">Option: {productOptionTitle}</p>
+          )}
+          <div className="border-b border-gray-100 mb-4" />
 
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
@@ -1021,12 +1144,16 @@ export default function MockCheckoutClient({
   overridePrice,
   overrideCurrency,
   promoCode,
+  initialProductOptionCode,
+  initialProductOptionTitle,
 }: {
   initialProductCode: string;
   overrideTitle?: string | null;
   overridePrice?: number | null;
   overrideCurrency?: string | null;
   promoCode?: string | null;
+  initialProductOptionCode?: string | null;
+  initialProductOptionTitle?: string | null;
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -1042,6 +1169,9 @@ export default function MockCheckoutClient({
   const [wantsPickup, setWantsPickup] = useState(false);
   const [pickupLocation, setPickupLocation] = useState("");
   const [specialRequest, setSpecialRequest] = useState("");
+
+  const [selectedOptionCode, setSelectedOptionCode] = useState(initialProductOptionCode || "");
+  const [selectedOptionTitle, setSelectedOptionTitle] = useState(initialProductOptionTitle || "");
 
   const productTitle = overrideTitle || initialProductCode;
 
@@ -1122,16 +1252,27 @@ export default function MockCheckoutClient({
           {/* Left: form steps */}
           <div className="lg:col-span-3 order-2 lg:order-1">
             {step === 0 && (
-              <StepContact
+              <StepOptions
                 onNext={() => setStep(1)}
+                productCode={initialProductCode}
+                selectedOptionCode={selectedOptionCode}
+                setSelectedOption={(code, title) => {
+                  setSelectedOptionCode(code);
+                  setSelectedOptionTitle(title);
+                }}
+              />
+            )}
+            {step === 1 && (
+              <StepContact
+                onNext={() => setStep(2)}
                 contact={contact}
                 setContact={setContact}
               />
             )}
-            {step === 1 && (
+            {step === 2 && (
               <StepTravelers
-                onNext={() => setStep(2)}
-                onBack={() => setStep(0)}
+                onNext={() => setStep(3)}
+                onBack={() => setStep(1)}
                 paxMix={paxMix}
                 setPaxMix={setPaxMix}
                 travelers={travelers}
@@ -1141,10 +1282,10 @@ export default function MockCheckoutClient({
                 contact={contact}
               />
             )}
-            {step === 2 && (
+            {step === 3 && (
               <StepLogistics
-                onNext={() => setStep(3)}
-                onBack={() => setStep(1)}
+                onNext={() => setStep(4)}
+                onBack={() => setStep(2)}
                 wantsPickup={wantsPickup}
                 setWantsPickup={setWantsPickup}
                 pickupLocation={pickupLocation}
@@ -1152,17 +1293,17 @@ export default function MockCheckoutClient({
                 productCode={initialProductCode}
               />
             )}
-            {step === 3 && (
+            {step === 4 && (
               <StepDetails
-                onNext={() => setStep(4)}
-                onBack={() => setStep(2)}
+                onNext={() => setStep(5)}
+                onBack={() => setStep(3)}
                 specialRequest={specialRequest}
                 setSpecialRequest={setSpecialRequest}
               />
             )}
-            {step === 4 && (
+            {step === 5 && (
               <StepConfirm
-                onBack={() => setStep(3)}
+                onBack={() => setStep(4)}
                 productCode={initialProductCode}
                 productTitle={productTitle}
                 overridePrice={overridePrice}
@@ -1175,6 +1316,8 @@ export default function MockCheckoutClient({
                 wantsPickup={wantsPickup}
                 pickupLocation={pickupLocation}
                 promoCode={promoCode}
+                productOptionCode={selectedOptionCode}
+                productOptionTitle={selectedOptionTitle}
               />
             )}
           </div>
@@ -1185,6 +1328,7 @@ export default function MockCheckoutClient({
               productTitle={productTitle}
               travelDate={travelDate}
               paxMix={paxMix}
+              productOptionTitle={selectedOptionTitle}
             />
           </div>
         </div>

@@ -160,6 +160,7 @@ model Booking {
 
   // Viator booking fields
   productOptionCode String?
+  productOptionTitle String?
   tourGradeCode     String?
   startTime         String?
   paxMixJson        Json?
@@ -257,6 +258,8 @@ model MockBooking {
   currency     String   @default("IDR")
   username     String?
   promoCode    String?
+  productOptionCode String?
+  productOptionTitle String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

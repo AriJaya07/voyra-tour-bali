@@ -474,6 +474,8 @@ export default function BookingViatorWidget({
                           price: basePrice,
                           currency,
                           promoCode: promoCode || null,
+                          productOptionCode: selectedOptionCode || null,
+                          productOptionTitle: productOptions?.find(o => o.productOptionCode === selectedOptionCode)?.title || null,
                         }),
                       });
                       const data = await res.json();
