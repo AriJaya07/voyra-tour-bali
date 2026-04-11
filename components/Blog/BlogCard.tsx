@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Destination } from "@/types/blog";
 import { getImageUrl } from "@/lib/newsApi";
-import { HiOutlineCalendarDays, HiOutlineMapPin } from "react-icons/hi2";
+import { CalendarIcon, MapPinIcon, ArrowRightIcon } from "@/components/assets/Icon/shared";
 
 export default function BlogCard({ blog }: { blog: Destination }) {
   return (
@@ -29,7 +29,7 @@ export default function BlogCard({ blog }: { blog: Destination }) {
         <div className="flex items-center text-xs text-gray-500 mb-3 space-x-4 ">
           {blog.createdAt && (
             <div className="flex items-center">
-              <HiOutlineCalendarDays className="w-4 h-4 mr-1" />
+              <CalendarIcon className="w-4 h-4 mr-1" />
               {new Date(blog.createdAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -39,7 +39,7 @@ export default function BlogCard({ blog }: { blog: Destination }) {
           )}
           {blog.location && (
             <div className="flex items-center">
-              <HiOutlineMapPin className="w-4 h-4 mr-1" />
+              <MapPinIcon className="w-4 h-4 mr-1" />
               <span className="truncate max-w-[120px]">{typeof blog.location === 'string' ? blog.location : blog.location.title || blog.location.address}</span>
             </div>
           )}
@@ -55,9 +55,7 @@ export default function BlogCard({ blog }: { blog: Destination }) {
 
         <div className="mt-auto pt-4 border-t border-gray-100 flex items-center text-sm font-semibold text-amber-500 group-hover:text-amber-600 ">
           Read More
-          <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
+          <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
         </div>
       </div>
     </Link>

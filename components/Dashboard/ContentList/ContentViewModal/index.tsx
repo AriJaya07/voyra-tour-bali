@@ -1,4 +1,5 @@
 import { Content } from "@/utils/service/content.service";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 
 
 export default function ContentViewModal({
@@ -18,9 +19,7 @@ export default function ContentViewModal({
             <img src={mainImage.url} alt={content.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
             <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="w-4 h-4" />
             </button>
             <div className="absolute bottom-4 left-6 right-12">
               <p className="text-orange-400 text-xs font-bold uppercase tracking-widest mb-1">Content</p>
@@ -36,9 +35,7 @@ export default function ContentViewModal({
               {content.subTitle && <p className="text-orange-100 text-sm mt-0.5">{content.subTitle}</p>}
             </div>
             <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="w-5 h-5" />
             </button>
           </div>
         )}

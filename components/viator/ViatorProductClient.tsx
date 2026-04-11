@@ -8,6 +8,7 @@ import { useViatorProductDetail, formatDuration } from "@/utils/hooks/useViator"
 import type { ViatorImage } from "@/utils/hooks/useViator"
 import { useCurrency } from "@/utils/hooks/useCurrency"
 import Container from "@/components/Container"
+import { ClockIcon, CheckmarkIcon, CloseIcon, InfoIcon } from "@/components/assets/Icon/shared"
 import BookingViatorWidget from "@/components/viator/BookingViatorWidget"
 import ImageGallery from "@/components/common/ImageGallery"
 import ErrorBoundary from "@/components/common/ErrorBoundary"
@@ -16,7 +17,7 @@ import LogisticsSection from "@/components/viator/LogisticsSection"
 import ProductDetailsSection from "@/components/viator/ProductDetailsSection"
 import ReviewsSection from "@/components/viator/ReviewsSection"
 import AttractionsSection from "@/components/viator/AttractionsSection"
-import { FaChevronRight } from "react-icons/fa"
+import { ChevronRightIcon } from "@/components/assets/Icon/shared"
 
 const FALLBACK_IMAGE = "/images/activity/melasti.png"
 
@@ -146,7 +147,7 @@ function ViatorProductContent({ productCode, isMockMode = false }: { productCode
             Home
           </Link>
 
-          <FaChevronRight className="w-4 h-4 text-gray-400" />
+          <ChevronRightIcon className="w-4 h-4 text-gray-400" />
 
           <span className="text-gray-900 font-semibold truncate max-w-[200px] sm:max-w-[300px] md:max-w-none">
             {product.title}
@@ -169,9 +170,7 @@ function ViatorProductContent({ productCode, isMockMode = false }: { productCode
               )}
               {duration && (
                 <span className="flex items-center gap-1 bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full text-black/80">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <ClockIcon className="w-4 h-4" />
                   {duration}
                 </span>
               )}
@@ -232,9 +231,7 @@ function ViatorProductContent({ productCode, isMockMode = false }: { productCode
                     if (!text) return null
                     return (
                       <li key={i} className="flex items-start gap-2.5 text-gray-700 bg-green-50 rounded-lg px-4 py-3">
-                        <svg className="w-5 h-5 text-green-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
+                        <CheckmarkIcon className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                         <span className="text-sm">{text}</span>
                       </li>
                     )
@@ -255,9 +252,7 @@ function ViatorProductContent({ productCode, isMockMode = false }: { productCode
                     if (!text) return null
                     return (
                       <li key={i} className="flex items-start gap-2.5 text-gray-700 bg-red-50 rounded-lg px-4 py-3">
-                        <svg className="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <CloseIcon className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
                         <span className="text-sm">{text}</span>
                       </li>
                     )
@@ -300,9 +295,7 @@ function ViatorProductContent({ productCode, isMockMode = false }: { productCode
                     if (!text) return null
                     return (
                       <li key={i} className="flex items-start gap-2.5 text-gray-700">
-                        <svg className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <InfoIcon className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
                         <span className="text-sm">{text}</span>
                       </li>
                     )

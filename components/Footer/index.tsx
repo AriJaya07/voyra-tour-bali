@@ -3,13 +3,11 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import {
-  FaFacebook,
-  FaInstagram,
-  FaTiktok,
-  FaYoutube,
-  FaTwitter,
-} from "react-icons/fa";
+import FacebookIcon from "../assets/sosmed/FacebookIcon";
+import InstagramIcon from "../assets/sosmed/InstagramIcon";
+import TiktokIcon from "../assets/sosmed/TiktokIcon";
+import YoutubeIcon from "../assets/sosmed/YoutubeIcon";
+import TwitterIcon from "../assets/sosmed/TwitterIcon";
 import VoryaIcon from "../assets/Icon/VoyraIcon";
 import ViatorIcon from "../assets/footer/ViatorIcon";
 import { SITE_NAME, buildWhatsAppUrl } from "@/lib/config";
@@ -47,11 +45,11 @@ const ACCOUNT_LINKS: NavLink[] = [
 ];
 
 const SOCIAL_LINKS = [
-  { name: "Facebook",  icon: FaFacebook,  href: "https://facebook.com/balitravelnow",  hoverClass: "hover:text-blue-400"  },
-  { name: "Instagram", icon: FaInstagram, href: "https://instagram.com/balitravelnow", hoverClass: "hover:text-pink-400"  },
-  { name: "TikTok",    icon: FaTiktok,    href: "https://tiktok.com/@balitravelnow",   hoverClass: "hover:text-white"     },
-  { name: "YouTube",   icon: FaYoutube,   href: "https://youtube.com/@balitravelnow",  hoverClass: "hover:text-red-400"   },
-  { name: "Twitter",   icon: FaTwitter,   href: "https://twitter.com/balitravelnow",   hoverClass: "hover:text-sky-400"   },
+  { name: "Facebook",  icon: FacebookIcon,  href: "https://facebook.com/balitravelnow",  hoverClass: "hover:text-blue-400"  },
+  { name: "Instagram", icon: InstagramIcon, href: "https://instagram.com/balitravelnow", hoverClass: "hover:text-pink-400"  },
+  { name: "TikTok",    icon: TiktokIcon,    href: "https://tiktok.com/@balitravelnow",   hoverClass: "hover:text-white"     },
+  { name: "YouTube",   icon: YoutubeIcon,   href: "https://youtube.com/@balitravelnow",  hoverClass: "hover:text-red-400"   },
+  { name: "Twitter",   icon: TwitterIcon,   href: "https://twitter.com/balitravelnow",   hoverClass: "hover:text-sky-400"   },
 ];
 
 const WHATSAPP_URL = buildWhatsAppUrl();

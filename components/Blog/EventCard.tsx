@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { EventItem } from "@/types/blog";
 import { getImageUrl } from "@/lib/newsApi";
-import { HiOutlineCalendarDays, HiOutlineMapPin } from "react-icons/hi2";
+import { CalendarIcon, MapPinIcon } from "@/components/assets/Icon/shared";
 
 export default function EventCard({ event }: { event: EventItem }) {
   return (
@@ -28,7 +28,7 @@ export default function EventCard({ event }: { event: EventItem }) {
         <div className="flex flex-wrap items-center text-sm text-indigo-600 font-semibold mb-3 space-x-1 ">
           {event.schedule && (
             <div className="flex items-center mr-4 mb-2">
-              <HiOutlineCalendarDays className="w-5 h-5 mr-1.5" />
+              <CalendarIcon className="w-5 h-5 mr-1.5" />
               {event.schedule}
             </div>
           )}
@@ -44,7 +44,7 @@ export default function EventCard({ event }: { event: EventItem }) {
         
         {event.location && (
           <div className="flex items-center text-sm text-gray-500 mt-auto ">
-            <HiOutlineMapPin className="w-5 h-5 mr-1.5" />
+            <MapPinIcon className="w-5 h-5 mr-1.5" />
             {typeof event.location === 'string' ? event.location : event.location.title || event.location.address}
           </div>
         )}

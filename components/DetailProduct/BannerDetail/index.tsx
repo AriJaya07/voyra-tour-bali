@@ -42,7 +42,7 @@ export default function BannerDetail({ title, description, images, categoryName 
                         </div>
                         <div className="flex flex-col sm:flex-row gap-1">
                             {/* Image 1 (always visible) */}
-                            <div className="relative w-full sm:w-[733px] h-[458px]">
+                            <div className="relative w-full sm:flex-[2] h-[458px]">
                                 <OptimizedImage src={img1} alt={title} fill sizes="(max-width: 640px) 100vw, 733px" className="object-cover" priority />
                             </div>
 
@@ -54,7 +54,7 @@ export default function BannerDetail({ title, description, images, categoryName 
                             </div>
 
                             {/* On larger screens, show multiple images */}
-                            <div className="hidden sm:flex sm:flex-col gap-1 sm:w-[362px] h-[458px]">
+                            <div className="hidden sm:flex sm:flex-col gap-1 sm:flex-1 h-[458px]">
                                 <div className="relative w-full h-[229px]">
                                     <OptimizedImage src={img2} alt={title} fill sizes="362px" className="object-cover" />
                                 </div>
@@ -64,7 +64,7 @@ export default function BannerDetail({ title, description, images, categoryName 
                             </div>
 
                             {/* On larger screens, show more images */}
-                            <div className="hidden sm:flex sm:flex-col gap-1 sm:w-[362px] h-[458px]">
+                            <div className="hidden sm:flex sm:flex-col gap-1 sm:flex-1 h-[458px]">
                                 <div className="relative w-full h-[229px]">
                                     <OptimizedImage src={img4} alt={title} fill sizes="362px" className="object-cover" />
                                 </div>

@@ -4,8 +4,7 @@ import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { AuthLayout, AuthInput } from "@/components/Auth";
 import PasswrodIcon from "@/components/assets/login/PasswordIcon";
-import EyesShowIcon from "@/components/assets/login/EyesShowIcon";
-import EyesCloseIcon from "@/components/assets/login/EyesCloseIcon copy";
+import { EyeOffIcon, EyeIcon, SpinnerIcon, AlertIcon, CheckCircleIcon } from "@/components/assets/Icon/shared";
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -31,9 +30,7 @@ function ResetPasswordContent() {
       >
         <div className="flex flex-col items-center text-center space-y-6 py-4">
           <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center text-red-400">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
+            <AlertIcon className="w-8 h-8" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>
@@ -64,9 +61,7 @@ function ResetPasswordContent() {
       >
         <div className="flex flex-col items-center text-center space-y-6 py-4">
           <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center text-green-400">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <CheckCircleIcon className="w-8 h-8" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>
@@ -130,7 +125,7 @@ function ResetPasswordContent() {
       className="text-slate-500 hover:text-slate-300 transition-colors"
       aria-label={visible ? "Hide password" : "Show password"}
     >
-      {visible ? <EyesShowIcon className="w-4 h-4" /> : <EyesCloseIcon className="w-4 h-4" />}
+      {visible ? <EyeOffIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
     </button>
   );
 
@@ -184,10 +179,7 @@ function ResetPasswordContent() {
         >
           {isLoading ? (
             <>
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+              <SpinnerIcon className="w-4 h-4" />
               Resetting...
             </>
           ) : (

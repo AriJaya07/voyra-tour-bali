@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { SpinnerIcon, ExternalLinkIcon, LockIcon } from "@/components/assets/Icon/shared";
 import { toast } from "sonner";
 import { handleBooking } from "@/lib/services/bookingService";
 import type { Product, BookingInput, BookingResult } from "@/types/bookingFlow";
@@ -105,22 +106,15 @@ export default function BookingButton({
     >
       {isProcessing ? (
         <>
-          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+          <SpinnerIcon className="w-5 h-5" />
           {isViator ? "Redirecting..." : "Processing..."}
         </>
       ) : (
         <>
           {isViator ? (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
+            <ExternalLinkIcon className="w-5 h-5" />
           ) : (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+            <LockIcon className="w-5 h-5" />
           )}
           {label} — {priceLabel}
         </>

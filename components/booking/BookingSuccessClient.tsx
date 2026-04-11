@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Container from '@/components/Container';
+import { CheckmarkIcon, ClockIcon } from "@/components/assets/Icon/shared";
 
 export default function BookingSuccessClient() {
   const searchParams = useSearchParams();
@@ -30,9 +31,9 @@ export default function BookingSuccessClient() {
       <div className="max-w-md w-full bg-white rounded-[24px] p-8 sm:p-10 shadow-lg text-center border border-gray-100">
         <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border-4 border-white ring-4 ${status === 'CONFIRMED' ? 'bg-green-100 text-green-500 ring-green-50' : 'bg-yellow-100 text-yellow-500 ring-yellow-50'}`}>
           {status === 'CONFIRMED' ? (
-            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+            <CheckmarkIcon className="w-10 h-10" strokeWidth={3} />
           ) : (
-            <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <ClockIcon className="w-10 h-10" strokeWidth={3} />
           )}
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{status === 'CONFIRMED' ? 'Booking Confirmed!' : 'Booking Pending...'}</h1>

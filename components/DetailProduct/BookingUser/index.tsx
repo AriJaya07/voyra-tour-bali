@@ -18,6 +18,7 @@ import {
 import type { ViatorAgeBand, AvailabilityPaxMix } from '@/utils/hooks/useViator'
 import { trackBeginCheckout, trackPurchase } from '@/utils/analytics'
 import WhatsAppIcon from '@/components/assets/sosmed/WhatsAppIcon'
+import { CheckmarkIcon, SpinnerIcon, ArrowRightIcon, ExternalLinkIcon, ShieldIcon, LightningIcon, PaymentIcon } from '@/components/assets/Icon/shared'
 
 // ── Config ─────────────────────────────────────────────────────────────
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890"
@@ -350,9 +351,7 @@ export default function BookingUser({
           onClick={() => { window.location.href = viatorUrl }}
           className="w-full h-12 flex items-center justify-center gap-2.5 rounded-xl bg-[#2D9B1B] hover:bg-[#257A15] active:scale-[0.98] transition-all shadow-md cursor-pointer"
         >
-          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
+          <ExternalLinkIcon className="w-5 h-5 text-white" />
           <span className="text-white font-bold text-sm">Book on Viator</span>
         </button>
 
@@ -375,21 +374,15 @@ export default function BookingUser({
         {/* Trust indicators */}
         <div className="mt-4 space-y-2">
           <div className="flex items-center gap-2 text-[11px] text-gray-400">
-            <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+            <ShieldIcon className="w-3.5 h-3.5 text-green-500 shrink-0" />
             Secure booking via Viator
           </div>
           <div className="flex items-center gap-2 text-[11px] text-gray-400">
-            <svg className="w-3.5 h-3.5 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            <LightningIcon className="w-3.5 h-3.5 text-blue-500 shrink-0" />
             Instant confirmation
           </div>
           <div className="flex items-center gap-2 text-[11px] text-gray-400">
-            <svg className="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
+            <PaymentIcon className="w-3.5 h-3.5 text-purple-500 shrink-0" />
             Free cancellation available
           </div>
         </div>
@@ -502,9 +495,7 @@ export default function BookingUser({
 
         {hasLivePricing && !isPriceLoading && (
           <div className="flex items-center justify-center gap-1.5 text-[10px] text-green-600 font-medium">
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+            <CheckmarkIcon className="w-3 h-3" />
             Real-time pricing from Viator
           </div>
         )}
@@ -545,10 +536,7 @@ export default function BookingUser({
         >
           {paymentMutation.isPending ? (
             <>
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+              <SpinnerIcon className="w-4 h-4" />
               Redirecting to payment...
             </>
           ) : isPriceLoading ? (
@@ -556,9 +544,7 @@ export default function BookingUser({
           ) : (
             <>
               Book & Pay Now
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
+              <ArrowRightIcon className="w-4 h-4" />
             </>
           )}
         </button>

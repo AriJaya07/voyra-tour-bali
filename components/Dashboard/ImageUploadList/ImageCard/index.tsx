@@ -1,4 +1,5 @@
 import { ImageItem } from "@/utils/service/image.service";
+import { LinkIcon, TrashIcon } from "@/components/assets/Icon/shared";
 
 export default function ImageCard({
     image,
@@ -50,18 +51,14 @@ export default function ImageCard({
             className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center text-white transition-colors"
             title="Tautkan"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
+            <LinkIcon className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="w-7 h-7 rounded-lg bg-red-500/70 backdrop-blur-sm hover:bg-red-500 flex items-center justify-center text-white transition-colors"
             title="Hapus"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6" />
-            </svg>
+            <TrashIcon className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

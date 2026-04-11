@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { Booking, bookingService } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
 import { toast } from "sonner";
-import { FaCopy } from "react-icons/fa";
+import { CopyIcon } from "@/components/assets/Icon/shared";
 import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
 import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import { ADMIN_ALLOWED_TRANSITIONS } from "@/types/booking";
@@ -284,7 +284,7 @@ export default function BookingViewModal({
                     onClick={handleCopyPaymentLink}
                     className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-sm font-bold rounded-xl border border-emerald-600/30 transition"
                   >
-                    <FaCopy className="w-3.5 h-3.5" />
+                    <CopyIcon className="w-3.5 h-3.5" />
                     Copy Payment Link for Customer
                   </button>
                 ) : (

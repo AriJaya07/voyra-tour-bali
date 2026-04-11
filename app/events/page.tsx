@@ -3,6 +3,7 @@ import { getAllEvents } from '@/lib/newsApi';
 import EventCard from '@/components/Blog/EventCard';
 import SectionHeader from '@/components/Blog/SectionHeader';
 import ErrorState from '@/components/Blog/ErrorState';
+import { CalendarIcon } from '@/components/assets/Icon/shared';
 
 export const metadata: Metadata = {
   title: 'Upcoming Events in Bali | Bali Travel Now',
@@ -41,9 +42,7 @@ export default async function EventsPage() {
         ) : (
           <div className="py-20 text-center bg-white rounded-3xl border border-gray-100 ">
              <div className="text-gray-400 mb-4">
-                <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+                <CalendarIcon className="w-16 h-16 mx-auto" strokeWidth={1} />
               </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No Upcoming Events</h3>
             <p className="text-gray-500 ">Check back later for new events in Bali.</p>

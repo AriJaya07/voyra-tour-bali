@@ -132,7 +132,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
       {/* Activities */}
       <div>
         {/* Grid — skeleton matches real card height */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 min-h-[900px] sm:min-h-[600px] md:min-h-[600px] lg:min-h-[300px]">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 min-h-[300px]">
           {isLoading ? (
             Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
               <SkeletonTranding key={i} />

@@ -8,6 +8,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import Container from "@/components/Container";
 import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon";
+import { CheckmarkIcon, CalendarIcon, ClockIcon, PeopleIcon, UserIcon, ClipboardIcon, ShieldIcon, LightningIcon, CloseIcon, SpinnerIcon, MapPinIcon, InfoIcon, ChatIcon } from "@/components/assets/Icon/shared";
 import { useViatorProductDetail } from "@/utils/hooks/useViator";
 import type { ViatorProductOption } from "@/utils/hooks/useViator";
 
@@ -90,15 +91,13 @@ const SectionHeader = memo(function SectionHeader({
   icon,
   title,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
 }) {
   return (
     <div className="flex items-center gap-2.5 mb-5">
       <div className="w-8 h-8 rounded-lg bg-[#0071CE]/10 flex items-center justify-center shrink-0">
-        <svg className="w-4 h-4 text-[#0071CE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
-        </svg>
+        {icon}
       </div>
       <h2 className="text-base sm:text-lg font-bold text-gray-900">{title}</h2>
     </div>
@@ -126,9 +125,7 @@ const StepIndicator = memo(function StepIndicator({
               aria-current={i === current ? "step" : undefined}
             >
               {i < current ? (
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckmarkIcon className="w-3.5 h-3.5" strokeWidth={3} />
               ) : (
                 i + 1
               )}
@@ -184,7 +181,7 @@ function StepOptions({
     <div className="space-y-5 relative">
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <SectionHeader
-          icon="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+          icon={<svg className="w-4 h-4 text-[#0071CE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>}
           title="Select Your Tour Option"
         />
         <div className="space-y-3">
@@ -239,7 +236,7 @@ function StepOptions({
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h3 className="text-sm font-bold text-gray-900">{detailOption.title}</h3>
               <button onClick={() => setDetailOption(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-400">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <CloseIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="px-5 py-4 overflow-y-auto space-y-4">
@@ -294,7 +291,7 @@ function StepContact({
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <SectionHeader
-          icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          icon={<UserIcon className="w-4 h-4 text-[#0071CE]" />}
           title="Contact Information"
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -339,9 +336,7 @@ function StepContact({
             {errors.confirmEmail && <p className="text-xs text-red-500 mt-1">{errors.confirmEmail}</p>}
             {!errors.confirmEmail && form.confirmEmail && form.email === form.confirmEmail && (
               <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckmarkIcon className="w-3 h-3" strokeWidth={3} />
                 Emails match
               </p>
             )}
@@ -451,7 +446,7 @@ function StepTravelers({
       {/* Date Picker */}
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <SectionHeader
-          icon="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          icon={<CalendarIcon className="w-4 h-4 text-[#0071CE]" />}
           title="Travel Date"
         />
         <style>{`
@@ -471,9 +466,7 @@ function StepTravelers({
           />
         </div>
         <p className="text-sm font-semibold text-[#0071CE] mt-3 flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+          <CheckmarkIcon className="w-4 h-4" />
           {travelDate.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
@@ -481,7 +474,7 @@ function StepTravelers({
       {/* Pax Mix */}
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <SectionHeader
-          icon="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+          icon={<PeopleIcon className="w-4 h-4 text-[#0071CE]" />}
           title="Number of Travelers"
         />
         <div className="space-y-4">
@@ -513,7 +506,7 @@ function StepTravelers({
       {/* Traveler Names */}
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <SectionHeader
-          icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          icon={<UserIcon className="w-4 h-4 text-[#0071CE]" />}
           title="Traveler Details"
         />
         <div className="space-y-6">
@@ -638,7 +631,7 @@ function StepLogistics({
     <div className="space-y-5">
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <SectionHeader
-          icon="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z"
+          icon={<MapPinIcon className="w-4 h-4 text-[#0071CE]" />}
           title="Pickup point"
         />
         <p className="text-gray-600 text-sm mb-5 leading-relaxed">
@@ -716,9 +709,7 @@ function StepLogistics({
             
             {pickupLocation && !isInputFocused && (
               <div className="p-3 bg-green-50 text-green-800 rounded-xl text-sm font-medium flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckmarkIcon className="w-4 h-4" />
                 Selected: {pickupLocation}
               </div>
             )}
@@ -751,7 +742,7 @@ function StepDetails({
     <div className="space-y-5">
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <SectionHeader
-          icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          icon={<ClipboardIcon className="w-4 h-4 text-[#0071CE]" />}
           title="Additional Notes"
         />
         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
@@ -765,9 +756,7 @@ function StepDetails({
           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition resize-none"
         />
         <div className="mt-5 p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-3">
-          <svg className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <InfoIcon className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
           <div>
             <p className="text-sm font-bold text-blue-800 mb-0.5">How this works</p>
             <p className="text-xs text-blue-700 leading-relaxed">
@@ -918,9 +907,7 @@ function StepConfirm({
       <div className="space-y-4">
         <div className="bg-green-50 border border-green-200 rounded-2xl p-5 flex items-start gap-4">
           <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-            </svg>
+            <CheckmarkIcon className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
           <div>
             <p className="text-sm font-bold text-green-800">Booking saved — WhatsApp opened!</p>
@@ -957,7 +944,7 @@ function StepConfirm({
       {/* Booking summary */}
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <SectionHeader
-          icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          icon={<ClipboardIcon className="w-4 h-4 text-[#0071CE]" />}
           title="Review Your Booking"
         />
         <div className="space-y-4 text-sm">
@@ -984,9 +971,7 @@ function StepConfirm({
 
       {/* Reserve now banner */}
       <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center gap-3">
-        <svg className="w-5 h-5 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <ClockIcon className="w-5 h-5 text-blue-500 shrink-0" />
         <p className="text-sm text-blue-700 font-medium">
           Reserve now — price will be confirmed by our team via WhatsApp.
         </p>
@@ -1061,9 +1046,7 @@ const MockBookingSidebar = memo(function MockBookingSidebar({
       <div className="bg-white rounded-2xl shadow-sm border border-[#F0F0F0] overflow-hidden">
         <div className="bg-[#0071CE] px-5 py-4">
           <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
+            <ClipboardIcon className="w-4 h-4" />
             Booking Summary
           </h2>
         </div>
@@ -1084,9 +1067,7 @@ const MockBookingSidebar = memo(function MockBookingSidebar({
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-500 flex items-center gap-1.5">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+                <CalendarIcon className="w-4 h-4" />
                 Date
               </span>
               <span className="font-bold text-gray-900">
@@ -1096,9 +1077,7 @@ const MockBookingSidebar = memo(function MockBookingSidebar({
             {totalPax > 0 && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500 flex items-center gap-1.5">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+                  <PeopleIcon className="w-4 h-4" />
                   Travelers
                 </span>
                 <span className="font-bold text-gray-900">{totalPax} pax</span>
@@ -1117,15 +1096,13 @@ const MockBookingSidebar = memo(function MockBookingSidebar({
       <div className="bg-white rounded-2xl shadow-sm border border-[#F0F0F0] p-4">
         <div className="grid grid-cols-3 gap-2 text-center">
           {[
-            { d: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z", label: "Secure", color: "green" },
-            { d: "M13 10V3L4 14h7v7l9-11h-7z", label: "Fast", color: "blue" },
-            { d: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z", label: "WhatsApp", color: "green" },
-          ].map(({ d, label, color }) => (
+            { icon: <ShieldIcon className="w-4 h-4 text-green-600" />, label: "Secure", color: "green" },
+            { icon: <LightningIcon className="w-4 h-4 text-blue-600" />, label: "Fast", color: "blue" },
+            { icon: <ChatIcon className="w-4 h-4 text-green-600" />, label: "WhatsApp", color: "green" },
+          ].map(({ icon, label, color }) => (
             <div key={label} className="flex flex-col items-center gap-1.5">
               <div className={`w-8 h-8 rounded-full bg-${color}-50 flex items-center justify-center`}>
-                <svg className={`w-4 h-4 text-${color}-600`} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={d} />
-                </svg>
+                {icon}
               </div>
               <span className="text-[10px] font-medium text-gray-500">{label}</span>
             </div>
@@ -1216,9 +1193,7 @@ export default function MockCheckoutClient({
       <div className="min-h-[60vh] flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
           <div className="w-16 h-16 rounded-full bg-[#0071CE]/10 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-[#0071CE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+            <UserIcon className="w-8 h-8 text-[#0071CE]" />
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Login Required</h2>
           <p className="text-sm text-gray-500 mb-6">Please login to complete your booking.</p>

@@ -9,8 +9,7 @@ import Button from "../ui/Button";
 import UserIcon from "../assets/login/UserIcon";
 import EmailIcon from "../assets/login/EmailIcon";
 import PasswrodIcon from "../assets/login/PasswordIcon";
-import EyesShowIcon from "../assets/login/EyesShowIcon";
-import EyesCloseIcon from "../assets/login/EyesCloseIcon copy";
+import { EyeOffIcon, EyeIcon, MailIcon } from "../assets/Icon/shared";
 
 const iconClass = "w-4 h-4";
 const toggleBtnClass = "text-slate-500 hover:text-slate-300 transition-colors";
@@ -24,7 +23,7 @@ function PasswordVisibilityToggle({
 }) {
   return (
     <button type="button" onClick={onToggle} className={toggleBtnClass} aria-label={visible ? "Hide password" : "Show password"}>
-      {visible ? <EyesShowIcon className={iconClass} /> : <EyesCloseIcon className={iconClass} />}
+      {visible ? <EyeOffIcon className={iconClass} /> : <EyeIcon className={iconClass} />}
     </button>
   );
 }
@@ -184,9 +183,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
     return (
       <div className="flex flex-col items-center text-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
         <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400">
-          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-          </svg>
+          <MailIcon className="w-8 h-8" />
         </div>
 
         <div>

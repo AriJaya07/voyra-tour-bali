@@ -1,6 +1,6 @@
 "use client";
 
-import { HiOutlineExclamationTriangle } from "react-icons/hi2";
+import { AlertIcon } from "@/components/assets/Icon/shared";
 
 interface ErrorStateProps {
   title?: string;
@@ -16,7 +16,7 @@ export default function ErrorState({
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl bg-red-50/50 border border-red-100 ">
       <div className="bg-red-100 p-4 rounded-full mb-6 ">
-        <HiOutlineExclamationTriangle className="w-10 h-10 text-red-600 " />
+        <AlertIcon className="w-10 h-10 text-red-600 " />
       </div>
       <h3 className="text-2xl font-bold text-gray-900 mb-3 ">
         {title}

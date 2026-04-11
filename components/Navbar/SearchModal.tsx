@@ -5,8 +5,7 @@ import OptimizedImage from "@/components/common/OptimizedImage"
 import { useSearchDestinations } from "@/utils/hooks/useSearchDestinations"
 import { useViatorSearch, getViatorImageUrl } from "@/utils/hooks/useViator"
 import { formatPrice } from "@/utils/formatPrice"
-import CloseIcon from "../assets/dashboard/CloseIcon"
-import SearchIcon from "../assets/Icon/SearchIcon"
+import { CloseIcon, SearchIcon, ChevronRightIcon } from "@/components/assets/Icon/shared"
 
 // ── Types ──────────────────────────────────────────────────────────
 interface SearchModalProps {
@@ -137,9 +136,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 className="text-gray-400 hover:text-gray-700 transition cursor-pointer"
                 aria-label="Clear"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <CloseIcon className="w-5 h-5" />
               </button>
             )}
 
@@ -217,9 +214,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         </div>
 
                         {/* Arrow */}
-                        <svg className="w-4 h-4 text-gray-300 group-hover:text-blue-500 flex-shrink-0 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
+                        <ChevronRightIcon className="w-4 h-4 text-gray-300 group-hover:text-blue-500 flex-shrink-0 transition" />
                       </a>
                     )
                   })}

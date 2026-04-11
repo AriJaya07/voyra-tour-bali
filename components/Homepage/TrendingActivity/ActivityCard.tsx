@@ -4,6 +4,7 @@ import Link from "next/link"
 import OptimizedImage from "@/components/common/OptimizedImage"
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
 import type { UnifiedActivity } from "@/types/tourism"
+import { ClockIcon } from "@/components/assets/Icon/shared"
 
 function getDiscountPercent(price: number, before?: number): number | null {
   if (!before || before <= price) return null
@@ -70,9 +71,7 @@ export function ActivityCard({ item, currency }: ActivityCardProps) {
                 )}
                 {item.duration && (
                   <span className="flex items-center gap-0.5">
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <ClockIcon className="w-3 h-3" />
                     {item.duration}
                   </span>
                 )}

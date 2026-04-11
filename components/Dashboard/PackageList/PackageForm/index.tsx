@@ -7,6 +7,7 @@ import { useDestinations } from "@/utils/hooks/useDestinations";
 import SpinnerIcon from "@/components/assets/dashboard/SpinnerIcon";
 import { Field, inputClass } from "@/components/common/InputForm";
 import { useImages } from "@/utils/hooks/useImages";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 
 interface FormData {
   title: string;
@@ -170,9 +171,7 @@ export default function PackageForm({ mode, initialData, onSubmit, onCancel, isL
           </h2>
         </div>
         <button onClick={onCancel} className="text-white/60 hover:text-white transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <CloseIcon className="w-5 h-5" />
         </button>
       </div>
 

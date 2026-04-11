@@ -131,7 +131,7 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="bg-gray-100 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl flex flex-col relative ticket-print-container"
+          className="bg-gray-100 w-full max-w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl flex flex-col relative ticket-print-container"
         >
           {/* Print Styles Injection */}
           <style dangerouslySetInnerHTML={{__html: `

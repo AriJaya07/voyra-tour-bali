@@ -16,7 +16,10 @@ import BookingsIcon     from "../../assets/Icon/sidebar/BookingsIcon";
 import ContentsIcon     from "../../assets/Icon/sidebar/ContentsIcon";
 import ImagesIcon       from "../../assets/Icon/sidebar/ImagesIcon";
 import SubscribersIcon  from "../../assets/Icon/sidebar/SubscribersIcon";
-import SettingsIcon     from "../../assets/Icon/sidebar/SettingsIcon";
+import {
+  GlobeIcon, MenuIcon, CloseIcon, CollapseLeftIcon, CollapseRightIcon,
+  SunIcon, MoonIcon, SignOutIcon,
+} from "../../assets/Icon/shared";
 
 const NAV_ITEMS = [
   {
@@ -124,9 +127,7 @@ export default function Sidebar() {
         <Link href={'/'} target="_self">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-              </svg>
+              <GlobeIcon className="w-4 h-4 text-white" />
             </div>
             <span className="text-white font-bold text-sm">TravelAdmin</span>
           </div>
@@ -135,9 +136,7 @@ export default function Sidebar() {
           onClick={() => setMobileOpen(true)}
           className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/60 transition-colors"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+          <MenuIcon className="w-5 h-5" />
         </button>
       </div>
 
@@ -216,16 +215,12 @@ function SidebarContent({
       <div className={`flex ${collapsed ? "justify-center" : "justify-end"} pt-3`}>
         {onToggleCollapse && !collapsed && (
             <button onClick={onToggleCollapse} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-700/60 transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
+              <CollapseLeftIcon className="w-4 h-4" />
             </button>
           )}
           {onToggleCollapse && collapsed && (
             <button onClick={onToggleCollapse} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-700/60 transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
+              <CollapseRightIcon className="w-4 h-4" />
             </button>
           )}
       </div>
@@ -233,10 +228,7 @@ function SidebarContent({
       <div className={`flex items-center justify-between pb-5 px-4 border-b border-slate-700/60 ${collapsed ? "px-3 justify-center" : ""}`}>
         <Link href={"/"} target="_self" className="flex items-center gap-3 min-w-0">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-900/40">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-            </svg>
+            <GlobeIcon className="w-4 h-4 text-white" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
@@ -249,9 +241,7 @@ function SidebarContent({
         {/* Close (mobile) / Collapse (desktop) */}
         {onClose && (
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-700/60 transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <CloseIcon className="w-4 h-4" />
           </button>
         )}
         
@@ -322,15 +312,9 @@ function SidebarContent({
         >
           <span className="flex-shrink-0">
             {theme === "dark" ? (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
+              <SunIcon className="w-5 h-5" />
             ) : (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
+              <MoonIcon className="w-5 h-5" />
             )}
           </span>
           {!collapsed && (
@@ -405,10 +389,7 @@ function SidebarContent({
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all text-sm font-medium"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+            <SignOutIcon className="w-4 h-4" />
             Sign Out
           </button>
         </div>

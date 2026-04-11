@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { checkAvailability } from "@/lib/api/viator-client";
+import { CalendarIcon, ClockIcon } from "@/components/assets/Icon/shared";
 import type { AvailabilitySlot } from "@/utils/hooks/useBookingStore";
 
 interface AvailabilitySelectorProps {
@@ -85,9 +86,7 @@ export default function AvailabilitySelector({
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <div className="flex items-center gap-2.5 mb-5">
           <div className="w-8 h-8 rounded-lg bg-[#0071CE]/10 flex items-center justify-center">
-            <svg className="w-4 h-4 text-[#0071CE]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <CalendarIcon className="w-4 h-4 text-[#0071CE]" />
           </div>
           <h2 className="text-base sm:text-lg font-bold text-gray-900">Select Date</h2>
         </div>
@@ -107,9 +106,7 @@ export default function AvailabilitySelector({
         <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
           <div className="flex items-center gap-2.5 mb-5">
             <div className="w-8 h-8 rounded-lg bg-[#0071CE]/10 flex items-center justify-center">
-              <svg className="w-4 h-4 text-[#0071CE]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <ClockIcon className="w-4 h-4 text-[#0071CE]" />
             </div>
             <h2 className="text-base sm:text-lg font-bold text-gray-900">Available Times</h2>
           </div>

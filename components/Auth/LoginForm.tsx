@@ -8,8 +8,7 @@ import Button from "../ui/Button";
 import WarningIcon from "../assets/login/WarningIcon";
 import EmailIcon from "../assets/login/EmailIcon";
 import PasswrodIcon from "../assets/login/PasswordIcon";
-import EyesShowIcon from "../assets/login/EyesShowIcon";
-import EyesCloseIcon from "../assets/login/EyesCloseIcon copy";
+import { EyeOffIcon, EyeIcon, ChevronRightIcon } from "../assets/Icon/shared";
 
 interface LoginFormProps {
   callbackUrl: string | null;
@@ -116,9 +115,9 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
               className="text-slate-500 hover:text-slate-300 transition-colors"
             >
               {showPassword ? (
-                <EyesShowIcon className="w-4 h-4" />
+                <EyeOffIcon className="w-4 h-4" />
               ) : (
-                <EyesCloseIcon className="w-4 h-4" />
+                <EyeIcon className="w-4 h-4" />
               )}
             </button>
           }
@@ -140,9 +139,7 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
           className="mt-2"
         >
           Sign In
-          <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
+          <ChevronRightIcon className="w-4 h-4 ml-1" />
         </Button>
       </form>
 

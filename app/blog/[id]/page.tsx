@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getAllDestinations, getDestinationDetail, getImageUrl } from '@/lib/newsApi';
 import BlogCard from '@/components/Blog/BlogCard';
-import { HiOutlineCalendarDays, HiOutlineMapPin, HiOutlineChevronLeft } from "react-icons/hi2";
+import { CalendarIcon, MapPinIcon, ChevronLeftIcon } from "@/components/assets/Icon/shared";
 import PromotionApp from '@/components/Homepage/PromotionApp';
 
 interface PageProps {
@@ -65,7 +65,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
         <div className="absolute inset-0 flex items-end pb-16">
           <div className="container mx-auto px-4 max-w-4xl">
             <Link href="/blog" className="inline-flex items-center text-white/80 hover:text-white mb-6 transition-colors">
-              <HiOutlineChevronLeft className="w-5 h-5 mr-1" />
+              <ChevronLeftIcon className="w-5 h-5 mr-1" />
               Back to Blog
             </Link>
             
@@ -82,7 +82,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
             <div className="flex flex-wrap items-center text-white/90 gap-6 text-sm font-medium">
               {destination.createdAt && (
                 <div className="flex items-center">
-                  <HiOutlineCalendarDays className="w-5 h-5 mr-2" />
+                  <CalendarIcon className="w-5 h-5 mr-2" />
                   {new Date(destination.createdAt).toLocaleDateString("en-US", {
                     month: "long",
                     day: "numeric",
@@ -92,7 +92,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
               )}
               {destination.location && (
                 <div className="flex items-center">
-                  <HiOutlineMapPin className="w-5 h-5 mr-2" />
+                  <MapPinIcon className="w-5 h-5 mr-2" />
                   {typeof destination.location === 'string' ? destination.location : destination.location.title || destination.location.address}
                 </div>
               )}

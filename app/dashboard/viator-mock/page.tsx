@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Link from "next/link";
-import { FaPlus, FaTrash, FaExternalLinkAlt, FaCopy } from "react-icons/fa";
+import { PlusIcon, TrashIcon, ExternalLinkIcon, CopyIcon } from "@/components/assets/Icon/shared";
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice";
 
 interface MockBooking {
@@ -72,7 +72,7 @@ export default function ViatorMockAdminPage() {
           href="/dashboard/viator-mock/new"
           className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl text-sm shadow-lg hover:shadow-teal-500/25 transition-all"
         >
-          <FaPlus className="w-3.5 h-3.5" />
+          <PlusIcon className="w-3.5 h-3.5" />
           Create New Link
         </Link>
       </div>
@@ -164,7 +164,7 @@ export default function ViatorMockAdminPage() {
                           className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-indigo-400 hover:bg-slate-700 transition"
                           title="Copy Link"
                         >
-                          <FaCopy className="w-3.5 h-3.5" />
+                          <CopyIcon className="w-3.5 h-3.5" />
                         </button>
                         <Link
                           href={`/v/${booking.slug}`}
@@ -172,14 +172,14 @@ export default function ViatorMockAdminPage() {
                           className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-teal-400 hover:bg-slate-700 transition"
                           title="Open Link"
                         >
-                          <FaExternalLinkAlt className="w-3 h-3" />
+                          <ExternalLinkIcon className="w-3 h-3" />
                         </Link>
                         <button
                           onClick={() => handleDelete(booking.id)}
                           className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 hover:bg-slate-700 transition"
                           title="Delete"
                         >
-                          <FaTrash className="w-3.5 h-3.5" />
+                          <TrashIcon className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>

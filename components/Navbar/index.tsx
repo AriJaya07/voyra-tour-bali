@@ -154,7 +154,7 @@ export default function Navbar() {
             <button
               onClick={() => setIsSearchOpen(true)}
               aria-label="Search"
-              className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-500 hover:text-[#0071CE] cursor-pointer"
+              className="h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-500 hover:text-[#0071CE] cursor-pointer"
             >
               <SearchIcon />
             </button>
@@ -283,7 +283,7 @@ export default function Navbar() {
               className="cursor-pointer"
               aria-label="Open menu"
             >
-              <BurgerIcon className="w-[40px] h-[40px]" />
+              <BurgerIcon className="w-[44px] h-[44px]" />
             </button>
           </div>
         </nav>

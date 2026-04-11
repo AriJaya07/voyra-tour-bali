@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { ClockIcon, CheckmarkIcon, PeopleIcon } from "@/components/assets/Icon/shared"
 import type {
   ViatorCancellationPolicy,
   ViatorBookingRequirements,
@@ -228,17 +229,13 @@ export default function ProductDetailsSection({
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         {dur && dur > 0 && (
                           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <ClockIcon className="w-3 h-3" />
                             {formatDuration({ fixedDurationInMinutes: dur })}
                           </span>
                         )}
                         {item.admissionIncluded === "YES" && (
                           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
+                            <CheckmarkIcon className="w-3 h-3" />
                             Admission included
                           </span>
                         )}
@@ -269,9 +266,7 @@ export default function ProductDetailsSection({
           {/* Duration summary */}
           {itinerary?.duration && (
             <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 ml-4 pl-6">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <ClockIcon className="w-4 h-4" />
               <span>Total duration: {formatDuration(itinerary.duration)}</span>
             </div>
           )}
@@ -327,9 +322,7 @@ export default function ProductDetailsSection({
           {bookingConfirmation && (
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <ClockIcon className="w-5 h-5 text-gray-500" />
                 <span
                   className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                     bookingConfirmation.confirmationType === "INSTANT"
@@ -358,9 +351,7 @@ export default function ProductDetailsSection({
           {bookingRequirements && (
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+                <PeopleIcon className="w-5 h-5 text-gray-500" />
                 <span className="text-xs font-bold text-gray-700">Group Size</span>
               </div>
               <p className="text-xs text-gray-600">

@@ -2,7 +2,7 @@
 
 import PencilIcon from "@/components/assets/dashboard/PencilIcon";
 import TrashIcon from "@/components/assets/dashboard/TrashIcon";
-import EyesShowIcon from "@/components/assets/login/EyesShowIcon";
+import { EyeIcon } from "@/components/assets/Icon/shared";
 import { ActionButton } from "@/components/common/InputForm";
 import { Package } from "@/utils/service/package.service";
 import { formatPrice } from "@/utils/formatPrice";
@@ -94,7 +94,7 @@ export default function PackageTable({ packages, onView, onEdit, onDelete }: Pro
                 title="View"
                 color="text-slate-500 hover:bg-slate-100"
                 icon={
-                  <EyesShowIcon />
+                  <EyeIcon />
                 }
               />
               <ActionButton

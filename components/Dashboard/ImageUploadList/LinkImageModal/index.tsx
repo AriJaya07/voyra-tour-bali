@@ -1,5 +1,6 @@
 import { ImageItem } from "@/utils/service/image.service";
 import { useState } from "react";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 
 export default function LinkImageModal({
     image,
@@ -31,9 +32,7 @@ export default function LinkImageModal({
               <h2 className="text-white font-bold text-lg">Tautkan Gambar</h2>
             </div>
             <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="w-5 h-5" />
             </button>
           </div>
   

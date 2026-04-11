@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { AlertIcon, ClockIcon } from "@/components/assets/Icon/shared";
 
 interface HoldTimerProps {
   /** ISO timestamp when the hold expires */
@@ -42,9 +43,7 @@ export default function HoldTimer({ expiration, onExpired }: HoldTimerProps) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-          <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <AlertIcon className="w-4 h-4 text-red-600" />
         </div>
         <div>
           <p className="text-sm font-bold text-red-800">Hold Expired</p>
@@ -73,7 +72,7 @@ export default function HoldTimer({ expiration, onExpired }: HoldTimerProps) {
             : "bg-blue-100"
         }`}
       >
-        <svg
+        <ClockIcon
           className={`w-4 h-4 ${
             isCritical
               ? "text-red-600"
@@ -81,17 +80,7 @@ export default function HoldTimer({ expiration, onExpired }: HoldTimerProps) {
               ? "text-amber-600"
               : "text-blue-600"
           } ${isCritical ? "animate-pulse" : ""}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
+        />
       </div>
 
       <div className="flex-1">

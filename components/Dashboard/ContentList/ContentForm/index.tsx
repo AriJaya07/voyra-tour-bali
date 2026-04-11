@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Content } from "@/utils/service/content.service";
 import { useDestinations } from "@/utils/hooks/useDestinations";
 import { useImages } from "@/utils/hooks/useImages";
+import { CloseIcon, SpinnerIcon } from "@/components/assets/Icon/shared";
 
 interface FormData {
   title: string;
@@ -172,9 +173,7 @@ export default function ContentForm({
           </h2>
         </div>
         <button onClick={onCancel} className="text-white/60 hover:text-white transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <CloseIcon className="w-5 h-5" />
         </button>
       </div>
 
@@ -344,10 +343,7 @@ export default function ContentForm({
             className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-semibold flex items-center justify-center gap-2"
           >
             {isLoading && (
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+              <SpinnerIcon className="w-4 h-4" />
             )}
             {mode === "create" ? "Add Content" : "Save Changes"}
           </button>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { FaArrowLeft, FaSearch, FaCheck, FaSpinner } from "react-icons/fa";
+import { ChevronLeftIcon, SearchIcon, CheckmarkIcon, SpinnerIcon } from "@/components/assets/Icon/shared";
 
 interface SearchResult {
   productCode: string;
@@ -116,7 +116,7 @@ export default function ViatorMockNewPage() {
           href="/dashboard/viator-mock"
           className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition"
         >
-          <FaArrowLeft className="w-4 h-4" />
+          <ChevronLeftIcon className="w-4 h-4" />
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-white">Create Mock Link</h1>
@@ -141,7 +141,7 @@ export default function ViatorMockNewPage() {
               disabled={isSearching || !searchQuery.trim()}
               className="px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl font-medium transition"
             >
-              {isSearching ? <FaSpinner className="animate-spin" /> : <FaSearch />}
+              {isSearching ? <SpinnerIcon className="animate-spin" /> : <SearchIcon />}
             </button>
           </form>
 
@@ -168,7 +168,7 @@ export default function ViatorMockNewPage() {
                 </div>
                 {selectedProduct?.productCode === product.productCode && (
                   <div className="text-indigo-400 flex items-center justify-center pr-2">
-                    <FaCheck className="w-5 h-5" />
+                    <CheckmarkIcon className="w-5 h-5" />
                   </div>
                 )}
               </div>
@@ -227,7 +227,7 @@ export default function ViatorMockNewPage() {
               disabled={isSubmitting || !selectedProduct || !slug}
               className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 rounded-xl text-white font-bold text-sm shadow-lg shadow-teal-500/20 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
             >
-              {isSubmitting && <FaSpinner className="animate-spin w-4 h-4" />}
+              {isSubmitting && <SpinnerIcon className="animate-spin w-4 h-4" />}
               Save & Generate Link
             </button>
           </form>

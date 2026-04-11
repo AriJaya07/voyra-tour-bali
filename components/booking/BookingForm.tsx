@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { UserIcon, PeopleIcon } from "@/components/assets/Icon/shared";
 
 export interface BookingFormData {
   firstName: string;
@@ -105,9 +106,7 @@ export default function BookingForm({
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <div className="flex items-center gap-2.5 mb-5">
           <div className="w-8 h-8 rounded-lg bg-[#0071CE]/10 flex items-center justify-center">
-            <svg className="w-4 h-4 text-[#0071CE]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+            <UserIcon className="w-4 h-4 text-[#0071CE]" />
           </div>
           <h2 className="text-base sm:text-lg font-bold text-gray-900">Contact Information</h2>
         </div>
@@ -140,9 +139,7 @@ export default function BookingForm({
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <div className="flex items-center gap-2.5 mb-5">
           <div className="w-8 h-8 rounded-lg bg-[#0071CE]/10 flex items-center justify-center">
-            <svg className="w-4 h-4 text-[#0071CE]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <PeopleIcon className="w-4 h-4 text-[#0071CE]" />
           </div>
           <h2 className="text-base sm:text-lg font-bold text-gray-900">Traveler Details</h2>
         </div>

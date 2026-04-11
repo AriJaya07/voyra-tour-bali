@@ -15,6 +15,7 @@ import {
 import { VIATOR_MOCK_BOOKING } from "@/lib/config/viator";
 import { buildWhatsAppUrl } from "@/lib/config";
 import WhatsAppIcon from "@/components/assets/sosmed/WhatsAppIcon";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 
 // ── Mock fallback reasons (used when VIATOR_MOCK_BOOKING is true) ────────────
 
@@ -175,9 +176,7 @@ export default function CancelModal({ booking, onClose, onSuccess }: CancelModal
           {/* Header */}
           <div className="bg-red-50 p-6 text-center border-b border-red-100">
             <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="w-8 h-8" />
             </div>
             <h2 className="text-xl font-black text-red-900">Cancel Booking?</h2>
             {VIATOR_MOCK_BOOKING && (

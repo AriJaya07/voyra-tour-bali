@@ -1,6 +1,7 @@
 import { fmtDate } from "@/components/common/ListForm";
 import { Location } from "@/utils/service/location.service";
 import Link from "next/link";
+import { CloseIcon, MapPinIcon, ExternalLinkIcon } from "@/components/assets/Icon/shared";
 
 // ── View Modal ─────────────────────────────────────────────
 export default function LocationViewModal({
@@ -38,9 +39,7 @@ export default function LocationViewModal({
               onClick={onClose}
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="w-4 h-4" />
             </button>
           </div>
         ) : (
@@ -60,9 +59,7 @@ export default function LocationViewModal({
               onClick={onClose}
               className="text-white/60 hover:text-white transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="w-5 h-5" />
             </button>
           </div>
         )}
@@ -71,9 +68,7 @@ export default function LocationViewModal({
           {/* Destination */}
           <div className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
             <div className="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
-              <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              </svg>
+              <MapPinIcon className="w-4 h-4 text-blue-400" />
             </div>
             <div>
               <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
@@ -109,9 +104,7 @@ export default function LocationViewModal({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sky-400 hover:text-sky-300 text-sm font-medium transition-colors break-all"
               >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
+                <ExternalLinkIcon className="w-4 h-4 flex-shrink-0" />
                 {location.hrefLink}
               </Link>
             </div>

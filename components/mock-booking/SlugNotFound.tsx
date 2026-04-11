@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SearchIcon } from "@/components/assets/Icon/shared";
 
 interface SlugNotFoundProps {
   slug?: string;
@@ -48,9 +49,7 @@ export default function SlugNotFound({ slug }: SlugNotFoundProps) {
             href="/"
             className="inline-flex items-center justify-center gap-2 bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold px-6 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <SearchIcon className="w-4 h-4" />
             Explore Our Tours
           </Link>
 

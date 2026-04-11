@@ -12,7 +12,7 @@ import Lightbox from "@/components/Dashboard/ImageUploadList/Lightbox";
 import { FilterType, fmtDate, ViewMode } from "@/components/common/ListForm";
 import DashboardPageHeader from "@/components/Dashboard/common/DashboardPageHeader";
 import { ErrorBanner } from "@/components/Dashboard/common/LoadingState";
-import EyesShowIcon from "@/components/assets/login/EyesShowIcon";
+import { EyeIcon, PlusIcon } from "@/components/assets/Icon/shared";
 
 export default function ImageUploadList() {
   const [filter, setFilter] = useState<FilterType>("all");
@@ -113,9 +113,7 @@ export default function ImageUploadList() {
           onClick={() => fileInputRef.current?.click()}
           className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-700 active:scale-95 transition-all font-semibold shadow-lg shadow-rose-900/40 text-sm"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-          </svg>
+          <PlusIcon className="w-4 h-4" />
           Upload Image
         </button>
         <input
@@ -319,7 +317,7 @@ export default function ImageUploadList() {
                     onClick={() => setLightboxImage(img)}
                     title="View"
                     color="text-slate-500 hover:bg-slate-700"
-                    icon={<EyesShowIcon />}
+                    icon={<EyeIcon />}
                   />
                   <ActionButton
                     onClick={() => setLinkModalImage(img)}

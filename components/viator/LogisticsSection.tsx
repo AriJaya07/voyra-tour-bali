@@ -2,6 +2,7 @@
 
 import { useEffect, useState, lazy, Suspense } from "react";
 import type { ViatorLogistics } from "@/utils/hooks/useViator";
+import { MapPinIcon, CheckmarkIcon, ClockIcon, RefreshIcon } from "@/components/assets/Icon/shared";
 
 const LeafletMap = lazy(() => import("@/components/ui/LeafletMap"));
 
@@ -54,25 +55,7 @@ function LocationCard({
 
   return (
     <div className="flex items-start gap-3">
-      <svg
-        className="w-4 h-4 text-[#0071CE] shrink-0 mt-1"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-        />
-      </svg>
+      <MapPinIcon className="w-4 h-4 text-[#0071CE] shrink-0 mt-1" />
       <div className="flex-1 min-w-0">
         {displayName && (
           <p className="text-sm font-medium text-gray-900">{displayName}</p>
@@ -201,9 +184,7 @@ export default function LogisticsSection({ logistics, timeZone }: LogisticsSecti
               <div className="p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
-                    <svg className="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
+                    <RefreshIcon className="w-3.5 h-3.5 text-green-600" />
                   </span>
                   <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Start & End Point</h3>
                   <span className="text-[10px] font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
@@ -228,9 +209,7 @@ export default function LogisticsSection({ logistics, timeZone }: LogisticsSecti
                   <div className="p-4 sm:p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
-                        <svg className="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                        </svg>
+                        <CheckmarkIcon className="w-3.5 h-3.5 text-green-600" strokeWidth={2.5} />
                       </span>
                       <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Start Point</h3>
                     </div>
@@ -259,10 +238,7 @@ export default function LogisticsSection({ logistics, timeZone }: LogisticsSecti
                   <div className="p-4 sm:p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center">
-                        <svg className="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                        <MapPinIcon className="w-3.5 h-3.5 text-red-500" />
                       </span>
                       <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">End Point</h3>
                     </div>
@@ -340,9 +316,7 @@ export default function LogisticsSection({ logistics, timeZone }: LogisticsSecti
         {/* Timezone */}
         {timeZone && (
           <p className="text-xs text-gray-400 flex items-center gap-1.5 pl-1">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <ClockIcon className="w-3.5 h-3.5" />
             Timezone: {timeZone.replace(/_/g, " ")}
           </p>
         )}

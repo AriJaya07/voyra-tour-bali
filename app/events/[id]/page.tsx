@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEventDetail, getImageUrl } from '@/lib/newsApi';
-import { HiOutlineCalendarDays, HiOutlineMapPin, HiOutlineChevronLeft } from "react-icons/hi2";
+import { CalendarIcon, MapPinIcon, ChevronLeftIcon } from "@/components/assets/Icon/shared";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -43,7 +43,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       <div className="container mx-auto px-4 max-w-4xl">
         
         <Link href="/events" className="inline-flex items-center text-gray-500 hover:text-indigo-600 mb-8 font-medium transition-colors :text-indigo-400">
-          <HiOutlineChevronLeft className="w-5 h-5 mr-1" />
+          <ChevronLeftIcon className="w-5 h-5 mr-1" />
           Back to Events
         </Link>
 
@@ -59,7 +59,7 @@ export default async function EventDetailPage({ params }: PageProps) {
               priority
             />
             <div className="absolute top-4 right-4 bg-white/90 backdrop-blur text-gray-900 px-4 py-2 rounded-xl text-sm font-bold shadow-lg flex items-center space-x-2">
-              <HiOutlineCalendarDays className="w-5 h-5 text-indigo-600" />
+              <CalendarIcon className="w-5 h-5 text-indigo-600" />
               <span>{event.schedule}</span>
             </div>
           </div>
@@ -73,7 +73,7 @@ export default async function EventDetailPage({ params }: PageProps) {
               {event.location && (
                 <div className="flex items-center text-gray-600 ">
                   <div className="bg-indigo-50 p-3 rounded-full mr-4">
-                    <HiOutlineMapPin className="w-6 h-6 text-indigo-600 " />
+                    <MapPinIcon className="w-6 h-6 text-indigo-600 " />
                   </div>
                   <div>
                     <div className="text-sm text-gray-400 font-medium">Location</div>
@@ -85,7 +85,7 @@ export default async function EventDetailPage({ params }: PageProps) {
               {event.schedule && (
                 <div className="flex items-center text-gray-600 ">
                   <div className="bg-indigo-50 p-3 rounded-full mr-4">
-                    <HiOutlineCalendarDays className="w-6 h-6 text-indigo-600 " />
+                    <CalendarIcon className="w-6 h-6 text-indigo-600 " />
                   </div>
                   <div>
                     <div className="text-sm text-gray-400 font-medium">Date & Time</div>

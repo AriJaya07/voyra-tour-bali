@@ -1,6 +1,7 @@
 "use client"
 
 import { Location, Image as PrismaImage } from "@prisma/client"
+import { MapPinIcon } from "@/components/assets/Icon/shared"
 
 type LocationWithImages = Location & { images: PrismaImage[] }
 
@@ -65,10 +66,7 @@ export default function LocationSection({ locations }: LocationSectionProps) {
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-[#02ACBE] hover:bg-[#018fa0] text-white text-sm font-semibold rounded-xl transition-colors w-fit"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                    <MapPinIcon className="w-4 h-4" />
                     Open Maps
                   </a>
                 )}

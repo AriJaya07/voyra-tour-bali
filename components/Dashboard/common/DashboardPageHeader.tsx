@@ -1,3 +1,5 @@
+import { PlusIcon } from "@/components/assets/Icon/shared";
+
 export type AccentColor = "emerald" | "blue" | "violet" | "orange" | "sky" | "rose" | "amber";
 
 const buttonColors: Record<AccentColor, string> = {
@@ -45,9 +47,7 @@ export default function DashboardPageHeader({
         onClick={onButtonClick}
         className={`flex items-center gap-2 px-4 py-2.5 text-white rounded-xl active:scale-95 transition-all font-semibold shadow-lg text-sm ${buttonColors[accent]}`}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-        </svg>
+        <PlusIcon className="w-4 h-4" />
         {buttonLabel}
       </button>
     </div>

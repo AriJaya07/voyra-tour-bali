@@ -2,6 +2,7 @@
 
 import type React from "react";
 import type { ViatorPaymentAccount } from "@/types/bookingFlow";
+import { PaymentIcon, CheckmarkIcon } from "@/components/assets/Icon/shared";
 
 interface PaymentSelectorProps {
   methods: ViatorPaymentAccount[];
@@ -12,9 +13,7 @@ interface PaymentSelectorProps {
 
 const PAYMENT_ICONS: Record<string, React.ReactNode> = {
   CARD: (
-    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-    </svg>
+    <PaymentIcon className="w-6 h-6" strokeWidth={1.5} />
   ),
   PAYPAL: (
     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -40,9 +39,7 @@ export default function PaymentSelector({
     <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
       <div className="flex items-center gap-2.5 mb-5">
         <div className="w-8 h-8 rounded-lg bg-[#0071CE]/10 flex items-center justify-center">
-          <svg className="w-4 h-4 text-[#0071CE]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-          </svg>
+          <PaymentIcon className="w-4 h-4 text-[#0071CE]" />
         </div>
         <h2 className="text-base sm:text-lg font-bold text-gray-900">Select Payment Method</h2>
       </div>
@@ -106,9 +103,7 @@ export default function PaymentSelector({
 
               {/* Selected check */}
               {isSelected && (
-                <svg className="w-5 h-5 text-[#0071CE] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckmarkIcon className="w-5 h-5 text-[#0071CE] shrink-0" strokeWidth={2.5} />
               )}
             </button>
           );
