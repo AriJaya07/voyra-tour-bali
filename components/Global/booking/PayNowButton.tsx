@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MIDTRANS_SNAP_URL, MIDTRANS_CLIENT_KEY } from "@/lib/config/midtrans";
+import { ACTIVE_GATEWAY } from "@/lib/config/payment";
 import type { Booking } from "@/types/booking";
 import { SpinnerIcon } from "@/components/assets/Icon/shared";
 
@@ -12,10 +13,10 @@ interface PayNowButtonProps {
 }
 
 /**
- * Smart Pay Now button that handles both local bookings (Midtrans Snap)
- * and mock bookings (redirect to manual payment page).
+ * Smart Pay Now button that handles payment gateway routing:
  *
- * - Local PENDING with snapToken → opens Midtrans Snap popup
+ * - Midtrans gateway: Local PENDING with snapToken → opens Midtrans Snap popup
+ * - Mayar gateway: Local PENDING with snapToken (payment link) → redirects to Mayar
  * - Mock PAYMENT with manualPrice → links to /payment/manual/[ref]
  */
 export default function PayNowButton({ booking, className = "" }: PayNowButtonProps) {
@@ -25,9 +26,9 @@ export default function PayNowButton({ booking, className = "" }: PayNowButtonPr
   const isLocalPending = booking.status === "PENDING" && booking.snapToken && !booking.isMockMode;
   const isMockPayment = (booking.status === "PAYMENT" || booking.status === "PENDING") && booking.manualPrice && booking.isMockMode;
 
-  // Load Midtrans Snap script for local bookings
+  // Load Midtrans Snap script for local bookings (only when using Midtrans gateway)
   useEffect(() => {
-    if (!isLocalPending || !MIDTRANS_SNAP_URL) return;
+    if (!isLocalPending || ACTIVE_GATEWAY !== "midtrans" || !MIDTRANS_SNAP_URL) return;
 
     const existing = document.querySelector(`script[src="${MIDTRANS_SNAP_URL}"]`);
     if (existing) return;
@@ -56,7 +57,19 @@ export default function PayNowButton({ booking, className = "" }: PayNowButtonPr
     );
   }
 
-  // Local booking → open Midtrans Snap
+  // Mayar gateway → redirect to payment link (stored in snapToken field)
+  if (ACTIVE_GATEWAY === "mayar") {
+    return (
+      <a
+        href={booking.snapToken!}
+        className={`flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold text-sm rounded-lg transition shadow-sm active:scale-[0.98] ${className}`}
+      >
+        💳 Pay Now — {currency} {booking.totalPrice.toLocaleString()}
+      </a>
+    );
+  }
+
+  // Midtrans gateway → open Snap popup
   const handleSnapPay = () => {
     if (!booking.snapToken) return;
     setPaying(true);

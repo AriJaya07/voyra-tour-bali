@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
-import { snap } from "@/lib/midtrans";
+import { getPaymentGateway } from "@/lib/services/paymentGateway";
 import crypto from "crypto";
 
 export async function POST(request: Request) {
@@ -95,16 +95,16 @@ export async function POST(request: Request) {
 
     const orderId = `VOYRA-${booking.id}-${Date.now()}`;
 
-    // Midtrans IDR requires whole numbers
+    // IDR requires whole numbers
     const perItemPrice = Math.round(Number(totalPrice) / Number(pax));
     const grossAmount = perItemPrice * Number(pax);
 
-    const parameter = {
-      transaction_details: {
-        order_id: orderId,
-        gross_amount: grossAmount,
-      },
-      item_details: [
+    // Use the active payment gateway (Midtrans or Mayar)
+    const gateway = getPaymentGateway();
+    const gatewayResult = await gateway.createTransaction({
+      orderId,
+      grossAmount,
+      itemDetails: [
         {
           id: productCode,
           price: perItemPrice,
@@ -112,27 +112,26 @@ export async function POST(request: Request) {
           name: productTitle.substring(0, 50),
         },
       ],
-      customer_details: {
-        first_name: leadFirstName || session.user.name || "Guest",
-        last_name: leadLastName || "",
+      customerDetails: {
+        firstName: leadFirstName || session.user.name || "Guest",
+        lastName: leadLastName || "",
         email: leadEmail || session.user.email || "",
         phone: leadPhone || "",
       },
-      callbacks: {
-        finish: `${process.env.NEXTAUTH_URL}/payment/success`,
-        unfinish: `${process.env.NEXTAUTH_URL}/payment/pending`,
+      callbackUrls: {
+        success: `${process.env.NEXTAUTH_URL}/payment/success`,
+        pending: `${process.env.NEXTAUTH_URL}/payment/pending`,
         error: `${process.env.NEXTAUTH_URL}/payment/error`,
       },
-    };
-
-    const snapResponse = await snap.createTransaction(parameter);
+    });
 
     // Update booking with payment info
+    // For Mayar: store the payment link in snapToken field (reuse existing field)
     await prisma.booking.update({
       where: { id: booking.id },
       data: {
         paymentId: orderId,
-        snapToken: snapResponse.token,
+        snapToken: gatewayResult.token || gatewayResult.redirectUrl || null,
         bookingRef: orderId,
       },
     });
@@ -146,8 +145,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       bookingId: booking.id,
       orderId,
-      snapToken: snapResponse.token,
-      redirectUrl: snapResponse.redirect_url,
+      snapToken: gatewayResult.token,
+      redirectUrl: gatewayResult.redirectUrl,
     });
   } catch (error: any) {
     console.error("Payment creation error:", error?.message || error);

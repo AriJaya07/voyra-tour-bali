@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
-import { snap } from "@/lib/midtrans";
+import { getPaymentGateway } from "@/lib/services/paymentGateway";
 
 /**
  * POST /api/payment/manual
@@ -41,12 +41,11 @@ export async function POST(request: Request) {
     const grossAmount = Math.round(booking.manualPrice);
     const orderId = `VOYRA-MANUAL-${booking.id}-${Date.now()}`;
 
-    const parameter = {
-      transaction_details: {
-        order_id: orderId,
-        gross_amount: grossAmount,
-      },
-      item_details: [
+    const gateway = getPaymentGateway();
+    const gatewayResult = await gateway.createTransaction({
+      orderId,
+      grossAmount,
+      itemDetails: [
         {
           id: booking.productCode,
           price: grossAmount,
@@ -54,32 +53,31 @@ export async function POST(request: Request) {
           name: booking.productTitle.substring(0, 50),
         },
       ],
-      customer_details: {
-        first_name: booking.leadFirstName || booking.user.name || "Guest",
-        last_name: booking.leadLastName || "",
+      customerDetails: {
+        firstName: booking.leadFirstName || booking.user.name || "Guest",
+        lastName: booking.leadLastName || "",
         email: booking.leadEmail || booking.user.email || "",
         phone: "",
       },
-      callbacks: {
-        finish: `${process.env.NEXTAUTH_URL}/payment/success`,
-        unfinish: `${process.env.NEXTAUTH_URL}/payment/pending`,
+      callbackUrls: {
+        success: `${process.env.NEXTAUTH_URL}/payment/success`,
+        pending: `${process.env.NEXTAUTH_URL}/payment/pending`,
         error: `${process.env.NEXTAUTH_URL}/payment/error`,
       },
-    };
+    });
 
-    const snapResponse = await snap.createTransaction(parameter);
-
-    // Update booking with new paymentId/snapToken so the webhook can find it
+    // Update booking with new paymentId/token so the webhook can find it
     await prisma.booking.update({
       where: { id: booking.id },
       data: {
         paymentId: orderId,
-        snapToken: snapResponse.token,
+        snapToken: gatewayResult.token || gatewayResult.redirectUrl || null,
       },
     });
 
     return NextResponse.json({
-      snapToken: snapResponse.token,
+      snapToken: gatewayResult.token,
+      redirectUrl: gatewayResult.redirectUrl,
       orderId,
     });
   } catch (error: any) {
