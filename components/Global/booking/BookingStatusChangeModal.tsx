@@ -60,12 +60,19 @@ export default function BookingStatusChangeModal({
   const [step, setStep] = useState<Step>("select");
   const [targetStatus, setTargetStatus] = useState<BookingStatus | null>(null);
   const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [ticketUrl, setTicketUrl] = useState<string | null>(
+    // pre-fill if ticket already uploaded
+    booking.ticketImageUrl ?? null
+  );
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const available = (ADMIN_ALLOWED_TRANSITIONS[booking.status] || []).map((t) => t.status as BookingStatus);
   const contextNote = STATUS_CONTEXT_NOTE[booking.status as BookingStatus];
-  const needsProof = targetStatus === "CONFIRMED";
+  const needsProof   = targetStatus === "CONFIRMED";
+  const needsTicket  = targetStatus === "COMPLETED";
+  const uploadedUrl  = needsProof ? proofUrl : needsTicket ? ticketUrl : null;
+  const needsUpload  = needsProof || needsTicket;
 
   function handleSelect(status: BookingStatus) {
     setTargetStatus(status);
@@ -75,8 +82,8 @@ export default function BookingStatusChangeModal({
 
   function handleConfirm() {
     if (!targetStatus) return;
-    if (needsProof && !proofUrl) {
-      toast.error("Please upload payment proof before confirming.");
+    if (needsUpload && !uploadedUrl) {
+      toast.error(needsProof ? "Upload payment proof first." : "Upload ticket image first.");
       return;
     }
     onUpdateStatus(booking.id, targetStatus);
@@ -89,21 +96,22 @@ export default function BookingStatusChangeModal({
     setStep("select");
   }
 
-  async function handleProofUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     try {
-      const res = await bookingService.uploadPaymentProof(booking.id, file);
-      if (res.success) {
-        setProofUrl(res.paymentProofUrl);
-        toast.success("Payment proof uploaded!");
+      if (needsProof) {
+        const res = await bookingService.uploadPaymentProof(booking.id, file);
+        if (res.success) { setProofUrl(res.paymentProofUrl); toast.success("Payment proof uploaded!"); }
+      } else if (needsTicket) {
+        const res = await bookingService.uploadTicket(booking.id, file);
+        if (res.success) { setTicketUrl(res.ticketImageUrl); toast.success("Ticket image uploaded!"); }
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to upload proof.");
+      toast.error(err?.response?.data?.error || "Upload failed.");
     } finally {
       setUploading(false);
-      // reset input so same file can be re-selected
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
@@ -241,23 +249,26 @@ export default function BookingStatusChangeModal({
                 </div>
               </div>
 
-              {/* Payment proof upload — required when confirming */}
-              {needsProof && (
+              {/* Upload section — payment proof (CONFIRMED) or ticket (COMPLETED) */}
+              {needsUpload && (
                 <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60 space-y-3">
                   <div>
-                    <p className="text-xs font-bold text-white mb-0.5">Upload Payment Proof</p>
+                    <p className="text-xs font-bold text-white mb-0.5">
+                      {needsProof ? "Upload Payment Proof" : "Upload Ticket Image"}
+                    </p>
                     <p className="text-[11px] text-slate-400">
-                      Upload the customer's payment screenshot (m-banking / transfer receipt). Required before confirming.
+                      {needsProof
+                        ? "Upload the customer's payment screenshot (m-banking / transfer receipt). Required before confirming."
+                        : "Upload the Viator ticket / voucher image. Customer will see this in their profile. Required before completing."}
                     </p>
                   </div>
 
-                  {proofUrl ? (
+                  {uploadedUrl ? (
                     <div className="space-y-2">
-                      {/* Preview */}
                       <div className="relative rounded-xl overflow-hidden border border-slate-600 bg-slate-800 group">
                         <img
-                          src={proofUrl}
-                          alt="Payment proof"
+                          src={uploadedUrl}
+                          alt={needsProof ? "Payment proof" : "Ticket image"}
                           className="w-full max-h-48 object-contain"
                         />
                         <button
@@ -271,7 +282,7 @@ export default function BookingStatusChangeModal({
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
-                        Proof uploaded — ready to confirm
+                        {needsProof ? "Proof uploaded — ready to confirm" : "Ticket uploaded — ready to complete"}
                       </div>
                     </div>
                   ) : (
@@ -290,7 +301,9 @@ export default function BookingStatusChangeModal({
                           <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          <span className="text-xs font-semibold">Click to upload screenshot</span>
+                          <span className="text-xs font-semibold">
+                            {needsProof ? "Click to upload screenshot" : "Click to upload ticket image"}
+                          </span>
                           <span className="text-[10px] text-slate-500">JPEG, PNG, WEBP · max 5MB</span>
                         </>
                       )}
@@ -302,7 +315,7 @@ export default function BookingStatusChangeModal({
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     className="hidden"
-                    onChange={handleProofUpload}
+                    onChange={handleFileUpload}
                   />
                 </div>
               )}
