@@ -1,7 +1,10 @@
 import crypto from 'crypto'
 import QRCode from 'qrcode'
 
-const SITE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+if (!process.env.NEXTAUTH_URL) {
+  throw new Error('Missing required environment variable: NEXTAUTH_URL')
+}
+const SITE_URL = process.env.NEXTAUTH_URL
 
 /** Generate a secure, unique ticket token */
 export function generateTicketToken(): string {

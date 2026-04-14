@@ -99,6 +99,15 @@ export async function POST(request: Request) {
     const perItemPrice = Math.round(Number(totalPrice) / Number(pax));
     const grossAmount = perItemPrice * Number(pax);
 
+    // Guard: NEXTAUTH_URL must be set to build correct Midtrans callback URLs
+    const siteUrl = process.env.NEXTAUTH_URL;
+    if (!siteUrl) {
+      return NextResponse.json(
+        { error: "Server misconfiguration: NEXTAUTH_URL is not set" },
+        { status: 500 }
+      );
+    }
+
     // Use the active payment gateway (Midtrans or Mayar)
     const gateway = getPaymentGateway();
     const gatewayResult = await gateway.createTransaction({
@@ -119,9 +128,9 @@ export async function POST(request: Request) {
         phone: leadPhone || "",
       },
       callbackUrls: {
-        success: `${process.env.NEXTAUTH_URL}/payment/success`,
-        pending: `${process.env.NEXTAUTH_URL}/payment/pending`,
-        error: `${process.env.NEXTAUTH_URL}/payment/error`,
+        success: `${siteUrl}/payment/success`,
+        pending: `${siteUrl}/payment/pending`,
+        error: `${siteUrl}/payment/error`,
       },
     });
 

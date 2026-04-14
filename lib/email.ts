@@ -1,7 +1,10 @@
 import nodemailer from "nodemailer"
 import { SITE_NAME } from "@/lib/config"
 
-const SITE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000"
+if (!process.env.NEXTAUTH_URL) {
+  throw new Error('Missing required environment variable: NEXTAUTH_URL')
+}
+const SITE_URL = process.env.NEXTAUTH_URL
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,

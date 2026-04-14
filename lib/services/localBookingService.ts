@@ -87,6 +87,11 @@ export async function createLocalBooking(
   }
 
   // 3. Generate Midtrans transaction
+  const siteUrl = process.env.NEXTAUTH_URL;
+  if (!siteUrl) {
+    throw new Error('Missing required environment variable: NEXTAUTH_URL')
+  }
+
   const orderId = `VOYRA-${booking.id}-${Date.now()}`;
   const perItemPrice = Math.round(Number(input.totalPrice) / Number(input.pax));
   const grossAmount = perItemPrice * Number(input.pax);
@@ -111,9 +116,9 @@ export async function createLocalBooking(
       phone: input.leadPhone || "",
     },
     callbacks: {
-      finish: `${process.env.NEXTAUTH_URL}/payment/success`,
-      unfinish: `${process.env.NEXTAUTH_URL}/payment/pending`,
-      error: `${process.env.NEXTAUTH_URL}/payment/error`,
+      finish: `${siteUrl}/payment/success`,
+      unfinish: `${siteUrl}/payment/pending`,
+      error: `${siteUrl}/payment/error`,
     },
   };
 

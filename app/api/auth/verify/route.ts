@@ -5,7 +5,10 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const token = searchParams.get('token')
   const callbackUrl = searchParams.get('callbackUrl')
-  const SITE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+  const SITE_URL = process.env.NEXTAUTH_URL
+  if (!SITE_URL) {
+    return NextResponse.json({ error: 'Server misconfiguration: NEXTAUTH_URL is not set' }, { status: 500 })
+  }
 
   const buildRedirect = (params: Record<string, string>) => {
     const qs = new URLSearchParams(params)
