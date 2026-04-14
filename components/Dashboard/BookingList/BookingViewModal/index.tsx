@@ -218,6 +218,30 @@ export default function BookingViewModal({
                 label="Paid At"
                 value={booking.paidAt ? fmtDateTime(booking.paidAt) : "Not yet paid"}
               />
+              {(booking as any).paymentProofUrl && (
+                <div className="mt-2">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                    Payment Proof
+                  </p>
+                  <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-800 group">
+                    <img
+                      src={(booking as any).paymentProofUrl}
+                      alt="Payment proof"
+                      className="w-full max-h-48 object-contain"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                      <a
+                        href={(booking as any).paymentProofUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 bg-white text-black text-xs font-bold rounded-lg hover:bg-gray-100 transition"
+                      >
+                        View Full
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Section>
 
             {/* ────────────────────────────────────────────────────── */}

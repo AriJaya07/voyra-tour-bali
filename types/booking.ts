@@ -107,9 +107,11 @@ export const BOOKING_STATUS_DARK: Record<string, string> = {
  */
 export const ADMIN_ALLOWED_TRANSITIONS: Record<string, { label: string; status: string; color: string }[]> = {
   PENDING: [
+    { label: "Confirm Payment (Manual)", status: "CONFIRMED", color: "bg-blue-600 hover:bg-blue-700" },
     { label: "Cancel Booking", status: "CANCELLED", color: "bg-red-600 hover:bg-red-700" },
   ],
   PAYMENT: [
+    { label: "Confirm Payment", status: "CONFIRMED", color: "bg-blue-600 hover:bg-blue-700" },
     { label: "Cancel Booking", status: "CANCELLED", color: "bg-red-600 hover:bg-red-700" },
   ],
   CONFIRMED: [

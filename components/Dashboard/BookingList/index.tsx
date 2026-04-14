@@ -6,6 +6,7 @@ import { Booking } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
 import BookingTable from "./BookingTable";
 import BookingViewModal from "./BookingViewModal";
+import BookingStatusChangeModal from "@/components/Global/booking/BookingStatusChangeModal";
 import { SearchIcon } from "@/components/assets/Icon/shared";
 
 const STATUS_TABS = [
@@ -22,6 +23,7 @@ export default function BookingList() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [viewBooking, setViewBooking] = useState<Booking | null>(null);
+  const [statusChangeBooking, setStatusChangeBooking] = useState<Booking | null>(null);
 
   const {
     bookings,
@@ -128,7 +130,7 @@ export default function BookingList() {
         bookings={bookings}
         isLoading={isLoading}
         onView={setViewBooking}
-        onUpdateStatus={(id: number, status: string, payload?: any) => updateStatus({ id, status, payload })}
+        onStatusChange={setStatusChangeBooking}
         updatingStatus={updatingStatus}
       />
 
@@ -166,6 +168,21 @@ export default function BookingList() {
             updateStatus(
               { id, status, payload },
               { onSuccess: () => setViewBooking(null) }
+            );
+          }}
+          updatingStatus={updatingStatus}
+        />
+      )}
+
+      {/* Status Change Modal */}
+      {statusChangeBooking && (
+        <BookingStatusChangeModal
+          booking={statusChangeBooking}
+          onClose={() => setStatusChangeBooking(null)}
+          onUpdateStatus={(id: number, status: string) => {
+            updateStatus(
+              { id, status },
+              { onSuccess: () => setStatusChangeBooking(null) }
             );
           }}
           updatingStatus={updatingStatus}

@@ -7,8 +7,8 @@ import { prisma } from "@/lib/prisma";
 // PAYMENT → CONFIRMED happens automatically via Midtrans webhook when user pays.
 // Admin can only: cancel from PAYMENT, or complete from CONFIRMED (after uploading ticket).
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  PENDING: ["CANCELLED"],
-  PAYMENT: ["CANCELLED"],
+  PENDING: ["CONFIRMED", "CANCELLED"],
+  PAYMENT: ["CONFIRMED", "CANCELLED"],
   CONFIRMED: ["COMPLETED"],
   COMPLETED: [],
   CANCELLED: [],
