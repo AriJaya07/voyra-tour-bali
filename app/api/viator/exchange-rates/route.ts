@@ -39,7 +39,9 @@ export async function GET() {
     }
 
     const res = await fetch(`${VIATOR_API_URL}/exchange-rates`, {
+      method: "POST",
       headers: VIATOR_HEADERS,
+      body: JSON.stringify({}),
       signal: viatorSignal(),
     });
 
