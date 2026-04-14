@@ -31,7 +31,7 @@ export default function PrivacyPolicyPage() {
 
           <SectionBlock number="1" title="Who We Are">
             <p>
-              <strong>Bali Travel Now</strong> (balitravelnow.com) is a travel agency based in Bali, Indonesia. We operate an online platform where travelers can discover, browse, and book tours and activities across Bali. For the purposes of data protection law, Bali Travel Now is the data controller responsible for your personal information.
+              <strong>Bali Travel Now</strong> (balitravelnow.com) is operated by <strong>I Made Ari Jaya Kusuma</strong>, an individual travel service provider based in Bali, Indonesia. We operate an online platform where travelers can discover, browse, and book tours and activities across Bali. For the purposes of data protection law, I Made Ari Jaya Kusuma is the data controller responsible for your personal information.
             </p>
           </SectionBlock>
 

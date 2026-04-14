@@ -120,7 +120,7 @@ export default function AboutPage() {
             <FeatureCard
               icon="💳"
               title="Secure Payments"
-              description="Book with confidence through our Midtrans-powered payment system supporting cards, e-wallets, and bank transfers."
+              description="Book with confidence through our secure payment system supporting cards, e-wallets, and bank transfers."
             />
             <FeatureCard
               icon="🤝"
