@@ -14,15 +14,18 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Delete PENDING bookings older than 24h that have a payment link (snapToken set)
-    // Excludes mock bookings still waiting for admin to set price (isMockMode=true & manualPrice=null)
     const expiryThreshold = new Date(Date.now() - BOOKING_HOLD_MS);
+    // Delete expired unpaid bookings (24h hold):
+    // 1. Non-mock PENDING with a Snap token (payment initiated but not completed)
+    // 2. Mock PAYMENT bookings (Viator/local mock flow — admin set price but user didn't pay)
     await prisma.booking.deleteMany({
       where: {
         userId: parseInt(session.user.id),
-        status: "PENDING",
         createdAt: { lt: expiryThreshold },
-        snapToken: { not: null },
+        OR: [
+          { status: "PENDING", snapToken: { not: null } },
+          { status: "PAYMENT", isMockMode: true },
+        ],
       },
     });
 

@@ -11,10 +11,8 @@ import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import PayNowButton from "@/components/Global/booking/PayNowButton";
 import { fetchProfile, updateProfile, uploadAvatar, fetchUserBookings } from "@/lib/api/profile";
 import VoryaIcon from "@/components/assets/Icon/VoyraIcon";
-import { BOOKING_STATUS_MAP } from "@/types/booking";
 import type { Booking, BookingStatus } from "@/types/booking";
 import type { UserProfile, ProfileFormMessage } from "@/types/profile";
-import { formatPrice } from "@/utils/formatPrice";
 
 const TABS = ["Upcoming", "Completed", "Cancelled"] as const;
 type Tab = (typeof TABS)[number];
@@ -378,8 +376,8 @@ export default function ProfilePage() {
                             </div>
                           </div>
 
-                          {/* Countdown timer for PENDING bookings with payment link */}
-                          {b.status === "PENDING" && b.snapToken && (
+                          {/* Countdown timer — non-mock PENDING (snap token) OR mock PAYMENT (Viator/local mock) */}
+                          {((b.status === "PENDING" && b.snapToken) || (b.status === "PAYMENT" && b.isMockMode)) && (
                             <div className="mt-3">
                               <BookingCountdown createdAt={b.createdAt} />
                             </div>
