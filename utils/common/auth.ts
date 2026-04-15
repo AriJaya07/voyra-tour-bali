@@ -21,54 +21,51 @@ export const authOptions: NextAuthOptions = {
       },
 
       async authorize(credentials) {
-        try {
-          if (!credentials?.email || !credentials?.password) {
-            return null;
-          }
-
-          const captchaOk = await verifyTurnstile(credentials?.captchaToken ?? "");
-          if (!captchaOk) return null;
-
-          const user = await prisma.user.findUnique({
-            where: {
-              email: credentials.email.toLowerCase().trim(),
-            },
-          });
-
-          if (!user) {
-            return null;
-          }
-
-          // If user registered via Google, they don't have a password
-          if (!user.password) {
-            throw new Error("This account uses Google Sign-In. Please login with Google.");
-          }
-
-          const isValid = await bcrypt.compare(
-            credentials.password,
-            user.password
-          );
-
-          if (!isValid) {
-            throw new Error("Invalid email or password");
-          }
-
-          if (!user.emailVerified && user.role === 'USER') {
-             throw new Error("Please verify your email first");
-          }
-
-          return {
-            id: user.id.toString(),
-            email: user.email,
-            name: user.name ?? "",
-            role: user.role,
-            image: user.image ?? undefined,
-            emailVerified: user.emailVerified,
-          };
-        } catch (error) {
-          console.error("Authorize error:", error);
+        if (!credentials?.email || !credentials?.password) {
           return null;
         }
+
+        const captchaOk = await verifyTurnstile(credentials.captchaToken ?? "");
+        if (!captchaOk) {
+          throw new Error("CAPTCHA verification failed. Please try again.");
+        }
+
+        let user;
+        try {
+          user = await prisma.user.findUnique({
+            where: { email: credentials.email.toLowerCase().trim() },
+          });
+        } catch (err) {
+          console.error("[Auth] DB lookup failed:", err);
+          throw new Error("An unexpected error occurred. Please try again.");
+        }
+
+        if (!user) {
+          throw new Error("Invalid email or password");
+        }
+
+        // User registered via Google — no password set
+        if (!user.password) {
+          throw new Error("This account uses Google Sign-In. Please login with Google.");
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) {
+          throw new Error("Invalid email or password");
+        }
+
+        if (!user.emailVerified && user.role === "USER") {
+          throw new Error("Please verify your email before signing in.");
+        }
+
+        return {
+          id: user.id.toString(),
+          email: user.email,
+          name: user.name ?? "",
+          role: user.role,
+          image: user.image ?? undefined,
+          emailVerified: user.emailVerified,
+        };
       },
     }),
   ],
