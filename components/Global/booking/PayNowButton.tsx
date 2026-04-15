@@ -78,9 +78,9 @@ export default function PayNowButton({ booking, className = "" }: PayNowButtonPr
     if (w.snap) {
       w.snap.pay(booking.snapToken, {
         onSuccess: () => window.location.reload(),
-        onPending: () => window.location.reload(),
+        onPending: () => { setPaying(false); window.location.reload(); },
         onError: () => setPaying(false),
-        onClose: () => setPaying(false),
+        onClose: () => { setPaying(false); window.location.reload(); },
       });
     } else {
       setPaying(false);

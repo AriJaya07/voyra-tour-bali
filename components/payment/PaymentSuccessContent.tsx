@@ -12,6 +12,8 @@ export default function PaymentSuccessContent() {
   const orderId = searchParams.get("order_id") || "";
   const transactionStatus = searchParams.get("transaction_status") || "settlement";
 
+  const isPending = transactionStatus === "pending";
+
   const { data: bookings, isLoading } = useQuery<Booking[]>({
     queryKey: ["my-bookings"],
     queryFn: async () => {
@@ -30,13 +32,23 @@ export default function PaymentSuccessContent() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
-        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
-          <CheckmarkIcon className="w-10 h-10 text-green-500" />
+        <div className={`w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center ${isPending ? "bg-yellow-100" : "bg-green-100"}`}>
+          {isPending ? (
+            <svg className="w-10 h-10 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            <CheckmarkIcon className="w-10 h-10 text-green-500" />
+          )}
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          {isPending ? "Waiting for Payment" : "Payment Successful!"}
+        </h1>
         <p className="text-gray-500 mb-6">
-          Your booking is being confirmed with the supplier. Check your email for your e-ticket.
+          {isPending
+            ? "Please complete your payment via the method you selected. Check your email for payment instructions."
+            : "Your booking is being confirmed with the supplier. Check your email for your e-ticket."}
         </p>
 
         {orderId && (
@@ -98,17 +110,19 @@ export default function PaymentSuccessContent() {
         )}
 
         {/* What happens next */}
-        <div className="bg-blue-50 rounded-xl p-4 mb-6 text-left">
-          <p className="text-xs font-bold text-blue-700 uppercase mb-3">What happens next</p>
+        <div className={`${isPending ? "bg-yellow-50" : "bg-blue-50"} rounded-xl p-4 mb-6 text-left`}>
+          <p className={`text-xs font-bold uppercase mb-3 ${isPending ? "text-yellow-700" : "text-blue-700"}`}>What happens next</p>
           <div className="space-y-2.5">
             <div className="flex items-start gap-2.5">
-              <span className="w-5 h-5 rounded-full bg-green-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-              <p className="text-xs text-gray-700">Payment confirmed</p>
+              <span className={`w-5 h-5 rounded-full ${isPending ? "bg-yellow-400 animate-pulse" : "bg-green-500"} text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5`}>1</span>
+              <p className="text-xs text-gray-700">
+                {isPending ? "Complete your payment (check email for instructions)" : "Payment confirmed"}
+              </p>
             </div>
             <div className="flex items-start gap-2.5">
-              <span className={`w-5 h-5 rounded-full ${viatorRef ? "bg-green-500" : "bg-blue-500 animate-pulse"} text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5`}>2</span>
+              <span className={`w-5 h-5 rounded-full ${!isPending && viatorRef ? "bg-green-500" : !isPending ? "bg-blue-500 animate-pulse" : "bg-gray-300"} text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5`}>2</span>
               <p className="text-xs text-gray-700">
-                {viatorRef ? "Booking confirmed with supplier" : "Confirming with supplier..."}
+                {!isPending && viatorRef ? "Booking confirmed with supplier" : "Confirming with supplier..."}
               </p>
             </div>
             <div className="flex items-start gap-2.5">
