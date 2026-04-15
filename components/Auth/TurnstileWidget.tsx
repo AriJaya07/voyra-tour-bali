@@ -89,7 +89,7 @@ export default function TurnstileWidget({
         </div>
 
         {/* Turnstile widget */}
-        <div className="px-3 pb-3">
+        <div className="pb-3">
           <Turnstile
             key={resetKey}
             siteKey={process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY!}
