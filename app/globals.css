@@ -81,6 +81,25 @@ body {
 .dashboard-theme[data-theme="light"] .bg-white { background-color: var(--dash-surface); }
 .dashboard-theme[data-theme="light"] .bg-slate-900 { background-color: var(--dash-surface); }
 
+/* Keep white text on any colored/gradient background — covers all buttons/headers globally */
+.dashboard-theme[data-theme="light"] .dash-keep-white,
+.dashboard-theme[data-theme="light"] [class*="from-"][class*="to-"] .text-white,
+.dashboard-theme[data-theme="light"] [class*="from-"][class*="to-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-blue-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-indigo-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-violet-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-purple-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-emerald-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-teal-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-green-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-rose-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-red-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-pink-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-orange-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-amber-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-sky-"].text-white,
+.dashboard-theme[data-theme="light"] [class*="bg-cyan-"].text-white { color: #ffffff !important; }
+
 /* Borders */
 .dashboard-theme .border-slate-900 { border-color: var(--dash-border); }
 .dashboard-theme .border-slate-800 { border-color: var(--dash-border); }
@@ -146,15 +165,52 @@ body {
 .dashboard-theme[data-theme="dark"] .bg-violet-100 { background-color: rgba(139, 92, 246, 0.15); }
 .dashboard-theme[data-theme="dark"] .bg-sky-100 { background-color: rgba(14, 165, 233, 0.15); }
 
-/* Colored text → dark mode equivalents */
+/* Colored text → dark mode equivalents (-600 base → lighter) */
 .dashboard-theme[data-theme="dark"] .text-emerald-600 { color: #34d399; }
-.dashboard-theme[data-theme="dark"] .text-blue-600 { color: #60a5fa; }
-.dashboard-theme[data-theme="dark"] .text-violet-600 { color: #a78bfa; }
-.dashboard-theme[data-theme="dark"] .text-orange-600 { color: #fb923c; }
-.dashboard-theme[data-theme="dark"] .text-red-700 { color: #f87171; }
-.dashboard-theme[data-theme="dark"] .text-violet-700 { color: #c4b5fd; }
-.dashboard-theme[data-theme="dark"] .text-sky-700 { color: #7dd3fc; }
+.dashboard-theme[data-theme="dark"] .text-teal-600    { color: #2dd4bf; }
+.dashboard-theme[data-theme="dark"] .text-blue-600    { color: #60a5fa; }
+.dashboard-theme[data-theme="dark"] .text-sky-600     { color: #38bdf8; }
+.dashboard-theme[data-theme="dark"] .text-violet-600  { color: #a78bfa; }
+.dashboard-theme[data-theme="dark"] .text-indigo-600  { color: #818cf8; }
+.dashboard-theme[data-theme="dark"] .text-rose-600    { color: #fb7185; }
+.dashboard-theme[data-theme="dark"] .text-amber-600   { color: #fbbf24; }
+.dashboard-theme[data-theme="dark"] .text-orange-600  { color: #fb923c; }
+.dashboard-theme[data-theme="dark"] .text-red-600     { color: #f87171; }
+.dashboard-theme[data-theme="dark"] .text-red-700     { color: #f87171; }
+.dashboard-theme[data-theme="dark"] .text-violet-700  { color: #c4b5fd; }
+.dashboard-theme[data-theme="dark"] .text-sky-700     { color: #7dd3fc; }
 .dashboard-theme[data-theme="dark"] .text-emerald-700 { color: #6ee7b7; }
+
+/* Light mode: -300 and -400 colored text → darker for readability on light bg */
+.dashboard-theme[data-theme="light"] .text-amber-300,
+.dashboard-theme[data-theme="light"] .text-amber-400   { color: #92400e; }
+.dashboard-theme[data-theme="light"] .text-emerald-300,
+.dashboard-theme[data-theme="light"] .text-emerald-400 { color: #065f46; }
+.dashboard-theme[data-theme="light"] .text-teal-300,
+.dashboard-theme[data-theme="light"] .text-teal-400    { color: #134e4a; }
+.dashboard-theme[data-theme="light"] .text-rose-300,
+.dashboard-theme[data-theme="light"] .text-rose-400    { color: #9f1239; }
+.dashboard-theme[data-theme="light"] .text-indigo-300,
+.dashboard-theme[data-theme="light"] .text-indigo-400  { color: #3730a3; }
+.dashboard-theme[data-theme="light"] .text-violet-300,
+.dashboard-theme[data-theme="light"] .text-violet-400  { color: #5b21b6; }
+.dashboard-theme[data-theme="light"] .text-blue-300,
+.dashboard-theme[data-theme="light"] .text-blue-400    { color: #1e40af; }
+.dashboard-theme[data-theme="light"] .text-sky-300,
+.dashboard-theme[data-theme="light"] .text-sky-400     { color: #0c4a6e; }
+.dashboard-theme[data-theme="light"] .text-red-400,
+.dashboard-theme[data-theme="light"] .text-red-300     { color: #9f1239; }
+
+/* Light mode: hover colored text */
+.dashboard-theme[data-theme="light"] .hover\:text-indigo-400:hover,
+.dashboard-theme[data-theme="light"] .hover\:text-indigo-300:hover { color: #3730a3; }
+.dashboard-theme[data-theme="light"] .hover\:text-violet-400:hover,
+.dashboard-theme[data-theme="light"] .hover\:text-violet-300:hover { color: #5b21b6; }
+.dashboard-theme[data-theme="light"] .hover\:text-teal-400:hover,
+.dashboard-theme[data-theme="light"] .hover\:text-teal-300:hover   { color: #134e4a; }
+.dashboard-theme[data-theme="light"] .hover\:text-rose-400:hover   { color: #9f1239; }
+.dashboard-theme[data-theme="light"] .hover\:text-emerald-400:hover { color: #065f46; }
+.dashboard-theme[data-theme="light"] .hover\:text-blue-400:hover   { color: #1e40af; }
 
 /* Hover colored backgrounds for dark mode */
 .dashboard-theme[data-theme="dark"] .hover\:bg-emerald-50:hover { background-color: rgba(16, 185, 129, 0.15); }
@@ -206,3 +262,40 @@ button {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;             /* Chrome, Safari */
 }
+
+/* ── Sidebar: always keep dark background in light mode ─────────────────── */
+/* Background */
+.dashboard-theme[data-theme="light"] aside.bg-slate-900,
+.dashboard-theme[data-theme="light"] aside .bg-slate-900,
+.dashboard-theme[data-theme="light"] .sidebar-mobile-bar {
+  background-color: #0f172a !important;
+}
+.dashboard-theme[data-theme="light"] aside .bg-slate-800\/60,
+.dashboard-theme[data-theme="light"] aside .bg-slate-800\/50 {
+  background-color: rgba(30, 41, 59, 0.6) !important;
+}
+/* Text */
+.dashboard-theme[data-theme="light"] aside .text-white,
+.dashboard-theme[data-theme="light"] .sidebar-mobile-bar .text-white { color: #ffffff !important; }
+.dashboard-theme[data-theme="light"] aside .text-slate-400,
+.dashboard-theme[data-theme="light"] .sidebar-mobile-bar .text-slate-400 { color: #94a3b8 !important; }
+.dashboard-theme[data-theme="light"] aside .text-slate-500 { color: #64748b !important; }
+.dashboard-theme[data-theme="light"] aside .text-slate-600 { color: #475569 !important; }
+/* Accent colors for active nav items (on dark sidebar) */
+.dashboard-theme[data-theme="light"] aside .text-emerald-400 { color: #34d399 !important; }
+.dashboard-theme[data-theme="light"] aside .text-teal-400    { color: #2dd4bf !important; }
+.dashboard-theme[data-theme="light"] aside .text-blue-400    { color: #60a5fa !important; }
+.dashboard-theme[data-theme="light"] aside .text-violet-400  { color: #a78bfa !important; }
+.dashboard-theme[data-theme="light"] aside .text-sky-400     { color: #38bdf8 !important; }
+.dashboard-theme[data-theme="light"] aside .text-rose-400    { color: #fb7185 !important; }
+.dashboard-theme[data-theme="light"] aside .text-amber-400   { color: #fbbf24 !important; }
+.dashboard-theme[data-theme="light"] aside .text-orange-400  { color: #fb923c !important; }
+/* Borders */
+.dashboard-theme[data-theme="light"] aside .border-slate-700\/60 { border-color: rgba(51, 65, 85, 0.6) !important; }
+.dashboard-theme[data-theme="light"] aside .border-slate-700\/40 { border-color: rgba(51, 65, 85, 0.4) !important; }
+.dashboard-theme[data-theme="light"] .sidebar-mobile-bar.border-b { border-color: rgba(51, 65, 85, 0.6) !important; }
+/* Hover */
+.dashboard-theme[data-theme="light"] aside .hover\:text-white:hover,
+.dashboard-theme[data-theme="light"] .sidebar-mobile-bar .hover\:text-white:hover { color: #ffffff !important; }
+.dashboard-theme[data-theme="light"] aside .hover\:bg-slate-700\/50:hover { background-color: rgba(51, 65, 85, 0.5) !important; }
+.dashboard-theme[data-theme="light"] aside .hover\:bg-slate-700\/60:hover { background-color: rgba(51, 65, 85, 0.6) !important; }

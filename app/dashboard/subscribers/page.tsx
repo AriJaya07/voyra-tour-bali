@@ -196,7 +196,7 @@ export default function SubscribersAdminPage() {
           </div>
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 bg-[#0071CE] hover:bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-lg transition"
+            className="flex items-center gap-2 bg-[#0071CE] hover:bg-blue-600 text-white dash-keep-white text-sm font-bold px-4 py-2 rounded-lg transition"
           >
             + Add Subscriber
           </button>
@@ -361,7 +361,7 @@ export default function SubscribersAdminPage() {
                 <button
                   type="submit"
                   disabled={addLoading}
-                  className="flex-1 py-3 rounded-xl bg-[#0071CE] hover:bg-blue-600 text-white text-sm font-bold transition disabled:opacity-60"
+                  className="flex-1 py-3 rounded-xl bg-[#0071CE] hover:bg-blue-600 text-white dash-keep-white text-sm font-bold transition disabled:opacity-60"
                 >
                   {addLoading ? "Adding..." : "Add Subscriber"}
                 </button>

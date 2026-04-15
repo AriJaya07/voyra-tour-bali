@@ -210,11 +210,11 @@ export default function DashboardOverviewPage() {
       {/* Status breakdown */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
-          { key: "pending",   label: "Needs Action", value: data?.bookings.pending,   color: "border-amber-500/20 bg-amber-500/5",   text: "text-amber-300" },
-          { key: "confirmed", label: "Confirmed",    value: data?.bookings.confirmed,  color: "border-emerald-500/20 bg-emerald-500/5", text: "text-emerald-300" },
-          { key: "completed", label: "Completed",    value: data?.bookings.completed,  color: "border-teal-500/20 bg-teal-500/5",    text: "text-teal-300" },
-          { key: "cancelled", label: "Cancelled",    value: data?.bookings.cancelled,  color: "border-rose-500/20 bg-rose-500/5",    text: "text-rose-300" },
-          { key: "month",     label: "This Month",   value: data?.bookings.thisMonth,  color: "border-indigo-500/20 bg-indigo-500/5", text: "text-indigo-300" },
+          { key: "pending",   label: "Needs Action", value: data?.bookings.pending,   color: "border-amber-500/20 bg-amber-500/5",    text: "text-amber-600" },
+          { key: "confirmed", label: "Confirmed",    value: data?.bookings.confirmed,  color: "border-emerald-500/20 bg-emerald-500/5", text: "text-emerald-600" },
+          { key: "completed", label: "Completed",    value: data?.bookings.completed,  color: "border-teal-500/20 bg-teal-500/5",      text: "text-teal-600" },
+          { key: "cancelled", label: "Cancelled",    value: data?.bookings.cancelled,  color: "border-rose-500/20 bg-rose-500/5",      text: "text-rose-600" },
+          { key: "month",     label: "This Month",   value: data?.bookings.thisMonth,  color: "border-indigo-500/20 bg-indigo-500/5",  text: "text-indigo-600" },
         ].map(({ key, label, value, color, text }) => (
           <div key={key} className={`rounded-2xl border p-4 ${color}`}>
             <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">{label}</p>

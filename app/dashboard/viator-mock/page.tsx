@@ -127,7 +127,7 @@ export default function ViatorMockAdminPage() {
         </div>
         <Link
           href="/dashboard/viator-mock/new"
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl text-sm shadow-lg hover:shadow-teal-500/25 transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white dash-keep-white font-semibold rounded-xl text-sm shadow-lg hover:shadow-teal-500/25 transition-all"
         >
           <PlusIcon className="w-3.5 h-3.5" />
           Create New Link
@@ -266,7 +266,7 @@ export default function ViatorMockAdminPage() {
                     disabled={isLoading}
                     className={`w-7 h-7 rounded-lg text-xs font-medium transition ${
                       p === page
-                        ? "bg-indigo-600 text-white"
+                        ? "bg-indigo-600 text-white dash-keep-white"
                         : "text-slate-400 hover:text-white hover:bg-slate-700"
                     }`}
                   >
