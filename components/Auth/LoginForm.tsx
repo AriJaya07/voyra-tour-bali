@@ -80,7 +80,17 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
       <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>
         Welcome back!
       </h2>
-      <p className="text-white text-sm mb-7"> Enter your email and password to continue</p>
+      <p className="text-white text-sm mb-5"> Enter your email and password to continue</p>
+
+      {/* Google Sign-In */}
+      <GoogleSignInButton callbackUrl={callbackUrl || "/"} />
+
+      {/* Divider */}
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-slate-700" />
+        <span className="text-xs text-slate-500 uppercase tracking-wider">or</span>
+        <div className="flex-1 h-px bg-slate-700" />
+      </div>
 
       {error && (
         <div className="flex items-start gap-3 bg-red-950/50 border border-red-800/60 text-red-300 rounded-xl px-4 py-3 mb-6 text-sm">
@@ -160,16 +170,6 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
           <ChevronRightIcon className="w-4 h-4 ml-1" />
         </Button>
       </form>
-
-      {/* Divider */}
-      <div className="flex items-center gap-3 my-5">
-        <div className="flex-1 h-px bg-slate-700" />
-        <span className="text-xs text-slate-500 uppercase tracking-wider">or</span>
-        <div className="flex-1 h-px bg-slate-700" />
-      </div>
-
-      {/* Google Sign-In */}
-      <GoogleSignInButton callbackUrl={callbackUrl || "/"} />
     </>
   );
 }

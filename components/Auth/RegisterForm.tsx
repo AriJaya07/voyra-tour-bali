@@ -231,7 +231,17 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
       <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>
         Welcome to Voyra!
       </h2>
-      <p className="text-white text-sm mb-7"> Create your account to continue</p>
+      <p className="text-white text-sm mb-5"> Create your account to continue</p>
+
+      {/* Google Sign-Up */}
+      <GoogleSignInButton callbackUrl="/" label="Sign up with Google" />
+
+      {/* Divider */}
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-slate-700" />
+        <span className="text-xs text-slate-500 uppercase tracking-wider">or</span>
+        <div className="flex-1 h-px bg-slate-700" />
+      </div>
 
       {error && (
         <div className="flex items-start gap-3 bg-red-950/50 border border-red-800/60 text-red-300 rounded-xl px-4 py-3 mb-6 text-sm">
@@ -316,16 +326,6 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
           </Button>
         </div>
       </form>
-
-      {/* Divider */}
-      <div className="flex items-center gap-3 my-3">
-        <div className="flex-1 h-px bg-slate-700" />
-        <span className="text-xs text-slate-500 uppercase tracking-wider">or</span>
-        <div className="flex-1 h-px bg-slate-700" />
-      </div>
-
-      {/* Google Sign-Up */}
-      <GoogleSignInButton callbackUrl="/" label="Sign up with Google" />
     </>
   );
 }
