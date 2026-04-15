@@ -108,7 +108,6 @@ export default function BookingViatorWidget({
   const [isChecking, setIsChecking] = useState(false);
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
-  const [promoCode, setPromoCode] = useState("");
   const [isMockBooking, setIsMockBooking] = useState(false);
 
   const totalTravelers = travelers.reduce((acc, t) => acc + t.count, 0);
@@ -442,19 +441,6 @@ export default function BookingViatorWidget({
                     {formatPrice(basePrice, currency as CurrencyCode, sourceCurrency as CurrencyCode)}
                   </span>
                 </div>
-                <div className="text-sm font-semibold text-green-600 mb-4 bg-green-50 px-3 py-2 rounded-lg text-center">
-                  Reserve now, pay later
-                </div>
-                {/* Optional promo code input */}
-                <div className="mb-4">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                    placeholder="Promo code (optional)"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition"
-                  />
-                </div>
                 {!date && <div className="mb-2 text-[11px] font-semibold text-red-500 text-center animate-pulse tracking-wide uppercase">Please select a date first</div>}
                 <button
                   disabled={!date || isMockBooking}
@@ -471,7 +457,6 @@ export default function BookingViatorWidget({
                           productImage: productImage || null,
                           price: basePrice,
                           currency,
-                          promoCode: promoCode || null,
                           productOptionCode: selectedOptionCode || null,
                           productOptionTitle: productOptions?.find(o => o.productOptionCode === selectedOptionCode)?.title || null,
                         }),
