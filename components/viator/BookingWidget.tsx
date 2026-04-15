@@ -312,41 +312,27 @@ export default function BookingWidget({
       {hasOptions && (
         <div className="mb-4">
           <label className="block text-sm font-semibold mb-2 text-gray-700">1. Select Option</label>
-          <div className="space-y-2">
-            {productOptions!.map((opt) => {
-              const isSelected = selectedOptionCode === opt.productOptionCode;
-              return (
-                <button
-                  key={opt.productOptionCode}
-                  onClick={() => handleOptionChange(opt.productOptionCode)}
-                  className={`w-full text-left p-3 rounded-xl border-2 transition ${isSelected ? "border-[#0071CE] bg-blue-50/50" : "border-gray-200 hover:border-gray-300 bg-white"
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#0071CE]" : "border-gray-300"
-                        }`}
-                    >
-                      {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#0071CE]" />}
-                    </div>
-                    <p className={`text-sm font-bold flex-1 min-w-0 truncate ${isSelected ? "text-[#0071CE]" : "text-gray-900"}`}>
-                      {opt.title}
-                    </p>
-                    {opt.description && (
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDetailOption(opt);
-                        }}
-                        className="text-[11px] font-semibold text-[#0071CE] hover:underline shrink-0"
-                      >
-                        Details
-                      </span>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
+          <div className="flex flex-col items-center gap-2">
+            <select
+              value={selectedOptionCode}
+              onChange={(e) => handleOptionChange(e.target.value)}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#0071CE] focus:border-transparent transition"
+            >
+              {productOptions!.map((opt) => (
+                <option key={opt.productOptionCode} value={opt.productOptionCode}>
+                  {opt.title}
+                </option>
+              ))}
+            </select>
+            {productOptions!.find((o) => o.productOptionCode === selectedOptionCode)?.description && (
+              <button
+                type="button"
+                onClick={() => setDetailOption(productOptions!.find((o) => o.productOptionCode === selectedOptionCode)!)}
+                className="shrink-0 text-xs font-semibold text-[#0071CE] hover:underline"
+              >
+                Details
+              </button>
+            )}
           </div>
         </div>
       )}
