@@ -4,6 +4,8 @@ import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
 
+const BOOKING_HOLD_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 // GET /api/bookings — get current user's bookings
 export async function GET() {
   try {
@@ -11,6 +13,18 @@ export async function GET() {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Delete PENDING bookings older than 24h that have a payment link (snapToken set)
+    // Excludes mock bookings still waiting for admin to set price (isMockMode=true & manualPrice=null)
+    const expiryThreshold = new Date(Date.now() - BOOKING_HOLD_MS);
+    await prisma.booking.deleteMany({
+      where: {
+        userId: parseInt(session.user.id),
+        status: "PENDING",
+        createdAt: { lt: expiryThreshold },
+        snapToken: { not: null },
+      },
+    });
 
     const bookings = await prisma.booking.findMany({
       where: { userId: parseInt(session.user.id) },
