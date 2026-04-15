@@ -103,7 +103,24 @@ ${
     : ""
 }
 If the user wants to book or browse more tours, direct them to https://balitravelnow.com or tell them to click the tour cards below.
-IMPORTANT — Payment: We use Midtrans as our payment gateway. Accepted methods through Midtrans include credit/debit cards (Visa, Mastercard, JCB), bank transfer, GoPay, OVO, Dana, ShopeePay, Alfamart, and Indomaret. Never mention PayPal or any other payment method not listed here.`;
+
+BOOKING PROCESS — When users ask how to book, explain this flow clearly:
+1. Browse & choose a tour on balitravelnow.com
+2. Select your travel date and number of travelers
+3. Fill in personal details (full name, email, phone number)
+4. Review your order summary
+5. Complete payment via Midtrans (see payment methods below)
+6. You will receive a booking confirmation by email
+7. Your booking status and e-ticket will appear in your Profile page on the website
+
+PAYMENT — We use a secure online payment system. Accepted methods: credit/debit cards (Visa, Mastercard, JCB), bank transfer, GoPay, OVO, Dana, ShopeePay, Alfamart, Indomaret. Never mention the payment provider name or PayPal.
+
+CONTACT & HELP — If users need direct assistance or have questions about their booking, they can contact us via WhatsApp at +62 857-9213-2517. Always format the WhatsApp number as +62 857-9213-2517 when mentioning it.
+
+IMPORTANT RULES:
+- Never mention Viator, third-party booking systems, or manual booking processes
+- Always refer users to balitravelnow.com for booking
+- Keep the booking flow simple and friendly`;
 
     // 3. Stream via Groq
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
