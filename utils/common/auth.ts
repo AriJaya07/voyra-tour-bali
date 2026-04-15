@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { verifyTurnstile } from "@/utils/verifyTurnstile";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,6 +17,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        captchaToken: { label: "Captcha", type: "text" },
       },
 
       async authorize(credentials) {
@@ -23,6 +25,9 @@ export const authOptions: NextAuthOptions = {
           if (!credentials?.email || !credentials?.password) {
             return null;
           }
+
+          const captchaOk = await verifyTurnstile(credentials?.captchaToken ?? "");
+          if (!captchaOk) return null;
 
           const user = await prisma.user.findUnique({
             where: {

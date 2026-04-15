@@ -3,10 +3,19 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
+import { verifyTurnstile } from '@/utils/verifyTurnstile';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, name, callbackUrl } = await request.json();
+    const { email, password, name, callbackUrl, captchaToken } = await request.json();
+
+    const captchaOk = await verifyTurnstile(captchaToken);
+    if (!captchaOk) {
+      return NextResponse.json(
+        { message: 'Captcha verification failed. Please try again.' },
+        { status: 400 }
+      );
+    }
 
     if (!email || !password) {
       return NextResponse.json(

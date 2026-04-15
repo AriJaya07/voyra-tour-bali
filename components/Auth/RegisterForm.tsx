@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import api from "@/lib/axios";
 import AuthInput from "./AuthInput";
 import GoogleSignInButton from "./GoogleSignInButton";
 import Button from "../ui/Button";
@@ -10,6 +11,7 @@ import UserIcon from "../assets/login/UserIcon";
 import EmailIcon from "../assets/login/EmailIcon";
 import PasswrodIcon from "../assets/login/PasswordIcon";
 import { EyeOffIcon, EyeIcon, MailIcon } from "../assets/Icon/shared";
+import TurnstileWidget from "./TurnstileWidget";
 
 const iconClass = "w-4 h-4";
 const toggleBtnClass = "text-slate-500 hover:text-slate-300 transition-colors";
@@ -47,6 +49,13 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
   const [resending, setResending] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [cooldownTime, setCooldownTime] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+
+  const resetCaptcha = () => {
+    setCaptchaToken(null);
+    setCaptchaResetKey((k) => k + 1);
+  };
 
   const clearError = () => setError("");
 
@@ -93,31 +102,20 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
     setResending(true);
     setResendMessage("");
     try {
-      const response = await fetch("/api/auth/resend-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: registeredEmail, callbackUrl }),
-      });
-      const data = await response.json();
-      
-      if (response.status === 429) {
-        // Backend actively blocked due to rate limits
-        const remaining = data.remainingSeconds || 300;
-        localStorage.setItem(`resendCooldown_${registeredEmail}`, (Date.now() + remaining * 1000).toString());
-        setCooldownTime(remaining);
-        throw new Error(data.message || "Too many requests. Please wait.");
-      }
-
-      if (!response.ok) throw new Error(data.message || "Failed to resend");
-      
+      await axios.post("/api/auth/resend-verification", { email: registeredEmail, callbackUrl });
       setResendMessage("Verification email sent! Check your inbox.");
-      
-      // Start 5-min cooldown locally
       const cooldownSecs = 300;
       localStorage.setItem(`resendCooldown_${registeredEmail}`, (Date.now() + cooldownSecs * 1000).toString());
       setCooldownTime(cooldownSecs);
     } catch (err: any) {
-      setResendMessage(err.message || "Something went wrong.");
+      if (axios.isAxiosError(err) && err.response?.status === 429) {
+        const remaining = err.response.data?.remainingSeconds || 300;
+        localStorage.setItem(`resendCooldown_${registeredEmail}`, (Date.now() + remaining * 1000).toString());
+        setCooldownTime(remaining);
+        setResendMessage(err.response.data?.message || "Too many requests. Please wait.");
+      } else {
+        setResendMessage(err.message || "Something went wrong.");
+      }
     } finally {
       setResending(false);
     }
@@ -147,22 +145,13 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email: email.toLowerCase().trim(),
-          password,
-          callbackUrl: "/",
-        }),
+      await api.post("/auth/register", {
+        name,
+        email: email.toLowerCase().trim(),
+        password,
+        callbackUrl: "/",
+        captchaToken,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
-      }
 
       const emailLower = email.toLowerCase().trim();
       setRegisteredEmail(emailLower);
@@ -174,6 +163,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
       setCooldownTime(cooldownSecs);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "A system error occurred");
+      resetCaptcha();
     } finally {
       setIsLoading(false);
     }
@@ -307,11 +297,19 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
             <PasswordVisibilityToggle visible={showConfirmPassword} onToggle={() => setShowConfirmPassword((p) => !p)} />
           }
         />
+        <TurnstileWidget
+          onVerify={setCaptchaToken}
+          onExpire={resetCaptcha}
+          onError={resetCaptcha}
+          resetKey={captchaResetKey}
+        />
+
         <div className="pt-1">
           <Button
             type="submit"
             variant="auth"
             isLoading={isLoading}
+            disabled={!captchaToken || isLoading}
             className="mt-4"
           >
             Register Now

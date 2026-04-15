@@ -9,6 +9,7 @@ import WarningIcon from "../assets/login/WarningIcon";
 import EmailIcon from "../assets/login/EmailIcon";
 import PasswrodIcon from "../assets/login/PasswordIcon";
 import { EyeOffIcon, EyeIcon, ChevronRightIcon } from "../assets/Icon/shared";
+import TurnstileWidget from "./TurnstileWidget";
 
 interface LoginFormProps {
   callbackUrl: string | null;
@@ -21,6 +22,13 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+
+  const resetCaptcha = () => {
+    setCaptchaToken(null);
+    setCaptchaResetKey((k) => k + 1);
+  };
 
   const getRedirectUrl = (role: string | undefined) => {
     if (role === "ADMIN") return "/dashboard";
@@ -45,6 +53,7 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
     const result = await signIn("credentials", {
       email: email.toLowerCase().trim(),
       password,
+      captchaToken: captchaToken ?? "",
       redirect: false,
     });
 
@@ -56,6 +65,7 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
           ? "Incorrect email or password"
           : "Login failed. Please try again."
       );
+      resetCaptcha();
       return;
     }
 
@@ -132,10 +142,18 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
           </a>
         </div>
 
+        <TurnstileWidget
+          onVerify={setCaptchaToken}
+          onExpire={resetCaptcha}
+          onError={resetCaptcha}
+          resetKey={captchaResetKey}
+        />
+
         <Button
           type="submit"
           variant="auth"
           isLoading={isLoading}
+          disabled={!captchaToken || isLoading}
           className="mt-2"
         >
           Sign In
