@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import AuthInput from "./AuthInput";
 import GoogleSignInButton from "./GoogleSignInButton";
@@ -8,7 +8,7 @@ import Button from "../ui/Button";
 import WarningIcon from "../assets/login/WarningIcon";
 import EmailIcon from "../assets/login/EmailIcon";
 import PasswrodIcon from "../assets/login/PasswordIcon";
-import { EyeOffIcon, EyeIcon, ChevronRightIcon } from "../assets/Icon/shared";
+import { EyeOffIcon, EyeIcon, ChevronRightIcon, LockIcon } from "../assets/Icon/shared";
 import TurnstileWidget from "./TurnstileWidget";
 
 interface LoginFormProps {
@@ -24,6 +24,18 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutSeconds((prev) => {
+        if (prev <= 1) { clearInterval(timer); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutSeconds]);
 
   const resetCaptcha = () => {
     setCaptchaToken(null);
@@ -50,6 +62,23 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
 
     setIsLoading(true);
 
+    // Pre-check: catch existing lockout before wasting a sign-in round trip
+    try {
+      const lockResp = await fetch(
+        `/api/auth/check-lockout?email=${encodeURIComponent(email.toLowerCase().trim())}`
+      );
+      const lockData = await lockResp.json();
+      if (lockData.locked) {
+        setLockoutSeconds(lockData.remainingSeconds);
+        setError("");
+        setIsLoading(false);
+        resetCaptcha();
+        return;
+      }
+    } catch {
+      // Network issue — continue and let signIn handle it
+    }
+
     const result = await signIn("credentials", {
       email: email.toLowerCase().trim(),
       password,
@@ -60,11 +89,28 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
     setIsLoading(false);
 
     if (result?.error) {
-      setError(
-        result.error === "CredentialsSignin"
-          ? "Incorrect email or password"
-          : "Login failed. Please try again."
-      );
+      try {
+        const resp = await fetch(
+          `/api/auth/check-lockout?email=${encodeURIComponent(email.toLowerCase().trim())}`
+        );
+        const { locked, remainingSeconds, loginAttempts } = await resp.json();
+
+        if (locked) {
+          setLockoutSeconds(remainingSeconds);
+          setError("");
+        } else {
+          const remaining = Math.max(0, 3 - loginAttempts);
+          if (loginAttempts > 0) {
+            setError(
+              `Incorrect email or password, \n ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining`
+            );
+          } else {
+            setError("Incorrect email or password");
+          }
+        }
+      } catch {
+        setError("Incorrect email or password");
+      }
       resetCaptcha();
       return;
     }
@@ -92,12 +138,22 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
         <div className="flex-1 h-px bg-slate-700" />
       </div>
 
-      {error && (
-        <div className="flex items-start gap-3 bg-red-950/50 border border-red-800/60 text-red-300 rounded-xl px-4 py-3 mb-6 text-sm">
-          <WarningIcon className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-400" />
-          <span>{error}</span>
+      {lockoutSeconds > 0 ? (
+        <div className="flex items-center gap-3 bg-amber-950/50 border border-amber-700/60 text-amber-300 rounded-xl px-4 py-3 mb-6 text-sm">
+          <LockIcon className="w-4 h-4 flex-shrink-0 text-amber-400" />
+          <span>
+            Too many failed attempts. Try again in{" "}
+            <strong className="text-amber-200">{lockoutSeconds}s</strong>
+          </span>
         </div>
-      )}
+      ) : error ? (
+        <div className="flex items-center gap-3 bg-red-950/50 border border-red-800/60 text-red-300 rounded-xl px-4 py-3 mb-6 text-sm">
+          <WarningIcon className="w-5 h-5 flex-shrink-0 text-red-400" />
+          <span className="flex-1 text-center whitespace-pre-line">
+            {error}
+          </span>
+        </div>
+      ) : null}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         <AuthInput
@@ -106,10 +162,11 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
           value={email}
           onChange={(e) => {
             setEmail(e.target.value);
-            setError("");
+            if (lockoutSeconds === 0) setError("");
           }}
           placeholder="admin@travel.com"
           autoComplete="email"
+          disabled={lockoutSeconds > 0}
           icon={
             <EmailIcon className="w-4 h-4" />
           }
@@ -121,10 +178,11 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);
-            setError("");
+            if (lockoutSeconds === 0) setError("");
           }}
           placeholder="••••••••"
           autoComplete="current-password"
+          disabled={lockoutSeconds > 0}
           icon={
             <PasswrodIcon className="w-4 h-4" />
           }
@@ -163,11 +221,11 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
           type="submit"
           variant="auth"
           isLoading={isLoading}
-          disabled={!captchaToken || isLoading}
+          disabled={!captchaToken || isLoading || lockoutSeconds > 0}
           className="mt-2"
         >
-          Sign In
-          <ChevronRightIcon className="w-4 h-4 ml-1" />
+          {lockoutSeconds > 0 ? `Wait ${lockoutSeconds}s…` : "Sign In"}
+          {lockoutSeconds <= 0 && <ChevronRightIcon className="w-4 h-4 ml-1" />}
         </Button>
       </form>
     </>

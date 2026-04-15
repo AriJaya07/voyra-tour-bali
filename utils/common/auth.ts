@@ -44,6 +44,17 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or password");
         }
 
+        // --- Lockout check ---
+        const MAX_ATTEMPTS = 3;
+        const LOCK_MS = 60 * 1000; // 60 seconds
+
+        if (user.loginLockedUntil && user.loginLockedUntil > new Date()) {
+          const remainingSeconds = Math.ceil(
+            (user.loginLockedUntil.getTime() - Date.now()) / 1000
+          );
+          throw new Error(`LOCKED:${remainingSeconds}`);
+        }
+
         // User registered via Google — no password set
         if (!user.password) {
           throw new Error("This account uses Google Sign-In. Please login with Google.");
@@ -51,11 +62,34 @@ export const authOptions: NextAuthOptions = {
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) {
+          const newAttempts = user.loginAttempts + 1;
+          if (newAttempts >= MAX_ATTEMPTS) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                loginAttempts: newAttempts,
+                loginLockedUntil: new Date(Date.now() + LOCK_MS),
+              },
+            });
+            throw new Error(`LOCKED:60`);
+          }
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { loginAttempts: newAttempts },
+          });
           throw new Error("Invalid email or password");
         }
 
         if (!user.emailVerified && user.role === "USER") {
           throw new Error("Please verify your email before signing in.");
+        }
+
+        // Reset attempt counter on successful login
+        if (user.loginAttempts > 0 || user.loginLockedUntil) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { loginAttempts: 0, loginLockedUntil: null },
+          });
         }
 
         return {
