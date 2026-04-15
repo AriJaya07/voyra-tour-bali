@@ -7,6 +7,7 @@ import type { Session } from "next-auth";
 import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 import SessionProviderWrapper from "@/components/Wrapper/SessionProviderWrapper";
 import ExchangeRateProvider from "@/components/providers/ExchangeRateProvider";
+import AIChatWidget from "@/components/AIChatWidget";
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -34,6 +35,7 @@ export default function AppProviders({ children, session }: AppProvidersProps) {
             },
           }}
         />
+        <AIChatWidget />
       </ReactQueryProvider>
     </SessionProviderWrapper>
   );
