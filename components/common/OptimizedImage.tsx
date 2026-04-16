@@ -6,6 +6,28 @@ import VoryaIcon from "../assets/Icon/VoyraIcon"
 
 const DEFAULT_FALLBACK = <VoryaIcon className="w-16 h-16 opacity-20" />
 
+// These CDNs already serve optimized images — no need to route through Vercel optimizer
+const SKIP_OPTIMIZATION_DOMAINS = [
+  'hare-media-cdn.tripadvisor.com',
+  'media-cdn.tripadvisor.com',
+  'media.tacdn.com',
+  'dynamic-media.tacdn.com',
+  'viator.com',
+  'cloudinary.com',
+]
+
+function shouldSkipOptimization(src: string): boolean {
+  if (!src || !src.startsWith('http')) return false
+  try {
+    const hostname = new URL(src).hostname
+    return SKIP_OPTIMIZATION_DOMAINS.some(
+      (d) => hostname === d || hostname.endsWith('.' + d)
+    )
+  } catch {
+    return false
+  }
+}
+
 interface OptimizedImageProps extends Omit<ImageProps, "onError" | "onLoad"> {
   fallbackSrc?: ReactNode
 }
@@ -28,6 +50,8 @@ export default function OptimizedImage({
     setIsLoaded(true)
   }, [])
 
+  const skipOptimize = shouldSkipOptimization(String(props.src))
+
   // If there is an error or the src is missing, render the fallback component (Icon)
   if (!props.src || hasError) {
     return (
@@ -49,6 +73,7 @@ export default function OptimizedImage({
       <Image
         loading={props.priority ? undefined : "lazy"}
         {...props}
+        unoptimized={props.unoptimized ?? skipOptimize}
         alt={alt}
         className={`${className} transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
         onLoad={handleLoad}
