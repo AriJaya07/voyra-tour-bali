@@ -108,7 +108,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Use the active payment gateway (Midtrans or Mayar)
     const gateway = getPaymentGateway();
     const gatewayResult = await gateway.createTransaction({
       orderId,
@@ -135,7 +134,6 @@ export async function POST(request: Request) {
     });
 
     // Update booking with payment info
-    // For Mayar: store the payment link in snapToken field (reuse existing field)
     await prisma.booking.update({
       where: { id: booking.id },
       data: {

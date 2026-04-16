@@ -1,13 +1,10 @@
 /**
  * Payment Gateway Abstraction Layer
  *
- * Provides a unified interface for creating payment transactions,
- * regardless of the underlying gateway (Midtrans or Mayar).
+ * Provides a unified interface for creating payment transactions via Midtrans.
  */
 
-import { ACTIVE_GATEWAY } from "@/lib/config/payment";
 import { MidtransGateway } from "./midtransGateway";
-import { MayarGateway } from "./mayarGateway";
 
 export interface CreateTransactionParams {
   orderId: string;
@@ -32,9 +29,9 @@ export interface CreateTransactionParams {
 }
 
 export interface PaymentGatewayResult {
-  /** Midtrans Snap token (null for Mayar) */
+  /** Midtrans Snap token */
   token: string | null;
-  /** Payment page URL (Mayar payment link or Midtrans redirect_url) */
+  /** Midtrans redirect URL (fallback when Snap is unavailable) */
   redirectUrl: string | null;
 }
 
@@ -43,14 +40,8 @@ export interface PaymentGateway {
 }
 
 /**
- * Factory function to get the active payment gateway instance.
+ * Returns the active payment gateway instance (Midtrans).
  */
 export function getPaymentGateway(): PaymentGateway {
-  switch (ACTIVE_GATEWAY) {
-    case "mayar":
-      return new MayarGateway();
-    case "midtrans":
-    default:
-      return new MidtransGateway();
-  }
+  return new MidtransGateway();
 }

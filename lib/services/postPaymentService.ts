@@ -2,7 +2,7 @@
  * Shared Post-Payment Service
  *
  * Contains logic that runs after a successful payment confirmation,
- * shared between Midtrans and Mayar webhook handlers.
+ * shared between Midtrans webhook handlers.
  * - Confirms Viator booking (for non-mock bookings)
  * - Sends confirmation email with ticket link
  */
