@@ -26,6 +26,7 @@ export interface Booking {
   userId: number;
   user?: BookingUser;
   ticketImageUrl: string | null;
+  paymentProofUrl: string | null;
   languageGuide: string | null;
   isMockMode: boolean;
   manualPrice: number | null;
@@ -72,6 +73,15 @@ export const bookingService = {
     const formData = new FormData();
     formData.append("file", file);
     const { data } = await api.post(`/admin/bookings/${id}/ticket`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+
+  uploadPaymentProof: async (id: number, file: File): Promise<{ success: boolean; paymentProofUrl: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post(`/admin/bookings/${id}/payment-proof`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return data;

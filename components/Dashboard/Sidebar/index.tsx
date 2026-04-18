@@ -123,7 +123,7 @@ export default function Sidebar() {
   return (
     <>
       {/* ── Mobile top bar ───────────────────────────────── */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-700/60">
+      <div className="sidebar-mobile-bar lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-700/60">
         <Link href={'/'} target="_self">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">

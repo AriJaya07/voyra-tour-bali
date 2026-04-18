@@ -8,7 +8,6 @@ import Container from "@/components/Container";
 import { useBookingStore } from "@/utils/hooks/useBookingStore";
 import type { TravelerInfo, BookingQuestion } from "@/utils/hooks/useBookingStore";
 import { MIDTRANS_SNAP_URL, MIDTRANS_CLIENT_KEY } from "@/lib/config/midtrans";
-import { ACTIVE_GATEWAY } from "@/lib/config/payment";
 import { handleMidtransBooking } from "@/lib/services/midtransService";
 import { holdBooking, getPaymentMethods, confirmBooking } from "@/lib/viator-checkout";
 import type { BookingInput, ViatorPaymentAccount, ViatorFlowStep } from "@/types/bookingFlow";
@@ -709,12 +708,6 @@ function StepReview({
         toast.error(msg);
         return;
       }
-      // Mayar gateway: always redirect (no popup)
-      if (!result.snapToken && result.redirectUrl) {
-        window.location.href = result.redirectUrl;
-        return;
-      }
-
       // Midtrans gateway: open Snap popup or fallback to redirect
       if (result.snapToken) {
         const win = window as unknown as Record<string, unknown>;
@@ -1108,8 +1101,8 @@ export default function CheckoutClient() {
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] pt-10 pb-8 sm:pb-16">
-      {/* Midtrans Snap Script — only needed for LOCAL products with Midtrans gateway */}
-      {store.source === "LOCAL" && ACTIVE_GATEWAY === "midtrans" && MIDTRANS_SNAP_URL && (
+      {/* Midtrans Snap Script — only needed for LOCAL products */}
+      {store.source === "LOCAL" && MIDTRANS_SNAP_URL && (
         <script
           src={MIDTRANS_SNAP_URL}
           data-client-key={MIDTRANS_CLIENT_KEY}

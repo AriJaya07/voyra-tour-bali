@@ -1133,10 +1133,10 @@ function StepConfirm({
           type="button"
           onClick={handleConfirm}
           disabled={!termsAccepted}
-          className="flex-[2] bg-[#25D366] hover:bg-[#1ebe5d] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md shadow-green-200 active:scale-[0.98] flex items-center justify-center gap-2"
+          className="flex-[2] bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          <WhatsAppIcon className="w-5 h-5" />
-          Confirm &amp; Contact via WhatsApp
+          <CalendarIcon className="w-5 h-5" />
+          Book Now
         </button>
       </div>
     </div>

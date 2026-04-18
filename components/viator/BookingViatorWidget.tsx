@@ -108,7 +108,6 @@ export default function BookingViatorWidget({
   const [isChecking, setIsChecking] = useState(false);
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
-  const [promoCode, setPromoCode] = useState("");
   const [isMockBooking, setIsMockBooking] = useState(false);
 
   const totalTravelers = travelers.reduce((acc, t) => acc + t.count, 0);
@@ -355,35 +354,27 @@ export default function BookingViatorWidget({
           {hasOptions && (
             <div className="mb-4">
               <label className="block text-sm font-semibold mb-2 text-gray-700">1. Select Option</label>
-              <div className="space-y-2">
-                {productOptions!.map((opt) => {
-                  const isSelected = selectedOptionCode === opt.productOptionCode;
-                  return (
-                    <button
-                      key={opt.productOptionCode}
-                      onClick={() => handleOptionChange(opt.productOptionCode)}
-                      className={`w-full text-left p-3 rounded-xl border-2 transition ${isSelected ? "border-[#0071CE] bg-blue-50/50" : "border-gray-200 hover:border-gray-300 bg-white"
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "border-[#0071CE]" : "border-gray-300"}`}>
-                          {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#0071CE]" />}
-                        </div>
-                        <p className={`text-sm font-bold flex-1 min-w-0 truncate ${isSelected ? "text-[#0071CE]" : "text-gray-900"}`}>
-                          {opt.title}
-                        </p>
-                        {opt.description && (
-                          <span
-                            onClick={(e) => { e.stopPropagation(); setDetailOption(opt); }}
-                            className="text-[11px] font-semibold text-[#0071CE] hover:underline shrink-0"
-                          >
-                            Details
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="flex flex-col items-center gap-2">
+                <select
+                  value={selectedOptionCode}
+                  onChange={(e) => handleOptionChange(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#0071CE] focus:border-transparent transition"
+                >
+                  {productOptions!.map((opt) => (
+                    <option key={opt.productOptionCode} value={opt.productOptionCode}>
+                      {opt.title}
+                    </option>
+                  ))}
+                </select>
+                {productOptions!.find((o) => o.productOptionCode === selectedOptionCode)?.description && (
+                  <button
+                    type="button"
+                    onClick={() => setDetailOption(productOptions!.find((o) => o.productOptionCode === selectedOptionCode)!)}
+                    className="shrink-0 text-xs font-semibold text-[#0071CE] hover:underline"
+                  >
+                    Details
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -450,19 +441,6 @@ export default function BookingViatorWidget({
                     {formatPrice(basePrice, currency as CurrencyCode, sourceCurrency as CurrencyCode)}
                   </span>
                 </div>
-                <div className="text-sm font-semibold text-green-600 mb-4 bg-green-50 px-3 py-2 rounded-lg text-center">
-                  Reserve now, pay later
-                </div>
-                {/* Optional promo code input */}
-                <div className="mb-4">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                    placeholder="Promo code (optional)"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition"
-                  />
-                </div>
                 {!date && <div className="mb-2 text-[11px] font-semibold text-red-500 text-center animate-pulse tracking-wide uppercase">Please select a date first</div>}
                 <button
                   disabled={!date || isMockBooking}
@@ -479,7 +457,6 @@ export default function BookingViatorWidget({
                           productImage: productImage || null,
                           price: basePrice,
                           currency,
-                          promoCode: promoCode || null,
                           productOptionCode: selectedOptionCode || null,
                           productOptionTitle: productOptions?.find(o => o.productOptionCode === selectedOptionCode)?.title || null,
                         }),

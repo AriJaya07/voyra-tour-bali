@@ -11,13 +11,49 @@ import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import PayNowButton from "@/components/Global/booking/PayNowButton";
 import { fetchProfile, updateProfile, uploadAvatar, fetchUserBookings } from "@/lib/api/profile";
 import VoryaIcon from "@/components/assets/Icon/VoyraIcon";
-import { BOOKING_STATUS_MAP } from "@/types/booking";
 import type { Booking, BookingStatus } from "@/types/booking";
 import type { UserProfile, ProfileFormMessage } from "@/types/profile";
-import { formatPrice } from "@/utils/formatPrice";
 
 const TABS = ["Upcoming", "Completed", "Cancelled"] as const;
 type Tab = (typeof TABS)[number];
+
+const BOOKING_HOLD_MS = 24 * 60 * 60 * 1000;
+
+function BookingCountdown({ createdAt }: { createdAt: string }) {
+  const expiresAt = new Date(new Date(createdAt).getTime() + BOOKING_HOLD_MS);
+  const [remaining, setRemaining] = useState(expiresAt.getTime() - Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setRemaining(expiresAt.getTime() - Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [expiresAt]);
+
+  if (remaining <= 0) {
+    return (
+      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
+        <span className="w-2 h-2 rounded-full bg-red-500" />
+        <span className="text-xs font-bold text-red-600">Booking expired</span>
+      </div>
+    );
+  }
+
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  const isUrgent = remaining < 3600000; // < 1 hour
+
+  return (
+    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${isUrgent ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"}`}>
+      <span className={`w-2 h-2 rounded-full animate-pulse ${isUrgent ? "bg-red-500" : "bg-amber-500"}`} />
+      <span className={`text-xs font-bold ${isUrgent ? "text-red-600" : "text-amber-700"}`}>
+        Hold expires in{" "}
+        <span className="font-mono">
+          {String(h).padStart(2, "0")}:{String(m).padStart(2, "0")}:{String(s).padStart(2, "0")}
+        </span>
+      </span>
+    </div>
+  );
+}
 
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString("en-US", {
@@ -339,6 +375,13 @@ export default function ProfilePage() {
                               </span>
                             </div>
                           </div>
+
+                          {/* Countdown timer — non-mock PENDING (snap token) OR mock PAYMENT (Viator/local mock) */}
+                          {((b.status === "PENDING" && b.snapToken) || (b.status === "PAYMENT" && b.isMockMode)) && (
+                            <div className="mt-3">
+                              <BookingCountdown createdAt={b.createdAt} />
+                            </div>
+                          )}
 
                           {/* Pay Now button — handles both local (Midtrans Snap) and mock (manual link) */}
                           <PayNowButton booking={b} className="mt-3 w-full" />

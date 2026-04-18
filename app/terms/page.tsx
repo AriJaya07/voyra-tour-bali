@@ -32,7 +32,7 @@ export default function TermsPage() {
 
           <SectionBlock number="1" title="Acceptance of Terms">
             <p>
-              These Terms & Conditions govern your use of <strong>Bali Travel Now</strong> (balitravelnow.com), operated by Bali Travel, a licensed travel agency based in Bali, Indonesia. By visiting our website, creating an account, or making a booking, you confirm that you have read, understood, and agree to these terms.
+              These Terms & Conditions govern your use of <strong>Bali Travel Now</strong> (balitravelnow.com), a travel service provider based in Bali, Indonesia. By visiting our website, creating an account, or making a booking, you confirm that you have read, understood, and agree to these terms.
             </p>
           </SectionBlock>
 

@@ -3,16 +3,9 @@
 import { Booking } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
 import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
-import { EyeIcon, CloseIcon } from "@/components/assets/Icon/shared";
+import { EyeIcon, SwitchIcon } from "@/components/assets/Icon/shared";
+import { ADMIN_ALLOWED_TRANSITIONS } from "@/types/booking";
 
-// Table quick-action labels.
-const NEXT_STATUS: Record<string, { label: string; actionable: boolean } | null> = {
-  PENDING: { label: "Set Price", actionable: true },
-  PAYMENT: { label: "Set Price", actionable: true },
-  CONFIRMED: { label: "Complete", actionable: true },
-  COMPLETED: null,
-  CANCELLED: null,
-};
 
 const fmtDate = (s: string) =>
   new Date(s).toLocaleDateString("en-US", {
@@ -25,7 +18,7 @@ interface BookingTableProps {
   bookings: Booking[];
   isLoading: boolean;
   onView: (booking: Booking) => void;
-  onUpdateStatus: (id: number, status: string, payload?: any) => void;
+  onStatusChange: (booking: Booking) => void;
   updatingStatus: boolean;
 }
 
@@ -33,7 +26,7 @@ export default function BookingTable({
   bookings,
   isLoading,
   onView,
-  onUpdateStatus,
+  onStatusChange,
   updatingStatus,
 }: BookingTableProps) {
   if (isLoading) {
@@ -78,7 +71,6 @@ export default function BookingTable({
           </thead>
           <tbody className="divide-y divide-slate-800/60">
             {bookings.map((b) => {
-              const nextAction = NEXT_STATUS[b.status];
               return (
                 <tr
                   key={b.id}
@@ -119,7 +111,7 @@ export default function BookingTable({
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
-                      {/* View button - view only, no actions */}
+                      {/* View details */}
                       <button
                         onClick={() => onView(b)}
                         title="View Details"
@@ -128,27 +120,14 @@ export default function BookingTable({
                         <EyeIcon className="w-4 h-4" />
                       </button>
 
-                      {/* Quick action button */}
-                      {nextAction && nextAction.actionable && (
+                      {/* Change status — only when transitions exist */}
+                      {(ADMIN_ALLOWED_TRANSITIONS[b.status] || []).length > 0 && (
                         <button
-                          onClick={() => onView(b)}
-                          disabled={updatingStatus}
-                          title={nextAction.label}
-                          className="px-2.5 py-1 rounded-lg bg-violet-500/15 text-violet-400 text-xs font-semibold hover:bg-violet-500/25 transition disabled:opacity-40"
+                          onClick={() => onStatusChange(b)}
+                          title="Change Status"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 transition"
                         >
-                          {nextAction.label}
-                        </button>
-                      )}
-
-                      {/* Cancel only from PENDING or PAYMENT */}
-                      {(b.status === "PENDING" || b.status === "PAYMENT") && (
-                        <button
-                          onClick={() => onUpdateStatus(b.id, "CANCELLED")}
-                          disabled={updatingStatus}
-                          title="Cancel"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition disabled:opacity-40"
-                        >
-                          <CloseIcon className="w-4 h-4" />
+                          <SwitchIcon className="w-4 h-4" />
                         </button>
                       )}
                     </div>

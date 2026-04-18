@@ -137,6 +137,9 @@ model User {
   resetToken        String?
   resetTokenExpiry  DateTime?
 
+  loginAttempts    Int       @default(0)
+  loginLockedUntil DateTime?
+
   bookings Booking[]
 
   createdAt DateTime @default(now())
@@ -192,6 +195,7 @@ model Booking {
 
   ticketToken    String?     @unique
   ticketImageUrl String? // Uploaded Viator ticket image (required before confirming)
+  paymentProofUrl String? // Admin-uploaded payment proof (m-banking screenshot)
 
   // Mock/manual booking fields
   isMockMode    Boolean     @default(false)

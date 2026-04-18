@@ -44,7 +44,8 @@ export async function PATCH(
       data: {
         manualPrice,
         travelTime: travelTime || booking.travelTime,
-        status: "PENDING",
+        // Advance to PAYMENT so admin can share the payment link with customer
+        status: booking.status === "PENDING" ? "PAYMENT" : booking.status,
       },
     });
 

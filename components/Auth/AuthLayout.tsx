@@ -48,7 +48,7 @@ export default function AuthLayout({
         <div className="bg-black/50 rounded-3xl shadow-2xl overflow-hidden h-full">
           <div className="h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-500" />
 
-          <div className="pt-8 px-8">
+          <div className="pt-8 px-4 sm:px-8">
             {children}
             {extraContent}
           </div>

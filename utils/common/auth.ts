@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { verifyTurnstile } from "@/utils/verifyTurnstile";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,54 +17,89 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        captchaToken: { label: "Captcha", type: "text" },
       },
 
       async authorize(credentials) {
-        try {
-          if (!credentials?.email || !credentials?.password) {
-            return null;
-          }
-
-          const user = await prisma.user.findUnique({
-            where: {
-              email: credentials.email.toLowerCase().trim(),
-            },
-          });
-
-          if (!user) {
-            return null;
-          }
-
-          // If user registered via Google, they don't have a password
-          if (!user.password) {
-            throw new Error("This account uses Google Sign-In. Please login with Google.");
-          }
-
-          const isValid = await bcrypt.compare(
-            credentials.password,
-            user.password
-          );
-
-          if (!isValid) {
-            throw new Error("Invalid email or password");
-          }
-
-          if (!user.emailVerified && user.role === 'USER') {
-             throw new Error("Please verify your email first");
-          }
-
-          return {
-            id: user.id.toString(),
-            email: user.email,
-            name: user.name ?? "",
-            role: user.role,
-            image: user.image ?? undefined,
-            emailVerified: user.emailVerified,
-          };
-        } catch (error) {
-          console.error("Authorize error:", error);
+        if (!credentials?.email || !credentials?.password) {
           return null;
         }
+
+        const captchaOk = await verifyTurnstile(credentials.captchaToken ?? "");
+        if (!captchaOk) {
+          throw new Error("CAPTCHA verification failed. Please try again.");
+        }
+
+        let user;
+        try {
+          user = await prisma.user.findUnique({
+            where: { email: credentials.email.toLowerCase().trim() },
+          });
+        } catch (err) {
+          console.error("[Auth] DB lookup failed:", err);
+          throw new Error("An unexpected error occurred. Please try again.");
+        }
+
+        if (!user) {
+          throw new Error("Invalid email or password");
+        }
+
+        // --- Lockout check ---
+        const MAX_ATTEMPTS = 3;
+        const LOCK_MS = 60 * 1000; // 60 seconds
+
+        if (user.loginLockedUntil && user.loginLockedUntil > new Date()) {
+          const remainingSeconds = Math.ceil(
+            (user.loginLockedUntil.getTime() - Date.now()) / 1000
+          );
+          throw new Error(`LOCKED:${remainingSeconds}`);
+        }
+
+        // User registered via Google — no password set
+        if (!user.password) {
+          throw new Error("This account uses Google Sign-In. Please login with Google.");
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) {
+          const newAttempts = user.loginAttempts + 1;
+          if (newAttempts >= MAX_ATTEMPTS) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                loginAttempts: newAttempts,
+                loginLockedUntil: new Date(Date.now() + LOCK_MS),
+              },
+            });
+            throw new Error(`LOCKED:60`);
+          }
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { loginAttempts: newAttempts },
+          });
+          throw new Error("Invalid email or password");
+        }
+
+        if (!user.emailVerified && user.role === "USER") {
+          throw new Error("Please verify your email before signing in.");
+        }
+
+        // Reset attempt counter on successful login
+        if (user.loginAttempts > 0 || user.loginLockedUntil) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { loginAttempts: 0, loginLockedUntil: null },
+          });
+        }
+
+        return {
+          id: user.id.toString(),
+          email: user.email,
+          name: user.name ?? "",
+          role: user.role,
+          image: user.image ?? undefined,
+          emailVerified: user.emailVerified,
+        };
       },
     }),
   ],

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import api from "@/lib/axios";
 import { AuthLayout, AuthInput } from "@/components/Auth";
+import TurnstileWidget from "@/components/Auth/TurnstileWidget";
 import EmailIcon from "@/components/assets/login/EmailIcon";
 import { MailIcon, SpinnerIcon } from "@/components/assets/Icon/shared";
 
@@ -10,6 +12,13 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+
+  const resetCaptcha = () => {
+    setCaptchaToken(null);
+    setCaptchaResetKey((k) => k + 1);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,25 +32,15 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      await api.post("/auth/forgot-password", {
+        email: email.toLowerCase().trim(),
+        captchaToken,
       });
-
-      const data = await response.json();
-
-      if (response.status === 429) {
-        throw new Error(data.message || "Too many requests. Please wait.");
-      }
-
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong.");
-      }
 
       setIsSuccess(true);
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
+      resetCaptcha();
     } finally {
       setIsLoading(false);
     }
@@ -122,9 +121,16 @@ export default function ForgotPasswordPage() {
           icon={<EmailIcon className="w-4 h-4" />}
         />
 
+        <TurnstileWidget
+          onVerify={setCaptchaToken}
+          onExpire={resetCaptcha}
+          onError={resetCaptcha}
+          resetKey={captchaResetKey}
+        />
+
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={!captchaToken || isLoading}
           className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-bold text-sm hover:from-violet-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-900/40 active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
         >
           {isLoading ? (

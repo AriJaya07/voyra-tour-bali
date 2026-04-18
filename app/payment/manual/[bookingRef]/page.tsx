@@ -83,8 +83,16 @@ export default function ManualPaymentPage() {
       window.snap?.pay(data.snapToken, {
         onSuccess: () => router.push("/payment/success"),
         onPending: () => router.push("/payment/pending"),
-        onError: () => router.push("/payment/error"),
-        onClose: () => setIsPaying(false),
+        onError: () => { toast.error("Payment failed. Please try again."); setIsPaying(false); },
+        onClose: async () => {
+          setIsPaying(false);
+          // Re-fetch booking to reflect any webhook-driven status change (e.g. GoPay scanned on phone)
+          try {
+            const r = await fetch(`/api/bookings/manual/${encodeURIComponent(bookingRef)}`);
+            const updated = await r.json();
+            if (!updated.error) setBooking(updated);
+          } catch {}
+        },
       });
     } catch (error: any) {
       toast.error(error.message || "Payment failed");
