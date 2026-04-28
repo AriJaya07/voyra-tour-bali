@@ -9,7 +9,7 @@ import CancelModal from "@/components/profile/CancelModal";
 import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
 import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import PayNowButton from "@/components/Global/booking/PayNowButton";
-import { fetchProfile, updateProfile, uploadAvatar, fetchUserBookings } from "@/lib/api/profile";
+import { fetchProfile, updateProfile, uploadAvatar, fetchAllUserBookings } from "@/lib/api/profile";
 import VoryaIcon from "@/components/assets/Icon/VoyraIcon";
 import type { Booking, BookingStatus } from "@/types/booking";
 import type { UserProfile, ProfileFormMessage } from "@/types/profile";
@@ -81,7 +81,7 @@ export default function ProfilePage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [p, b] = await Promise.all([fetchProfile(), fetchUserBookings()]);
+        const [p, b] = await Promise.all([fetchProfile(), fetchAllUserBookings()]);
         setProfile(p);
         setName(p.name || "");
         setPhone(p.phone || "");
@@ -271,6 +271,9 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8" id="my-bookings">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900">My Bookings</h2>
+            <span className="text-xs text-gray-500 font-medium">
+              Local · Viator · TourCMS
+            </span>
           </div>
           <div className="p-6">
             {/* Tabs */}
@@ -313,14 +316,32 @@ export default function ProfilePage() {
                   const currency = b.currency || "IDR";
                   const time = b.travelTime || "Pending Confirmation";
 
+                  const provider = b.provider || "LOCAL";
+                  const providerStyle =
+                    provider === "TOURCMS"
+                      ? "bg-sky-100 text-sky-700 border-sky-200"
+                      : provider === "VIATOR"
+                        ? "bg-orange-100 text-orange-700 border-orange-200"
+                        : "bg-emerald-100 text-emerald-700 border-emerald-200";
+
                   return (
-                    <div key={b.id} className="border border-gray-200 rounded-2xl overflow-hidden hover:border-[#0071CE]/40 transition bg-white shadow-sm">
-                      {/* Flow Steps Progress */}
-                      <div className="px-5 pt-4 pb-2 bg-gray-50 border-b border-gray-100">
-                        <BookingFlowSteps
-                          currentStatus={b.status as BookingStatus}
-                          variant="light"
-                        />
+                    <div
+                      key={`${b._src || "booking"}-${b.id}`}
+                      className="border border-gray-200 rounded-2xl overflow-hidden hover:border-[#0071CE]/40 transition bg-white shadow-sm"
+                    >
+                      {/* Provider tag + Flow Steps Progress */}
+                      <div className="px-5 pt-4 pb-2 bg-gray-50 border-b border-gray-100 flex items-center gap-3">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider ${providerStyle}`}
+                        >
+                          {provider}
+                        </span>
+                        <div className="flex-1">
+                          <BookingFlowSteps
+                            currentStatus={b.status as BookingStatus}
+                            variant="light"
+                          />
+                        </div>
                       </div>
 
                       <div className="flex flex-col md:flex-row">
@@ -413,14 +434,56 @@ export default function ProfilePage() {
                             {/* Cancel from PENDING or PAYMENT (before paying) */}
                             {(b.status === "PAYMENT" || b.status === "PENDING") && !isPast && (
                               <button
-                                onClick={() => setCancellingTicket(b)}
+                                onClick={async () => {
+                                  if (provider === "TOURCMS") {
+                                    if (!confirm("Cancel this TourCMS booking?")) return;
+                                    try {
+                                      await fetch("/api/tourcms/bookings/cancel", {
+                                        method: "POST",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({
+                                          bookingId: b.id,
+                                          reason: "CUSTOMER_REQUEST",
+                                        }),
+                                      });
+                                      setBookings(
+                                        bookings.map((x) =>
+                                          x.id === b.id && x._src === "tourcms"
+                                            ? { ...x, status: "CANCELLED" }
+                                            : x
+                                        )
+                                      );
+                                      setMessage({
+                                        type: "success",
+                                        text: "Booking cancelled.",
+                                      });
+                                    } catch {
+                                      setMessage({
+                                        type: "error",
+                                        text: "Failed to cancel booking.",
+                                      });
+                                    }
+                                  } else {
+                                    setCancellingTicket(b);
+                                  }
+                                }}
                                 className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition border border-red-100"
                               >
                                 Cancel
                               </button>
                             )}
                             {/* View Ticket only when COMPLETED (ticket uploaded) */}
-                            {b.status === "COMPLETED" && (
+                            {b.status === "COMPLETED" && provider === "TOURCMS" && b.ticketToken && (
+                              <Link
+                                href={`/tourcms/ticket/${b.ticketToken}`}
+                                className="px-5 py-2 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition shadow-sm"
+                              >
+                                View Ticket
+                              </Link>
+                            )}
+                            {b.status === "COMPLETED" && provider !== "TOURCMS" && (
                               <button
                                 onClick={() => setSelectedTicket(b)}
                                 className="px-5 py-2 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition shadow-sm"
@@ -428,14 +491,34 @@ export default function ProfilePage() {
                                 View Ticket
                               </button>
                             )}
-                            {/* View Details for PENDING/PAYMENT (no price yet) or CONFIRMED */}
-                            {(((b.status === "PAYMENT" || b.status === "PENDING") && !b.manualPrice) || b.status === "CONFIRMED") && (
-                              <button
-                                onClick={() => setSelectedTicket(b)}
+                            {/* CONFIRMED + TourCMS: deep link to ticket */}
+                            {b.status === "CONFIRMED" && provider === "TOURCMS" && b.ticketToken && (
+                              <Link
+                                href={`/tourcms/ticket/${b.ticketToken}`}
                                 className="px-5 py-2 text-sm font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-lg transition border border-blue-100"
                               >
-                                View Details
-                              </button>
+                                View Ticket
+                              </Link>
+                            )}
+                            {/* View Details for PENDING/PAYMENT (no price yet) or CONFIRMED */}
+                            {provider !== "TOURCMS" &&
+                              (((b.status === "PAYMENT" || b.status === "PENDING") && !b.manualPrice) ||
+                                b.status === "CONFIRMED") && (
+                                <button
+                                  onClick={() => setSelectedTicket(b)}
+                                  className="px-5 py-2 text-sm font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-lg transition border border-blue-100"
+                                >
+                                  View Details
+                                </button>
+                              )}
+                            {/* TourCMS: resume payment for PENDING with snap token */}
+                            {provider === "TOURCMS" && b.status === "PENDING" && b.snapToken && b.paymentId && (
+                              <Link
+                                href={`/tourcms/booking-success?orderId=${b.paymentId}`}
+                                className="px-5 py-2 text-sm font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition border border-amber-100"
+                              >
+                                Resume Payment
+                              </Link>
                             )}
                           </div>
                         </div>

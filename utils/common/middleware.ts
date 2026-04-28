@@ -28,7 +28,7 @@ export default withAuth(
   }
 );
 
-// Protect /dashboard/*, /profile/*, /checkout, and /payment/* (require login)
+// Protect /dashboard/*, /profile/*, /checkout, /payment/*, and /tourcms/checkout|booking-success
 export const config = {
   matcher: [
     "/dashboard/:path*",
@@ -36,5 +36,7 @@ export const config = {
     "/profile",
     "/checkout",
     "/payment/:path*",
+    "/tourcms/checkout",
+    "/tourcms/booking-success",
   ],
 };

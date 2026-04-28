@@ -10,5 +10,7 @@ export const config = {
     "/profile",
     "/checkout",
     "/payment/:path*",
+    "/tourcms/checkout",
+    "/tourcms/booking-success",
   ],
 };

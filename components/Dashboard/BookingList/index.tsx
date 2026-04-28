@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { useBookings } from "@/utils/hooks/useBookings";
-import { Booking } from "@/utils/service/booking.service";
+import { Booking, BookingProvider } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
 import BookingTable from "./BookingTable";
 import BookingViewModal from "./BookingViewModal";
@@ -18,8 +19,18 @@ const STATUS_TABS = [
   { key: "CANCELLED", label: "Cancelled" },
 ];
 
+const PROVIDER_TABS: { key: "ALL" | BookingProvider; label: string }[] = [
+  { key: "ALL", label: "All" },
+  { key: "LOCAL", label: "Local" },
+  { key: "VIATOR", label: "Viator" },
+  { key: "TOURCMS", label: "TourCMS" },
+];
+
 export default function BookingList() {
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [providerFilter, setProviderFilter] = useState<"ALL" | BookingProvider>(
+    "ALL"
+  );
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [viewBooking, setViewBooking] = useState<Booking | null>(null);
@@ -33,8 +44,11 @@ export default function BookingList() {
     isError,
     updateStatus,
     updatingStatus,
+    retryCommit,
+    retrying,
   } = useBookings({
     status: statusFilter === "ALL" ? undefined : statusFilter,
+    provider: providerFilter,
     search: search.trim() || undefined,
     page,
     limit: 15,
@@ -79,6 +93,30 @@ export default function BookingList() {
       </div>
 
       {/* Filters */}
+      <div className="flex flex-col gap-3">
+        {/* Provider Tabs */}
+        <div className="flex flex-wrap gap-2">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest self-center">
+            Provider
+          </span>
+          {PROVIDER_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => {
+                setProviderFilter(tab.key);
+                setPage(1);
+              }}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                providerFilter === tab.key
+                  ? "bg-sky-500/15 text-sky-300 border-sky-500/30"
+                  : "bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Status Tabs */}
         <div className="flex flex-wrap gap-2">
@@ -117,6 +155,7 @@ export default function BookingList() {
           </div>
         </div>
       </div>
+      </div>
 
       {/* Error */}
       {isError && (
@@ -132,6 +171,19 @@ export default function BookingList() {
         onView={setViewBooking}
         onStatusChange={setStatusChangeBooking}
         updatingStatus={updatingStatus}
+        retrying={retrying}
+        onRetryCommit={(b) => {
+          retryCommit(b.id, {
+            onSuccess: (res) => {
+              if (res.success) toast.success("TourCMS commit retried successfully");
+              else toast.error(res.message || "Retry failed");
+            },
+            onError: (err) =>
+              toast.error(
+                err instanceof Error ? err.message : "Retry failed"
+              ),
+          });
+        }}
       />
 
       {/* Pagination */}
@@ -164,9 +216,13 @@ export default function BookingList() {
         <BookingViewModal
           booking={viewBooking}
           onClose={() => setViewBooking(null)}
-          onUpdateStatus={(id: number, status: string, payload?: any) => {
+          onUpdateStatus={(id: number, status: string, payload?: { manualPrice?: number; travelTime?: string }) => {
             updateStatus(
-              { id, status, payload },
+              {
+                id,
+                status,
+                payload: { ...payload, provider: viewBooking.provider },
+              },
               { onSuccess: () => setViewBooking(null) }
             );
           }}
@@ -181,7 +237,11 @@ export default function BookingList() {
           onClose={() => setStatusChangeBooking(null)}
           onUpdateStatus={(id: number, status: string) => {
             updateStatus(
-              { id, status },
+              {
+                id,
+                status,
+                payload: { provider: statusChangeBooking.provider },
+              },
               { onSuccess: () => setStatusChangeBooking(null) }
             );
           }}

@@ -421,6 +421,27 @@ Category  ──→  Destination  ──→  Location
 | `Location` | Sub-locations within a destination |
 | `Content` | Rich content articles for destinations |
 | `Image` | Images linked to destinations or packages |
+| `Booking` / `BookingTraveler` | Local + Viator bookings |
+| `TourcmsBooking` / `TourcmsBookingTraveler` | TourCMS provider bookings (isolated) |
+| `TourcmsProductCache` | Hot listing cache for TourCMS (1h TTL) |
+
+---
+
+## Providers
+
+| Path | Provider | Status |
+|---|---|---|
+| `/detail/[slug]` | Local (Voyra-curated, Midtrans) | stable |
+| `/viator/[productCode]` | Viator REST API | stable |
+| `/tourcms`, `/tourcms/[slug]` | TourCMS Marketplace XML API | new — see [agent plan](../.claude/plans/tourcms-integration.md) |
+
+TourCMS uses isolated tables, services, webhook (`/api/tourcms/payment/notification`), and an optional separate Midtrans merchant (`TOURCMS_MIDTRANS_*` env). See [agent/docs/environment.md §3.16](agent/docs/environment.md) for setup.
+
+Smoke-test TourCMS credentials:
+
+```bash
+npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/tourcms-signature-check.ts
+```
 
 ---
 

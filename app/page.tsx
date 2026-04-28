@@ -4,6 +4,7 @@ import BannerHome from "@/components/Homepage/BannerHome";
 import Destionation from "@/components/Homepage/Destination";
 import TrendingActivity from "@/components/Homepage/TrendingActivity";
 import PromotionApp from "@/components/Homepage/PromotionApp";
+import TourcmsTrending from "@/components/Homepage/TourcmsTrending";
 
 export default async function Home() {
   const categories = await getCategories();
@@ -15,6 +16,7 @@ export default async function Home() {
       <Container className="">
         <Destionation categories={categories} />
         <TrendingActivity categories={categories} />
+        <TourcmsTrending />
         <PromotionApp />
       </Container>
     </div>

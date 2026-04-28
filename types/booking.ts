@@ -5,6 +5,8 @@ export interface BookingTraveler {
   ageBand: string;
 }
 
+export type BookingProviderTag = "LOCAL" | "VIATOR" | "TOURCMS";
+
 export interface Booking {
   id: number;
   bookingRef: string;
@@ -31,6 +33,10 @@ export interface Booking {
   manualPrice?: number;
   isMockMode?: boolean;
   paidAt?: string;
+
+  // Unified profile-list additions
+  provider?: BookingProviderTag;
+  _src?: "booking" | "tourcms";
 }
 
 export interface BookingStatusConfig {

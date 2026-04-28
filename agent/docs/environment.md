@@ -143,6 +143,29 @@ Configure Vercel Cron jobs in the dashboard with that header.
 |---|---|
 | `NEXT_PUBLIC_WA_NUMBER` | WhatsApp number used in floating CTA (`+62...`) |
 
+### 3.16 TourCMS (alt provider) — additive, isolated from Viator
+Reuses existing `MIDTRANS_*` merchant. Add a SECOND Payment Notification URL in the Midtrans MAP dashboard pointing at `/api/tourcms/payment/notification`. Both webhooks receive every event; each filters by order_id prefix (`VOYRA-` vs `TC-VOY-`).
+
+| Name | Example |
+|---|---|
+| `TOURCMS_API_URL` | `https://api.tourcms.com` |
+| `TOURCMS_MARKETPLACE_ID` | Marketplace partner ID issued by TourCMS |
+| `TOURCMS_API_KEY` | TourCMS API key |
+| `TOURCMS_PRIVATE_KEY` | TourCMS HMAC private key. **Server-only.** |
+| `TOURCMS_DEFAULT_CHANNEL` | Default channel id used for non-marketplace endpoints (or `0`) |
+| `TOURCMS_SUPPRESS_VENDOR_EMAIL` | `"true"` to send `<suppress_email>1</suppress_email>` on `commit.xml`, suppressing TourCMS auto-emails so only our Brevo email goes out. |
+| `TOURCMS_GEO_FILTER` | `"bali"` (default) / `"custom"` / `"off"`. |
+| `TOURCMS_GEO_LAT` | Default `-8.4095` (Denpasar). |
+| `TOURCMS_GEO_LONG` | Default `115.1889`. |
+| `TOURCMS_GEO_RADIUS_KM` | Default `80` km. |
+| `TOURCMS_COUNTRY_ISO` | Default `"ID"`. ISO 3166 alpha-2. |
+| `TOURCMS_LOCATION_KEYWORDS` | Comma-separated lowercase substrings for post-fetch filter. |
+
+Mock mode auto-engages when `TOURCMS_API_KEY` or `TOURCMS_PRIVATE_KEY` is empty — no toggle needed. Fill all four core creds and live data takes over automatically on next request.
+
+Webhook URL to add in the Midtrans MAP dashboard:
+- `https://yourdomain.com/api/tourcms/payment/notification`
+
 ---
 
 ## 4. `.env.local` — copy-paste template
@@ -259,6 +282,8 @@ Vercel cron jobs (configured in dashboard under **Cron Jobs**):
 | `0 */6 * * *` (every 6 h) | `/api/cron/viator-sync` | same |
 | `0 */6 * * *` | `/api/cron/viator-products-sync` | same |
 | `0 2 * * *` (daily 02:00) | `/api/cron/viator-daily-sync` | same |
+| `0 */6 * * *` (every 6 h) | `/api/tourcms/cron/sync` | same — TourCMS commit retry + remote cancellation reconciliation |
+| `0 1 * * *` (daily 01:00) | `/api/tourcms/cron/auto-complete` | same — `CONFIRMED → COMPLETED` past `travelDate` |
 
 ---
 

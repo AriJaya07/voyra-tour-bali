@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/config";
+import { listProducts } from "@/lib/services/tourcmsService";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages
@@ -72,5 +73,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // DB unreachable at build time — return static pages only
   }
 
-  return [...staticPages, ...destinationPages];
+  const tourcmsStatic: MetadataRoute.Sitemap = [
+    {
+      url: `${SITE_URL}/tourcms`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    },
+  ];
+
+  let tourcmsPages: MetadataRoute.Sitemap = [];
+  try {
+    const result = await listProducts({ page: 1, pageSize: 50 });
+    tourcmsPages = result.items.map((p) => ({
+      url: `${SITE_URL}/tourcms/${p.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+  } catch {
+    // TourCMS unreachable — skip dynamic tourcms entries
+  }
+
+  return [
+    ...staticPages,
+    ...destinationPages,
+    ...tourcmsStatic,
+    ...tourcmsPages,
+  ];
 }

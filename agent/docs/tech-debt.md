@@ -194,6 +194,16 @@ No global `staleTime` / `cacheTime` tuning. Mutations work because of explicit i
 
 ---
 
+## 13.4 Provider isolation duplication (TourCMS) 🟠
+
+The TourCMS integration mirrors the local Booking flow with its own tables (`TourcmsBooking`, `TourcmsBookingTraveler`), services (`tourcmsBookingService`, `tourcmsPostPaymentService`), and webhook (`/api/tourcms/payment/notification`). This was a deliberate isolation choice ([plan §3](../../../.claude/plans/tourcms-integration.md), constraint C1) to avoid touching the stable Viator path. Cost: duplication of post-payment email logic, status mapping, and idempotency handling.
+
+**Revisit when:** a third provider is added, or both providers are stable enough to support a generic `bookingFinalizer<T>(provider, bookingId)` extracted into `lib/services/`. Don't refactor speculatively; let the duplication tell us when consolidation is worth it.
+
+Also note: TourCMS uses a **separate Midtrans merchant** (`TOURCMS_MIDTRANS_*`). If the second merchant is decommissioned, see plan §10.4 Option B (multi-URL on a single merchant).
+
+---
+
 ## 14. Cleanup checklist (good "while I'm here" wins)
 
 - [ ] Delete `test.html`, `scratch-viator.js`, `get_slugs.ts` (or move to `/scripts/`). **Audit confirmed zero importers.** Awaiting user authorisation.

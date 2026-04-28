@@ -7,6 +7,8 @@ export interface BookingUser {
   image: string | null;
 }
 
+export type BookingProvider = "LOCAL" | "VIATOR" | "TOURCMS";
+
 export interface Booking {
   id: number;
   bookingRef: string;
@@ -33,6 +35,20 @@ export interface Booking {
   promoCode: string | null;
   createdAt: string;
   updatedAt: string;
+
+  // Unified-table additions
+  provider: BookingProvider;
+  _src: "booking" | "tourcms";
+
+  // TourCMS-only fields (present when _src === "tourcms")
+  tourcmsBookingRef?: string | null;
+  tourcmsBookingStatus?: string | null;
+  tourcmsCommitError?: string | null;
+  tourcmsRetryCount?: number;
+  tourcmsVoucherUrl?: string | null;
+  ticketToken?: string | null;
+  leadEmail?: string | null;
+  channelId?: number;
 }
 
 export interface BookingsResponse {
@@ -45,6 +61,7 @@ export interface BookingsResponse {
 export interface BookingFilters {
   status?: string;
   search?: string;
+  provider?: "ALL" | BookingProvider;
   page?: number;
   limit?: number;
 }
@@ -63,9 +80,20 @@ export const bookingService = {
   updateStatus: async (
     id: number,
     status: string,
-    payload?: { manualPrice?: number; travelTime?: string }
+    payload?: { manualPrice?: number; travelTime?: string; provider?: BookingProvider }
   ): Promise<Booking> => {
-    const { data } = await api.patch(`/admin/bookings/${id}`, { status, ...payload });
+    if (payload?.provider === "TOURCMS") {
+      const { data } = await api.patch(`/tourcms/bookings/${id}`, { status });
+      return data;
+    }
+    const { provider: _ignored, ...rest } = payload || {};
+    void _ignored;
+    const { data } = await api.patch(`/admin/bookings/${id}`, { status, ...rest });
+    return data;
+  },
+
+  retryTourcmsCommit: async (id: number): Promise<{ success: boolean; message?: string }> => {
+    const { data } = await api.post(`/admin/tourcms-bookings/${id}/retry-commit`);
     return data;
   },
 

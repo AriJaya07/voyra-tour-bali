@@ -1,7 +1,11 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { bookingService, BookingFilters } from "../service/booking.service";
+import {
+  bookingService,
+  BookingFilters,
+  BookingProvider,
+} from "../service/booking.service";
 
 export function useBookings(filters?: BookingFilters) {
   const queryClient = useQueryClient();
@@ -14,8 +18,24 @@ export function useBookings(filters?: BookingFilters) {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status, payload }: { id: number; status: string; payload?: { manualPrice?: number; travelTime?: string } }) =>
-      bookingService.updateStatus(id, status, payload),
+    mutationFn: ({
+      id,
+      status,
+      payload,
+    }: {
+      id: number;
+      status: string;
+      payload?: {
+        manualPrice?: number;
+        travelTime?: string;
+        provider?: BookingProvider;
+      };
+    }) => bookingService.updateStatus(id, status, payload),
+    onSuccess: invalidate,
+  });
+
+  const retryCommitMutation = useMutation({
+    mutationFn: (id: number) => bookingService.retryTourcmsCommit(id),
     onSuccess: invalidate,
   });
 
@@ -28,5 +48,7 @@ export function useBookings(filters?: BookingFilters) {
     isError,
     updateStatus: updateStatusMutation.mutate,
     updatingStatus: updateStatusMutation.isPending,
+    retryCommit: retryCommitMutation.mutate,
+    retrying: retryCommitMutation.isPending,
   };
 }

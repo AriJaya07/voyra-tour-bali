@@ -1,10 +1,16 @@
 "use client";
 
-import { Booking } from "@/utils/service/booking.service";
+import { Booking, BookingProvider } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
 import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
 import { EyeIcon, SwitchIcon } from "@/components/assets/Icon/shared";
 import { ADMIN_ALLOWED_TRANSITIONS } from "@/types/booking";
+
+const PROVIDER_BADGE: Record<BookingProvider, string> = {
+  LOCAL: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  VIATOR: "bg-orange-500/15 text-orange-300 border-orange-500/30",
+  TOURCMS: "bg-sky-500/15 text-sky-300 border-sky-500/30",
+};
 
 
 const fmtDate = (s: string) =>
@@ -20,6 +26,8 @@ interface BookingTableProps {
   onView: (booking: Booking) => void;
   onStatusChange: (booking: Booking) => void;
   updatingStatus: boolean;
+  onRetryCommit?: (booking: Booking) => void;
+  retrying?: boolean;
 }
 
 export default function BookingTable({
@@ -27,7 +35,8 @@ export default function BookingTable({
   isLoading,
   onView,
   onStatusChange,
-  updatingStatus,
+  onRetryCommit,
+  retrying = false,
 }: BookingTableProps) {
   if (isLoading) {
     return (
@@ -57,7 +66,7 @@ export default function BookingTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-800">
-              {["Ref", "Customer", "Product", "Travel Date", "Pax", "Price", "Status", "Actions"].map(
+              {["Ref", "Provider", "Customer", "Product", "Travel Date", "Pax", "Price", "Status", "Actions"].map(
                 (h) => (
                   <th
                     key={h}
@@ -73,7 +82,7 @@ export default function BookingTable({
             {bookings.map((b) => {
               return (
                 <tr
-                  key={b.id}
+                  key={`${b._src || "booking"}-${b.id}`}
                   className="hover:bg-slate-800/40 transition-colors"
                 >
                   <td className="px-5 py-3">
@@ -81,13 +90,27 @@ export default function BookingTable({
                       {b.bookingRef || "—"}
                     </p>
                     <p className="text-slate-600 text-xs">{fmtDate(b.createdAt)}</p>
+                    {b.provider === "TOURCMS" && b.tourcmsBookingStatus === "FAILED" && (
+                      <p className="text-rose-400 text-[10px] mt-1 font-bold">
+                        commit failed ({b.tourcmsRetryCount ?? 0})
+                      </p>
+                    )}
+                  </td>
+                  <td className="px-5 py-3">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider ${
+                        PROVIDER_BADGE[b.provider || "LOCAL"]
+                      }`}
+                    >
+                      {b.provider || "LOCAL"}
+                    </span>
                   </td>
                   <td className="px-5 py-3">
                     <p className="text-white text-sm font-medium truncate max-w-[140px]">
                       {b.user?.name || "Unknown"}
                     </p>
                     <p className="text-slate-500 text-xs truncate max-w-[140px]">
-                      {b.user?.email}
+                      {b.user?.email || b.leadEmail}
                     </p>
                   </td>
                   <td className="px-5 py-3">
@@ -129,6 +152,19 @@ export default function BookingTable({
                         >
                           <SwitchIcon className="w-4 h-4" />
                         </button>
+                      )}
+
+                      {b.provider === "TOURCMS" &&
+                        b.tourcmsBookingStatus === "FAILED" &&
+                        onRetryCommit && (
+                          <button
+                            disabled={retrying}
+                            onClick={() => onRetryCommit(b)}
+                            title="Retry TourCMS commit"
+                            className="px-2 py-1 rounded-lg text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 text-[10px] font-bold border border-amber-500/30 disabled:opacity-50 transition"
+                          >
+                            Retry
+                          </button>
                       )}
                     </div>
                   </td>

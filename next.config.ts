@@ -38,6 +38,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'traveller-be.onrender.com',
       },
+      {
+        protocol: 'https',
+        hostname: '*.tourcms.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.tourcms.com',
+      },
     ],
   },
 };
