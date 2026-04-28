@@ -26,12 +26,19 @@ export async function GET() {
 
     return NextResponse.json(packages);
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching packages:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Failed to fetch packages" },
       { status: 500 }
     );
   }
+}
+
+interface PackageImageInput {
+  id: number | string;
+  altText?: string | null;
+  isMain?: boolean;
+  order?: number;
 }
 
 // POST /api/packages
@@ -46,6 +53,14 @@ export async function POST(req: NextRequest) {
       categoryId,
       destinationId,
       images,
+    }: {
+      title: string;
+      slug: string;
+      description: string;
+      price: number | string;
+      categoryId?: number | string | null;
+      destinationId?: number | string | null;
+      images?: PackageImageInput[];
     } = body;
 
     if (!title || !slug || !description || price === undefined) {
@@ -55,36 +70,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const pkg = await prisma.package.create({
-      data: {
-        title,
-        slug, 
-        description,
-        price: Number(price),
-        categoryId: categoryId ? Number(categoryId) : null,
-        destinationId: destinationId ? Number(destinationId) : null,
-      },
+    const packageId = await prisma.$transaction(async (tx) => {
+      const pkg = await tx.package.create({
+        data: {
+          title,
+          slug,
+          description,
+          price: Number(price),
+          categoryId: categoryId ? Number(categoryId) : null,
+          destinationId: destinationId ? Number(destinationId) : null,
+        },
+      });
+
+      if (images && images.length > 0) {
+        await Promise.all(
+          images.map((image, index) =>
+            tx.image.update({
+              where: { id: Number(image.id) },
+              data: {
+                packageId: pkg.id,
+                altText: image.altText || null,
+                isMain: image.isMain ?? false,
+                order: image.order ?? index,
+              },
+            })
+          )
+        );
+      }
+
+      return pkg.id;
     });
 
-    if (images && images.length > 0) {
-      await Promise.all(
-        images.map((image: any, index: number) =>
-          prisma.image.update({
-            where: { id: Number(image.id) },
-            data: {
-              packageId: pkg.id,
-              altText: image.altText || null,
-              isMain: image.isMain ?? false,
-              order: image.order ?? index,
-            },
-          })
-        )
-      );
-    }
-
-    // ✅ 3. Return full package with relations
     const fullPackage = await prisma.package.findUnique({
-      where: { id: pkg.id },
+      where: { id: packageId },
       include: {
         category: { select: { id: true, name: true, slug: true } },
         destination: { select: { id: true, title: true } },
@@ -105,7 +123,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(fullPackage, { status: 201 });
   } catch (error) {
-    console.error(error);
+    console.error("Error creating package:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Failed to create package" },
       { status: 500 }

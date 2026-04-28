@@ -138,7 +138,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Availability check error:", error);
+    console.error("Availability check error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Failed to check availability" },
       { status: 500 }

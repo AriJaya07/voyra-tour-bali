@@ -58,7 +58,7 @@ export async function GET(
 
     return NextResponse.json(booking);
   } catch (error) {
-    console.error("Error fetching manual booking:", error);
+    console.error("Error fetching manual booking:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to fetch booking" }, { status: 500 });
   }
 }

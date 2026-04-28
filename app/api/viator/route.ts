@@ -297,11 +297,11 @@ export async function GET(request: Request) {
       { error: 'Invalid action parameter' },
       { status: 400 }
     )
-  } catch (error: any) {
-    console.error('Viator API Error:', error.response?.data || error.message)
+  } catch (error) {
+    const axiosErr = error as { response?: { status?: number; data?: unknown }; message?: string };
+    console.error('Viator API Error:', axiosErr.message || 'Unknown')
 
-    // Gracefully handle auth errors — return empty data so frontend can fall back to DB
-    const status = error.response?.status
+    const status = axiosErr.response?.status
     if (status === 401 || status === 403) {
       console.warn('Viator API key invalid or expired — returning empty products')
       return NextResponse.json({
@@ -312,10 +312,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(
-      {
-        error: 'Failed to fetch Viator data',
-        details: error.response?.data || error.message
-      },
+      { error: 'Failed to fetch Viator data' },
       { status: status || 500 }
     )
   }
@@ -454,15 +451,13 @@ export async function POST(request: Request) {
       { error: 'Invalid POST action' },
       { status: 400 }
     )
-  } catch (error: any) {
-    console.error('Viator POST Error:', error.response?.data || error.message)
+  } catch (error) {
+    const axiosErr = error as { response?: { status?: number }; message?: string };
+    console.error('Viator POST Error:', axiosErr.message || 'Unknown')
 
     return NextResponse.json(
-      {
-        error: 'Failed request',
-        details: error.response?.data || error.message
-      },
-      { status: error.response?.status || 500 }
+      { error: 'Failed request' },
+      { status: axiosErr.response?.status || 500 }
     )
   }
 }

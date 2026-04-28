@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
       rawSchedules: data.bookableItems || data.schedules || [],
     });
   } catch (error) {
-    console.error("Schedules error:", error);
+    console.error("Schedules error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -43,7 +43,7 @@ export async function GET() {
       reasons: data.reasons || data.cancelReasons || [],
     });
   } catch (error) {
-    console.error("Cancel reasons error:", error);
+    console.error("Cancel reasons error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

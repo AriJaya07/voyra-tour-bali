@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
       deletedCount,
     });
   } catch (error) {
-    console.error("[mock-bookings] GET failed:", error);
+    console.error("[mock-bookings] GET failed:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to fetch mock bookings" }, { status: 500 });
   }
 }
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, mockBooking });
   } catch (error) {
-    console.error("[mock-bookings] POST failed:", error);
+    console.error("[mock-bookings] POST failed:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to create mock booking" }, { status: 500 });
   }
 }

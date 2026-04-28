@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ bookingQuestions: mappedQuestions });
 
   } catch (error) {
-    console.error("Booking Questions error:", error);
+    console.error("Booking Questions error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

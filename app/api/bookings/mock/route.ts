@@ -80,7 +80,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, booking });
   } catch (error) {
-    console.error("Error creating mock booking:", error);
+    console.error("Error creating mock booking:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
   }
 }

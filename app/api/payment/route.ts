@@ -155,14 +155,11 @@ export async function POST(request: Request) {
       snapToken: gatewayResult.token,
       redirectUrl: gatewayResult.redirectUrl,
     });
-  } catch (error: any) {
-    console.error("Payment creation error:", error?.message || error);
+  } catch (error) {
+    console.error("Payment creation error:", error instanceof Error ? error.message : "Unknown");
 
     return NextResponse.json(
-      {
-        error: "Failed to create payment",
-        details: error?.message || "Unknown error",
-      },
+      { error: "Failed to create payment" },
       { status: 500 }
     );
   }

@@ -162,7 +162,7 @@ IMPORTANT RULES:
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   } catch (error) {
-    console.error("[ai/chat] Error:", error);
+    console.error("[ai/chat] Error:", error instanceof Error ? error.message : "Unknown");
     return new Response(JSON.stringify({ error: "AI service unavailable." }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

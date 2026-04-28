@@ -37,7 +37,7 @@ export async function GET(
 
     return NextResponse.json(pkg);
   } catch (error) {
-    console.error(error);
+    console.error("Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Failed to fetch package" },
       { status: 500 }
@@ -144,7 +144,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
     return NextResponse.json(updatedPackage);
   } catch (error) {
-    console.error(error);
+    console.error("Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Failed to update package" },
       { status: 500 }
