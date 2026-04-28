@@ -78,7 +78,7 @@ export async function GET() {
       expiresAt: new Date(expiryMs).toISOString(),
     });
   } catch (error) {
-    console.error("Exchange rates error:", error);
+    console.error("Exchange rates error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

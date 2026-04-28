@@ -56,7 +56,7 @@ export async function GET(
       destinationId: data.destinationId,
     });
   } catch (error) {
-    console.error("Attraction detail error:", error);
+    console.error("Attraction detail error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

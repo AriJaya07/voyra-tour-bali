@@ -15,7 +15,7 @@ export async function GET(
   
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching destination:", error);
+    console.error("Error fetching destination:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -207,7 +207,7 @@ export async function PUT(
 
     return NextResponse.json(completeDestination);
   } catch (error) {
-    console.error("Error updating destination:", error);
+    console.error("Error updating destination:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -226,7 +226,7 @@ export async function DELETE(
   
     return NextResponse.json({ message: "Deleted successfully" });
   } catch (error) {
-    console.error("Error deleting destination:", error);
+    console.error("Error deleting destination:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

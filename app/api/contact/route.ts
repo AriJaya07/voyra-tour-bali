@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: "Message sent successfully." }, { status: 200 });
   } catch (error) {
-    console.error("[contact/route] Error:", error);
+    console.error("[contact/route] Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to send message. Please try again." }, { status: 500 });
   }
 }

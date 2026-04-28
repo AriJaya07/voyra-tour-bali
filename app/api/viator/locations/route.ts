@@ -86,10 +86,10 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ locations });
-  } catch (error: any) {
+  } catch (error) {
     console.error(
       "[Viator Locations] Error:",
-      error.response?.data || error.message
+      error instanceof Error ? error.message : "Unknown"
     );
 
     return NextResponse.json({ locations: [] });

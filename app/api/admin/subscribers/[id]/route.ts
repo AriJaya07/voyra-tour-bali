@@ -46,7 +46,7 @@ export async function PATCH(
     if (error.code === "P2025") {
       return NextResponse.json({ error: "Subscriber not found." }, { status: 404 });
     }
-    console.error("Admin Update Error:", error);
+    console.error("Admin Update Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to update subscriber." }, { status: 500 });
   }
 }
@@ -73,7 +73,7 @@ export async function DELETE(
     if (error.code === "P2025") {
       return NextResponse.json({ error: "Subscriber not found." }, { status: 404 });
     }
-    console.error("Admin Delete Error:", error);
+    console.error("Admin Delete Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to delete subscriber." }, { status: 500 });
   }
 }

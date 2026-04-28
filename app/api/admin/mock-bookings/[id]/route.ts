@@ -26,7 +26,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete mock booking:", error);
+    console.error("Failed to delete mock booking:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to delete mock booking" }, { status: 500 });
   }
 }
