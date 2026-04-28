@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     console.error("Local booking error:", message);
 
     return NextResponse.json(
-      { error: "Failed to create booking", details: message },
+      { error: "Failed to create booking" },
       { status: 500 }
     );
   }

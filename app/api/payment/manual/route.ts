@@ -80,10 +80,10 @@ export async function POST(request: Request) {
       redirectUrl: gatewayResult.redirectUrl,
       orderId,
     });
-  } catch (error: any) {
-    console.error("Manual payment error:", error?.message || error);
+  } catch (error) {
+    console.error("Manual payment error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
-      { error: "Failed to create payment", details: error?.message },
+      { error: "Failed to create payment" },
       { status: 500 }
     );
   }

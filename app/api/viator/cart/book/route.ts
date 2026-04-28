@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       voucherInfo: data.voucherInfo,
     });
   } catch (error) {
-    console.error("Cart book error:", error);
+    console.error("Cart book error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

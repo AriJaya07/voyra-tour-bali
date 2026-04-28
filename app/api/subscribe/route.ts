@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Subscription Error:", error);
+    console.error("Subscription Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Failed to process your request. Please try again." },
       { status: 500 }

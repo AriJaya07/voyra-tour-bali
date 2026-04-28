@@ -143,7 +143,7 @@ export async function GET() {
       monthlyData,
     });
   } catch (error) {
-    console.error("[Dashboard Stats Error]", error);
+    console.error("[Dashboard Stats Error]", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to fetch dashboard stats" }, { status: 500 });
   }
 }

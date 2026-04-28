@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       paymentAccounts: data.paymentAccounts || data.accounts || [],
     });
   } catch (error) {
-    console.error("Checkout session error:", error);
+    console.error("Checkout session error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

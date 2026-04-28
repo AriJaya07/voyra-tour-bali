@@ -33,7 +33,7 @@ export async function GET(_: NextRequest, context: { params: Promise<{ id: strin
 
     return NextResponse.json(location);
   } catch (error) {
-    console.error(error);
+    console.error("Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Failed to fetch location" },
       { status: 500 }
@@ -121,7 +121,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
     return NextResponse.json(updatedLocation);
   } catch (error) {
-    console.error(error);
+    console.error("Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Failed to update location" },
       { status: 500 }
@@ -143,7 +143,7 @@ export async function DELETE(_: NextRequest, context: { params: Promise<{ id: st
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    console.error("Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Failed to delete location" },
       { status: 500 }

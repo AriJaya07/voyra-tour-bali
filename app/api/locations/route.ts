@@ -30,27 +30,42 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(locations);
-  } catch (error: any) {
-    console.error("Full error:", error);
+  } catch (error) {
+    console.error("Error fetching locations:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
-      { error: error?.message ?? "Failed to fetch locations" },
+      { error: "Failed to fetch locations" },
       { status: 500 }
     );
   }
+}
+
+interface LocationImageInput {
+  id: number | string;
+  altText?: string | null;
+  isMain?: boolean;
+  order?: number;
 }
 
 // POST /api/locations
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, images, hrefLink, description, destinationId } = body;
+    const {
+      title,
+      images,
+      hrefLink,
+      description,
+      destinationId,
+    }: {
+      title: string;
+      images?: LocationImageInput[];
+      hrefLink?: string;
+      description?: string;
+      destinationId: number | string;
+    } = body;
 
-    // ✅ Validation
     if (!title?.trim()) {
-      return NextResponse.json(
-        { error: "Title is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
     if (!destinationId) {
@@ -60,7 +75,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Check destination exists
     const destination = await prisma.destination.findUnique({
       where: { id: Number(destinationId) },
     });
@@ -72,36 +86,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ 1. Create location first
-    const location = await prisma.location.create({
-      data: {
-        title: title.trim(),
-        hrefLink: hrefLink?.trim() || null,
-        description: description?.trim() || null,
-        destinationId: Number(destinationId),
-      },
+    const locationId = await prisma.$transaction(async (tx) => {
+      const location = await tx.location.create({
+        data: {
+          title: title.trim(),
+          hrefLink: hrefLink?.trim() || null,
+          description: description?.trim() || null,
+          destinationId: Number(destinationId),
+        },
+      });
+
+      if (images && Array.isArray(images) && images.length > 0) {
+        await Promise.all(
+          images.map((image, index) =>
+            tx.image.update({
+              where: { id: Number(image.id) },
+              data: {
+                locationId: location.id,
+                altText: image.altText || null,
+                isMain: image.isMain ?? false,
+                order: image.order ?? index,
+              },
+            })
+          )
+        );
+      }
+
+      return location.id;
     });
 
-    // ✅ 2. Attach images (if any)
-    if (images && Array.isArray(images) && images.length > 0) {
-      await Promise.all(
-        images.map((image: any, index: number) =>
-          prisma.image.update({
-            where: { id: Number(image.id) },
-            data: {
-              locationId: location.id, // 🔥 attach to location
-              altText: image.altText || null,
-              isMain: image.isMain ?? false,
-              order: image.order ?? index,
-            },
-          })
-        )
-      );
-    }
-
-    // ✅ 3. Return full location with relations
     const fullLocation = await prisma.location.findUnique({
-      where: { id: location.id },
+      where: { id: locationId },
       include: {
         destination: { select: { id: true, title: true } },
         images: {
@@ -120,10 +135,10 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(fullLocation, { status: 201 });
-  } catch (error: any) {
-    console.error("Meta:", error);
+  } catch (error) {
+    console.error("Error creating location:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
-      { error: error?.message ?? "Failed to create location" },
+      { error: "Failed to create location" },
       { status: 500 }
     );
   }

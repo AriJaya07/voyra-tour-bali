@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(image, { status: 201 });
   } catch (error) {
-    console.error("[Image Upload Error]", error);
+    console.error("[Image Upload Error]", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });
   }
 }

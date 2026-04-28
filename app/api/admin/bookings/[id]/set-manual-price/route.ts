@@ -51,7 +51,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, booking: updated });
   } catch (error) {
-    console.error("Error setting manual price:", error);
+    console.error("Error setting manual price:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to set manual price" }, { status: 500 });
   }
 }

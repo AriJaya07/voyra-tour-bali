@@ -93,7 +93,7 @@ export async function POST(req: Request) {
       status: data.status || "HELD",
     });
   } catch (error) {
-    console.error("Cart hold error:", error);
+    console.error("Cart hold error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

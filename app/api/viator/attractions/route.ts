@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
       hasMore: start + count - 1 < totalCount,
     });
   } catch (error) {
-    console.error("Attractions search error:", error);
+    console.error("Attractions search error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

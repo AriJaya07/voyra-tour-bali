@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, slug: mockBooking.slug });
   } catch (error) {
-    console.error("Error creating mock booking:", error);
+    console.error("Error creating mock booking:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to create mock booking" }, { status: 500 });
   }
 }

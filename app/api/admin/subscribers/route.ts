@@ -99,7 +99,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: subscriber }, { status: 201 });
   } catch (error) {
-    console.error("Admin Create Subscriber Error:", error);
+    console.error("Admin Create Subscriber Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to create subscriber." }, { status: 500 });
   }
 }

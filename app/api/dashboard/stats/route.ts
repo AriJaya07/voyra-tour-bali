@@ -135,7 +135,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("[dashboard/stats] Error:", error);
+    console.error("[dashboard/stats] Error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
   }
 }

@@ -156,7 +156,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, email: session.user.email || booking.user.email });
   } catch (error) {
-    console.error("Resend email error:", error);
+    console.error("Resend email error:", error instanceof Error ? error.message : "Unknown");
     return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
   }
 }
