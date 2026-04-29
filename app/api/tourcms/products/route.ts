@@ -13,17 +13,21 @@ export async function GET(req: NextRequest) {
     const pageSize = sp.get("pageSize")
       ? Math.max(1, Math.min(50, Number(sp.get("pageSize"))))
       : 24;
+    const noCache = sp.get("nocache") === "1";
 
-    const result = await listProducts({ q, categoryId, channelId, page, pageSize });
+    const result = await listProducts({ q, categoryId, channelId, page, pageSize, noCache });
     return NextResponse.json(result);
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown";
     console.error("Error fetching TourCMS products:", msg);
     if (error instanceof TourcmsApiError) {
-      return NextResponse.json({ error: "Upstream unavailable" }, { status: 502 });
+      return NextResponse.json(
+        { error: "Upstream unavailable", detail: msg },
+        { status: 502 }
+      );
     }
     return NextResponse.json(
-      { error: "Failed to fetch products" },
+      { error: "Failed to fetch products", detail: msg },
       { status: 500 }
     );
   }

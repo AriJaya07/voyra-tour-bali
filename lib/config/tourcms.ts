@@ -1,20 +1,32 @@
 import crypto from "crypto";
 
+function intEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 export const TOURCMS_API_URL =
   process.env.TOURCMS_API_URL || "https://api.tourcms.com";
-export const TOURCMS_MARKETPLACE_ID = Number(
-  process.env.TOURCMS_MARKETPLACE_ID || 0
-);
-export const TOURCMS_API_KEY = process.env.TOURCMS_API_KEY || "";
+export const TOURCMS_MARKETPLACE_ID = intEnv("TOURCMS_MARKETPLACE_ID", 0);
 export const TOURCMS_PRIVATE_KEY = process.env.TOURCMS_PRIVATE_KEY || "";
-export const TOURCMS_DEFAULT_CHANNEL = Number(
-  process.env.TOURCMS_DEFAULT_CHANNEL || 0
-);
+export const TOURCMS_DEFAULT_CHANNEL = intEnv("TOURCMS_DEFAULT_CHANNEL", 0);
 /**
- * Mock mode automatically engages when credentials are missing.
- * No env toggle needed — fill TOURCMS_API_KEY + TOURCMS_PRIVATE_KEY to go live.
+ * Channel id used by the listing page when no explicit channel is requested.
+ * 0 = marketplace search (`/p/tours/search.xml`, signed with channel=0).
+ * Set to a specific operator's channel id to scope the listing to one operator.
  */
-export const TOURCMS_MOCK = !TOURCMS_PRIVATE_KEY || !TOURCMS_API_KEY;
+export const TOURCMS_LISTING_CHANNEL = intEnv("TOURCMS_LISTING_CHANNEL", 0);
+/**
+ * Mock mode auto-engages when credentials are missing OR
+ * TOURCMS_FORCE_MOCK=true (use during dev when sandbox account
+ * has no Bali inventory).
+ */
+const FORCE_MOCK =
+  (process.env.TOURCMS_FORCE_MOCK || "").toLowerCase() === "true";
+export const TOURCMS_MOCK =
+  FORCE_MOCK || !TOURCMS_PRIVATE_KEY || !TOURCMS_MARKETPLACE_ID;
 
 export const TOURCMS_TIMEOUT_MS = 30_000;
 

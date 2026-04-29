@@ -149,9 +149,8 @@ Reuses existing `MIDTRANS_*` merchant. Add a SECOND Payment Notification URL in 
 | Name | Example |
 |---|---|
 | `TOURCMS_API_URL` | `https://api.tourcms.com` |
-| `TOURCMS_MARKETPLACE_ID` | Marketplace partner ID issued by TourCMS |
-| `TOURCMS_API_KEY` | TourCMS API key |
-| `TOURCMS_PRIVATE_KEY` | TourCMS HMAC private key. **Server-only.** |
+| `TOURCMS_MARKETPLACE_ID` | "TourCMS Marketplace Account ID" from dashboard → API Settings (numeric). |
+| `TOURCMS_PRIVATE_KEY` | "Private API key" from dashboard → API Settings. HMAC secret. **Server-only.** |
 | `TOURCMS_DEFAULT_CHANNEL` | Default channel id used for non-marketplace endpoints (or `0`) |
 | `TOURCMS_SUPPRESS_VENDOR_EMAIL` | `"true"` to send `<suppress_email>1</suppress_email>` on `commit.xml`, suppressing TourCMS auto-emails so only our Brevo email goes out. |
 | `TOURCMS_GEO_FILTER` | `"bali"` (default) / `"custom"` / `"off"`. |

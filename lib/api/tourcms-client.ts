@@ -8,7 +8,6 @@ import {
   TOURCMS_GEO_LAT,
   TOURCMS_GEO_LONG,
   TOURCMS_GEO_RADIUS_KM,
-  TOURCMS_MARKETPLACE_ID,
   buildTourcmsAuthHeader,
   tourcmsSignal,
 } from "@/lib/config/tourcms";
@@ -107,6 +106,13 @@ async function callTourcms<T = unknown>(opts: {
 
   const text = await res.text();
   if (!res.ok) {
+    if (res.status === 401) {
+      console.error(
+        `[TourCMS] 401 Unauthorized signing channel=${opts.channelId} path=${opts.pathWithQuery}. ` +
+          `Likely causes: (1) /p/* must sign with channel=0, (2) account not subscribed to that channel, ` +
+          `(3) clock skew >300s, (4) wrong TOURCMS_PRIVATE_KEY.`
+      );
+    }
     throw new TourcmsApiError(
       `Upstream ${res.status}`,
       "TOURCMS_HTTP",
@@ -123,13 +129,18 @@ async function callTourcms<T = unknown>(opts: {
 
   const root = (parsed.response ??
     parsed[Object.keys(parsed)[0] || ""]) as Record<string, unknown> | undefined;
+  const benignStatuses = new Set([
+    "OK",
+    "NO DATA CHANGED",
+    "NO MATCHING DATA",
+    "NO RESULTS",
+  ]);
   if (root && typeof root === "object") {
     const error = (root as Record<string, unknown>).error;
     if (
       error != null &&
       typeof error === "string" &&
-      error.toUpperCase() !== "OK" &&
-      error.toUpperCase() !== "NO DATA CHANGED"
+      !benignStatuses.has(error.toUpperCase())
     ) {
       throw new TourcmsApiError(error, "TOURCMS_API", 502);
     }
@@ -199,13 +210,16 @@ export async function searchTours(opts: {
     if (TOURCMS_COUNTRY_ISO) params.set("country", TOURCMS_COUNTRY_ISO);
   }
 
-  const channelId = opts.channelId ?? TOURCMS_MARKETPLACE_ID;
-  const isMarketplace = !channelId;
+  // /p/* (marketplace) endpoints MUST be signed with channel=0 per official
+  // PHP client. /c/* (channel-scoped) requires the operator's channel id.
+  const sigChannel =
+    opts.channelId && opts.channelId > 0 ? opts.channelId : 0;
+  const isMarketplace = sigChannel === 0;
   const path = isMarketplace
     ? `/p/tours/search.xml?${params.toString()}`
     : `/c/tours/search.xml?${params.toString()}`;
   const data = await callTourcms<Record<string, unknown>>({
-    channelId,
+    channelId: sigChannel,
     verb: "GET",
     pathWithQuery: path,
   });
@@ -561,13 +575,15 @@ export async function listBookings(opts: {
   if (opts.modifiedSince) params.set("made_date_start", opts.modifiedSince);
   params.set("per_page", String(opts.perPage ?? 100));
 
-  const isMarketplace = !opts.channelId;
+  const sigChannel =
+    opts.channelId && opts.channelId > 0 ? opts.channelId : 0;
+  const isMarketplace = sigChannel === 0;
   const path = isMarketplace
     ? `/p/bookings/list.xml?${params.toString()}`
     : `/c/bookings/list.xml?${params.toString()}`;
 
   const data = await callTourcms<Record<string, unknown>>({
-    channelId: opts.channelId,
+    channelId: sigChannel,
     verb: "GET",
     pathWithQuery: path,
   });
