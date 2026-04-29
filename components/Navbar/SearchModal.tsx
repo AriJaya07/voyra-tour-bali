@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import OptimizedImage from "@/components/common/OptimizedImage"
 import { useSearchDestinations } from "@/utils/hooks/useSearchDestinations"
 import { useViatorSearch, getViatorImageUrl } from "@/utils/hooks/useViator"
+import { useDebounce } from "@/utils/hooks/useDebounce"
 import { formatPrice } from "@/utils/formatPrice"
 import { CloseIcon, SearchIcon, ChevronRightIcon } from "@/components/assets/Icon/shared"
 
@@ -13,20 +14,10 @@ interface SearchModalProps {
   onClose: () => void
 }
 
-// ── Debounce hook ──────────────────────────────────────────────────
-function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-  return debounced
-}
-
 // ── Component ──────────────────────────────────────────────────────
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState("")
-  const debouncedQuery = useDebounce(query, 400)
+  const debouncedQuery = useDebounce(query, 500)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // React Query - fetch all destinations when modal opens
