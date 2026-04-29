@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-
+import OptimizedImage from "@/components/common/OptimizedImage";
 import type { TourcmsProductDetail } from "@/types/tourcms";
 import TourcmsBookingWidget from "./TourcmsBookingWidget";
 
@@ -11,21 +10,40 @@ interface Props {
 
 export default function TourcmsProductClient({ product }: Props) {
   const hero = product.images[0]?.url || product.imageUrl;
+  const gallery = product.images.slice(1, 5);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 py-8">
       <div className="lg:col-span-2 space-y-6">
         {hero && (
           <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-gray-100">
-            <Image
+            <OptimizedImage
               src={hero}
               alt={product.title}
               fill
               sizes="(max-width: 1024px) 100vw, 66vw"
               className="object-cover"
-              unoptimized
               priority
             />
+          </div>
+        )}
+
+        {gallery.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {gallery.map((img, i) => (
+              <div
+                key={`${img.url}-${i}`}
+                className="relative aspect-square rounded-lg overflow-hidden bg-gray-100"
+              >
+                <OptimizedImage
+                  src={img.url}
+                  alt={img.alt || `${product.title} photo ${i + 2}`}
+                  fill
+                  sizes="(max-width: 640px) 50vw, 16vw"
+                  className="object-cover"
+                />
+              </div>
+            ))}
           </div>
         )}
 

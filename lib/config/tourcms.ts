@@ -19,14 +19,11 @@ export const TOURCMS_DEFAULT_CHANNEL = intEnv("TOURCMS_DEFAULT_CHANNEL", 0);
  */
 export const TOURCMS_LISTING_CHANNEL = intEnv("TOURCMS_LISTING_CHANNEL", 0);
 /**
- * Mock mode auto-engages when credentials are missing OR
- * TOURCMS_FORCE_MOCK=true (use during dev when sandbox account
- * has no Bali inventory).
+ * Mock mode auto-engages only when credentials are missing.
+ * Used by booking/cancel/cron paths as a no-creds safety fallback —
+ * product listing/detail always go live to TourCMS.
  */
-const FORCE_MOCK =
-  (process.env.TOURCMS_FORCE_MOCK || "").toLowerCase() === "true";
-export const TOURCMS_MOCK =
-  FORCE_MOCK || !TOURCMS_PRIVATE_KEY || !TOURCMS_MARKETPLACE_ID;
+export const TOURCMS_MOCK = !TOURCMS_PRIVATE_KEY || !TOURCMS_MARKETPLACE_ID;
 
 export const TOURCMS_TIMEOUT_MS = 30_000;
 

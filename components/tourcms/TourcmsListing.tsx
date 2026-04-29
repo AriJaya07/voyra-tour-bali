@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { useTourcmsProducts } from "@/utils/hooks/useTourcms";
 import TourcmsCard from "./TourcmsCard";
+import TourcmsEmptyState from "./TourcmsEmptyState";
 import Pagination from "@/components/ui/Pagination";
 
 const PAGE_SIZE = 24;
@@ -83,12 +84,6 @@ export default function TourcmsListing() {
         </form>
       </div>
 
-      {isError && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 mb-3 text-sm text-yellow-700">
-          TourCMS data unavailable — please try again later.
-        </div>
-      )}
-
       <div className="flex flex-wrap items-center gap-2 mb-4 text-sm">
         <select
           value={bandIdx}
@@ -118,20 +113,58 @@ export default function TourcmsListing() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {isLoading
-          ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-[4/3] rounded-xl bg-gray-100 animate-pulse"
-              />
-            ))
-          : items.map((it) => <TourcmsCard key={it.productCode} item={it} />)}
-      </div>
-
-      {!isLoading && items.length === 0 && (
-        <div className="py-20 text-center text-gray-500">
-          No tours match your filters.
+      {isLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-[4/3] rounded-xl bg-gray-100 animate-pulse"
+            />
+          ))}
+        </div>
+      ) : isError ? (
+        <TourcmsEmptyState
+          variant="error"
+          action={
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="px-5 py-2 bg-[#0071CE] text-white rounded-lg font-bold hover:bg-[#005ba6]"
+            >
+              Try again
+            </button>
+          }
+        />
+      ) : items.length === 0 ? (
+        <TourcmsEmptyState
+          variant={
+            (data?.total ?? 0) === 0 && !appliedQ && bandIdx === 0
+              ? "no-data"
+              : "no-results"
+          }
+          action={
+            (data?.total ?? 0) > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setQ("");
+                  setAppliedQ("");
+                  setBandIdx(0);
+                  setSort("default");
+                  setPage(1);
+                }}
+                className="px-5 py-2 border border-gray-300 rounded-lg font-bold hover:bg-gray-50"
+              >
+                Clear filters
+              </button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {items.map((it) => (
+            <TourcmsCard key={it.productCode} item={it} />
+          ))}
         </div>
       )}
 
