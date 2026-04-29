@@ -49,6 +49,6 @@ export interface UnifiedActivity {
   duration?: string             // e.g. "2h 30m"
   freeCancellation?: boolean
   slug?: string                 // DB destination slug (for /detail/[slug])
-  productCode?: string          // Viator product code (for /viator/[code])
+  productCode?: string          // Viator product code — used to build viator.com deep-link
   categoryId?: number | string | null
 }

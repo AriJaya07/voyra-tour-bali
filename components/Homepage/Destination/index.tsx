@@ -6,6 +6,7 @@ import { assignCategoryIcons } from "../../assets/Icon/categories"
 import OptimizedImage from "@/components/common/OptimizedImage"
 import Link from "next/link"
 import { useViatorProducts, getViatorImageUrl } from "@/utils/hooks/useViator"
+import { buildViatorProductUrl } from "@/lib/config/viator"
 import { useDBDestinations } from "@/utils/hooks/useDestinations"
 import type { Category } from "@/types/tourism"
 import Pagination from "@/components/ui/Pagination"
@@ -124,7 +125,8 @@ export default function Destination({ categories }: DestinationProps) {
         title: product.title,
         slug: product.productCode,
         imageUrl: getViatorImageUrl(product.images, 720),
-        href: `/viator/${product.productCode}${product.pricing?.summary?.fromPrice ? `?price=${product.pricing.summary.fromPrice}&cur=${product.pricing.currency ?? "USD"}` : ""}`,
+        href: buildViatorProductUrl(product.productCode, product.title),
+        external: true,
       }))
     }
     if (!dbDestinations) return []
@@ -138,6 +140,7 @@ export default function Destination({ categories }: DestinationProps) {
         slug: dest.slug || String(dest.id),
         imageUrl: mainImage,
         href: `/detail/${dest.slug || dest.id}`,
+        external: false,
       }
     })
   }, [isViator, viatorData, dbDestinations])
@@ -185,8 +188,8 @@ export default function Destination({ categories }: DestinationProps) {
                 <div key={i} className="relative w-full h-[220px] rounded-md overflow-hidden bg-gray-200 animate-pulse" />
               ))
             ) : displayedDestinations.length > 0 ? (
-              displayedDestinations.map((item) => (
-                <Link href={item.href} key={item.id}>
+              displayedDestinations.map((item) => {
+                const card = (
                   <div className="relative w-full h-[220px] rounded-md overflow-hidden">
                     <OptimizedImage
                       src={item.imageUrl}
@@ -196,8 +199,25 @@ export default function Destination({ categories }: DestinationProps) {
                       className="object-cover transition-transform transform hover:scale-105"
                     />
                   </div>
-                </Link>
-              ))
+                )
+                if (item.external) {
+                  return (
+                    <a
+                      href={item.href}
+                      key={item.id}
+                      target="_blank"
+                      rel="noopener noreferrer sponsored"
+                    >
+                      {card}
+                    </a>
+                  )
+                }
+                return (
+                  <Link href={item.href} key={item.id}>
+                    {card}
+                  </Link>
+                )
+              })
             ) : (
               <div className="col-span-full w-full h-[220px] rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50/50">
                 <p className="text-gray-500 font-medium text-center px-4">

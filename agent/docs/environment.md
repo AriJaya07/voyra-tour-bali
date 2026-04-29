@@ -99,6 +99,7 @@ Sandbox test cards: see Midtrans docs (`4811 1111 1111 1114` is the standard suc
 | `VIATOR_API_URL` | `https://api.viator.com/partner` (or sandbox URL) |
 | `NEXT_PUBLIC_VIATOR_MOCK_BOOKING` | `"true"` to short-circuit live calls in dev/staging |
 | `VIATOR_DEFAULT_CURRENCY` *(optional)* | defaults to `IDR` |
+| `NEXT_PUBLIC_VIATOR_PARTNER_ID` *(optional)* | Viator affiliate partner id (default `P00292613`); appended as `?pid=` on outbound product redirects from `/viator/[productCode]` |
 
 ### 3.9 Email (Brevo SMTP)
 | Name | Example |

@@ -5,6 +5,7 @@ import OptimizedImage from "@/components/common/OptimizedImage"
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
 import type { UnifiedActivity } from "@/types/tourism"
 import { ClockIcon } from "@/components/assets/Icon/shared"
+import { buildViatorProductUrl } from "@/lib/config/viator"
 
 function getDiscountPercent(price: number, before?: number): number | null {
   if (!before || before <= price) return null
@@ -17,16 +18,16 @@ interface ActivityCardProps {
 }
 
 export function ActivityCard({ item, currency }: ActivityCardProps) {
-  const href = item.source === "viator"
-    ? `/viator/${item.productCode}?price=${item.price}&cur=${item.currency}`
+  const isViator = item.source === "viator"
+  const href = isViator
+    ? buildViatorProductUrl(item.productCode!, item.title)
     : `/detail/${item.slug}`
 
   const discountPercent = getDiscountPercent(item.price, item.priceBeforeDiscount)
   const sourceCurrency = item.currency as CurrencyCode
 
-  return (
-    <Link href={href} className="group block">
-      <div className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 h-[280px] flex flex-col">
+  const cardBody = (
+    <div className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 h-[280px] flex flex-col">
         <div className="relative w-full aspect-[4/3] overflow-hidden">
           <OptimizedImage
             src={item.imageUrl}
@@ -100,6 +101,24 @@ export function ActivityCard({ item, currency }: ActivityCardProps) {
           </div>
         </div>
       </div>
+  )
+
+  if (isViator) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer sponsored"
+        className="group block"
+      >
+        {cardBody}
+      </a>
+    )
+  }
+
+  return (
+    <Link href={href} className="group block">
+      {cardBody}
     </Link>
   )
 }

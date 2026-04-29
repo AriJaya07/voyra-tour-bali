@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { IoChatbubblesOutline, IoClose, IoSend } from "react-icons/io5";
 import { HiSparkles } from "react-icons/hi2";
 import Image from "next/image";
-import Link from "next/link";
+import { buildViatorProductUrl } from "@/lib/config/viator";
 
 interface ProductCard {
   productCode: string;
@@ -245,9 +245,11 @@ export default function AIChatWidget() {
                       className="grid grid-cols-2 gap-2"
                     >
                       {msg.products.map((card) => (
-                        <Link
+                        <a
                           key={card.productCode}
-                          href={`/viator/${card.productCode}`}
+                          href={buildViatorProductUrl(card.productCode, card.title)}
+                          target="_blank"
+                          rel="noopener noreferrer sponsored"
                           className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md hover:border-blue-200 active:scale-95 transition-all duration-200 group"
                           onClick={() => setIsOpen(false)}
                         >
@@ -276,7 +278,7 @@ export default function AIChatWidget() {
                               </p>
                             )}
                           </div>
-                        </Link>
+                        </a>
                       ))}
                     </motion.div>
                   )}
