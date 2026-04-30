@@ -148,6 +148,50 @@ function StepContact({
   );
 }
 
+// ── Saved Travelers (API) ───────────────────────────────────────────
+interface SavedTravelerRow {
+  id: number;
+  firstName: string;
+  lastName: string;
+  ageBand: string;
+  isLead: boolean;
+}
+
+function SavedTravelerSelect({
+  ageBand,
+  options,
+  onPick,
+}: {
+  ageBand: string;
+  options: SavedTravelerRow[];
+  onPick: (t: SavedTravelerRow) => void;
+}) {
+  const matches = options.filter((o) => o.ageBand === ageBand);
+  if (matches.length === 0) return null;
+  return (
+    <div className="mb-3">
+      <label className="block text-xs font-semibold text-gray-500 mb-1">Autofill from saved travelers</label>
+      <select
+        defaultValue=""
+        onChange={(e) => {
+          const id = Number(e.target.value);
+          const picked = matches.find((m) => m.id === id);
+          if (picked) onPick(picked);
+          e.currentTarget.value = "";
+        }}
+        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0071CE]/30 focus:border-[#0071CE] transition"
+      >
+        <option value="">— Choose saved traveler —</option>
+        {matches.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.firstName} {m.lastName} {m.isLead ? "(Lead)" : ""}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 // ── Step 1: Travelers ───────────────────────────────────────────────
 function StepTravelers({
   onNext,
@@ -157,6 +201,16 @@ function StepTravelers({
   onBack: () => void;
 }) {
   const { paxMix, travelers: savedTravelers, setTravelers, contactInfo } = useBookingStore();
+  const { status: sessionStatus } = useSession();
+  const [savedTravelerOptions, setSavedTravelerOptions] = useState<SavedTravelerRow[]>([]);
+
+  useEffect(() => {
+    if (sessionStatus !== "authenticated") return;
+    fetch("/api/saved-travelers", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: SavedTravelerRow[]) => setSavedTravelerOptions(data ?? []))
+      .catch(() => setSavedTravelerOptions([]));
+  }, [sessionStatus]);
 
   // Build traveler list from paxMix
   const buildInitialTravelers = useCallback((): TravelerInfo[] => {
@@ -232,6 +286,23 @@ function StepTravelers({
                   </span>
                 )}
               </div>
+              {sessionStatus === "authenticated" && savedTravelerOptions.length > 0 && (
+                <SavedTravelerSelect
+                  ageBand={t.ageBand}
+                  options={savedTravelerOptions}
+                  onPick={(picked) => {
+                    const updated = [...travelers];
+                    updated[idx] = { ...updated[idx], firstName: picked.firstName, lastName: picked.lastName };
+                    setLocalTravelers(updated);
+                    setErrors((prev) => {
+                      const next = { ...prev };
+                      delete next[`${idx}-firstName`];
+                      delete next[`${idx}-lastName`];
+                      return next;
+                    });
+                  }}
+                />
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <input

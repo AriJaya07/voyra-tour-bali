@@ -213,6 +213,8 @@ export async function handlePaymentSuccess(orderId: string): Promise<{
         pax: booking.pax,
         totalPrice: `Rp ${Math.round(booking.totalPrice).toLocaleString("id-ID")}`,
         ticketToken,
+        meetingPoint: booking.meetingPoint,
+        travelTime: booking.travelTime,
       }).catch((err) => {
         console.error("[Email] Failed to send booking confirmation:", err);
       });

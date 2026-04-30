@@ -1,29 +1,27 @@
 import { Image as PrismaImage } from "@prisma/client"
-import OptimizedImage from "@/components/common/OptimizedImage"
 import Link from "next/link"
 import Container from "../../../components/Container"
 import BackArrowIcon from "../../assets/detail/BackArrowIcon"
+import WishlistButton from "@/components/common/WishlistButton"
+import ImageGalleryGrid from "./ImageGalleryGrid"
 
 interface BannerDetailProps {
     title: string;
     description: string;
     images: PrismaImage[];
     categoryName: string;
+    productCode?: string;
+    href?: string;
+    sourceCurrency?: string;
 }
 
-export default function BannerDetail({ title, description, images, categoryName }: BannerDetailProps) {
+export default function BannerDetail({ title, description, images, categoryName, productCode, href, sourceCurrency }: BannerDetailProps) {
     const sortedImages = [...images].sort((a, b) => {
         if (a.isMain) return -1;
         if (b.isMain) return 1;
         if (a.order !== null && b.order !== null) return a.order - b.order;
         return 0;
     });
-
-    const img1 = sortedImages[0]?.url;
-    const img2 = sortedImages[1]?.url;
-    const img3 = sortedImages[2]?.url;
-    const img4 = sortedImages[3]?.url;
-    const img5 = sortedImages[4]?.url;
 
     return (
         <div className="">
@@ -40,39 +38,24 @@ export default function BannerDetail({ title, description, images, categoryName 
                             <p className="text-[24px] font-bold text-black leading-[24px] sm:text-[20px]">{title}</p>
                             <p className="text-[14px] font-normal text-black leading-[24px] sm:text-[12px]">{description}</p>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-1">
-                            {/* Image 1 (always visible) */}
-                            <div className="relative w-full sm:flex-[2] h-[458px]">
-                                <OptimizedImage src={img1} alt={title} fill sizes="(max-width: 640px) 100vw, 733px" className="object-cover" priority />
-                            </div>
-
-                            {/* On mobile, show only one image */}
-                            <div className="flex flex-col sm:hidden gap-1">
-                                <div className="relative w-full h-[226px]">
-                                    <OptimizedImage src={img2} alt={title} fill sizes="100vw" className="object-cover" />
-                                </div>
-                            </div>
-
-                            {/* On larger screens, show multiple images */}
-                            <div className="hidden sm:flex sm:flex-col gap-1 sm:flex-1 h-[458px]">
-                                <div className="relative w-full h-[229px]">
-                                    <OptimizedImage src={img2} alt={title} fill sizes="362px" className="object-cover" />
-                                </div>
-                                <div className="relative w-full h-[225px]">
-                                    <OptimizedImage src={img3} alt={title} fill sizes="362px" className="object-cover" />
-                                </div>
-                            </div>
-
-                            {/* On larger screens, show more images */}
-                            <div className="hidden sm:flex sm:flex-col gap-1 sm:flex-1 h-[458px]">
-                                <div className="relative w-full h-[229px]">
-                                    <OptimizedImage src={img4} alt={title} fill sizes="362px" className="object-cover" />
-                                </div>
-                                <div className="relative w-full h-[225px]">
-                                    <OptimizedImage src={img5} alt={title} fill sizes="362px" className="object-cover" />
-                                </div>
-                            </div>
-                        </div>
+                        <ImageGalleryGrid
+                            images={sortedImages.map((img) => ({ url: img.url }))}
+                            title={title}
+                            heroOverlay={
+                                productCode ? (
+                                    <WishlistButton
+                                        item={{
+                                            productCode,
+                                            source: "local",
+                                            title,
+                                            imageUrl: sortedImages[0]?.url,
+                                            href,
+                                            currency: sourceCurrency || "IDR",
+                                        }}
+                                    />
+                                ) : null
+                            }
+                        />
                     </div>
                 </Container>
             </div>

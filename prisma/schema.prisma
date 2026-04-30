@@ -8,9 +8,9 @@ datasource db {
 }
 
 model Category {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
-  slug        String   @unique
+  slug        String  @unique
   description String?
 
   image String?
@@ -23,7 +23,7 @@ model Category {
 }
 
 model Destination {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   title       String
   slug        String? @unique
   description String
@@ -34,8 +34,8 @@ model Destination {
 
   images Image[]
 
-  packages Package[]
-  contents Content[]
+  packages  Package[]
+  contents  Content[]
   locations Location[]
 
   createdAt DateTime @default(now())
@@ -43,7 +43,7 @@ model Destination {
 }
 
 model Package {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   title       String
   slug        String? @unique
   description String
@@ -69,7 +69,7 @@ model Content {
   description String
 
   dateAvailable DateTime
-  isAvailable   Boolean @default(true)
+  isAvailable   Boolean  @default(true)
 
   destinationId Int
   destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
@@ -97,9 +97,9 @@ model Location {
 }
 
 model Image {
-  id   Int    @id @default(autoincrement())
-  url  String
-  key  String
+  id  Int    @id @default(autoincrement())
+  url String
+  key String
 
   altText String?
   isMain  Boolean @default(false)
@@ -121,110 +121,187 @@ model Image {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
   password String?
   name     String?
-  role     UserRole  @default(USER)
+  role     UserRole @default(USER)
   image    String?
   phone    String?
-  provider String    @default("credentials")
+  provider String   @default("credentials")
 
   emailVerified     Boolean   @default(false)
   verificationToken String?
   tokenExpiry       DateTime?
 
-  resetToken        String?
-  resetTokenExpiry  DateTime?
+  resetToken       String?
+  resetTokenExpiry DateTime?
 
   loginAttempts    Int       @default(0)
   loginLockedUntil DateTime?
 
-  bookings Booking[]
+  bookings       Booking[]
+  wishlistItems  WishlistItem[]
+  savedTravelers SavedTraveler[]
+  reviews        Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model WishlistItem {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productCode String // Viator productCode OR local slug
+  source      String // "viator" | "local" | "tourcms"
+  title       String
+  imageUrl    String?
+  price       Float?
+  currency    String?
+  href        String? // resolved navigation target
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productCode, source])
+  @@index([userId])
+}
+
+model SavedTraveler {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName           String
+  lastName            String
+  ageBand             String // ADULT | CHILD | INFANT | SENIOR | YOUTH
+  dateOfBirth         DateTime?
+  passportNumber      String?
+  passportExpiry      DateTime?
+  nationality         String?
+  dietaryRequirements String?
+  pickupHotel         String?
+  isLead              Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Review {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bookingId Int?     @unique
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  productCode  String
+  source       String // "viator" | "local" | "tourcms"
+  rating       Int // 1-5
+  title        String?
+  body         String
+  photos       Json? // array of S3 URLs
+  status       ReviewStatus @default(PENDING)
+  helpfulCount Int          @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productCode, source, status])
+  @@index([userId])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Booking {
-  id             Int         @id @default(autoincrement())
-  bookingRef     String
-  productCode    String
-  productTitle   String
-  productImage   String?
-  totalPrice     Float
-  totalPriceUsd  Float?
-  currency       String      @default("IDR")
-  travelDate     DateTime
-  travelTime     String?
-  meetingPoint   String?
-  pax            Int         @default(1)
-  status         BookingStatus @default(PENDING)
+  id            Int           @id @default(autoincrement())
+  bookingRef    String
+  productCode   String
+  productTitle  String
+  productImage  String?
+  totalPrice    Float
+  totalPriceUsd Float?
+  currency      String        @default("IDR")
+  travelDate    DateTime
+  travelTime    String?
+  meetingPoint  String?
+  pax           Int           @default(1)
+  status        BookingStatus @default(PENDING)
 
   // Viator booking fields
-  productOptionCode String?
-  productOptionTitle String?
-  tourGradeCode     String?
-  startTime         String?
-  paxMixJson        Json?
+  productOptionCode    String?
+  productOptionTitle   String?
+  tourGradeCode        String?
+  startTime            String?
+  paxMixJson           Json?
   bookingQuestionsJson Json?
-  languageGuide     String?
+  languageGuide        String?
 
   // Lead traveler contact
-  leadFirstName  String?
-  leadLastName   String?
-  leadEmail      String?
-  leadPhone      String?
+  leadFirstName String?
+  leadLastName  String?
+  leadEmail     String?
+  leadPhone     String?
 
   travelersJson  Json?
-  isFraudFlagged Boolean     @default(false)
-  voucherEmailed Boolean     @default(false)
+  isFraudFlagged Boolean @default(false)
+  voucherEmailed Boolean @default(false)
 
   // Payment
-  paymentId      String?     @unique
+  paymentId      String?   @unique
   snapToken      String?
   paidAt         DateTime?
-  idempotencyKey String?     @unique
+  idempotencyKey String?   @unique
 
   // Viator confirmation
-  viatorBookingRef   String?
+  viatorBookingRef    String?
   viatorBookingStatus String?
-  viatorVoucherUrl   String?
-  viatorBookingError String?
-  viatorRetryCount   Int       @default(0)
+  viatorVoucherUrl    String?
+  viatorBookingError  String?
+  viatorRetryCount    Int     @default(0)
 
-  ticketToken    String?     @unique
-  ticketImageUrl String? // Uploaded Viator ticket image (required before confirming)
+  ticketToken     String? @unique
+  ticketImageUrl  String? // Uploaded Viator ticket image (required before confirming)
   paymentProofUrl String? // Admin-uploaded payment proof (m-banking screenshot)
 
+  reminderSentAt DateTime? // T-1 day reminder email send timestamp
+
   // Mock/manual booking fields
-  isMockMode    Boolean     @default(false)
+  isMockMode    Boolean @default(false)
   manualPrice   Float?
   promoCode     String?
   documentsJson Json?
 
   userId Int
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  travelers      BookingTraveler[]
+  travelers BookingTraveler[]
+  review    Review?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model BookingTraveler {
-  id         Int      @id @default(autoincrement())
+  id         Int    @id @default(autoincrement())
   bookingRef String
   firstName  String
   lastName   String
   fullName   String
   ageBand    String
 
-  bookingId  Int
-  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId Int
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum BookingStatus {
@@ -254,16 +331,16 @@ model Subscription {
 }
 
 model MockBooking {
-  id           Int      @id @default(autoincrement())
-  slug         String   @unique
-  productCode  String
-  productTitle String
-  productImage String?
-  price        Float?
-  currency     String   @default("IDR")
-  username     String?
-  promoCode    String?
-  productOptionCode String?
+  id                 Int     @id @default(autoincrement())
+  slug               String  @unique
+  productCode        String
+  productTitle       String
+  productImage       String?
+  price              Float?
+  currency           String  @default("IDR")
+  username           String?
+  promoCode          String?
+  productOptionCode  String?
   productOptionTitle String?
 
   createdAt DateTime @default(now())

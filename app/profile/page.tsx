@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TicketModal from "@/components/profile/TicketModal";
 import CancelModal from "@/components/profile/CancelModal";
+import UpcomingTripCard from "@/components/profile/UpcomingTripCard";
 import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
 import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import PayNowButton from "@/components/Global/booking/PayNowButton";
@@ -179,7 +180,9 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">My Profile</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">My Profile</h1>
+
+        <UpcomingTripCard bookings={bookings} onViewTicket={(b) => setSelectedTicket(b)} />
 
         {message && (
           <div
@@ -448,7 +451,45 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Link href="/wishlist" className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-[#0071CE]/40 hover:shadow-md transition group">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-pink-500" strokeWidth={0}>
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">My Wishlist</p>
+                <p className="text-xs text-gray-500">Saved tours</p>
+              </div>
+            </div>
+          </Link>
+          <Link href="/profile/travelers" className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-[#0071CE]/40 hover:shadow-md transition">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                <span className="text-lg">👥</span>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">Saved Travelers</p>
+                <p className="text-xs text-gray-500">Autofill at checkout</p>
+              </div>
+            </div>
+          </Link>
+          <Link href="/profile/reviews" className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-[#0071CE]/40 hover:shadow-md transition">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
+                <span className="text-lg">⭐</span>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">My Reviews</p>
+                <p className="text-xs text-gray-500">Share your experience</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        <div className="mt-8 text-center">
           <Link href="/" className="text-[#0071CE] font-medium hover:underline">
             Back to Home
           </Link>

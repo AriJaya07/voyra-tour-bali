@@ -7,6 +7,8 @@ import type { Session } from "next-auth";
 import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 import SessionProviderWrapper from "@/components/Wrapper/SessionProviderWrapper";
 import ExchangeRateProvider from "@/components/providers/ExchangeRateProvider";
+import WishlistProvider from "@/components/providers/WishlistProvider";
+import ExitIntentModal from "@/components/common/ExitIntentModal";
 import AIChatWidget from "@/components/AIChatWidget";
 
 interface AppProvidersProps {
@@ -23,6 +25,7 @@ export default function AppProviders({ children, session }: AppProvidersProps) {
     <SessionProviderWrapper session={session}>
       <ReactQueryProvider>
         <ExchangeRateProvider />
+        <WishlistProvider />
         {children}
         <Toaster
           position="top-right"
@@ -36,6 +39,7 @@ export default function AppProviders({ children, session }: AppProvidersProps) {
           }}
         />
         <AIChatWidget />
+        <ExitIntentModal />
       </ReactQueryProvider>
     </SessionProviderWrapper>
   );

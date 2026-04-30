@@ -8,8 +8,9 @@ import BurgerIcon from "../assets/Icon/BurgerIcon"
 import VoryaIcon from "../assets/Icon/VoyraIcon"
 import SearchModal from "./SearchModal"
 import SearchIcon from "../assets/Icon/SearchIcon"
-import { ProfileIcon, DashboardIcon, HomeIcon, SignOutIcon, ChevronDownIcon, CurrencyIcon, SearchNavIcon } from "../assets/Icon/NavIcons"
-import { useCurrency } from "@/utils/hooks/useCurrency"
+import { ProfileIcon, DashboardIcon, HomeIcon, SignOutIcon, ChevronDownIcon, SearchNavIcon } from "../assets/Icon/NavIcons"
+import CurrencyDropdown from "@/components/common/CurrencyDropdown"
+import { useWishlistStore } from "@/utils/hooks/useWishlist"
 
 const NAV_ITEMS = [
   { label: "Home", id: "home" },
@@ -29,7 +30,7 @@ export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
   const [scrolled, setScrolled] = useState(false)
-  const { currency, toggle: toggleCurrency } = useCurrency()
+  const wishlistCount = useWishlistStore((s) => s.items.length)
   const userImage = (session?.user as any)?.image || "/images/people.png"
   const userRole = (session?.user as any)?.role as string | undefined
 
@@ -159,18 +160,24 @@ export default function Navbar() {
               <SearchIcon />
             </button>
 
-            {/* Currency Toggle – Desktop */}
-            <button
-              onClick={toggleCurrency}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-gray-200 hover:border-[#0071CE] transition text-xs font-medium cursor-pointer shrink-0"
-              aria-label="Toggle currency"
+            {/* Wishlist link */}
+            <Link
+              href="/wishlist"
+              aria-label="Wishlist"
+              className="relative h-10 w-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-500 hover:text-pink-500"
             >
-              <span className={`${currency === "USD" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>USD</span>
-              <div className="relative w-7 h-3.5 rounded-full bg-gray-200">
-                <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-[#0071CE] transition-all duration-200 ${currency === "IDR" ? "left-3.5" : "left-0.5"}`} />
-              </div>
-              <span className={`${currency === "IDR" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>IDR</span>
-            </button>
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              {wishlistCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Currency – Desktop */}
+            <CurrencyDropdown variant="desktop" />
 
             {session ? (
               <div className="relative">
@@ -265,19 +272,23 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile: Currency Toggle + Burger */}
+          {/* Mobile: Wishlist + Currency Dropdown + Burger */}
           <div className="flex lg:hidden items-center gap-2 flex-shrink-0">
-            <button
-              onClick={toggleCurrency}
-              className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200 text-xs font-medium cursor-pointer"
-              aria-label="Toggle currency"
+            <Link
+              href="/wishlist"
+              aria-label="Wishlist"
+              className="relative h-9 w-9 flex items-center justify-center rounded-full text-gray-500 hover:text-pink-500"
             >
-              <span className={currency === "USD" ? "text-[#0071CE] font-bold" : "text-gray-400"}>$</span>
-              <div className="relative w-6 h-3 rounded-full bg-gray-200">
-                <div className={`absolute top-0.5 w-2 h-2 rounded-full bg-[#0071CE] transition-all duration-200 ${currency === "IDR" ? "left-3" : "left-0.5"}`} />
-              </div>
-              <span className={currency === "IDR" ? "text-[#0071CE] font-bold" : "text-gray-400"}>Rp</span>
-            </button>
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              {wishlistCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              )}
+            </Link>
+            <CurrencyDropdown variant="mobile" />
             <button
               onClick={() => setIsOpen(true)}
               className="cursor-pointer"
@@ -360,23 +371,20 @@ export default function Navbar() {
             )
           })}
 
-          {/* Currency Toggle – Mobile Slide Menu */}
-          <button
-            onClick={toggleCurrency}
-            className="flex items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
+          {/* Wishlist link – Mobile Slide Menu */}
+          <Link
+            href="/wishlist"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:text-pink-500 hover:bg-gray-50 rounded-xl transition"
           >
-            <div className="flex items-center gap-2">
-              <CurrencyIcon className="w-4 h-4 text-gray-400" />
-              <span>Currency</span>
-            </div>
-            <span className="flex items-center gap-1.5">
-              <span className={`text-xs ${currency === "USD" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>USD</span>
-              <div className="relative w-8 h-4 rounded-full bg-gray-200">
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-[#0071CE] transition-all duration-200 ${currency === "IDR" ? "left-4" : "left-0.5"}`} />
-              </div>
-              <span className={`text-xs ${currency === "IDR" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>IDR</span>
-            </span>
-          </button>
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            My Wishlist
+            {wishlistCount > 0 && (
+              <span className="ml-auto px-2 py-0.5 rounded-full bg-pink-500 text-white text-[10px] font-bold">{wishlistCount}</span>
+            )}
+          </Link>
 
           {/* Divider */}
           <hr />

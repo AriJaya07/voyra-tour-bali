@@ -5,6 +5,7 @@ import DotsIcon from "../../assets/Icon/DotsIcon"
 import { assignCategoryIcons } from "../../assets/Icon/categories"
 import OptimizedImage from "@/components/common/OptimizedImage"
 import Link from "next/link"
+import WishlistButton from "@/components/common/WishlistButton"
 import { useViatorProducts, getViatorImageUrl } from "@/utils/hooks/useViator"
 import { buildViatorProductUrl } from "@/lib/config/viator"
 import { useDBDestinations } from "@/utils/hooks/useDestinations"
@@ -190,7 +191,7 @@ export default function Destination({ categories }: DestinationProps) {
             ) : displayedDestinations.length > 0 ? (
               displayedDestinations.map((item) => {
                 const card = (
-                  <div className="relative w-full h-[220px] rounded-md overflow-hidden">
+                  <div className="relative w-full h-[220px] rounded-md overflow-hidden group">
                     <OptimizedImage
                       src={item.imageUrl}
                       alt={item.title}
@@ -198,6 +199,21 @@ export default function Destination({ categories }: DestinationProps) {
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover transition-transform transform hover:scale-105"
                     />
+                    <div className="absolute top-2 right-2 z-10">
+                      <WishlistButton
+                        size="sm"
+                        item={{
+                          productCode: item.slug,
+                          source: item.external ? "viator" : "local",
+                          title: item.title,
+                          imageUrl: item.imageUrl,
+                          href: item.href,
+                        }}
+                      />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 pointer-events-none">
+                      <p className="text-white font-bold text-sm leading-tight line-clamp-2">{item.title}</p>
+                    </div>
                   </div>
                 )
                 if (item.external) {

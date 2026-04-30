@@ -59,6 +59,12 @@ const NAV_ITEMS = [
     color: "amber",
   },
   {
+    label: "Reviews",
+    href: "/dashboard/reviews",
+    icon: <BookingsIcon />,
+    color: "violet",
+  },
+  {
     label: "Contents",
     href: "/dashboard/contents",
     icon: <ContentsIcon />,

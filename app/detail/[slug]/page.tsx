@@ -5,6 +5,13 @@ import Container from "@/components/Container";
 import AboutDetail from "@/components/DetailProduct/AboutDetail";
 import BannerDetail from "@/components/DetailProduct/BannerDetail";
 import BookingLocalWidget from "@/components/booking/BookingLocalWidget";
+import StickyDetailCTA from "@/components/DetailProduct/StickyDetailCTA";
+import ReviewsSection from "@/components/DetailProduct/ReviewsSection";
+import RecentlyViewedTracker from "@/components/DetailProduct/RecentlyViewedTracker";
+import RecentlyViewedStrip from "@/components/common/RecentlyViewedStrip";
+import SimilarTours from "@/components/DetailProduct/SimilarTours";
+import SocialProofBadge from "@/components/DetailProduct/SocialProofBadge";
+import TrustBadges from "@/components/DetailProduct/TrustBadges";
 import ExcpectDetail from "@/components/DetailProduct/ExpectDetail";
 import ContentsSection from "@/components/DetailProduct/ContentsSection";
 import LocationSection from "@/components/DetailProduct/LocationSection";
@@ -126,12 +133,17 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
                 description={destination.description}
                 images={destination.images}
                 categoryName={destination.category?.name || "Liburan"}
+                productCode={`LOCAL-${slug}`}
+                href={`/detail/${slug}`}
+                sourceCurrency="IDR"
             />
 
             <Container>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 py-8">
                     {/* ── Left: Product details ── */}
                     <div className="lg:col-span-2 space-y-0">
+                        <SocialProofBadge productCode={`LOCAL-${slug}`} />
+                        <TrustBadges />
                         <AboutDetail
                             description={destination.description}
                             mainImage={mainImage}
@@ -143,10 +155,24 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
                             destinationTitle={destination.title}
                         />
                         <ExcpectDetail images={destination.images} />
+                        <ReviewsSection
+                            productCode={`LOCAL-${slug}`}
+                            source="local"
+                            productTitle={destination.title}
+                        />
+                        <SimilarTours
+                            destinationId={destination.id}
+                            categoryId={destination.categoryId}
+                        />
+                        <RecentlyViewedStrip
+                            excludeProductCode={`LOCAL-${slug}`}
+                            title="Recently Viewed"
+                            minItems={2}
+                        />
                     </div>
 
                     {/* ── Right: Sticky booking card ── */}
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-1" id="booking-widget">
                         <div className="lg:sticky lg:top-24">
                             <BookingLocalWidget
                                 price={price}
@@ -159,6 +185,26 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
                     </div>
                 </div>
             </Container>
+
+            <StickyDetailCTA
+                price={price}
+                sourceCurrency="IDR"
+                productCode={`LOCAL-${slug}`}
+                source="local"
+                title={destination.title}
+                imageUrl={mainImage || undefined}
+                href={`/detail/${slug}`}
+            />
+
+            <RecentlyViewedTracker
+                productCode={`LOCAL-${slug}`}
+                source="local"
+                title={destination.title}
+                imageUrl={mainImage || undefined}
+                price={price > 0 ? price : undefined}
+                currency="IDR"
+                href={`/detail/${slug}`}
+            />
         </div>
     );
 }
