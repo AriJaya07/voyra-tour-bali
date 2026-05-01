@@ -114,7 +114,21 @@ Sandbox test cards: see Midtrans docs (`4811 1111 1111 1114` is the standard suc
 | Name | Example |
 |---|---|
 | `GROQ_API_KEY` | from console.groq.com |
-| `GROQ_MODEL` *(optional)* | defaults inside `app/api/ai/route.ts` |
+| `GROQ_MODEL` *(optional)* | defaults inside `app/api/ai/route.ts` (`llama-3.3-70b-versatile`) |
+
+### 3.10b Web Push (optional — push notifications)
+
+| Name | Example |
+|---|---|
+| `VAPID_PUBLIC_KEY` | base64url public key (`web-push.generateVAPIDKeys().publicKey`) |
+| `VAPID_PRIVATE_KEY` | base64url private key |
+| `VAPID_SUBJECT` *(optional, default `mailto:support@voyra.id`)* | `mailto:` URL or `https://` URL |
+
+If absent, `lib/services/pushService.ts` skips silently. Install with `npm i web-push`. Generate keys:
+
+```bash
+npx --package=web-push -- web-push generate-vapid-keys
+```
 
 ### 3.11 Cron secret
 | Name | Example |
@@ -195,6 +209,11 @@ SMTP_FROM="Voyra <noreply@yourdomain.com>"
 
 # === Groq ===
 GROQ_API_KEY=""
+
+# === Web Push (optional) ===
+VAPID_PUBLIC_KEY=""
+VAPID_PRIVATE_KEY=""
+VAPID_SUBJECT="mailto:support@yourdomain.com"
 
 # === Cron ===
 CRON_SECRET="REPLACE_WITH_RANDOM_STRING"
@@ -303,6 +322,8 @@ The repo's current `build` is plain `next build`. Adopt this when you have prod 
 | `app/api/cron/**` | `CRON_SECRET` |
 | `lib/newsApi.ts` | `BALI_NEWS_API` |
 | `components/AIChatWidget.tsx` / `app/api/ai` | `GROQ_API_KEY` |
+| `lib/services/pushService.ts` / `app/api/push/**` | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` |
+| `lib/services/emailService.ts`, `app/api/email/**` | `NEXTAUTH_URL` (used to build absolute pixel + click URLs) |
 
 If you add a new env var, also add it to:
 1. The table in §3.

@@ -9,6 +9,8 @@ import StickyDetailCTA from "@/components/DetailProduct/StickyDetailCTA";
 import ReviewsSection from "@/components/DetailProduct/ReviewsSection";
 import RecentlyViewedTracker from "@/components/DetailProduct/RecentlyViewedTracker";
 import RecentlyViewedStrip from "@/components/common/RecentlyViewedStrip";
+import PublicNotesBlock from "@/components/common/PublicNotesBlock";
+import ConciergeButton from "@/components/common/ConciergeButton";
 import SimilarTours from "@/components/DetailProduct/SimilarTours";
 import SocialProofBadge from "@/components/DetailProduct/SocialProofBadge";
 import TrustBadges from "@/components/DetailProduct/TrustBadges";
@@ -160,6 +162,17 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
                             source="local"
                             productTitle={destination.title}
                         />
+                        <PublicNotesBlock
+                            targetType="destination"
+                            targetKey={slug}
+                            title={`Traveler Notes about ${destination.title}`}
+                        />
+                        <div className="py-4">
+                            <ConciergeButton
+                                productTitle={destination.title}
+                                productCode={`LOCAL-${slug}`}
+                            />
+                        </div>
                         <SimilarTours
                             destinationId={destination.id}
                             categoryId={destination.categoryId}

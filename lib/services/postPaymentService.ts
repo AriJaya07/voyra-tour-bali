@@ -152,21 +152,98 @@ export async function handlePaymentSuccess(orderId: string): Promise<{
 
     const ticketToken = generateTicketToken();
 
-    // Update booking to CONFIRMED
+    // Update booking to CONFIRMED. Clear payment-only tokens — Midtrans snapToken expires after 15min,
+    // idempotencyKey is only used during checkout. Both are dead weight after CONFIRMED.
     await prisma.booking.update({
       where: { paymentId: orderId },
       data: {
         status: "CONFIRMED",
         paidAt: new Date(),
         ticketToken,
+        snapToken: null,
+        idempotencyKey: null,
       },
     });
 
     console.log(`[PostPayment] ${orderId} → CONFIRMED`);
 
-    // Confirm with Viator (skip for mock bookings)
+    // Loyalty — accrue points (1 pt per Rp 1,000 base; tier multiplier applied at write time)
+    try {
+      const totalIDR = booking.totalPrice;
+      const account = await prisma.loyaltyAccount.upsert({
+        where: { userId: booking.userId },
+        update: {},
+        create: { userId: booking.userId },
+      });
+      const tierMultiplier = account.tier === "GOLD" ? 2 : account.tier === "SILVER" ? 1.5 : 1;
+      const earned = Math.floor((totalIDR / 1000) * tierMultiplier);
+      const newSpend = account.lifetimeSpend + totalIDR;
+      const newTier =
+        newSpend >= 20_000_000 ? "GOLD" : newSpend >= 5_000_000 ? "SILVER" : "BRONZE";
+      await prisma.loyaltyAccount.update({
+        where: { userId: booking.userId },
+        data: {
+          pointsBalance: account.pointsBalance + earned,
+          lifetimeSpend: newSpend,
+          tier: newTier,
+        },
+      });
+      await prisma.loyaltyLedger.create({
+        data: {
+          userId: booking.userId,
+          delta: earned,
+          reason: "BOOKING",
+          refId: booking.bookingRef,
+        },
+      });
+    } catch (e: any) {
+      console.error("[Loyalty] failed to accrue:", e?.message);
+    }
+
+    // Referral conversion — credit the inviter if this is invitee's first confirmed booking
+    try {
+      const otherBookings = await prisma.booking.count({
+        where: {
+          userId: booking.userId,
+          status: { in: ["CONFIRMED", "COMPLETED"] },
+          id: { not: booking.id },
+        },
+      });
+      if (otherBookings === 0) {
+        const ref = await prisma.referral.findFirst({
+          where: { inviteeId: booking.userId, status: "SIGNED_UP", rewardGiven: false },
+        });
+        if (ref) {
+          await prisma.referral.update({
+            where: { id: ref.id },
+            data: { status: "CONVERTED", rewardGiven: true },
+          });
+          // Reward inviter 500 pts
+          await prisma.loyaltyAccount.upsert({
+            where: { userId: ref.inviterId },
+            update: { pointsBalance: { increment: 500 } },
+            create: { userId: ref.inviterId, pointsBalance: 500 },
+          });
+          await prisma.loyaltyLedger.create({
+            data: {
+              userId: ref.inviterId,
+              delta: 500,
+              reason: "REFERRAL",
+              refId: ref.code,
+            },
+          });
+          console.log(`[Referral] Inviter ${ref.inviterId} credited 500 pts for ${booking.bookingRef}`);
+        }
+      }
+    } catch (e: any) {
+      console.error("[Referral] auto-credit failed:", e?.message);
+    }
+
+    // Confirm with Viator (skip for mock bookings, local source, or already-booked)
     if (booking.isMockMode) {
       console.log(`[Viator] Mock booking ${orderId} — skipping Viator confirmation`);
+    } else if (booking.source !== "viator") {
+      console.log(`[Viator] Source=${booking.source} for ${orderId} — skipping Viator confirmation`);
     } else if (booking.viatorBookingRef) {
       console.log(`[Viator] Already booked: ${booking.viatorBookingRef}, skipping`);
     } else {

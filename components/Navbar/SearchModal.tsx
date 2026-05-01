@@ -170,7 +170,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2 py-1 mb-1">
                   {debouncedQuery
                     ? `${results.length} results for "${debouncedQuery}"`
-                    : `All Destinations (${results.length})`}
+                    : `All Destinations`}
                 </p>
                 <div className="flex flex-col gap-1">
                   {results.map((item) => {

@@ -10,6 +10,8 @@ interface PaymentPayload {
   travelDate: string;
   pax: number;
   totalPrice: number;
+  source?: "viator" | "local" | "tourcms";
+  currency?: string;
 }
 
 interface PaymentResponse {

@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 export interface WishlistItem {
   id?: number;
@@ -13,45 +12,42 @@ export interface WishlistItem {
   price?: number | null;
   currency?: string | null;
   href?: string | null;
+  priceAtSave?: number | null;
+  currencyAtSave?: string | null;
+  savedAt?: string | null;
 }
 
 interface WishlistStore {
   items: WishlistItem[];
+  /** True once initial sync (server fetch for authed, immediate for guest) is complete. */
   hydrated: boolean;
   setItems: (items: WishlistItem[]) => void;
   add: (item: WishlistItem) => void;
   remove: (productCode: string, source: string) => void;
   has: (productCode: string, source: string) => boolean;
+  clear: () => void;
   setHydrated: (v: boolean) => void;
 }
 
 const key = (productCode: string, source: string) => `${source}::${productCode}`;
 
-export const useWishlistStore = create<WishlistStore>()(
-  persist(
-    (set, get) => ({
-      items: [],
-      hydrated: false,
-      setItems: (items) => set({ items }),
-      add: (item) => {
-        if (get().items.some((i) => key(i.productCode, i.source) === key(item.productCode, item.source))) return;
-        set({ items: [item, ...get().items] });
-      },
-      remove: (productCode, source) =>
-        set({
-          items: get().items.filter((i) => key(i.productCode, i.source) !== key(productCode, source)),
-        }),
-      has: (productCode, source) =>
-        get().items.some((i) => key(i.productCode, i.source) === key(productCode, source)),
-      setHydrated: (hydrated) => set({ hydrated }),
+export const useWishlistStore = create<WishlistStore>()((set, get) => ({
+  items: [],
+  hydrated: false,
+  setItems: (items) => set({ items }),
+  add: (item) => {
+    if (get().items.some((i) => key(i.productCode, i.source) === key(item.productCode, item.source))) return;
+    set({ items: [item, ...get().items] });
+  },
+  remove: (productCode, source) =>
+    set({
+      items: get().items.filter((i) => key(i.productCode, i.source) !== key(productCode, source)),
     }),
-    {
-      name: "voyra_wishlist",
-      partialize: (s) => ({ items: s.items }),
-      onRehydrateStorage: () => (state) => state?.setHydrated(true),
-    }
-  )
-);
+  has: (productCode, source) =>
+    get().items.some((i) => key(i.productCode, i.source) === key(productCode, source)),
+  clear: () => set({ items: [] }),
+  setHydrated: (hydrated) => set({ hydrated }),
+}));
 
 async function apiList(): Promise<WishlistItem[]> {
   const res = await fetch("/api/wishlist", { cache: "no-store" });
@@ -74,28 +70,32 @@ async function apiRemove(productCode: string, source: string) {
 }
 
 /**
- * Hydrate wishlist from server when authenticated.
- * Merges any local items into server, then loads server items into store.
+ * Hydrate wishlist from DB on auth state change.
+ * - Authenticated: fetch from server, set items.
+ * - Unauthenticated: clear items.
  */
-export function useWishlistSync(isAuthenticated: boolean) {
-  const { items, setItems, hydrated } = useWishlistStore();
+export function useWishlistSync(status: "loading" | "authenticated" | "unauthenticated") {
+  const { setItems, setHydrated, clear } = useWishlistStore();
 
   useEffect(() => {
-    if (!hydrated || !isAuthenticated) return;
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      clear();
+      setHydrated(true);
+      return;
+    }
     let cancelled = false;
     (async () => {
-      const localItems = items;
-      // Push local-only to server
-      await Promise.all(localItems.map((i) => apiAdd(i).catch(() => null)));
       const serverItems = await apiList();
       if (cancelled) return;
       setItems(serverItems);
+      setHydrated(true);
     })();
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, isAuthenticated]);
+  }, [status]);
 }
 
 /**

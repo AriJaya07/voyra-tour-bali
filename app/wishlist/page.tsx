@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { useWishlistStore } from "@/utils/hooks/useWishlist";
 import WishlistButton from "@/components/common/WishlistButton";
 import RecentlyViewedStrip from "@/components/common/RecentlyViewedStrip";
@@ -18,8 +19,15 @@ export default function WishlistPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">My Wishlist</h1>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">My Wishlist</h1>
+            {items.length > 0 && (
+              <p className="text-sm text-gray-500 mt-1">{items.length} saved tour{items.length === 1 ? "" : "s"}</p>
+            )}
+          </div>
+        </div>
 
         {items.length === 0 ? (
           <>
@@ -33,48 +41,65 @@ export default function WishlistPage() {
             <RecentlyViewedStrip className="mt-4" minItems={1} title="Pick up where you left off" />
           </>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {items.map((item) => (
-              <div key={`${item.source}::${item.productCode}`} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition group">
-                <div className="relative aspect-[4/3] bg-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {items.map((item) => {
+              const savedDays = item.savedAt
+                ? Math.max(0, Math.floor((Date.now() - new Date(item.savedAt).getTime()) / (24 * 3600 * 1000)))
+                : null;
+              const savedLabel =
+                savedDays === null
+                  ? null
+                  : savedDays === 0
+                    ? "Saved today"
+                    : savedDays === 1
+                      ? "Saved yesterday"
+                      : `Saved ${savedDays}d ago`;
+
+              const card = (
+                <div className="relative w-full h-[220px] rounded-md overflow-hidden group">
                   {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                    <OptimizedImage
+                      src={item.imageUrl}
+                      alt={item.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover transition-transform transform group-hover:scale-105"
+                    />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100" />
                   )}
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
                     <WishlistButton size="sm" item={item} />
                   </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-2 min-h-[40px]">{item.title}</h3>
-                  {item.price && item.price > 0 && (
-                    <p className="text-sm font-bold text-gray-900 mb-3">
-                      {item.currency || "USD"} {item.price.toLocaleString()}
-                    </p>
+                  {savedLabel && (
+                    <span className="absolute top-2 left-2 px-2 py-0.5 bg-white/95 text-[10px] font-bold text-gray-600 rounded-full shadow-sm">
+                      {savedLabel}
+                    </span>
                   )}
-                  {item.href ? (
-                    item.href.startsWith("http") ? (
-                      <a
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer sponsored"
-                        className="block w-full text-center px-4 py-2.5 bg-[#0071CE] hover:bg-[#005ba6] text-white text-sm font-bold rounded-xl transition"
-                      >
-                        View Tour
-                      </a>
-                    ) : (
-                      <Link
-                        href={item.href}
-                        className="block w-full text-center px-4 py-2.5 bg-[#0071CE] hover:bg-[#005ba6] text-white text-sm font-bold rounded-xl transition"
-                      >
-                        View Tour
-                      </Link>
-                    )
-                  ) : null}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 pointer-events-none">
+                    <p className="text-white font-bold text-sm leading-tight line-clamp-2">{item.title}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+
+              const key = `${item.source}::${item.productCode}`;
+
+              if (item.href?.startsWith("http")) {
+                return (
+                  <a key={key} href={item.href} target="_blank" rel="noopener noreferrer sponsored" className="block">
+                    {card}
+                  </a>
+                );
+              }
+              if (item.href) {
+                return (
+                  <Link key={key} href={item.href} className="block">
+                    {card}
+                  </Link>
+                );
+              }
+              return <div key={key}>{card}</div>;
+            })}
           </div>
         )}
       </div>

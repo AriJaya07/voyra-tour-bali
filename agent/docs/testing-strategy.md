@@ -1,6 +1,8 @@
 # Testing Strategy — Voyra Tour Bali
 
 > Current state, target state, and the ramp between them. Read before introducing any test framework.
+>
+> **Companion**: [../test-user/](../test-user/) — one file per feature area with concrete `Given/When/Then` cases, manual QA checkboxes, third-party + local response shapes. This file talks about the framework choice; that folder talks about what to actually verify.
 
 ---
 
@@ -55,9 +57,12 @@ Stack chosen for compatibility with Next 16 + ESM:
 | Surface | Reason | Type |
 |---|---|---|
 | `app/api/payment/notification/route.ts` | Money + status transitions + email side-effect. Webhook signature verification. | Integration (POST with mock payload + signature) |
-| `lib/services/postPaymentService.handlePaymentSuccess` | Generates ticket, calls Viator, sends email. Idempotency. | Unit + integration |
+| `lib/services/postPaymentService.handlePaymentSuccess` | Generates ticket, calls Viator, sends email, credits loyalty + referral conversion. Idempotency. | Unit + integration |
 | `lib/services/bookingService.ts` | Create-booking branching (Viator vs Midtrans). | Unit |
 | `app/api/bookings/local/route.ts` (POST) | Idempotency key, traveller create, snap token issue. | Integration |
+| `app/api/loyalty/redeem/route.ts` | 1000-pt increments, balance gate, ledger write. | Integration |
+| `app/api/auth/register/route.ts` | Referral signup credit (+200 pts), email send. | Integration |
+| `lib/services/emailService.sendTrackedEmail` | Unsub gate, EmailDelivery row, pixel + click rewrite. | Unit |
 | `utils/common/auth.ts` (NextAuth callbacks) | Lockout, email-verification gate, bcrypt path. | Unit |
 | `utils/verifyTurnstile.ts` | Verifies the Cloudflare token correctly; fails closed. | Unit |
 | `utils/formatPrice.ts` | IDR formatting; locale; whole-number assumption. | Unit |
@@ -80,7 +85,7 @@ Stack chosen for compatibility with Next 16 + ESM:
 | Sitemap / robots generation | SEO regressions |
 | AI chat widget guardrails | No structured guarantee, but smoke tests |
 
-### 4.4 E2E Golden Paths (Playwright, ~10 tests)
+### 4.4 E2E Golden Paths (Playwright, ~12 tests)
 
 1. Visitor browses homepage → category → destination detail.
 2. Visitor signs up with email → receives verification (mock SMTP) → verifies → logs in.
@@ -92,6 +97,8 @@ Stack chosen for compatibility with Next 16 + ESM:
 8. Admin updates a booking status.
 9. Forgot-password full round trip.
 10. Locked-out account after 3 failed logins; unlock after 60 s.
+11. `/compare?codes=A,B,C` renders side-by-side and supports per-column remove (✕ updates URL).
+12. Cookie consent banner appears on first visit, persists across reload, and does not show on `/dashboard/*`.
 
 ---
 

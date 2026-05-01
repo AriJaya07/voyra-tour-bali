@@ -5,6 +5,6 @@ import { useWishlistSync } from "@/utils/hooks/useWishlist";
 
 export default function WishlistProvider() {
   const { status } = useSession();
-  useWishlistSync(status === "authenticated");
+  useWishlistSync(status);
   return null;
 }

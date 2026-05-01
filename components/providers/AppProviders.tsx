@@ -8,6 +8,10 @@ import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 import SessionProviderWrapper from "@/components/Wrapper/SessionProviderWrapper";
 import ExchangeRateProvider from "@/components/providers/ExchangeRateProvider";
 import WishlistProvider from "@/components/providers/WishlistProvider";
+import CurrencySync from "@/components/providers/CurrencySync";
+import RecentlyViewedSync from "@/components/providers/RecentlyViewedSync";
+import PreferencesSync from "@/components/providers/PreferencesSync";
+import PWARegister from "@/components/providers/PWARegister";
 import ExitIntentModal from "@/components/common/ExitIntentModal";
 import AIChatWidget from "@/components/AIChatWidget";
 
@@ -25,7 +29,11 @@ export default function AppProviders({ children, session }: AppProvidersProps) {
     <SessionProviderWrapper session={session}>
       <ReactQueryProvider>
         <ExchangeRateProvider />
+        <CurrencySync />
         <WishlistProvider />
+        <RecentlyViewedSync />
+        <PreferencesSync />
+        <PWARegister />
         {children}
         <Toaster
           position="top-right"

@@ -208,13 +208,14 @@ React Query defaults: provider in `components/providers/ReactQueryProvider.tsx`.
 
 | System | Purpose | Entry point |
 |---|---|---|
-| **Viator REST API** | Product, availability, booking, exchange rates, reviews | `lib/api/viator-client.ts`, `lib/services/viatorService.ts`, `lib/config/viator.ts` |
+| **Viator REST API** | Product, availability, exchange rates, reviews. **Booking is redirect-only via the widget**; confirmation comes back through cron sync or the manual `ImportedTrip` paste flow. | `lib/api/viator-client.ts`, `lib/services/viatorService.ts`, `lib/config/viator.ts` |
 | **Midtrans Snap** | Payment gateway (IDR) | `lib/services/midtransService.ts`, `lib/config/midtrans.ts`, `app/api/payment/notification/route.ts` |
-| **Brevo SMTP** (Nodemailer) | Verification, password reset, ticket email | `lib/email.ts` |
+| **Brevo SMTP** (Nodemailer) | Verification, password reset, ticket email, marketing. Wrapped by `lib/services/emailService.sendTrackedEmail` which writes `EmailDelivery` rows + injects open-pixel + click-redirect URLs. | `lib/email.ts`, `lib/services/emailService.ts`, `app/api/email/open/route.ts`, `app/api/email/click/route.ts` |
 | **Cloudflare Turnstile** | CAPTCHA on login/register | `utils/verifyTurnstile.ts`, `@marsidev/react-turnstile` |
-| **Groq** | AI chat assistant | `components/AIChatWidget.tsx`, `app/api/ai` |
+| **Groq** | AI chat assistant + itinerary planner (`llama-3.3-70b-versatile`) — kept by user direction; do not switch to Anthropic | `components/AIChatWidget.tsx`, `app/api/ai` |
 | **Bali News API** | External news / activities feed | `lib/newsApi.ts` (ISR 60 s) |
-| **Google Analytics / GTM** | Tracking | `utils/analytics.ts` |
+| **Google Analytics / GTM** | Tracking — loads only after cookie consent `accepted` (via `voyra:cookie-accepted` event) | `components/Global/Analytics.tsx`, `components/Global/Gtm.tsx` |
+| **Web Push** (`web-push` lib + browser push services) | Notifications. Lazy-loaded so absent lib/keys are a no-op. VAPID env: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | `lib/services/pushService.ts`, `app/api/push/subscribe/route.ts`, `app/api/push/vapid/route.ts`, `public/sw.js` (push + notificationclick handlers) |
 
 ---
 
@@ -225,6 +226,14 @@ Routes under `app/api/cron/*`. Each requires `Authorization: Bearer ${CRON_SECRE
 | Route | Job |
 |---|---|
 | `/api/cron/auto-complete-bookings` | `CONFIRMED → COMPLETED` once `travelDate < now()` |
+| `/api/cron/cleanup-booking-tokens` | Clear ticket tokens past retention window |
+| `/api/cron/cleanup-recently-viewed` | Delete `RecentlyViewedItem` rows older than 24 h |
+| `/api/cron/abandoned-wishlist` | Marketing nudge to users with idle wishlist (gated by `NotificationPref.marketingEmails`) |
+| `/api/cron/trip-anniversary` | "1 year ago you visited Bali" outreach |
+| `/api/cron/trip-reminders` | T-1 day reminder email |
+| `/api/cron/nyepi-reminder` | Day-of-Silence heads-up to upcoming travelers |
+| `/api/cron/volcano-alert` | Volcano status escalation push + email |
+| `/api/cron/weather-alert` | Severe weather notice for nearby travel dates |
 | `/api/cron/viator-sync` | Pull modified bookings from Viator, ack |
 | `/api/cron/viator-products-sync` | Detect modified products |
 | `/api/cron/viator-daily-sync` | Daily reconciliation |
@@ -263,4 +272,10 @@ Routes under `app/api/cron/*`. Each requires `Authorization: Bearer ${CRON_SECRE
 | How is payment confirmed? | `app/api/payment/notification/route.ts` → `lib/services/postPaymentService.ts` |
 | How is a tour fetched from Viator? | `lib/api/viator-client.ts`, `app/api/viator/**` |
 | How are images uploaded? | `app/api/images/route.ts` → `utils/common/s3.ts` |
+| How is loyalty earned/redeemed? | `lib/services/postPaymentService.ts` (earn), `app/api/loyalty/redeem/route.ts` (redeem) |
+| How does referral conversion fire? | `app/api/auth/register/route.ts` (signup leg) + `lib/services/postPaymentService.ts` (conversion leg on first CONFIRMED booking) |
+| How do tracked emails work? | `lib/services/emailService.ts` → writes `EmailDelivery`, injects pixel + click rewriter |
+| How do push notifications work? | `lib/services/pushService.ts` (lazy `web-push`) + `public/sw.js` (push + notificationclick) |
+| What's in `/compare` / `/notes` / `/bali-events` / `/guides/profiles`? | Phase 16+ pages — see `app/compare/page.tsx`, `app/notes/page.tsx`, `app/bali-events/page.tsx`, `app/guides/profiles/[slug]/page.tsx` |
+| Where do test specs live? | [test-user/](../test-user/) (one file per feature area) |
 | What environment variables exist? | [environment.md](./environment.md) |

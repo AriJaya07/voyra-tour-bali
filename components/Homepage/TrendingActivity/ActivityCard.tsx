@@ -3,6 +3,7 @@
 import Link from "next/link"
 import OptimizedImage from "@/components/common/OptimizedImage"
 import WishlistButton from "@/components/common/WishlistButton"
+import StyleMatchBadge from "@/components/common/StyleMatchBadge"
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
 import type { UnifiedActivity } from "@/types/tourism"
 import { ClockIcon } from "@/components/assets/Icon/shared"
@@ -49,6 +50,10 @@ export function ActivityCard({ item, currency }: ActivityCardProps) {
               Free Cancellation
             </span>
           )}
+
+          <div className="absolute bottom-2 left-2 z-10">
+            <StyleMatchBadge text={item.title} />
+          </div>
 
           <div className="absolute top-2 right-2 z-10">
             <WishlistButton

@@ -26,10 +26,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "productCode, source, title required" }, { status: 400 });
   }
   const userId = parseInt(session.user.id);
+  const now = new Date();
+  // Snapshot current price/currency on first save; refresh "live" fields on re-save
   const item = await prisma.wishlistItem.upsert({
     where: { userId_productCode_source: { userId, productCode, source } },
     update: { title, imageUrl, price, currency, href },
-    create: { userId, productCode, source, title, imageUrl, price, currency, href },
+    create: {
+      userId,
+      productCode,
+      source,
+      title,
+      imageUrl,
+      price,
+      currency,
+      href,
+      priceAtSave: typeof price === "number" ? price : null,
+      currencyAtSave: typeof currency === "string" ? currency : null,
+      savedAt: now,
+    },
   });
   return NextResponse.json(item);
 }

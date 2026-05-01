@@ -9,7 +9,6 @@ import TiktokIcon from "../assets/sosmed/TiktokIcon";
 import YoutubeIcon from "../assets/sosmed/YoutubeIcon";
 import TwitterIcon from "../assets/sosmed/TwitterIcon";
 import VoryaIcon from "../assets/Icon/VoyraIcon";
-import ViatorIcon from "../assets/footer/ViatorIcon";
 import { SITE_NAME, buildWhatsAppUrl } from "@/lib/config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -24,6 +23,9 @@ interface NavLink {
 
 const EXPLORE_LINKS: NavLink[] = [
   { label: "Home",             href: "/",                   ready: true  },
+  { label: "AI Trip Planner",  href: "/plan",               ready: true  },
+  { label: "Travel Guides",    href: "/guides",             ready: true  },
+  { label: "List Your Tours",  href: "/operator/apply",     ready: true  },
   { label: "About Us",         href: "/about",              ready: true  },
   { label: "Contact Us",       href: "/contact",            ready: true  },
   { label: "Bali Destinations", href: "/#destinasi",        ready: true  },
@@ -33,11 +35,12 @@ const EXPLORE_LINKS: NavLink[] = [
 ];
 
 const LEGAL_LINKS: NavLink[] = [
-  { label: "Terms & Conditions",  href: "/terms",               ready: true  },
-  { label: "Privacy Policy",      href: "/privacy",             ready: true  },
-  { label: "Cancellation Policy", href: "/cancellation-policy", ready: true  },
-  { label: "FAQ",                 href: "/about#faq",           ready: true  },
-  { label: "How to Book",         href: "/how-to-book",         ready: true  },
+  { label: "Help Center",          href: "/help",                ready: true  },
+  { label: "Trust & Safety",       href: "/trust-and-safety",    ready: true  },
+  { label: "Booking & Refunds",    href: "/cancellation-policy", ready: true  },
+  { label: "Terms of Service",     href: "/terms",               ready: true  },
+  { label: "Privacy Policy",       href: "/privacy",             ready: true  },
+  { label: "Status",               href: "/status",              ready: true  },
 ];
 
 const ACCOUNT_LINKS: NavLink[] = [
@@ -339,13 +342,27 @@ export default function Footer() {
         {/* ── BOTTOM BAR ────────────────────────────────────────────── */}
         <div className="border-t border-zinc-800 pt-8 space-y-6">
 
-          {/* Viator badge */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <p className="text-sm text-gray-500 font-medium">
-              Tours and activities powered by
-            </p>
-            <div className="bg-white border border-gray-200 rounded-lg px-3 py-1 flex items-center justify-center shadow-sm">
-              <ViatorIcon className="w-20 h-10 object-contain" />
+          {/* Trust strip */}
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-gray-400">
+            <div className="flex items-center gap-1.5">
+              <span aria-hidden>🔒</span>
+              <span>Secure SSL Checkout</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span aria-hidden>✅</span>
+              <span>Vetted Local Operators</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span aria-hidden>📞</span>
+              <span>24/7 Travel Support</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span aria-hidden>💯</span>
+              <span>Instant Confirmation</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span aria-hidden>🌴</span>
+              <span>Based in Bali, Indonesia</span>
             </div>
           </div>
 
@@ -358,11 +375,13 @@ export default function Footer() {
             <Dot />
             <Link href="/contact"             className="hover:text-white transition-colors">Contact</Link>
             <Dot />
-            <Link href="/terms"               className="hover:text-white transition-colors">Terms &amp; Conditions</Link>
+            <Link href="/trust-and-safety"    className="hover:text-white transition-colors">Trust &amp; Safety</Link>
             <Dot />
-            <Link href="/privacy"             className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/terms"               className="hover:text-white transition-colors">Terms</Link>
             <Dot />
-            <Link href="/cancellation-policy" className="hover:text-white transition-colors">Cancellation Policy</Link>
+            <Link href="/privacy"             className="hover:text-white transition-colors">Privacy</Link>
+            <Dot />
+            <Link href="/cancellation-policy" className="hover:text-white transition-colors">Booking &amp; Refunds</Link>
             <Dot />
             <a
               href={WHATSAPP_URL}

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { useWishlistActions, type WishlistItem } from "@/utils/hooks/useWishlist";
@@ -12,6 +13,8 @@ interface Props {
 
 export default function WishlistButton({ item, className = "", size = "md" }: Props) {
   const { status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
   const isAuthenticated = status === "authenticated";
   const { toggle, has } = useWishlistActions(isAuthenticated);
   const active = has(item.productCode, item.source);
@@ -21,6 +24,13 @@ export default function WishlistButton({ item, className = "", size = "md" }: Pr
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (status === "loading") return;
+    if (!isAuthenticated) {
+      toast.info("Please login to save to wishlist", { duration: 1800 });
+      const callback = pathname ? `?callbackUrl=${encodeURIComponent(pathname)}` : "";
+      router.push(`/login${callback}`);
+      return;
+    }
     toggle(item);
     toast.success(active ? "Removed from wishlist" : "Added to wishlist", { duration: 1500 });
   };

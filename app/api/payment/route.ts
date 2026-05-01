@@ -15,6 +15,7 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const {
+      source,
       productCode,
       productTitle,
       productImage,
@@ -35,6 +36,8 @@ export async function POST(request: Request) {
       languageGuide,
       bookingQuestionAnswers,
     } = body;
+    const safeSource =
+      source === "local" || source === "viator" || source === "tourcms" ? source : "viator";
 
     if (!productCode || !productTitle || !travelDate || !pax || !totalPrice) {
       return NextResponse.json(
@@ -55,6 +58,7 @@ export async function POST(request: Request) {
       data: {
         userId: Number(session.user.id),
         bookingRef: "", // Will be set after Midtrans order ID
+        source: safeSource,
         productCode,
         productTitle,
         productImage: productImage || null,

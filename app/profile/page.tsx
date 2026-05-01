@@ -7,6 +7,7 @@ import Link from "next/link";
 import TicketModal from "@/components/profile/TicketModal";
 import CancelModal from "@/components/profile/CancelModal";
 import UpcomingTripCard from "@/components/profile/UpcomingTripCard";
+import ImportedTripsSection from "@/components/profile/ImportedTripsSection";
 import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
 import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import PayNowButton from "@/components/Global/booking/PayNowButton";
@@ -270,7 +271,11 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* My Bookings */}
+        {/* Imported (partner) trips — visible regardless of local booking state */}
+        <ImportedTripsSection hasLocalBookings={bookings.length > 0} />
+
+        {/* My Bookings — only render if user has any local bookings */}
+        {bookings.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8" id="my-bookings">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900">My Bookings</h2>
@@ -451,41 +456,100 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Link href="/wishlist" className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-[#0071CE]/40 hover:shadow-md transition group">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-pink-500" strokeWidth={0}>
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-              </div>
-              <div>
-                <p className="font-bold text-gray-900 text-sm">My Wishlist</p>
-                <p className="text-xs text-gray-500">Saved tours</p>
-              </div>
+        )}
+
+        <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Link
+            href="/plan"
+            className="bg-gradient-to-br from-[#0071CE] to-[#005ba6] rounded-2xl p-4 hover:shadow-md transition text-white"
+          >
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mb-2">
+              <span className="text-lg">✨</span>
             </div>
+            <p className="font-bold text-sm leading-tight">AI Trip Planner</p>
+            <p className="text-xs text-blue-100 mt-0.5">Build itinerary</p>
           </Link>
-          <Link href="/profile/travelers" className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-[#0071CE]/40 hover:shadow-md transition">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                <span className="text-lg">👥</span>
-              </div>
-              <div>
-                <p className="font-bold text-gray-900 text-sm">Saved Travelers</p>
-                <p className="text-xs text-gray-500">Autofill at checkout</p>
-              </div>
+          <Link
+            href="/wishlist"
+            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition group"
+          >
+            <div className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center mb-2">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-pink-500" strokeWidth={0}>
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
             </div>
+            <p className="font-bold text-gray-900 text-sm leading-tight">My Wishlist</p>
+            <p className="text-xs text-gray-500 mt-0.5">Saved tours</p>
           </Link>
-          <Link href="/profile/reviews" className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-[#0071CE]/40 hover:shadow-md transition">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
-                <span className="text-lg">⭐</span>
-              </div>
-              <div>
-                <p className="font-bold text-gray-900 text-sm">My Reviews</p>
-                <p className="text-xs text-gray-500">Share your experience</p>
-              </div>
+          <Link
+            href="/profile/itineraries"
+            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+          >
+            <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center mb-2">
+              <span className="text-lg">🗺️</span>
             </div>
+            <p className="font-bold text-gray-900 text-sm leading-tight">My Itineraries</p>
+            <p className="text-xs text-gray-500 mt-0.5">Saved plans</p>
+          </Link>
+          <Link
+            href="/profile/calendar"
+            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+          >
+            <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center mb-2">
+              <span className="text-lg">📅</span>
+            </div>
+            <p className="font-bold text-gray-900 text-sm leading-tight">Trip Calendar</p>
+            <p className="text-xs text-gray-500 mt-0.5">All upcoming</p>
+          </Link>
+          <Link
+            href="/profile/travel-profile"
+            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+          >
+            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center mb-2">
+              <span className="text-lg">🧭</span>
+            </div>
+            <p className="font-bold text-gray-900 text-sm leading-tight">Travel Profile</p>
+            <p className="text-xs text-gray-500 mt-0.5">Party + interests</p>
+          </Link>
+          <Link
+            href="/profile/notes"
+            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+          >
+            <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center mb-2">
+              <span className="text-lg">📓</span>
+            </div>
+            <p className="font-bold text-gray-900 text-sm leading-tight">Bali Notes</p>
+            <p className="text-xs text-gray-500 mt-0.5">Travel journal</p>
+          </Link>
+          <Link
+            href="/profile/survival-pack"
+            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+          >
+            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center mb-2">
+              <span className="text-lg">🎒</span>
+            </div>
+            <p className="font-bold text-gray-900 text-sm leading-tight">Survival Pack</p>
+            <p className="text-xs text-gray-500 mt-0.5">Pre-trip cheatsheet</p>
+          </Link>
+          <Link
+            href="/profile/rewards"
+            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+          >
+            <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center mb-2">
+              <span className="text-lg">🎁</span>
+            </div>
+            <p className="font-bold text-gray-900 text-sm leading-tight">Rewards</p>
+            <p className="text-xs text-gray-500 mt-0.5">Points + referrals</p>
+          </Link>
+          <Link
+            href="/profile/settings"
+            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+          >
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+              <span className="text-lg">⚙️</span>
+            </div>
+            <p className="font-bold text-gray-900 text-sm leading-tight">Settings</p>
+            <p className="text-xs text-gray-500 mt-0.5">Account + data</p>
           </Link>
         </div>
 
