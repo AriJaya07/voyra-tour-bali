@@ -17,6 +17,7 @@ export { default as EyeIcon } from "./EyeIcon";
 export { default as EyeOffIcon } from "./EyeOffIcon";
 export { default as GlobeIcon } from "./GlobeIcon";
 export { default as HeartIcon } from "./HeartIcon";
+export { default as BellIcon } from "./BellIcon";
 export { default as GoogleIcon } from "./GoogleIcon";
 export { default as InfoIcon } from "./InfoIcon";
 export { default as LightningIcon } from "./LightningIcon";
