@@ -322,7 +322,8 @@ The repo's current `build` is plain `next build`. Adopt this when you have prod 
 | `app/api/cron/**` | `CRON_SECRET` |
 | `lib/newsApi.ts` | `BALI_NEWS_API` |
 | `components/AIChatWidget.tsx` / `app/api/ai` | `GROQ_API_KEY` |
-| `lib/services/pushService.ts` / `app/api/push/**` | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` |
+| `lib/services/pushService.ts` / `app/api/push/**` / `app/api/cron/calendar-event-reminders/**` / `app/api/cron/notification-broadcasts/**` | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` |
+| `lib/services/notificationService.ts` / `app/api/admin/notifications/**` / `app/api/notifications/**` | `VAPID_*` (push fan-out), `SMTP_*` (email fan-out) |
 | `lib/services/emailService.ts`, `app/api/email/**` | `NEXTAUTH_URL` (used to build absolute pixel + click URLs) |
 
 If you add a new env var, also add it to:

@@ -237,6 +237,46 @@ Routes under `app/api/cron/*`. Each requires `Authorization: Bearer ${CRON_SECRE
 | `/api/cron/viator-sync` | Pull modified bookings from Viator, ack |
 | `/api/cron/viator-products-sync` | Detect modified products |
 | `/api/cron/viator-daily-sync` | Daily reconciliation |
+| `/api/cron/calendar-event-reminders` | T-1 push reminder for `CalendarEvent` rows (one-off and recurring); respects `NotificationPref.calendarReminders` |
+| `/api/cron/notification-broadcasts` | Every 5 min: pick `SCHEDULED` `NotificationBroadcast` rows whose `scheduledAt` elapsed and fan-out via `lib/services/notificationService.sendBroadcast` |
+
+---
+
+## 10A. Notification Inbox + Trip Calendar (Member Engagement Subsystems)
+
+These are **server-orchestrated, three-channel** modules added to drive repeat engagement after booking. They follow the standard route → service → data layering.
+
+### Trip Calendar
+- Schema: `CalendarEvent` (one-off + recurring via RFC5545 RRULE subset). Optional `noteId` links to a `BaliNote`.
+- API: `app/api/calendar-events/route.ts` (CRUD + `?from=&to=` range), `app/api/calendar-events/export/route.ts` (RFC5545 `.ics` download), `app/api/cron/calendar-event-reminders` (T-1 push).
+- Service: `lib/calendar/recurrence.ts` (parser + `expandOccurrences` + `nextOccurrenceAfter`).
+- Hook: `utils/hooks/useCalendarEvents.ts` (range-aware fetch + create/update/remove).
+- UI components (`components/calendar/`): `CalendarMonthGrid`, `MonthSwitcher`, `DayPanel`, `EventChip`, `EventFormDialog`, `types.ts` (color/type → Tailwind maps).
+- Pages: `app/profile/calendar/page.tsx` (authed full editor + drag-reschedule + ICS export + share-toggle), `app/share/calendar/[slug]/page.tsx` (public read-only by `User.calendarShareSlug`).
+
+### In-App Notification Inbox
+- Schema: `AppNotification` (per-user delivered row, `@@unique([broadcastId, userId])` for idempotency), `NotificationBroadcast` (snapshot fan-out job), `NotificationTemplate` (admin-managed reusable copy).
+- Service: `lib/services/notificationService.ts` orchestrates **3 channels**:
+  - **In-app** — always written; respects `NotificationPref.inAppMutedCategories`
+  - **Push** — `sendPushToUser` (existing web-push)
+  - **Email** — `lib/email.sendNotificationEmail` (gated by `marketingEmails` pref for `DEAL` category)
+- APIs:
+  - User: `app/api/notifications/route.ts` (list cursor), `count/`, `[id]/` (PATCH read|dismissed, DELETE), `read-all/`
+  - Admin (role gate): `app/api/admin/notifications/templates/**`, `broadcasts/**` (+ `[id]/send`, `[id]/stats`)
+  - Cron: `app/api/cron/notification-broadcasts` (every 5 min, `SCHEDULED → SENT`)
+- Hooks: `utils/hooks/useNotifications.ts` (`useNotifications` paginated + `useNotificationCount` 60 s polling).
+- UI components (`components/notifications/`): `NotificationBell` (header), `NotificationPanel` (popover), `NotificationItem`, `NotificationCategoryBadge`.
+- Pages: `app/profile/inbox/page.tsx` (full inbox), `app/dashboard/notifications/page.tsx` (admin tabs: Broadcasts / Templates / Compose, theme-aware via `useTheme`).
+
+### Homepage Travel Toolkit (member discovery banner)
+- Component: `components/Homepage/TravelToolkit/index.tsx` — auth-aware bento grid surfacing AI Planner, Calendar, Survival Pack, Notes, Itineraries, Rewards. Replaces "buried profile features" UX.
+- Endpoint: `app/api/me/toolkit/route.ts` — single aggregated counter fetch (unread inbox, upcoming events, wishlist count, notes, itineraries, loyalty points). `Cache-Control: private, max-age=30`.
+- Hook: `utils/hooks/useToolkitData.ts`.
+- Tile catalog (`ToolkitTile`, `ToolkitHero`, `ToolkitFooterCTA`) — declarative, single accent map for color tokens, motion-reduce aware. Hero + footer use `public/images/banner-travel.png` + `banner-reward.png` with gradient overlay for legibility.
+
+### Reusable globals introduced alongside
+- `components/common/BackLink.tsx` — pill-style back link, used on every `/profile/*` sub-page.
+- `components/common/ConfirmDialog.tsx` + `ConfirmDialogProvider` (mounted in `AppProviders`) + `useConfirm()` — imperative `await confirm({…})`. **Replaces native `alert/confirm/prompt`** across app and admin (see `agent-rules.md`).
 
 ---
 
