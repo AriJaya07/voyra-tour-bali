@@ -162,7 +162,16 @@ export default function BookingLocalWidget({
     trackBeginCheckout({ productCode, title, price: totalPrice, currency: pricingCurrency, travelers: totalTravelers })
 
     paymentMutation.mutate(
-      { productCode, productTitle: title, productImage: image, travelDate: toISODate(date!), pax: totalTravelers, totalPrice },
+      {
+        source: "local",
+        productCode,
+        productTitle: title,
+        productImage: image,
+        travelDate: toISODate(date!),
+        pax: totalTravelers,
+        totalPrice,
+        currency: pricingCurrency,
+      },
       {
         onSuccess: (data) => {
           trackPurchase({ transactionId: data.orderId || `txn-${Date.now()}`, productCode, title, price: totalPrice, currency: pricingCurrency, travelers: totalTravelers })

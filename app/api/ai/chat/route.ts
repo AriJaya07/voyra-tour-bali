@@ -1,5 +1,8 @@
 import Groq from "groq-sdk";
 import { NextRequest } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/utils/common/auth";
+import { prisma } from "@/lib/prisma";
 
 interface ViatorImage {
   isCover?: boolean;
@@ -39,6 +42,49 @@ export async function POST(req: NextRequest) {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
+    }
+
+    // 0. Personalize from session (auth optional)
+    let userName: string | null = null;
+    let userCurrency = "IDR";
+    let prefsLine = "";
+    try {
+      const session = await getServerSession(authOptions);
+      if (session?.user?.id) {
+        const userId = parseInt(session.user.id);
+        const [u, prefs] = await Promise.all([
+          prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true, currency: true },
+          }),
+          prisma.userPreferences.findUnique({ where: { userId } }),
+        ]);
+        if (u) {
+          userName = u.name;
+          userCurrency = u.currency || "IDR";
+        }
+        if (prefs) {
+          const partyParts: string[] = [];
+          if (prefs.partyAdults > 0) partyParts.push(`${prefs.partyAdults} adult${prefs.partyAdults > 1 ? "s" : ""}`);
+          if (prefs.partyChildren > 0) partyParts.push(`${prefs.partyChildren} child${prefs.partyChildren > 1 ? "ren" : ""}`);
+          if (prefs.partySeniors > 0) partyParts.push(`${prefs.partySeniors} senior${prefs.partySeniors > 1 ? "s" : ""}`);
+          if (prefs.partyInfants > 0) partyParts.push(`${prefs.partyInfants} infant${prefs.partyInfants > 1 ? "s" : ""}`);
+
+          const bits: string[] = [];
+          if (partyParts.length > 0) bits.push(`Party: ${partyParts.join(", ")}.`);
+          if (prefs.styleTags.length > 0) bits.push(`Travel style: ${prefs.styleTags.join(", ")}.`);
+          if (prefs.regionPref) bits.push(`Staying in ${prefs.regionPref}.`);
+          if (prefs.tripLengthDays) bits.push(`Trip length ~${prefs.tripLengthDays} days.`);
+          if (prefs.dietary) bits.push(`Dietary: ${prefs.dietary}.`);
+          if (prefs.mobility) bits.push(`Mobility note: ${prefs.mobility}.`);
+
+          if (bits.length > 0) {
+            prefsLine = `\nUSER TRAVEL PROFILE — use this to filter and rank suggestions:\n${bits.join(" ")}\nWhen recommending, prefer tours that match the style + region; avoid ones that conflict with mobility or dietary needs. If staying in a specific region, prefer tours with pickup in that zone (Ubud↔Uluwatu = 2-3h drive).`;
+          }
+        }
+      }
+    } catch {
+      // non-fatal — fallback to guest mode
     }
 
     // 1. Search Viator for relevant tours
@@ -93,34 +139,61 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. System prompt
-    const systemPrompt = `You are a helpful Bali travel assistant for Bali Travel Now (balitravelnow.com), a tour booking platform.
-Help users discover and book tours and activities in Bali, Indonesia.
-Be friendly, concise, and recommend specific tours when relevant.
-Keep answers under 150 words unless user asks for details.
+    const personaLine = userName
+      ? `The user is signed in as ${userName}. Address them by their first name once at the start, then naturally. They prefer prices in ${userCurrency}.`
+      : `The user is browsing as a guest. They prefer prices in ${userCurrency}. After 2-3 helpful exchanges, gently suggest creating an account to save their wishlist and itinerary.`;
+
+    const systemPrompt = `You are Voyra's friendly Bali travel assistant for balitravelnow.com — a tour booking platform.
+Help users discover, plan, and book tours and activities in Bali, Indonesia.
+
+${personaLine}
+${prefsLine}
+
+STYLE:
+- Friendly, warm, concise. Short sentences. Bullet lists when listing options.
+- Default under 150 words; expand only when user asks for details.
+- When discussing prices, prefer ${userCurrency} unless the user mentions another currency.
+- Use the user's language if they write in Indonesian, Chinese, Japanese, Korean, or Russian. Otherwise English.
 ${
   tourContext
-    ? `\nHere are tours from our platform that match the user's interest:\n${tourContext}\n\nMention these tours by name and price when relevant.`
+    ? `\nTOURS MATCHING THE USER'S INTEREST (from our platform):\n${tourContext}\n\nMention these tours by name and price when they fit. The UI will render product cards below your reply.`
     : ""
 }
-If the user wants to book or browse more tours, direct them to https://balitravelnow.com or tell them to click the tour cards below.
+If the user wants to book or browse more tours, point them to https://balitravelnow.com or tell them to tap the tour cards below your reply.
 
-BOOKING PROCESS — When users ask how to book, explain this flow clearly:
+BALI EXPERTISE — when relevant, share local tips:
+- Best time of day (sunrise/sunset for Mt Batur/Tanah Lot/Uluwatu).
+- Travel-time awareness: Ubud↔Uluwatu = 2-3h; don't pair both in same day.
+- Cultural notes: temples need sarong + sash; Nyepi day = full island shutdown.
+- Weather: dry season Apr-Oct, wet Nov-Mar; afternoon rain common.
+- Money: ATMs work but skim risk; bring small bills for offering boxes.
+- Transport: Grab/Gojek work in cities, not in many tour areas — book pickup.
+
+BOOKING PROCESS — When users ask how to book:
 1. Browse & choose a tour on balitravelnow.com
-2. Select your travel date and number of travelers
+2. Select travel date and number of travelers
 3. Fill in personal details (full name, email, phone number)
-4. Review your order summary
-5. Complete payment via Midtrans (see payment methods below)
-6. You will receive a booking confirmation by email
-7. Your booking status and e-ticket will appear in your Profile page on the website
+4. Review order summary
+5. Complete secure payment
+6. Receive booking confirmation by email
+7. View booking status and e-ticket in Profile
 
-PAYMENT — We use a secure online payment system. Accepted methods: credit/debit cards (Visa, Mastercard, JCB), bank transfer, GoPay, OVO, Dana, ShopeePay, Alfamart, Indomaret. Never mention the payment provider name or PayPal.
+PAYMENT — Secure online payment. Accepted: credit/debit cards (Visa, Mastercard, JCB), bank transfer, GoPay, OVO, Dana, ShopeePay, Alfamart, Indomaret. Never mention the payment provider name or PayPal.
 
-CONTACT & HELP — If users need direct assistance or have questions about their booking, they can contact us via WhatsApp at +62 857-9213-2517. Always format the WhatsApp number as +62 857-9213-2517 when mentioning it.
+ACCOUNT BENEFITS (mention naturally to guests):
+- Save tours to wishlist (synced across devices)
+- Track booking status and e-tickets in one place
+- Save traveler details for faster checkout
+- Post reviews after completed tours
+- Currency preference remembered
 
-IMPORTANT RULES:
-- Never mention Viator, third-party booking systems, or manual booking processes
-- Always refer users to balitravelnow.com for booking
-- Keep the booking flow simple and friendly`;
+CONTACT — For direct help: WhatsApp +62 857-9213-2517. Always format as +62 857-9213-2517.
+
+RULES:
+- Never mention Viator, third-party booking systems, or manual booking processes.
+- Always refer users to balitravelnow.com for booking.
+- Don't invent prices or availability — defer to the tour cards.
+- Don't promise discounts or free upgrades that aren't listed.`;
 
     // 3. Stream via Groq
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });

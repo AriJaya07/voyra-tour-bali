@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { IoChatbubblesOutline, IoClose, IoSend } from "react-icons/io5";
+import { IoChatbubblesOutline, IoClose, IoSend, IoRefresh } from "react-icons/io5";
 import { HiSparkles } from "react-icons/hi2";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
-import Link from "next/link";
+import { buildViatorProductUrl } from "@/lib/config/viator";
 
 interface ProductCard {
   productCode: string;
@@ -20,22 +21,52 @@ interface Message {
   products?: ProductCard[];
 }
 
-const WELCOME_MESSAGE: Message = {
-  role: "assistant",
-  content:
-    "Hi! I'm your Bali travel assistant ✈️ Tell me what you'd like to do — adventure, culture, beaches — and I'll show you the best tours!",
-};
+const QUICK_PROMPTS = [
+  { label: "🌅 Sunrise tours", text: "What are the best sunrise tours in Bali?" },
+  { label: "🌊 Beaches & surf", text: "Recommend beach and surf experiences in Bali" },
+  { label: "🛕 Culture & temples", text: "Best cultural and temple tours in Bali" },
+  { label: "👨‍👩‍👧 Family-friendly", text: "Tours suitable for families with kids" },
+  { label: "💰 Under $50", text: "Affordable tours under $50 per person" },
+  { label: "📅 5-day plan", text: "Plan a 5-day Bali itinerary for me" },
+];
 
 const STORAGE_KEY = "blt-chat-seen";
 
 export default function AIChatWidget() {
+  const { data: session } = useSession();
+  const firstName = useMemo(() => {
+    const name = session?.user?.name?.trim();
+    if (!name) return null;
+    return name.split(/\s+/)[0];
+  }, [session?.user?.name]);
+
+  const welcomeMessage = useMemo<Message>(
+    () => ({
+      role: "assistant",
+      content: firstName
+        ? `Welcome back, ${firstName}! 🌺 Ready to plan your next Bali adventure? Try a starter or ask anything.`
+        : "Hi! I'm your Bali travel assistant ✈️ Tell me what you'd like to do — adventure, culture, beaches — or pick a quick start below.",
+    }),
+    [firstName]
+  );
+
   const [isOpen, setIsOpen] = useState(false);
-  const [hasOpened, setHasOpened] = useState(true); // default true prevents flash on SSR
-  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
+  const [hasOpened, setHasOpened] = useState(true);
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Refresh welcome when session resolves (avoid stale "Hi!" for signed-in user)
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 0) return [welcomeMessage];
+      // Only swap the first welcome if it's still the only message
+      if (prev.length === 1 && prev[0].role === "assistant") return [welcomeMessage];
+      return prev;
+    });
+  }, [welcomeMessage]);
 
   // After mount, read localStorage to decide whether to show pulse
   useEffect(() => {
@@ -59,11 +90,18 @@ export default function AIChatWidget() {
     setIsOpen((v) => !v);
   }
 
-  async function sendMessage() {
-    const text = inputValue.trim();
+  function resetChat() {
+    if (isStreaming) return;
+    setMessages([welcomeMessage]);
+    setInputValue("");
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+
+  async function sendMessage(overrideText?: string) {
+    const text = (overrideText ?? inputValue).trim();
     if (!text || isStreaming) return;
 
-    const history = messages.filter((m) => m !== WELCOME_MESSAGE);
+    const history = messages.filter((m) => m !== welcomeMessage);
 
     setMessages((prev) => [
       ...prev,
@@ -193,26 +231,57 @@ export default function AIChatWidget() {
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <HiSparkles className="text-white text-lg" />
-                <div>
-                  <p className="text-white font-semibold text-sm leading-tight">
-                    Bali Travel AI
+              <div className="flex items-center gap-2 min-w-0">
+                <HiSparkles className="text-white text-lg flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-sm leading-tight truncate">
+                    {firstName ? `Hi ${firstName}` : "Bali Travel AI"}
                   </p>
-                  <p className="text-blue-100 text-xs">balitravelnow.com</p>
+                  <p className="text-blue-100 text-xs truncate">Voyra Bali Assistant</p>
                 </div>
               </div>
-              <button
-                onClick={handleToggle}
-                className="text-white hover:text-blue-100 transition-colors p-1"
-                aria-label="Close chat"
-              >
-                <IoClose size={20} />
-              </button>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={resetChat}
+                  disabled={isStreaming || messages.length <= 1}
+                  className="text-white hover:text-blue-100 transition-colors p-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Reset chat"
+                  title="New chat"
+                >
+                  <IoRefresh size={18} />
+                </button>
+                <button
+                  onClick={handleToggle}
+                  className="text-white hover:text-blue-100 transition-colors p-1"
+                  aria-label="Close chat"
+                >
+                  <IoClose size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-gray-50 overscroll-contain">
+              {/* Quick prompt chips — only show when chat is fresh */}
+              {messages.length === 1 && !isStreaming && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: 0.1 }}
+                  className="flex flex-wrap gap-2 pt-1"
+                >
+                  {QUICK_PROMPTS.map((qp) => (
+                    <button
+                      key={qp.label}
+                      onClick={() => sendMessage(qp.text)}
+                      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-full hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-95 transition shadow-sm"
+                    >
+                      {qp.label}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+
               {messages.map((msg, i) => (
                 <div key={i} className="space-y-2">
                   <div
@@ -245,9 +314,11 @@ export default function AIChatWidget() {
                       className="grid grid-cols-2 gap-2"
                     >
                       {msg.products.map((card) => (
-                        <Link
+                        <a
                           key={card.productCode}
-                          href={`/viator/${card.productCode}`}
+                          href={buildViatorProductUrl(card.productCode, card.title)}
+                          target="_blank"
+                          rel="noopener noreferrer sponsored"
                           className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md hover:border-blue-200 active:scale-95 transition-all duration-200 group"
                           onClick={() => setIsOpen(false)}
                         >
@@ -276,7 +347,7 @@ export default function AIChatWidget() {
                               </p>
                             )}
                           </div>
-                        </Link>
+                        </a>
                       ))}
                     </motion.div>
                   )}
@@ -299,7 +370,7 @@ export default function AIChatWidget() {
                 className="flex-1 min-w-0 text-sm px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 bg-gray-50 disabled:opacity-60"
               />
               <button
-                onClick={sendMessage}
+                onClick={() => sendMessage()}
                 disabled={isStreaming || !inputValue.trim()}
                 className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
                 aria-label="Send"

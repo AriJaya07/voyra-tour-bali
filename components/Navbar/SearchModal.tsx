@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import OptimizedImage from "@/components/common/OptimizedImage"
 import { useSearchDestinations } from "@/utils/hooks/useSearchDestinations"
 import { useViatorSearch, getViatorImageUrl } from "@/utils/hooks/useViator"
+import { buildViatorProductUrl } from "@/lib/config/viator"
 import { formatPrice } from "@/utils/formatPrice"
 import { CloseIcon, SearchIcon, ChevronRightIcon } from "@/components/assets/Icon/shared"
 
@@ -58,7 +59,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       imageUrl: d.images?.find((i) => i.isMain)?.url || d.images?.[0]?.url || null,
       categoryName: d.category?.name || "Destination",
       price: d.price,
-      currency: "IDR"
+      currency: "IDR",
+      external: false,
     }))
 
     const viatorFiltered = debouncedQuery.trim()
@@ -70,11 +72,12 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     const viatorMapped = viatorFiltered.map((v) => ({
       id: `viator-${v.productCode}`,
       title: v.title,
-      href: `/viator/${v.productCode}${v.pricing?.summary?.fromPrice ? `?price=${v.pricing.summary.fromPrice}&cur=${v.pricing.currency ?? "USD"}` : ""}`,
+      href: buildViatorProductUrl(v.productCode, v.title),
       imageUrl: getViatorImageUrl(v.images, 200),
       categoryName: "Tour / Activity",
       price: v.pricing?.summary?.fromPrice ?? null,
-      currency: v.pricing?.currency ?? "USD"
+      currency: v.pricing?.currency ?? "USD",
+      external: true,
     }))
 
     return [...dbMapped, ...viatorMapped]
@@ -167,7 +170,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2 py-1 mb-1">
                   {debouncedQuery
                     ? `${results.length} results for "${debouncedQuery}"`
-                    : `All Destinations (${results.length})`}
+                    : `All Destinations`}
                 </p>
                 <div className="flex flex-col gap-1">
                   {results.map((item) => {
@@ -177,6 +180,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         key={item.id}
                         href={item.href}
                         onClick={onClose}
+                        target={item.external ? "_blank" : undefined}
+                        rel={item.external ? "noopener noreferrer sponsored" : undefined}
                         className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition group cursor-pointer"
                       >
                         {/* Thumbnail */}

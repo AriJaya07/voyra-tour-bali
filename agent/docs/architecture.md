@@ -208,13 +208,14 @@ React Query defaults: provider in `components/providers/ReactQueryProvider.tsx`.
 
 | System | Purpose | Entry point |
 |---|---|---|
-| **Viator REST API** | Product, availability, booking, exchange rates, reviews | `lib/api/viator-client.ts`, `lib/services/viatorService.ts`, `lib/config/viator.ts` |
+| **Viator REST API** | Product, availability, exchange rates, reviews. **Booking is redirect-only via the widget**; confirmation comes back through cron sync or the manual `ImportedTrip` paste flow. | `lib/api/viator-client.ts`, `lib/services/viatorService.ts`, `lib/config/viator.ts` |
 | **Midtrans Snap** | Payment gateway (IDR) | `lib/services/midtransService.ts`, `lib/config/midtrans.ts`, `app/api/payment/notification/route.ts` |
-| **Brevo SMTP** (Nodemailer) | Verification, password reset, ticket email | `lib/email.ts` |
+| **Brevo SMTP** (Nodemailer) | Verification, password reset, ticket email, marketing. Wrapped by `lib/services/emailService.sendTrackedEmail` which writes `EmailDelivery` rows + injects open-pixel + click-redirect URLs. | `lib/email.ts`, `lib/services/emailService.ts`, `app/api/email/open/route.ts`, `app/api/email/click/route.ts` |
 | **Cloudflare Turnstile** | CAPTCHA on login/register | `utils/verifyTurnstile.ts`, `@marsidev/react-turnstile` |
-| **Groq** | AI chat assistant | `components/AIChatWidget.tsx`, `app/api/ai` |
+| **Groq** | AI chat assistant + itinerary planner (`llama-3.3-70b-versatile`) — kept by user direction; do not switch to Anthropic | `components/AIChatWidget.tsx`, `app/api/ai` |
 | **Bali News API** | External news / activities feed | `lib/newsApi.ts` (ISR 60 s) |
-| **Google Analytics / GTM** | Tracking | `utils/analytics.ts` |
+| **Google Analytics / GTM** | Tracking — loads only after cookie consent `accepted` (via `voyra:cookie-accepted` event) | `components/Global/Analytics.tsx`, `components/Global/Gtm.tsx` |
+| **Web Push** (`web-push` lib + browser push services) | Notifications. Lazy-loaded so absent lib/keys are a no-op. VAPID env: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | `lib/services/pushService.ts`, `app/api/push/subscribe/route.ts`, `app/api/push/vapid/route.ts`, `public/sw.js` (push + notificationclick handlers) |
 
 ---
 
@@ -225,9 +226,57 @@ Routes under `app/api/cron/*`. Each requires `Authorization: Bearer ${CRON_SECRE
 | Route | Job |
 |---|---|
 | `/api/cron/auto-complete-bookings` | `CONFIRMED → COMPLETED` once `travelDate < now()` |
+| `/api/cron/cleanup-booking-tokens` | Clear ticket tokens past retention window |
+| `/api/cron/cleanup-recently-viewed` | Delete `RecentlyViewedItem` rows older than 24 h |
+| `/api/cron/abandoned-wishlist` | Marketing nudge to users with idle wishlist (gated by `NotificationPref.marketingEmails`) |
+| `/api/cron/trip-anniversary` | "1 year ago you visited Bali" outreach |
+| `/api/cron/trip-reminders` | T-1 day reminder email |
+| `/api/cron/nyepi-reminder` | Day-of-Silence heads-up to upcoming travelers |
+| `/api/cron/volcano-alert` | Volcano status escalation push + email |
+| `/api/cron/weather-alert` | Severe weather notice for nearby travel dates |
 | `/api/cron/viator-sync` | Pull modified bookings from Viator, ack |
 | `/api/cron/viator-products-sync` | Detect modified products |
 | `/api/cron/viator-daily-sync` | Daily reconciliation |
+| `/api/cron/calendar-event-reminders` | T-1 push reminder for `CalendarEvent` rows (one-off and recurring); respects `NotificationPref.calendarReminders` |
+| `/api/cron/notification-broadcasts` | Every 5 min: pick `SCHEDULED` `NotificationBroadcast` rows whose `scheduledAt` elapsed and fan-out via `lib/services/notificationService.sendBroadcast` |
+
+---
+
+## 10A. Notification Inbox + Trip Calendar (Member Engagement Subsystems)
+
+These are **server-orchestrated, three-channel** modules added to drive repeat engagement after booking. They follow the standard route → service → data layering.
+
+### Trip Calendar
+- Schema: `CalendarEvent` (one-off + recurring via RFC5545 RRULE subset). Optional `noteId` links to a `BaliNote`.
+- API: `app/api/calendar-events/route.ts` (CRUD + `?from=&to=` range), `app/api/calendar-events/export/route.ts` (RFC5545 `.ics` download), `app/api/cron/calendar-event-reminders` (T-1 push).
+- Service: `lib/calendar/recurrence.ts` (parser + `expandOccurrences` + `nextOccurrenceAfter`).
+- Hook: `utils/hooks/useCalendarEvents.ts` (range-aware fetch + create/update/remove).
+- UI components (`components/calendar/`): `CalendarMonthGrid`, `MonthSwitcher`, `DayPanel`, `EventChip`, `EventFormDialog`, `types.ts` (color/type → Tailwind maps).
+- Pages: `app/profile/calendar/page.tsx` (authed full editor + drag-reschedule + ICS export + share-toggle), `app/share/calendar/[slug]/page.tsx` (public read-only by `User.calendarShareSlug`).
+
+### In-App Notification Inbox
+- Schema: `AppNotification` (per-user delivered row, `@@unique([broadcastId, userId])` for idempotency), `NotificationBroadcast` (snapshot fan-out job), `NotificationTemplate` (admin-managed reusable copy).
+- Service: `lib/services/notificationService.ts` orchestrates **3 channels**:
+  - **In-app** — always written; respects `NotificationPref.inAppMutedCategories`
+  - **Push** — `sendPushToUser` (existing web-push)
+  - **Email** — `lib/email.sendNotificationEmail` (gated by `marketingEmails` pref for `DEAL` category)
+- APIs:
+  - User: `app/api/notifications/route.ts` (list cursor), `count/`, `[id]/` (PATCH read|dismissed, DELETE), `read-all/`
+  - Admin (role gate): `app/api/admin/notifications/templates/**`, `broadcasts/**` (+ `[id]/send`, `[id]/stats`)
+  - Cron: `app/api/cron/notification-broadcasts` (every 5 min, `SCHEDULED → SENT`)
+- Hooks: `utils/hooks/useNotifications.ts` (`useNotifications` paginated + `useNotificationCount` 60 s polling).
+- UI components (`components/notifications/`): `NotificationBell` (header), `NotificationPanel` (popover), `NotificationItem`, `NotificationCategoryBadge`.
+- Pages: `app/profile/inbox/page.tsx` (full inbox), `app/dashboard/notifications/page.tsx` (admin tabs: Broadcasts / Templates / Compose, theme-aware via `useTheme`).
+
+### Homepage Travel Toolkit (member discovery banner)
+- Component: `components/Homepage/TravelToolkit/index.tsx` — auth-aware bento grid surfacing AI Planner, Calendar, Survival Pack, Notes, Itineraries, Rewards. Replaces "buried profile features" UX.
+- Endpoint: `app/api/me/toolkit/route.ts` — single aggregated counter fetch (unread inbox, upcoming events, wishlist count, notes, itineraries, loyalty points). `Cache-Control: private, max-age=30`.
+- Hook: `utils/hooks/useToolkitData.ts`.
+- Tile catalog (`ToolkitTile`, `ToolkitHero`, `ToolkitFooterCTA`) — declarative, single accent map for color tokens, motion-reduce aware. Hero + footer use `public/images/banner-travel.png` + `banner-reward.png` with gradient overlay for legibility.
+
+### Reusable globals introduced alongside
+- `components/common/BackLink.tsx` — pill-style back link, used on every `/profile/*` sub-page.
+- `components/common/ConfirmDialog.tsx` + `ConfirmDialogProvider` (mounted in `AppProviders`) + `useConfirm()` — imperative `await confirm({…})`. **Replaces native `alert/confirm/prompt`** across app and admin (see `agent-rules.md`).
 
 ---
 
@@ -263,4 +312,10 @@ Routes under `app/api/cron/*`. Each requires `Authorization: Bearer ${CRON_SECRE
 | How is payment confirmed? | `app/api/payment/notification/route.ts` → `lib/services/postPaymentService.ts` |
 | How is a tour fetched from Viator? | `lib/api/viator-client.ts`, `app/api/viator/**` |
 | How are images uploaded? | `app/api/images/route.ts` → `utils/common/s3.ts` |
+| How is loyalty earned/redeemed? | `lib/services/postPaymentService.ts` (earn), `app/api/loyalty/redeem/route.ts` (redeem) |
+| How does referral conversion fire? | `app/api/auth/register/route.ts` (signup leg) + `lib/services/postPaymentService.ts` (conversion leg on first CONFIRMED booking) |
+| How do tracked emails work? | `lib/services/emailService.ts` → writes `EmailDelivery`, injects pixel + click rewriter |
+| How do push notifications work? | `lib/services/pushService.ts` (lazy `web-push`) + `public/sw.js` (push + notificationclick) |
+| What's in `/compare` / `/notes` / `/bali-events` / `/guides/profiles`? | Phase 16+ pages — see `app/compare/page.tsx`, `app/notes/page.tsx`, `app/bali-events/page.tsx`, `app/guides/profiles/[slug]/page.tsx` |
+| Where do test specs live? | [test-user/](../test-user/) (one file per feature area) |
 | What environment variables exist? | [environment.md](./environment.md) |

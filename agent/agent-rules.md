@@ -15,6 +15,7 @@
 | [docs/tech-debt.md](./docs/tech-debt.md) | Before "while I'm here" cleanups |
 | [docs/environment.md](./docs/environment.md) | Before adding env vars or third-party integrations |
 | [docs/testing-strategy.md](./docs/testing-strategy.md) | Before introducing tests / test framework |
+| [test-user/README.md](./test-user/README.md) | Before shipping a feature — for the manual QA checklist + per-feature acceptance criteria + third-party / local response shapes |
 
 If a request would change something covered above, **cite the doc and follow it**. If you must deviate, say so explicitly and justify.
 
@@ -104,6 +105,7 @@ A task is done when:
 8. **UI changes** were exercised in a browser via `npm run dev` (or explicitly noted as not visually testable).
 9. **Booking / payment / auth changes** have a manual QA note in the PR description (until tests exist — see [docs/testing-strategy.md §9](./docs/testing-strategy.md)).
 10. **No `console.log` left** behind. `console.error` only for genuine errors.
+11. **Spec file under [test-user/](./test-user/) updated** — add the new test case, append the route to the matching surface-area table, and bump `updatedAt`. New Prisma model? Append to [test-user/13-local-checklist.md](./test-user/13-local-checklist.md). New external dependency? Append to [test-user/12-third-party-checklist.md](./test-user/12-third-party-checklist.md).
 
 ---
 

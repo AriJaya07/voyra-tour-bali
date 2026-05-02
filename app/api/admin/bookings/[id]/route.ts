@@ -100,11 +100,14 @@ export async function PATCH(
       );
     }
 
+    const isConfirming = status === "CONFIRMED";
     const updated = await prisma.booking.update({
       where: { id: Number(id) },
       data: {
         status,
-        paidAt: status === "CONFIRMED" && !booking.paidAt ? new Date() : booking.paidAt,
+        paidAt: isConfirming && !booking.paidAt ? new Date() : booking.paidAt,
+        // Drop dead payment tokens once confirmed — frees ~60B/booking
+        ...(isConfirming ? { snapToken: null, idempotencyKey: null } : {}),
       },
       include: {
         user: { select: { id: true, name: true, email: true, image: true } },

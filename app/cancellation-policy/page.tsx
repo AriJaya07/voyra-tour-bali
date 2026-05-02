@@ -6,8 +6,8 @@ import Container from "@/components/Container";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Cancellation Policy",
-  description: `Understand the cancellation and refund rules for tours and activities booked through ${SITE_NAME} in Bali.`,
+  title: "Booking & Refunds",
+  description: `Booking, cancellation, and refund rules for tours and activities found through ${SITE_NAME} in Bali. Most tours offer free cancellation up to 24 hours before.`,
   alternates: { canonical: `${SITE_URL}/cancellation-policy` },
 };
 
@@ -15,176 +15,223 @@ export default function CancellationPolicyPage() {
   return (
     <div className="min-h-screen bg-white">
       <PageHero
-        badge="Policies"
-        title="Cancellation Policy"
-        subtitle="We understand that plans can change. Learn about our cancellation and refund rules before you book."
-        lastUpdated="1 April 2025"
+        badge="Booking Policies"
+        title="Booking & Refunds"
+        subtitle="How booking, cancellation, and refunds work on our platform — clear, traveler-friendly, and operator-set."
+        lastUpdated="1 May 2026"
         bannerImage="/images/cancel-policy/banner-cancel.png"
       />
 
       <Container>
         <div className="max-w-3xl mx-auto py-14 sm:py-20">
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-12 text-sm text-blue-800 leading-relaxed">
+            <strong>Quick summary:</strong> Most tours offer <strong>free cancellation up to 24 hours</strong> before
+            the start time. The exact cancellation window is shown on every tour page before you book.
+            Cancellations and refunds are processed by our trusted booking partner — our local concierge team helps
+            you every step.
+          </div>
 
-          {/* Quick Summary Cards */}
+          {/* Quick summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-14">
             <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center">
               <p className="text-2xl mb-2">✅</p>
               <p className="font-bold text-green-800 text-sm">Free Cancellation</p>
-              <p className="text-green-700 text-xs mt-1">48+ hours before</p>
+              <p className="text-green-700 text-xs mt-1">24+ hours before*</p>
             </div>
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center">
               <p className="text-2xl mb-2">⚠️</p>
-              <p className="font-bold text-amber-800 text-sm">Partial Refund</p>
-              <p className="text-amber-700 text-xs mt-1">24–48 hours before</p>
+              <p className="font-bold text-amber-800 text-sm">Partial / No Refund</p>
+              <p className="text-amber-700 text-xs mt-1">Inside cancellation window</p>
             </div>
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 text-center">
-              <p className="text-2xl mb-2">❌</p>
-              <p className="font-bold text-red-800 text-sm">No Refund</p>
-              <p className="text-red-700 text-xs mt-1">Less than 24 hours</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-center">
+              <p className="text-2xl mb-2">🔁</p>
+              <p className="font-bold text-blue-800 text-sm">Free Reschedule</p>
+              <p className="text-blue-700 text-xs mt-1">If operator allows</p>
             </div>
           </div>
+          <p className="text-xs text-gray-400 text-center -mt-10 mb-14">
+            * Tour-specific. Some specialist activities (private charters, multi-day tours, equipment-heavy trips)
+            have different windows shown on the product page.
+          </p>
 
-          <SectionBlock number="1" title="Standard Cancellation Timeframes">
-            <p>The following cancellation rules apply to most tours and activities on Bali Travel Now:</p>
+          <SectionBlock number="1" title="Where the cancellation rules come from">
+            <p>
+              Each tour&apos;s cancellation rules are set by the operator running that activity and shown on the
+              individual product page. {SITE_NAME} does not override or change these rules — we display them so
+              you can review them <em>before</em> you book.
+            </p>
+            <p>
+              The vast majority of tours we list offer <strong>free cancellation up to 24 hours before</strong>{" "}
+              the activity start time. Some require longer notice (often for transport or equipment-heavy trips).
+              Read the cancellation block on the product page before confirming.
+            </p>
+          </SectionBlock>
+
+          <SectionBlock number="2" title="Standard cancellation tiers">
+            <p>Most tours follow this structure:</p>
             <div className="overflow-x-auto mt-3">
               <table className="w-full text-sm border border-gray-200 rounded-xl overflow-hidden">
                 <thead className="bg-gray-100 text-gray-700 text-left">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Cancellation Notice</th>
-                    <th className="px-4 py-3 font-semibold">Refund Amount</th>
+                    <th className="px-4 py-3 font-semibold">Cancellation notice</th>
+                    <th className="px-4 py-3 font-semibold">Typical refund</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   <tr className="bg-white">
-                    <td className="px-4 py-3">72 hours or more before activity</td>
+                    <td className="px-4 py-3">24 hours or more before activity</td>
                     <td className="px-4 py-3 font-semibold text-green-700">100% Full Refund</td>
-                  </tr>
-                  <tr className="bg-gray-50">
-                    <td className="px-4 py-3">48–72 hours before activity</td>
-                    <td className="px-4 py-3 font-semibold text-green-700">100% Full Refund</td>
-                  </tr>
-                  <tr className="bg-white">
-                    <td className="px-4 py-3">24–48 hours before activity</td>
-                    <td className="px-4 py-3 font-semibold text-amber-600">50% Refund</td>
                   </tr>
                   <tr className="bg-gray-50">
                     <td className="px-4 py-3">Less than 24 hours before activity</td>
                     <td className="px-4 py-3 font-semibold text-red-600">No Refund</td>
                   </tr>
+                  <tr className="bg-white">
+                    <td className="px-4 py-3">Operator-cancelled (weather, safety, etc.)</td>
+                    <td className="px-4 py-3 font-semibold text-green-700">100% Refund or free reschedule</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
             <p className="text-xs text-gray-400 mt-2">
-              * Some specialist activities (private charters, multi-day tours) may have different cancellation rules, which will be stated on the product page.
+              Always check the cancellation block on the product page — it overrides this default.
             </p>
           </SectionBlock>
 
-          <SectionBlock number="2" title="How to Cancel a Booking">
-            <p>To cancel a booking, please follow these steps:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-gray-600">
-              <li>Log in to your account on <strong>balitravelnow.com</strong>.</li>
-              <li>Navigate to <strong>My Bookings</strong> in your dashboard.</li>
-              <li>Select the booking you wish to cancel and click <strong>"Cancel Booking"</strong>.</li>
-              <li>You will receive an email confirmation of your cancellation request within 24 hours.</li>
-            </ol>
-            <p>
-              Alternatively, you may contact us directly via WhatsApp or email with your booking reference number, and our team will process the cancellation for you.
-            </p>
+          <SectionBlock number="3" title="How to cancel a booking">
+            <p>You have three ways to cancel:</p>
+            <div className="space-y-3 mt-3">
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
+                <p className="font-semibold text-gray-900 text-sm mb-1">📧 From your booking confirmation email</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Open the email you received at booking and tap the <strong>Manage booking</strong> link. It opens
+                  the booking partner&apos;s self-service page where you can cancel in one click.
+                </p>
+              </div>
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
+                <p className="font-semibold text-gray-900 text-sm mb-1">👤 From your Profile on {SITE_NAME}</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Sign in, open <strong>My Bookings</strong>, pick the booking, and follow the link to the
+                  partner&apos;s manage-booking page.
+                </p>
+              </div>
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
+                <p className="font-semibold text-gray-900 text-sm mb-1">💬 WhatsApp our concierge team</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Send your booking reference and we&apos;ll guide you through the cancellation, follow up on the
+                  refund, and help with any rebooking. Available daily.
+                </p>
+              </div>
+            </div>
           </SectionBlock>
 
-          <SectionBlock number="3" title="Refund Processing">
+          <SectionBlock number="4" title="How refunds are processed">
             <p>
-              Approved refunds are currently processed <strong>manually by our team</strong>. Please allow the following timeframes:
+              Approved refunds are issued by our booking partner directly to the original payment method. Typical
+              processing times:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-gray-600">
-              <li><strong>Bank Transfer:</strong> 3–7 business days</li>
-              <li><strong>Credit/Debit Card:</strong> 5–14 business days (depending on your bank)</li>
-              <li><strong>E-Wallet:</strong> 1–3 business days</li>
+              <li><strong>Credit / debit card:</strong> 3–10 business days, depending on your bank</li>
+              <li><strong>Digital wallet:</strong> Usually within 1–3 business days</li>
+              <li><strong>Bank transfer:</strong> 3–7 business days</li>
             </ul>
             <p>
-              If you have not received your refund within the above timeframe, please contact us with your booking reference and we will investigate promptly.
+              You will receive an email from the booking partner once the refund is initiated. If your refund has
+              not arrived after the timeframe above, message us with your booking reference and we&apos;ll chase it.
             </p>
           </SectionBlock>
 
-          <SectionBlock number="4" title="No-Show Policy">
+          <SectionBlock number="5" title="No-show policy">
             <p>
-              A "no-show" occurs when a customer fails to appear at the meeting point at the scheduled time without prior notice. In such cases:
+              A no-show occurs when a traveler does not appear at the meeting point at the scheduled time without
+              prior notice. In that case:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-gray-600">
-              <li>No refund will be provided for no-shows.</li>
-              <li>The activity will be considered completed and the booking closed.</li>
-              <li>There is no option to reschedule after a no-show.</li>
+              <li>No refund is provided.</li>
+              <li>The booking is closed and cannot be rescheduled after the start time.</li>
             </ul>
             <p>
-              If you are going to be late or need to reach the meeting point, please contact your guide or our WhatsApp support line as early as possible. We will do our best to accommodate you.
+              Running late? Message your driver/guide on the contact provided at booking, or message our WhatsApp
+              line — we will relay to the operator and try to delay pickup where feasible.
             </p>
           </SectionBlock>
 
-          <SectionBlock number="5" title="Changes & Rescheduling">
+          <SectionBlock number="6" title="Date changes & rescheduling">
             <p>
-              If you need to change your booking date, we will do our best to accommodate the request subject to availability. Please note:
+              Date changes depend on operator availability and the tour-specific reschedule policy:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-gray-600">
-              <li>Date changes must be requested at least <strong>48 hours</strong> before the original booking.</li>
-              <li>Only one free date change is permitted per booking.</li>
-              <li>If the new date is priced differently, the price difference will be charged.</li>
-              <li>Rescheduling requests within 24 hours of the activity are treated as cancellations.</li>
+              <li>Most tours allow free reschedule if requested at least 24 hours before the original start time.</li>
+              <li>If the new date is priced higher, you pay the difference; if lower, the difference is refunded.</li>
+              <li>Inside the cancellation window, a reschedule is treated as a cancellation.</li>
             </ul>
+            <p>
+              Use the partner&apos;s manage-booking link or message our concierge team — we can coordinate with
+              the operator on your behalf.
+            </p>
           </SectionBlock>
 
-          <SectionBlock number="6" title="Operator-Initiated Cancellations">
+          <SectionBlock number="7" title="Operator-initiated cancellations">
             <p>
-              In rare circumstances, Bali Travel Now or the local operator may need to cancel a tour due to factors beyond our control, such as:
+              Operators may cancel a tour for reasons outside their control:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-gray-600">
-              <li>Severe weather or natural disaster warnings</li>
-              <li>Local safety concerns or government directives</li>
-              <li>Insufficient participant numbers for group activities</li>
+              <li>Severe weather, volcanic activity, or natural-disaster warnings</li>
+              <li>Government safety directives or closure of attractions</li>
+              <li>Insufficient participants for group-only activities</li>
+              <li>Vehicle or equipment safety issues</li>
             </ul>
             <p>
-              In these cases, you will be notified as soon as possible and offered the choice of a <strong>full refund</strong> or an alternative booking date at no extra cost.
+              You will be notified by email as soon as the operator confirms the cancellation. You can choose a
+              <strong> free reschedule</strong> or a <strong>full refund</strong> through the booking partner.
             </p>
           </SectionBlock>
 
-          <SectionBlock number="7" title="Force Majeure">
+          <SectionBlock number="8" title="Force majeure">
             <p>
-              Bali Travel Now will not be liable for cancellations, delays, or service disruptions caused by events beyond our reasonable control, including but not limited to:
+              Neither {SITE_NAME} nor our booking partner is liable for trip disruption caused by events beyond
+              reasonable control, including but not limited to:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-gray-600">
-              <li>Natural disasters, volcanic eruptions, earthquakes, or tsunamis</li>
-              <li>Pandemics, government-imposed travel bans, or public health emergencies</li>
-              <li>Strikes, riots, or civil unrest</li>
-              <li>Extreme adverse weather conditions</li>
+              <li>Volcanic eruption, earthquake, tsunami, flooding</li>
+              <li>Pandemic, public-health emergency, or travel ban</li>
+              <li>Strikes, riots, civil unrest</li>
+              <li>Extreme adverse weather</li>
             </ul>
             <p>
-              In force majeure situations, we will make every effort to reschedule your experience. Refunds in such cases will be assessed on a case-by-case basis.
-            </p>
-            <p>
-              We strongly recommend purchasing comprehensive travel insurance that covers force majeure events before booking.
-            </p>
-          </SectionBlock>
-
-          <SectionBlock number="8" title="Viator-Powered Activities">
-            <p>
-              Some activities on our platform are powered by the Viator affiliate network. These products may have different cancellation policies set by the individual operator. Please refer to the specific cancellation policy shown on the product page before booking.
-            </p>
-            <p>
-              For Viator-origin bookings, refunds and cancellations are ultimately governed by Viator's own cancellation terms, and our team will facilitate the process on your behalf.
+              In force-majeure cases, refunds and rescheduling are evaluated by the operator and processed by the
+              booking partner. We strongly recommend comprehensive travel insurance covering trip cancellation
+              and force-majeure events.
             </p>
           </SectionBlock>
 
-          <div className="mt-12 bg-gradient-to-br from-[#0071CE]/5 to-blue-50 border border-[#0071CE]/20 rounded-2xl p-6 sm:p-8">
-            <h3 className="font-bold text-gray-900 text-lg mb-2">Need to Cancel or Have Questions?</h3>
-            <p className="text-gray-600 text-sm mb-5">Our team is available daily to help you with booking changes, cancellations, and refunds.</p>
+          <SectionBlock number="9" title="Payment-confirmation timing">
+            <p>
+              You receive an instant e-voucher when payment clears at the partner&apos;s checkout. If the operator
+              cannot honour the request (rare — usually capacity limits at peak times), the booking partner issues
+              a full automatic refund and we&apos;ll suggest alternative tours that match your dates.
+            </p>
+          </SectionBlock>
+
+          <SectionBlock number="10" title="Need help?">
+            <p>
+              Our local team is happy to walk you through any cancellation, refund, or reschedule.
+            </p>
+          </SectionBlock>
+
+          <div className="mt-4 bg-gradient-to-br from-[#0071CE]/5 to-blue-50 border border-[#0071CE]/20 rounded-2xl p-6 sm:p-8">
+            <h3 className="font-bold text-gray-900 text-lg mb-2">Questions about a booking?</h3>
+            <p className="text-gray-600 text-sm mb-5">
+              Send your booking reference — we respond fast and stay with you until it&apos;s sorted.
+            </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a
-                href={buildWhatsAppUrl("Hello, I need help with a cancellation for booking ")}
+                href={buildWhatsAppUrl("Hello, I need help with a booking. My reference is: ")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                WhatsApp Support
+                💬 WhatsApp Support
               </a>
               <Link
                 href="/contact"
@@ -192,9 +239,14 @@ export default function CancellationPolicyPage() {
               >
                 Contact Us
               </Link>
+              <Link
+                href="/trust-and-safety"
+                className="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-[#0071CE] text-gray-700 hover:text-[#0071CE] font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
+              >
+                Trust & Safety
+              </Link>
             </div>
           </div>
-
         </div>
       </Container>
     </div>

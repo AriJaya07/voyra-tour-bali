@@ -4,12 +4,14 @@ import { useState, useEffect, useCallback } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import BurgerIcon from "../assets/Icon/BurgerIcon"
 import VoryaIcon from "../assets/Icon/VoyraIcon"
 import SearchModal from "./SearchModal"
 import SearchIcon from "../assets/Icon/SearchIcon"
-import { ProfileIcon, DashboardIcon, HomeIcon, SignOutIcon, ChevronDownIcon, CurrencyIcon, SearchNavIcon } from "../assets/Icon/NavIcons"
-import { useCurrency } from "@/utils/hooks/useCurrency"
+import { ProfileIcon, DashboardIcon, HomeIcon, SignOutIcon, ChevronDownIcon } from "../assets/Icon/NavIcons"
+import HeartIcon from "../assets/Icon/shared/HeartIcon"
+import NotificationBell from "../notifications/NotificationBell"
+import CurrencyDropdown from "@/components/common/CurrencyDropdown"
+import { useWishlistStore } from "@/utils/hooks/useWishlist"
 
 const NAV_ITEMS = [
   { label: "Home", id: "home" },
@@ -24,20 +26,14 @@ export default function Navbar() {
   const { data: session } = useSession()
   const pathname = usePathname()
   const isHomePage = pathname === "/"
-  const [isOpen, setIsOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
   const [scrolled, setScrolled] = useState(false)
-  const { currency, toggle: toggleCurrency } = useCurrency()
+  const wishlistCount = useWishlistStore((s) => s.items.length)
   const userImage = (session?.user as any)?.image || "/images/people.png"
   const userRole = (session?.user as any)?.role as string | undefined
-
-  // Lock scroll when menu open + cleanup on unmount
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : ""
-    return () => { document.body.style.overflow = "" }
-  }, [isOpen])
 
   // Track scroll position for active section + navbar style
   useEffect(() => {
@@ -159,18 +155,25 @@ export default function Navbar() {
               <SearchIcon />
             </button>
 
-            {/* Currency Toggle – Desktop */}
-            <button
-              onClick={toggleCurrency}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-gray-200 hover:border-[#0071CE] transition text-xs font-medium cursor-pointer shrink-0"
-              aria-label="Toggle currency"
+            {/* Wishlist link */}
+            <Link
+              href="/wishlist"
+              aria-label="Wishlist"
+              className="relative h-10 w-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-500 hover:text-pink-500"
             >
-              <span className={`${currency === "USD" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>USD</span>
-              <div className="relative w-7 h-3.5 rounded-full bg-gray-200">
-                <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-[#0071CE] transition-all duration-200 ${currency === "IDR" ? "left-3.5" : "left-0.5"}`} />
-              </div>
-              <span className={`${currency === "IDR" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>IDR</span>
-            </button>
+              <HeartIcon className="w-5 h-5 fill-none stroke-current" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Notifications – Desktop */}
+            <NotificationBell variant="desktop" />
+
+            {/* Currency – Desktop */}
+            <CurrencyDropdown variant="desktop" />
 
             {session ? (
               <div className="relative">
@@ -265,186 +268,94 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile: Currency Toggle + Burger */}
+          {/* Mobile: Notifications + Currency + Avatar (or Sign In). Primary nav lives in MobileBottomNav. */}
           <div className="flex lg:hidden items-center gap-2 flex-shrink-0">
-            <button
-              onClick={toggleCurrency}
-              className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200 text-xs font-medium cursor-pointer"
-              aria-label="Toggle currency"
-            >
-              <span className={currency === "USD" ? "text-[#0071CE] font-bold" : "text-gray-400"}>$</span>
-              <div className="relative w-6 h-3 rounded-full bg-gray-200">
-                <div className={`absolute top-0.5 w-2 h-2 rounded-full bg-[#0071CE] transition-all duration-200 ${currency === "IDR" ? "left-3" : "left-0.5"}`} />
-              </div>
-              <span className={currency === "IDR" ? "text-[#0071CE] font-bold" : "text-gray-400"}>Rp</span>
-            </button>
-            <button
-              onClick={() => setIsOpen(true)}
-              className="cursor-pointer"
-              aria-label="Open menu"
-            >
-              <BurgerIcon className="w-[44px] h-[44px]" />
-            </button>
-          </div>
-        </nav>
-      </header>
+            <NotificationBell variant="mobile" />
+            <CurrencyDropdown variant="mobile" />
 
-      {/* OVERLAY */}
-      <div
-        onClick={() => setIsOpen(false)}
-        className={`
-          fixed inset-0 z-40 bg-black/40
-          transition-opacity duration-300
-          ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"}
-        `}
-      />
-
-      {/* MOBILE SLIDE MENU */}
-      <aside
-        className={`
-          fixed top-0 right-0 z-50 h-[100dvh] w-[80%] max-w-[320px]
-          bg-white shadow-lg overflow-y-auto overscroll-contain
-          transform transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "translate-x-full"}
-        `}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 h-16 border-b">
-          <VoryaIcon className="h-[50px] max-w-[50px]" />
-          <button
-            onClick={() => setIsOpen(false)}
-            className="text-xl font-bold cursor-pointer"
-            aria-label="Close menu"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Menu Items */}
-        <div className="flex flex-col px-5 py-6 gap-5">
-          {NAV_ITEMS.map((item) => {
-            const hasPage = "href" in item && item.href
-            const isActive = hasPage
-              ? pathname === item.href
-              : isHomePage && activeSection === item.id
-
-            const cls = `flex items-center gap-3 px-3 py-2 rounded-xl transition-all cursor-pointer ${
-              isActive
-                ? "bg-blue-50 text-[#0071CE] font-semibold"
-                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-            }`
-
-            return hasPage ? (
-              <Link
-                href={item.href!}
-                key={item.label}
-                onClick={() => setIsOpen(false)}
-                className={cls}
-              >
-                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#0071CE]" />}
-                <span className="text-base font-medium">{item.label}</span>
-              </Link>
-            ) : (
-              <a
-                href={`/#${item.id}`}
-                key={item.label}
-                onClick={(e) => {
-                  setIsOpen(false)
-                  scrollToSection(e, item.id)
-                }}
-                className={cls}
-              >
-                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#0071CE]" />}
-                <span className="text-base font-medium">{item.label}</span>
-              </a>
-            )
-          })}
-
-          {/* Currency Toggle – Mobile Slide Menu */}
-          <button
-            onClick={toggleCurrency}
-            className="flex items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
-          >
-            <div className="flex items-center gap-2">
-              <CurrencyIcon className="w-4 h-4 text-gray-400" />
-              <span>Currency</span>
-            </div>
-            <span className="flex items-center gap-1.5">
-              <span className={`text-xs ${currency === "USD" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>USD</span>
-              <div className="relative w-8 h-4 rounded-full bg-gray-200">
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-[#0071CE] transition-all duration-200 ${currency === "IDR" ? "left-4" : "left-0.5"}`} />
-              </div>
-              <span className={`text-xs ${currency === "IDR" ? "text-[#0071CE] font-bold" : "text-gray-400"}`}>IDR</span>
-            </span>
-          </button>
-
-          {/* Divider */}
-          <hr />
-
-          {/* Search Icon Button – Mobile */}
-          <button
-            onClick={() => { setIsSearchOpen(true); setIsOpen(false); }}
-            aria-label="Search"
-            className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:text-[#0071CE] hover:bg-gray-50 rounded-xl transition"
-          >
-            <SearchNavIcon className="w-5 h-5" />
-            Search destinations...
-          </button>
-
-          {/* Profile */}
-          <div className="flex flex-col gap-4 pt-4">
             {session ? (
-              <>
-                <div className="flex items-center gap-3">
+              <div className="relative">
+                <button
+                  onClick={() => setIsMobileProfileOpen((p) => !p)}
+                  className="flex items-center cursor-pointer"
+                  aria-label="Account menu"
+                  aria-expanded={isMobileProfileOpen}
+                >
                   <img
                     src={userImage}
                     alt={session.user?.name || "User"}
-                    className="h-12 w-12 rounded-full object-cover border-2 border-[#0071CE]"
+                    className="h-9 w-9 rounded-full object-cover border-2 border-[#0071CE] shadow-sm"
                   />
-                  <div>
-                    <p className="text-base font-bold text-gray-900">{session.user?.name || "My Account"}</p>
-                    <p className="text-xs text-gray-500">{session.user?.email}</p>
-                  </div>
-                </div>
-                <Link
-                  href="/profile"
-                  onClick={() => setIsOpen(false)}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-[#0071CE] hover:bg-blue-50 rounded-xl transition"
-                >
-                  <ProfileIcon className="w-4 h-4" />
-                  My Profile
-                </Link>
-                {userRole === "ADMIN" && (
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setIsOpen(false)}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
-                  >
-                    <DashboardIcon className="w-4 h-4 text-gray-400" />
-                    Dashboard Admin
-                  </Link>
-                )}
-                <button
-                  onClick={() => signOut()}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl mt-1 transition"
-                >
-                  <SignOutIcon className="w-4 h-4" />
-                  Sign Out
                 </button>
-              </>
+
+                {isMobileProfileOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setIsMobileProfileOpen(false)}
+                    />
+                    <div className="absolute right-0 top-12 z-40 w-64 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
+                      <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] p-4 flex items-center gap-3">
+                        <img
+                          src={userImage}
+                          alt={session.user?.name || "User"}
+                          className="h-11 w-11 rounded-full object-cover border-2 border-white shadow"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-white font-bold text-sm truncate">
+                            {session.user?.name || "My Account"}
+                          </p>
+                          <p className="text-blue-100 text-[11px] truncate">
+                            {session.user?.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="p-2">
+                        {userRole === "ADMIN" && (
+                          <Link
+                            href="/dashboard"
+                            onClick={() => setIsMobileProfileOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
+                          >
+                            <DashboardIcon className="w-4 h-4 text-gray-400" />
+                            Dashboard Admin
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => {
+                            setIsMobileProfileOpen(false)
+                            signOut({ callbackUrl: "/" })
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                        >
+                          <SignOutIcon className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             ) : (
-              <div className="flex flex-col gap-3">
-                <Link onClick={() => setIsOpen(false)} href="/login" className="w-full text-center px-4 py-3 text-sm font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-xl transition">
-                  Sign In with Email
+              <div className="flex items-center gap-1.5">
+                <Link
+                  href="/login"
+                  className="px-3 py-2 text-xs font-bold text-[#0071CE] hover:bg-blue-50 rounded-full transition"
+                >
+                  Sign In
                 </Link>
-                <Link onClick={() => setIsOpen(false)} href="/register" className="w-full text-center px-4 py-3 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-xl transition shadow-sm">
-                  Create Account
+                <Link
+                  href="/register"
+                  className="px-3.5 py-2 text-xs font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-full transition shadow-sm"
+                >
+                  Sign Up
                 </Link>
               </div>
             )}
           </div>
-        </div>
-      </aside>
+        </nav>
+      </header>
+
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   )

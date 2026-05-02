@@ -7,7 +7,7 @@ import { verifyTurnstile } from '@/utils/verifyTurnstile';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, name, callbackUrl, captchaToken } = await request.json();
+    const { email, password, name, callbackUrl, captchaToken, referralCode } = await request.json();
 
     const captchaOk = await verifyTurnstile(captchaToken);
     if (!captchaOk) {
@@ -71,6 +71,35 @@ export async function POST(request: Request) {
           tokenExpiry,
         }
       });
+    }
+
+    // Referral wire-up: if registered with a code, mark referral SIGNED_UP
+    if (typeof referralCode === "string" && referralCode.trim()) {
+      try {
+        const code = referralCode.trim().toUpperCase();
+        const ref = await prisma.referral.findUnique({ where: { code } });
+        if (ref && ref.inviterId !== user.id) {
+          await prisma.referral.update({
+            where: { id: ref.id },
+            data: {
+              inviteeId: user.id,
+              inviteeEmail: user.email,
+              status: "SIGNED_UP",
+            },
+          });
+          // Award signup bonus to invitee (200 pts)
+          await prisma.loyaltyAccount.upsert({
+            where: { userId: user.id },
+            update: { pointsBalance: { increment: 200 } },
+            create: { userId: user.id, pointsBalance: 200 },
+          });
+          await prisma.loyaltyLedger.create({
+            data: { userId: user.id, delta: 200, reason: "SIGNUP", refId: code },
+          });
+        }
+      } catch (refErr) {
+        console.error('[Referral] failed to apply code:', refErr);
+      }
     }
 
     // Send verification email (non-blocking — don't fail registration if email fails)

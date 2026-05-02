@@ -22,6 +22,14 @@
 | **Idempotency Key** | Per-booking unique key used to prevent duplicate creation on client retries. |
 | **Snap Token** | Midtrans-issued token used by `window.snap.pay()` on the client. |
 | **Ticket Token** | Voyra-generated unique token surfaced as `/ticket/[token]` for the customer voucher. |
+| **BaliNote** | User-authored note attached to a `targetType/targetKey` pair (tour/destination/place). Optional `date` field surfaces it on the Trip Calendar. |
+| **SavedItinerary** | AI-generated trip plan saved by a user. `visibility=PUBLIC` mints `shareSlug` for `/share/itinerary/[slug]`. |
+| **CalendarEvent** | User-created event on the Trip Calendar. Supports recurrence (RFC5545 RRULE subset stored in `recurrence` + `recurrenceUntil`). Optional `noteId` link. `reminderSent` gates T-1 push. |
+| **AppNotification** | Per-user inbox row. Either spawned by a `NotificationBroadcast` fan-out (idempotent via `@@unique([broadcastId,userId])`) or written ad-hoc via `notifyUser()`. |
+| **NotificationTemplate** | Admin-managed reusable announcement. Used as starting point for broadcasts; broadcasts snapshot the content so template edits don't drift sent records. |
+| **NotificationBroadcast** | One fan-out job: title/body snapshot + audience (`ALL`/`ROLE_USER`/`ROLE_ADMIN`/`USER_LIST`) + channels (`inApp` always, `push`, `email`) + scheduling. State machine: `DRAFT → SCHEDULED → SENDING → SENT \| FAILED \| CANCELLED`. |
+| **PushSubscription** | Web-push subscription per user/device. Stale entries (HTTP 404/410 from push service) are auto-pruned on send. |
+| **Calendar Share Slug** | `User.calendarShareSlug` — opaque token granting public read-only access to a user's `visibility=PUBLIC` calendar events at `/share/calendar/[slug]`. Rotatable via `DELETE /api/profile/calendar-share`. |
 
 ---
 
@@ -283,3 +291,37 @@ When in doubt, gate with `if (session.user.role !== "ADMIN") return 403`.
 ## 10. Soft delete vs hard delete
 
 The schema uses **hard delete** everywhere via Prisma `onDelete: Cascade`. There is no `deletedAt` flag. Be deliberate before exposing destructive actions in the UI; consider adding a soft-delete column if business rules ever require recovery.
+
+---
+
+## 11. Engagement Subsystems
+
+### 11.1 Trip Calendar invariants
+- `CalendarEvent.date` is stored at **UTC midnight** of the user's chosen day (parsed via `parseDateOnly` in the route handler). Time-of-day lives in `startTime`/`endTime` strings (`HH:MM`) — not in `date`.
+- `recurrence` is the RRULE body without the `RRULE:` prefix. Supported subset: `FREQ=DAILY|WEEKLY|MONTHLY`, `INTERVAL`, `COUNT`, `UNTIL`, `BYDAY` (weekly only). Anything else parses to `null` and the row is treated as one-off.
+- `recurrenceUntil` is **inclusive** — last day on which an occurrence may fire.
+- Drag-and-drop reschedule **only allowed on non-recurring** events; UI blocks recurring drags with a toast (see `app/profile/calendar/page.tsx`).
+- `reminderSent` is **only used for non-recurring**. For recurring events the cron computes `nextOccurrenceAfter` and sends only when next occurrence equals tomorrow; deduplication is by push notification `tag` per-occurrence.
+- Public share slug rotates: `POST /api/profile/calendar-share { enabled }` regenerates only when no slug exists; `DELETE` always rotates and disables.
+
+### 11.2 NotificationBroadcast state machine
+```
+DRAFT ──(action=schedule)──► SCHEDULED ──(cron picks)──► SENDING ──► SENT
+   │                            │                            │
+   │                            └──(admin cancel)──► CANCELLED│
+   │                                                          ▼
+   └──(action=send)─────────────────────────────────► SENDING ──► FAILED (errorMessage set)
+```
+Invariants:
+- A broadcast in `SENT` or `SENDING` is immutable — `PATCH` rejects edits.
+- `sendBroadcast(id)` is idempotent: AppNotification fan-out uses `skipDuplicates` against `@@unique([broadcastId, userId])`. Re-running a `FAILED` broadcast won't double-deliver.
+- `audience=USER_LIST` requires non-empty `audienceIds`; ids are validated against `prisma.user.findMany` so deleted users drop out silently.
+- Channel pref gating happens per-user inside `sendBroadcast`:
+  - In-app skipped if user muted that `category` in `NotificationPref.inAppMutedCategories`
+  - Push always attempted if `channels.push=true` AND user has subscriptions
+  - Email skipped for `category=DEAL` if `marketingEmails=false`
+
+### 11.3 Inbox semantics
+- Reads are scoped by `userId` — **never** allow cross-account access on `/api/notifications/[id]`.
+- `dismissedAt` is hard-delete equivalent for the user's view (filtered out of all listings) but the row is kept until cascade on user delete. Use `DELETE` for true row removal.
+- `useNotificationCount` polls every 60 s. Expensive aggregations (e.g. category breakdown) belong on a separate endpoint — keep `/count` cheap.

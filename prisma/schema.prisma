@@ -8,9 +8,9 @@ datasource db {
 }
 
 model Category {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
-  slug        String   @unique
+  slug        String  @unique
   description String?
 
   image String?
@@ -23,7 +23,7 @@ model Category {
 }
 
 model Destination {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   title       String
   slug        String? @unique
   description String
@@ -34,8 +34,8 @@ model Destination {
 
   images Image[]
 
-  packages Package[]
-  contents Content[]
+  packages  Package[]
+  contents  Content[]
   locations Location[]
 
   createdAt DateTime @default(now())
@@ -43,7 +43,7 @@ model Destination {
 }
 
 model Package {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   title       String
   slug        String? @unique
   description String
@@ -69,7 +69,7 @@ model Content {
   description String
 
   dateAvailable DateTime
-  isAvailable   Boolean @default(true)
+  isAvailable   Boolean  @default(true)
 
   destinationId Int
   destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
@@ -97,9 +97,9 @@ model Location {
 }
 
 model Image {
-  id   Int    @id @default(autoincrement())
-  url  String
-  key  String
+  id  Int    @id @default(autoincrement())
+  url String
+  key String
 
   altText String?
   isMain  Boolean @default(false)
@@ -121,110 +121,595 @@ model Image {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
   password String?
   name     String?
-  role     UserRole  @default(USER)
+  role     UserRole @default(USER)
   image    String?
   phone    String?
-  provider String    @default("credentials")
+  provider String   @default("credentials")
 
   emailVerified     Boolean   @default(false)
   verificationToken String?
   tokenExpiry       DateTime?
 
-  resetToken        String?
-  resetTokenExpiry  DateTime?
+  resetToken       String?
+  resetTokenExpiry DateTime?
 
   loginAttempts    Int       @default(0)
   loginLockedUntil DateTime?
 
-  bookings Booking[]
+  currency String @default("IDR")
+
+  bookings       Booking[]
+  wishlistItems  WishlistItem[]
+  recentlyViewed RecentlyViewedItem[]
+  savedTravelers SavedTraveler[]
+  reviews        Review[]
+  importedTrips  ImportedTrip[]
+  preferences    UserPreferences?
+  baliNotes      BaliNote[]
+  itineraries    SavedItinerary[]
+  calendarEvents CalendarEvent[]
+  calendarShareSlug    String?  @unique
+  calendarShareEnabled Boolean  @default(false)
+  notificationPref NotificationPref?
+  loyalty        LoyaltyAccount?
+  loyaltyLedger  LoyaltyLedger[]
+  referralsSent  Referral[]       @relation("ReferralInviter")
+  operatorAccount Operator?
+  pushSubscriptions PushSubscription[]
+
+  appNotifications        AppNotification[]
+  notificationTemplates   NotificationTemplate[]   @relation("TplCreatedBy")
+  notificationBroadcasts  NotificationBroadcast[]  @relation("BroadcastCreatedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model WishlistItem {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productCode String // Viator productCode OR local slug
+  source      String // "viator" | "local" | "tourcms"
+  title       String
+  imageUrl    String?
+  price       Float?
+  currency    String?
+  href        String? // resolved navigation target
+
+  priceAtSave    Float?
+  currencyAtSave String?
+  savedAt        DateTime  @default(now())
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productCode, source])
+  @@index([userId])
+}
+
+model ImportedTrip {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  source       String   @default("viator") // viator | external
+  externalRef  String?
+  productTitle String
+  productImage String?
+  travelDate   DateTime?
+  notes        String?
+  href         String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, travelDate])
+}
+
+model UserPreferences {
+  userId         Int      @id
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  partyAdults    Int      @default(2)
+  partyChildren  Int      @default(0)
+  partySeniors   Int      @default(0)
+  partyInfants   Int      @default(0)
+  styleTags      String[] @default([])
+  dietary        String?
+  mobility       String?
+  regionPref     String?
+  tripLengthDays Int?
+
+  updatedAt      DateTime @updatedAt
+}
+
+model BaliNote {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  targetType  String   // tour | destination | place
+  targetKey   String
+  targetTitle String?
+  rating      Int?
+  body        String
+  photos      Json?
+  date        DateTime? // optional date the note refers to (visit/event day)
+  visibility  String   @default("PRIVATE") // PRIVATE | PUBLIC
+  status      String   @default("APPROVED") // APPROVED | PENDING | REJECTED
+
+  calendarEvents CalendarEvent[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([targetType, targetKey])
+  @@index([visibility, status])
+}
+
+model CalendarEvent {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String
+  notes     String?
+  date      DateTime
+  startTime String?
+  endTime   String?
+  location  String?
+  color     String?
+  noteId    Int?
+  baliNote  BaliNote? @relation(fields: [noteId], references: [id], onDelete: SetNull)
+
+  // Recurrence (RFC5545 subset). null = one-time.
+  recurrence       String?    // FREQ=DAILY|WEEKLY|MONTHLY[;INTERVAL=n][;BYDAY=MO,...]
+  recurrenceUntil  DateTime?  // last day inclusive; null = no limit
+  reminderSent     Boolean    @default(false)
+  visibility       String     @default("PRIVATE") // PRIVATE | PUBLIC (per-event override)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, date])
+  @@index([noteId])
+}
+
+model SavedItinerary {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title      String
+  fromDate   DateTime?
+  toDate     DateTime?
+  party      Json?    // { adults, children, seniors, infants }
+  itemsJson  Json     // [{ day, slot, productCode, source, title, notes, href }]
+  visibility String   @default("PRIVATE") // PRIVATE | PUBLIC
+  shareSlug  String?  @unique
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([visibility, shareSlug])
+}
+
+model BaliEvent {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  name        String
+  date        DateTime
+  endDate     DateTime?
+  type        String   // FESTIVAL | CEREMONY | PUBLIC_HOLIDAY | NYEPI
+  region      String?
+  description String
+  impact      String?  // free-form: "Full island shutdown", "Temple visits restricted", etc.
+  link        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([type])
+}
+
+model TourGuide {
+  id          Int      @id @default(autoincrement())
+  operatorId  Int?
+  name        String
+  slug        String   @unique
+  photo       String?
+  bio         String?
+  languages   String[] @default([])
+  yearsActive Int      @default(0)
+  rating      Float    @default(0)
+  reviewCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([operatorId])
+}
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Operator {
+  id            Int      @id @default(autoincrement())
+  ownerUserId   Int      @unique
+  ownerUser     User     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  name          String
+  slug          String   @unique
+  email         String
+  phone         String?
+  whatsapp      String?
+  website       String?
+  description   String?
+
+  licenseNo     String
+  insurance     Boolean  @default(false)
+  yearsActive   Int      @default(0)
+
+  rating        Float    @default(0)
+  reviewCount   Int      @default(0)
+
+  status        String   @default("PENDING") // PENDING | APPROVED | SUSPENDED | REJECTED
+  rejectReason  String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Guide {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  title       String
+  excerpt     String
+  body        String   // markdown
+  coverImage  String?
+  region      String?  // Ubud | Canggu | etc
+  tags        String[] @default([])
+  status      String   @default("DRAFT") // DRAFT | PUBLISHED
+  publishedAt DateTime?
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([region, status])
+}
+
+model EmailCampaign {
+  id          String   @id @default(uuid())
+  type        String   // WELCOME | ABANDONED_WISHLIST | TRIP_ANNIVERSARY | NEWSLETTER | PRE_TRIP
+  subject     String
+  body        String
+  scheduledAt DateTime?
+  status      String   @default("DRAFT") // DRAFT | SCHEDULED | SENT | FAILED
+  createdAt   DateTime @default(now())
+}
+
+model EmailDelivery {
+  id           Int      @id @default(autoincrement())
+  campaignId   String?
+  userId       Int
+  type         String
+  sentAt       DateTime?
+  openedAt     DateTime?
+  clickedAt    DateTime?
+  unsubscribed Boolean  @default(false)
+  meta         Json?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([type, sentAt])
+}
+
+model LoyaltyAccount {
+  userId        Int      @id
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  pointsBalance Int      @default(0)
+  tier          String   @default("BRONZE") // BRONZE | SILVER | GOLD
+  lifetimeSpend Float    @default(0)
+
+  updatedAt     DateTime @updatedAt
+}
+
+model LoyaltyLedger {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  delta     Int
+  reason    String   // BOOKING | REFERRAL | REDEEM | ADJUST | SIGNUP
+  refId     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Referral {
+  id           Int      @id @default(autoincrement())
+  inviterId    Int
+  inviter      User     @relation("ReferralInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  inviteeEmail String
+  inviteeId    Int?
+  code         String   @unique
+  status       String   @default("PENDING") // PENDING | SIGNED_UP | CONVERTED
+  rewardGiven  Boolean  @default(false)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([inviterId])
+  @@unique([inviterId, inviteeEmail])
+}
+
+model NotificationPref {
+  userId          Int      @id
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  weatherAlerts     Boolean  @default(false)
+  volcanoAlerts     Boolean  @default(true)
+  nyepiAlert        Boolean  @default(true)
+  tripReminders     Boolean  @default(true)
+  calendarReminders Boolean  @default(true)
+  marketingEmails   Boolean  @default(false)
+  inAppMutedCategories Json @default("[]")
+
+  updatedAt       DateTime @updatedAt
+}
+
+model NotificationTemplate {
+  id          Int       @id @default(autoincrement())
+  key         String    @unique
+  title       String
+  body        String
+  category    String
+  url         String?
+  iconKey     String?
+  archivedAt  DateTime?
+  createdById Int
+  createdBy   User      @relation("TplCreatedBy", fields: [createdById], references: [id])
+  broadcasts  NotificationBroadcast[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, archivedAt])
+}
+
+model NotificationBroadcast {
+  id           Int       @id @default(autoincrement())
+  templateId   Int?
+  template     NotificationTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  title        String
+  body         String
+  category     String
+  url          String?
+  iconKey      String?
+
+  audience     String                       // ALL | ROLE_USER | ROLE_ADMIN | USER_LIST
+  audienceIds  Json?
+  channels     Json                         // { inApp: true, push: false, email: false }
+
+  scheduledAt  DateTime?
+  sentAt       DateTime?
+  status       String     @default("DRAFT") // DRAFT | SCHEDULED | SENDING | SENT | FAILED | CANCELLED
+  errorMessage String?
+
+  createdById  Int
+  createdBy    User       @relation("BroadcastCreatedBy", fields: [createdById], references: [id])
+
+  notifications AppNotification[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status, scheduledAt])
+  @@index([sentAt])
+}
+
+model AppNotification {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  broadcastId Int?
+  broadcast   NotificationBroadcast? @relation(fields: [broadcastId], references: [id], onDelete: SetNull)
+
+  title       String
+  body        String
+  category    String
+  url         String?
+  iconKey     String?
+
+  readAt      DateTime?
+  dismissedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId, dismissedAt, createdAt])
+  @@index([broadcastId])
+  @@unique([broadcastId, userId])
+}
+
+model RecentlyViewedItem {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productCode String
+  source      String
+  title       String
+  imageUrl    String?
+  price       Float?
+  currency    String?
+  href        String?
+
+  viewedAt DateTime @default(now())
+
+  @@unique([userId, productCode, source])
+  @@index([userId])
+  @@index([userId, viewedAt])
+}
+
+model SavedTraveler {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName           String
+  lastName            String
+  ageBand             String // ADULT | CHILD | INFANT | SENIOR | YOUTH
+  dateOfBirth         DateTime?
+  passportNumber      String?
+  passportExpiry      DateTime?
+  nationality         String?
+  dietaryRequirements String?
+  pickupHotel         String?
+  isLead              Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Review {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bookingId Int?     @unique
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  productCode  String
+  source       String // "viator" | "local" | "tourcms"
+  rating       Int // 1-5
+  title        String?
+  body         String
+  photos       Json? // array of S3 URLs
+  status       ReviewStatus @default(PENDING)
+  helpfulCount Int          @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productCode, source, status])
+  @@index([userId])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Booking {
-  id             Int         @id @default(autoincrement())
-  bookingRef     String
-  productCode    String
-  productTitle   String
-  productImage   String?
-  totalPrice     Float
-  totalPriceUsd  Float?
-  currency       String      @default("IDR")
-  travelDate     DateTime
-  travelTime     String?
-  meetingPoint   String?
-  pax            Int         @default(1)
-  status         BookingStatus @default(PENDING)
+  id            Int           @id @default(autoincrement())
+  bookingRef    String
+  source        String        @default("viator") // viator | local | tourcms
+  productCode   String
+  productTitle  String
+  productImage  String?
+  totalPrice    Float
+  totalPriceUsd Float?
+  currency      String        @default("IDR")
+  travelDate    DateTime
+  travelTime    String?
+  meetingPoint  String?
+  pax           Int           @default(1)
+  status        BookingStatus @default(PENDING)
 
   // Viator booking fields
-  productOptionCode String?
-  productOptionTitle String?
-  tourGradeCode     String?
-  startTime         String?
-  paxMixJson        Json?
+  productOptionCode    String?
+  productOptionTitle   String?
+  tourGradeCode        String?
+  startTime            String?
+  paxMixJson           Json?
   bookingQuestionsJson Json?
-  languageGuide     String?
+  languageGuide        String?
 
   // Lead traveler contact
-  leadFirstName  String?
-  leadLastName   String?
-  leadEmail      String?
-  leadPhone      String?
+  leadFirstName String?
+  leadLastName  String?
+  leadEmail     String?
+  leadPhone     String?
 
   travelersJson  Json?
-  isFraudFlagged Boolean     @default(false)
-  voucherEmailed Boolean     @default(false)
+  isFraudFlagged Boolean @default(false)
+  voucherEmailed Boolean @default(false)
 
   // Payment
-  paymentId      String?     @unique
+  paymentId      String?   @unique
   snapToken      String?
   paidAt         DateTime?
-  idempotencyKey String?     @unique
+  idempotencyKey String?   @unique
 
   // Viator confirmation
-  viatorBookingRef   String?
+  viatorBookingRef    String?
   viatorBookingStatus String?
-  viatorVoucherUrl   String?
-  viatorBookingError String?
-  viatorRetryCount   Int       @default(0)
+  viatorVoucherUrl    String?
+  viatorBookingError  String?
+  viatorRetryCount    Int     @default(0)
 
-  ticketToken    String?     @unique
-  ticketImageUrl String? // Uploaded Viator ticket image (required before confirming)
+  ticketToken     String? @unique
+  ticketImageUrl  String? // Uploaded Viator ticket image (required before confirming)
   paymentProofUrl String? // Admin-uploaded payment proof (m-banking screenshot)
 
+  reminderSentAt DateTime? // T-1 day reminder email send timestamp
+
   // Mock/manual booking fields
-  isMockMode    Boolean     @default(false)
+  isMockMode    Boolean @default(false)
   manualPrice   Float?
   promoCode     String?
   documentsJson Json?
 
   userId Int
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  travelers      BookingTraveler[]
+  travelers BookingTraveler[]
+  review    Review?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model BookingTraveler {
-  id         Int      @id @default(autoincrement())
+  id         Int    @id @default(autoincrement())
   bookingRef String
   firstName  String
   lastName   String
   fullName   String
   ageBand    String
 
-  bookingId  Int
-  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId Int
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum BookingStatus {
@@ -254,16 +739,16 @@ model Subscription {
 }
 
 model MockBooking {
-  id           Int      @id @default(autoincrement())
-  slug         String   @unique
-  productCode  String
-  productTitle String
-  productImage String?
-  price        Float?
-  currency     String   @default("IDR")
-  username     String?
-  promoCode    String?
-  productOptionCode String?
+  id                 Int     @id @default(autoincrement())
+  slug               String  @unique
+  productCode        String
+  productTitle       String
+  productImage       String?
+  price              Float?
+  currency           String  @default("IDR")
+  username           String?
+  promoCode          String?
+  productOptionCode  String?
   productOptionTitle String?
 
   createdAt DateTime @default(now())

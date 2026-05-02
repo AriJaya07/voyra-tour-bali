@@ -325,7 +325,7 @@ export async function getCategoriesFromViator(): Promise<Category[]> {
 export async function getProductDetailFromViator(
   productCode: string,
   currency: string = "USD"
-): Promise<{ title: string; description: string; imageUrl: string; price: number; currency: string } | null> {
+): Promise<{ title: string; description: string; imageUrl: string; price: number; currency: string; productUrl: string | null } | null> {
   if (!VIATOR_API_KEY) return null
 
   try {
@@ -348,6 +348,7 @@ export async function getProductDetailFromViator(
       imageUrl,
       price: data.pricing?.summary?.fromPrice ?? 0,
       currency: data.pricing?.currency ?? currency,
+      productUrl: typeof data.productUrl === "string" ? data.productUrl : null,
     }
   } catch {
     return null

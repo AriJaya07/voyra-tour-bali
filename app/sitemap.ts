@@ -53,24 +53,68 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "yearly" as const,
       priority: 0.3,
     },
+    {
+      url: `${SITE_URL}/plan`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.85,
+    },
+    {
+      url: `${SITE_URL}/guides`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/trust-and-safety`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    },
+    {
+      url: `${SITE_URL}/help`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    },
+    {
+      url: `${SITE_URL}/status`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.3,
+    },
   ];
 
   // Dynamic destination pages
   let destinationPages: MetadataRoute.Sitemap = [];
+  let guidePages: MetadataRoute.Sitemap = [];
   try {
-    const destinations = await prisma.destination.findMany({
-      select: { slug: true, updatedAt: true },
-    });
+    const [destinations, guides] = await Promise.all([
+      prisma.destination.findMany({ select: { slug: true, updatedAt: true } }),
+      prisma.guide.findMany({
+        where: { status: "PUBLISHED" },
+        select: { slug: true, updatedAt: true },
+      }),
+    ]);
 
-    destinationPages = destinations.map((d) => ({
-      url: `${SITE_URL}/detail/${d.slug}`,
-      lastModified: d.updatedAt,
+    destinationPages = destinations
+      .filter((d): d is { slug: string; updatedAt: Date } => Boolean(d.slug))
+      .map((d) => ({
+        url: `${SITE_URL}/detail/${d.slug}`,
+        lastModified: d.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.9,
+      }));
+
+    guidePages = guides.map((g) => ({
+      url: `${SITE_URL}/guides/${g.slug}`,
+      lastModified: g.updatedAt,
       changeFrequency: "weekly" as const,
-      priority: 0.9,
+      priority: 0.8,
     }));
   } catch {
     // DB unreachable at build time — return static pages only
   }
 
-  return [...staticPages, ...destinationPages];
+  return [...staticPages, ...destinationPages, ...guidePages];
 }

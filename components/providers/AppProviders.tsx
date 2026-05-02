@@ -7,6 +7,13 @@ import type { Session } from "next-auth";
 import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 import SessionProviderWrapper from "@/components/Wrapper/SessionProviderWrapper";
 import ExchangeRateProvider from "@/components/providers/ExchangeRateProvider";
+import WishlistProvider from "@/components/providers/WishlistProvider";
+import CurrencySync from "@/components/providers/CurrencySync";
+import RecentlyViewedSync from "@/components/providers/RecentlyViewedSync";
+import PreferencesSync from "@/components/providers/PreferencesSync";
+import PWARegister from "@/components/providers/PWARegister";
+import ExitIntentModal from "@/components/common/ExitIntentModal";
+import { ConfirmDialogProvider } from "@/components/common/ConfirmDialog";
 import AIChatWidget from "@/components/AIChatWidget";
 
 interface AppProvidersProps {
@@ -23,7 +30,12 @@ export default function AppProviders({ children, session }: AppProvidersProps) {
     <SessionProviderWrapper session={session}>
       <ReactQueryProvider>
         <ExchangeRateProvider />
-        {children}
+        <CurrencySync />
+        <WishlistProvider />
+        <RecentlyViewedSync />
+        <PreferencesSync />
+        <PWARegister />
+        <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
         <Toaster
           position="top-right"
           richColors
@@ -36,6 +48,7 @@ export default function AppProviders({ children, session }: AppProvidersProps) {
           }}
         />
         <AIChatWidget />
+        <ExitIntentModal />
       </ReactQueryProvider>
     </SessionProviderWrapper>
   );

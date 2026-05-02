@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react"
 import { useCurrency } from "@/utils/hooks/useCurrency"
 import { useViatorProducts } from "@/utils/hooks/useViator"
 import { useDBDestinations } from "@/utils/hooks/useDestinations"
+import { usePrefsStore } from "@/utils/hooks/useUserPreferences"
 import type { Category, UnifiedActivity } from "@/types/tourism"
 import { trackCategoryClick } from "@/utils/analytics"
 import Pagination from "@/components/ui/Pagination"
@@ -80,7 +81,9 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
     if (rawTotalPages > 0) setViatorTotalPages(rawTotalPages)
   }, [rawTotalPages])
 
-  const activities: UnifiedActivity[] = useMemo(() => {
+  const regionPref = usePrefsStore((s) => s.prefs.regionPref)
+
+  const activitiesRaw: UnifiedActivity[] = useMemo(() => {
     if (isViator) {
       if (!viatorData?.products) return []
       return viatorData.products.map(mapViatorToActivity)
@@ -88,6 +91,20 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
     if (!dbDestinations) return []
     return dbDestinations.map(mapDBToActivity)
   }, [isViator, viatorData, dbDestinations])
+
+  // Region-aware reorder — bubble matching tours to top when user picked a region
+  const activities: UnifiedActivity[] = useMemo(() => {
+    if (!regionPref || activitiesRaw.length === 0) return activitiesRaw
+    const needle = regionPref.toLowerCase()
+    const matches: UnifiedActivity[] = []
+    const rest: UnifiedActivity[] = []
+    for (const a of activitiesRaw) {
+      const hay = `${a.title || ""} ${(a as { description?: string }).description || ""}`.toLowerCase()
+      if (hay.includes(needle)) matches.push(a)
+      else rest.push(a)
+    }
+    return matches.length > 0 ? [...matches, ...rest] : activitiesRaw
+  }, [activitiesRaw, regionPref])
 
   const displayedActivities = useMemo(
     () => (!isViator && !showAll ? activities.slice(0, 5) : activities),
@@ -108,6 +125,11 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
       </div>
       <p className="text-gray-500 text-sm mb-2">
         Discover the best tours & activities in Bali
+        {regionPref && (
+          <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-700">
+            📍 {regionPref} prioritized
+          </span>
+        )}
       </p>
 
       {isError && (
