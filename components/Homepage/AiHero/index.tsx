@@ -3,21 +3,17 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { HiSparkles } from "react-icons/hi2";
-import { useAiWallet } from "@/utils/hooks/useAiWallet";
 import AiPromptDemo from "./AiPromptDemo";
-
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", { day: "numeric", month: "short" });
 
 /**
  * Homepage AI Hero — full-width strip beneath the main tour-search hero.
- * Auth-aware: signed-in users see live balance + plan + soonest expiry;
- * guests see the "50 free credits on signup" carrot.
+ * Guests see the "50 free credits on signup" carrot. Authed users see the
+ * same value-prop without their balance — credits stay on /profile/ai by
+ * design (anxiety-free browsing).
  */
 export default function AiHero() {
   const { status } = useSession();
   const authed = status === "authenticated";
-  const { data } = useAiWallet({ enabled: authed });
 
   return (
     <section
@@ -83,24 +79,6 @@ export default function AiHero() {
           <p className="mt-3 text-[11px] text-white/60">
             ⏱ Subscription credits valid 365 days · 🔒 No card stored on file · ↩ 7-day refund
           </p>
-
-          {authed && data ? (
-            <div className="mt-4 inline-flex flex-wrap items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-xs text-white ring-1 ring-white/15 backdrop-blur">
-              <span className="font-semibold">
-                {data.balance.toLocaleString()} credits
-              </span>
-              <span className="opacity-50">·</span>
-              <span>{data.planLabel}</span>
-              {data.soonestExpiry ? (
-                <>
-                  <span className="opacity-50">·</span>
-                  <span className="text-amber-200">
-                    soonest expires {fmtDate(data.soonestExpiry.expiresAt)}
-                  </span>
-                </>
-              ) : null}
-            </div>
-          ) : null}
         </div>
 
         <AiPromptDemo />

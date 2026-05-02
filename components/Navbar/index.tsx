@@ -11,7 +11,6 @@ import { ProfileIcon, DashboardIcon, HomeIcon, SignOutIcon, ChevronDownIcon } fr
 import HeartIcon from "../assets/Icon/shared/HeartIcon"
 import NotificationBell from "../notifications/NotificationBell"
 import CurrencyDropdown from "@/components/common/CurrencyDropdown"
-import AiCreditBadge from "@/components/ai/AiCreditBadge"
 import { useWishlistStore } from "@/utils/hooks/useWishlist"
 
 const NAV_ITEMS = [
@@ -170,9 +169,6 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* AI Credit pill – Desktop, signed-in only (component self-hides for guests) */}
-            <AiCreditBadge />
-
             {/* Notifications – Desktop */}
             <NotificationBell variant="desktop" />
 
@@ -273,8 +269,7 @@ export default function Navbar() {
           </div>
 
           {/* Mobile: Notifications + Currency + Avatar (or Sign In). Primary nav lives in MobileBottomNav. */}
-          <div className="flex lg:hidden items-center gap-1.5 flex-shrink-0">
-            <AiCreditBadge className="" />
+          <div className="flex lg:hidden items-center gap-2 flex-shrink-0">
             <NotificationBell variant="mobile" />
             <CurrencyDropdown variant="mobile" />
 

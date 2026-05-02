@@ -7,9 +7,7 @@ import { HiSparkles } from "react-icons/hi2";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { buildViatorProductUrl } from "@/lib/config/viator";
-import AiCreditBadge from "@/components/ai/AiCreditBadge";
 import AiUpgradeModal from "@/components/ai/AiUpgradeModal";
-import CostPill from "@/components/ai/CostPill";
 import { useQueryClient } from "@tanstack/react-query";
 import { AI_QUERY_KEYS, useAiWallet } from "@/utils/hooks/useAiWallet";
 
@@ -317,13 +315,6 @@ export default function AIChatWidget() {
                     {mode === "concierge" ? "★ MEM" : "MEM"}
                   </button>
                 ) : null}
-                {isAuthed ? (
-                  <AiCreditBadge
-                    inline
-                    refetchInterval={isOpen ? 30_000 : 0}
-                    className="!border-white/30 !bg-white/10 !text-white"
-                  />
-                ) : null}
                 <button
                   onClick={resetChat}
                   disabled={isStreaming || messages.length <= 1}
@@ -441,13 +432,7 @@ export default function AIChatWidget() {
 
             {/* Input */}
             <div className="border-t border-gray-100 bg-white flex-shrink-0">
-              {isAuthed ? (
-                <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1 text-[10px] text-slate-500">
-                  <span>Press Enter to send</span>
-                  <CostPill endpoint={mode === "concierge" ? "concierge" : "chat"} />
-                </div>
-              ) : null}
-              <div className="px-3 pb-2.5 pt-1 flex items-center gap-2">
+              <div className="px-3 py-2.5 flex items-center gap-2">
                 <input
                   ref={inputRef}
                   type="text"

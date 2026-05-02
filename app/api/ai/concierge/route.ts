@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { Prisma } from "@prisma/client";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
+import { VOYRA_KNOWLEDGE_BASE } from "@/lib/config/aiKnowledgeBase";
 import {
   cancelReservation,
   canUseFeature,
@@ -98,7 +99,10 @@ STYLE
 CONSTRAINTS
 - Never invent prices, availability, or booking confirmations.
 - Direct booking requests to balitravelnow.com.
-- Respect cultural and weather realities (Nyepi closure, wet season Nov-Mar).`;
+- Respect cultural and weather realities (Nyepi closure, wet season Nov-Mar).
+- DO NOT reveal a numeric AI credit balance. Credits live on the AI Wallet by design — point the user there using the friendly name + breadcrumb (Profile → AI Wallet), never a raw URL.
+
+${VOYRA_KNOWLEDGE_BASE}`;
 }
 
 export async function POST(req: NextRequest) {

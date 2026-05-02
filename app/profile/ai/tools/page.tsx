@@ -5,7 +5,6 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import BackLink from "@/components/common/BackLink";
-import CostPill from "@/components/ai/CostPill";
 import SpendConfirmDialog from "@/components/ai/SpendConfirmDialog";
 import {
   useAiWallet,
@@ -73,10 +72,7 @@ function CulturalCard() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-base font-semibold text-slate-900">🛕 Cultural co-pilot</h2>
-        <CostPill endpoint="cultural" />
-      </div>
+      <h2 className="text-base font-semibold text-slate-900">🛕 Cultural co-pilot</h2>
       <p className="mt-1 text-xs text-slate-500">
         Explorer+ · grounded in our Bali ceremony calendar.
       </p>
@@ -153,10 +149,7 @@ function DayOfTripCard() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-base font-semibold text-slate-900">🌧️ Day-of-Trip helper</h2>
-        <CostPill endpoint="day_of_trip" />
-      </div>
+      <h2 className="text-base font-semibold text-slate-900">🌧️ Day-of-Trip helper</h2>
       <p className="mt-1 text-xs text-slate-500">
         Free for confirmed travelers in trip window · Voyager+ otherwise.
       </p>
@@ -254,10 +247,7 @@ function VoucherReadCard() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-base font-semibold text-slate-900">📷 Voucher reader (vision)</h2>
-        <CostPill endpoint="voucher_read" />
-      </div>
+      <h2 className="text-base font-semibold text-slate-900">📷 Voucher reader (vision)</h2>
       <p className="mt-1 text-xs text-slate-500">
         Voyager+ · JPG / PNG / WEBP, max 8 MB. Disabled when vision env not configured.
       </p>
