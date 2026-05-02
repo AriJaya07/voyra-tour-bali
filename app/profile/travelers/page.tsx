@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { toast } from "sonner";
+import BackLink from "@/components/common/BackLink";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 
 const AGE_BANDS = ["ADULT", "CHILD", "INFANT", "SENIOR", "YOUTH"] as const;
 type AgeBand = (typeof AGE_BANDS)[number];
@@ -37,6 +39,7 @@ const emptyForm = (): Omit<Traveler, "id"> => ({
 
 export default function SavedTravelersPage() {
   const { status } = useSession();
+  const confirm = useConfirm();
   const [travelers, setTravelers] = useState<Traveler[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | "new" | null>(null);
@@ -109,7 +112,14 @@ export default function SavedTravelersPage() {
   };
 
   const del = async (id: number) => {
-    if (!confirm("Delete this traveler?")) return;
+    const ok = await confirm({
+      title: "Delete this traveler?",
+      description: "This will permanently remove the saved traveler profile.",
+      confirmLabel: "Delete traveler",
+      cancelLabel: "Keep it",
+      destructive: true,
+    });
+    if (!ok) return;
     const res = await fetch(`/api/saved-travelers/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Deleted");
@@ -140,9 +150,7 @@ export default function SavedTravelersPage() {
             <h1 className="text-2xl font-bold text-gray-900">Saved Travelers</h1>
             <p className="text-sm text-gray-500 mt-1">Reuse traveler details across bookings.</p>
           </div>
-          <Link href="/profile" className="text-sm text-[#0071CE] hover:underline">
-            ← Back to profile
-          </Link>
+          <BackLink href="/profile" label="Back to profile" />
         </div>
 
         {loading ? (

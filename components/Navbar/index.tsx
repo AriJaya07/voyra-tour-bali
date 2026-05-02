@@ -8,6 +8,8 @@ import VoryaIcon from "../assets/Icon/VoyraIcon"
 import SearchModal from "./SearchModal"
 import SearchIcon from "../assets/Icon/SearchIcon"
 import { ProfileIcon, DashboardIcon, HomeIcon, SignOutIcon, ChevronDownIcon } from "../assets/Icon/NavIcons"
+import HeartIcon from "../assets/Icon/shared/HeartIcon"
+import NotificationBell from "../notifications/NotificationBell"
 import CurrencyDropdown from "@/components/common/CurrencyDropdown"
 import { useWishlistStore } from "@/utils/hooks/useWishlist"
 
@@ -159,15 +161,16 @@ export default function Navbar() {
               aria-label="Wishlist"
               className="relative h-10 w-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-500 hover:text-pink-500"
             >
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
+              <HeartIcon className="w-5 h-5 fill-none stroke-current" />
               {wishlistCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold flex items-center justify-center">
                   {wishlistCount > 99 ? "99+" : wishlistCount}
                 </span>
               )}
             </Link>
+
+            {/* Notifications – Desktop */}
+            <NotificationBell variant="desktop" />
 
             {/* Currency – Desktop */}
             <CurrencyDropdown variant="desktop" />
@@ -265,8 +268,9 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile: Currency + Avatar (or Sign In). Primary nav lives in MobileBottomNav. */}
+          {/* Mobile: Notifications + Currency + Avatar (or Sign In). Primary nav lives in MobileBottomNav. */}
           <div className="flex lg:hidden items-center gap-2 flex-shrink-0">
+            <NotificationBell variant="mobile" />
             <CurrencyDropdown variant="mobile" />
 
             {session ? (

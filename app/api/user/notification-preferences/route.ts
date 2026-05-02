@@ -14,6 +14,7 @@ const DEFAULTS = {
   volcanoAlerts: true,
   nyepiAlert: true,
   tripReminders: true,
+  calendarReminders: true,
   marketingEmails: false,
 };
 
@@ -34,6 +35,7 @@ export async function PUT(req: NextRequest) {
     volcanoAlerts: !!body?.volcanoAlerts,
     nyepiAlert: !!body?.nyepiAlert,
     tripReminders: !!body?.tripReminders,
+    calendarReminders: body?.calendarReminders === undefined ? true : !!body.calendarReminders,
     marketingEmails: !!body?.marketingEmails,
   };
 

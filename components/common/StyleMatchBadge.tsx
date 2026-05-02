@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { matchesStyle, usePrefsStore } from "@/utils/hooks/useUserPreferences";
+import StarSolidIcon from "@/components/assets/Icon/shared/StarSolidIcon";
 
 interface Props {
   text: string | undefined | null;
@@ -39,9 +40,7 @@ export default function StyleMatchBadge({ text, className = "" }: Props) {
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold ${className}`}
       title={TAG_LABEL[tag] || `Matches your ${tag} style`}
     >
-      <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 fill-current" aria-hidden>
-        <path d="M8 0L9.8 5.5H16l-5.1 3.7L12.7 16 8 12.3 3.3 16l1.8-6.8L0 5.5h6.2z" />
-      </svg>
+      <StarSolidIcon />
       Matches your style
     </span>
   );

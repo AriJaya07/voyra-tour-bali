@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
+import BackLink from "@/components/common/BackLink";
 import { useSession } from "next-auth/react";
 
 interface Loyalty {
@@ -124,9 +126,14 @@ export default function RewardsPage() {
   const copyCode = async (code: string) => {
     try {
       await navigator.clipboard.writeText(code);
-      alert(`Copied code: ${code}`);
+      toast.success("Reward code copied", {
+        description: code,
+      });
     } catch {
-      prompt("Copy code:", code);
+      toast(code, {
+        description: "Long-press to copy this reward code.",
+        duration: 8000,
+      });
     }
   };
 
@@ -164,9 +171,7 @@ export default function RewardsPage() {
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/profile" className="text-sm text-[#0071CE] hover:underline">
-            ← Back to Profile
-          </Link>
+          <BackLink href="/profile" label="Back to profile" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Voyra Rewards</h1>
         <p className="text-sm text-gray-500 mb-6">

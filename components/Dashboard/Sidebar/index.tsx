@@ -20,6 +20,7 @@ import {
   GlobeIcon, MenuIcon, CloseIcon, CollapseLeftIcon, CollapseRightIcon,
   SunIcon, MoonIcon, SignOutIcon,
 } from "../../assets/Icon/shared";
+import BellIcon from "../../assets/Icon/shared/BellIcon";
 
 const NAV_ITEMS = [
   {
@@ -79,6 +80,12 @@ const NAV_ITEMS = [
 ];
 
 const BOTTOM_ITEMS = [
+  {
+    label: "Notifications",
+    href: "/dashboard/notifications",
+    icon: <BellIcon />,
+    color: "violet",
+  },
   {
     label: "Subscribers",
     href: "/dashboard/subscribers",

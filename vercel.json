@@ -1,0 +1,61 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/calendar-event-reminders",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/notification-broadcasts",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/trip-reminders",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/auto-complete-bookings",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-booking-tokens",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-recently-viewed",
+      "schedule": "0 4 * * 0"
+    },
+    {
+      "path": "/api/cron/abandoned-wishlist",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/trip-anniversary",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/nyepi-reminder",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/volcano-alert",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/weather-alert",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/viator-daily-sync",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/viator-products-sync",
+      "schedule": "0 2 * * 0"
+    },
+    {
+      "path": "/api/cron/viator-sync",
+      "schedule": "0 */6 * * *"
+    }
+  ]
+}

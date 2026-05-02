@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { toast } from "sonner";
+import BackLink from "@/components/common/BackLink";
+import EventFormDialog from "@/components/calendar/EventFormDialog";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 
 interface BaliNote {
   id: number;
@@ -11,6 +15,7 @@ interface BaliNote {
   targetTitle: string | null;
   rating: number | null;
   body: string;
+  date: string | null;
   visibility: "PRIVATE" | "PUBLIC";
   createdAt: string;
 }
@@ -20,6 +25,7 @@ const fmtDate = (d: string) =>
 
 export default function BaliNotesPage() {
   const { status } = useSession();
+  const confirm = useConfirm();
   const [notes, setNotes] = useState<BaliNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -32,6 +38,16 @@ export default function BaliNotesPage() {
   const [body, setBody] = useState("");
   const [rating, setRating] = useState<number | null>(null);
   const [visibility, setVisibility] = useState<"PRIVATE" | "PUBLIC">("PRIVATE");
+  const [noteDate, setNoteDate] = useState("");
+
+  // Add-to-calendar dialog
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarPrefill, setCalendarPrefill] = useState<{
+    title: string;
+    noteId: number;
+    notesText: string;
+    defaultDate: string;
+  } | null>(null);
 
   const load = async () => {
     try {
@@ -55,6 +71,7 @@ export default function BaliNotesPage() {
     setBody("");
     setRating(null);
     setVisibility("PRIVATE");
+    setNoteDate("");
     setError(null);
   };
 
@@ -73,6 +90,7 @@ export default function BaliNotesPage() {
           rating,
           body,
           visibility,
+          date: noteDate || null,
         }),
       });
       if (!res.ok) {
@@ -88,10 +106,92 @@ export default function BaliNotesPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Delete this note?")) return;
-    await fetch(`/api/notes?id=${id}`, { method: "DELETE" });
-    setNotes((n) => n.filter((x) => x.id !== id));
+  const performDelete = async (id: number) => {
+    try {
+      const res = await fetch(`/api/notes?id=${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error("Could not delete note", {
+          description: data?.error || "Please try again in a moment.",
+        });
+        return;
+      }
+      setNotes((n) => n.filter((x) => x.id !== id));
+      toast.success("Note deleted");
+    } catch {
+      toast.error("Network problem", {
+        description: "Couldn't reach the server. Please try again.",
+      });
+    }
+  };
+
+  const handleDelete = async (id: number, title: string) => {
+    const ok = await confirm({
+      title: `Delete "${title}"?`,
+      description: "This will permanently remove the note. This action cannot be undone.",
+      confirmLabel: "Delete note",
+      cancelLabel: "Keep it",
+      destructive: true,
+    });
+    if (ok) performDelete(id);
+  };
+
+  const addToCalendar = (note: BaliNote) => {
+    let dateStr: string;
+    if (note.date) {
+      dateStr = note.date.slice(0, 10);
+    } else {
+      const today = new Date();
+      dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${String(today.getDate()).padStart(2, "0")}`;
+    }
+    setCalendarPrefill({
+      title: note.targetTitle || `Note: ${note.targetType}`,
+      noteId: note.id,
+      notesText: note.body.slice(0, 500),
+      defaultDate: dateStr,
+    });
+    setCalendarOpen(true);
+  };
+
+  const handleCalendarSubmit = async (input: {
+    title: string;
+    date: string;
+    notes: string | null;
+    startTime: string | null;
+    endTime: string | null;
+    location: string | null;
+    color: string;
+    noteId: number | null;
+    recurrence: string | null;
+    recurrenceUntil: string | null;
+    visibility: "PRIVATE" | "PUBLIC";
+  }) => {
+    const res = await fetch("/api/calendar-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error || "Could not add to calendar");
+    }
+    const dateLabel = new Date(`${input.date}T00:00:00`).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+    toast.success(`Added to your calendar on ${dateLabel}`, {
+      description: "View or edit details any time from Trip Calendar.",
+      action: {
+        label: "Open calendar",
+        onClick: () => {
+          window.location.href = "/profile/calendar";
+        },
+      },
+    });
   };
 
   if (status === "loading" || loading) {
@@ -123,9 +223,7 @@ export default function BaliNotesPage() {
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/profile" className="text-sm text-[#0071CE] hover:underline">
-            ← Back to Profile
-          </Link>
+          <BackLink href="/profile" label="Back to profile" />
         </div>
         <div className="flex items-end justify-between mb-6 gap-3">
           <div>
@@ -182,7 +280,14 @@ export default function BaliNotesPage() {
                       {n.visibility === "PUBLIC" ? "Public" : "Private"}
                     </span>
                     <button
-                      onClick={() => handleDelete(n.id)}
+                      onClick={() => addToCalendar(n)}
+                      className="px-2 py-1 text-[11px] font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded transition border border-blue-100"
+                      title="Add to calendar"
+                    >
+                      📅 Calendar
+                    </button>
+                    <button
+                      onClick={() => handleDelete(n.id, n.targetTitle || n.targetKey)}
                       className="px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-50 rounded transition"
                       aria-label="Delete note"
                     >
@@ -205,7 +310,12 @@ export default function BaliNotesPage() {
                 )}
 
                 <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{n.body}</p>
-                <p className="text-[11px] text-gray-400 mt-3">{fmtDate(n.createdAt)}</p>
+                <div className="flex flex-wrap gap-3 mt-3 text-[11px] text-gray-400">
+                  {n.date && (
+                    <span className="text-[#0071CE] font-bold">📅 {fmtDate(n.date)}</span>
+                  )}
+                  <span>Saved {fmtDate(n.createdAt)}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -277,6 +387,21 @@ export default function BaliNotesPage() {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Date (optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={noteDate}
+                    onChange={(e) => setNoteDate(e.target.value)}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE] focus:border-transparent"
+                  />
+                  <p className="mt-1 text-[10px] text-gray-400">
+                    The day this note refers to. Dated notes also appear on your Trip Calendar.
+                  </p>
+                </div>
+
+                <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Rating (optional)</label>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((n) => (
@@ -343,6 +468,23 @@ export default function BaliNotesPage() {
           </div>
         )}
       </div>
+
+      <EventFormDialog
+        open={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+        defaultDate={calendarPrefill?.defaultDate || ""}
+        prefill={
+          calendarPrefill
+            ? {
+                title: calendarPrefill.title,
+                notes: calendarPrefill.notesText,
+                noteId: calendarPrefill.noteId,
+                color: "green",
+              }
+            : null
+        }
+        onSubmit={handleCalendarSubmit}
+      />
     </div>
   );
 }

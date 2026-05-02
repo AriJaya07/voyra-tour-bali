@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import BackLink from "@/components/common/BackLink";
 import { useSession } from "next-auth/react";
 
 interface Prefs {
@@ -9,6 +10,7 @@ interface Prefs {
   volcanoAlerts: boolean;
   nyepiAlert: boolean;
   tripReminders: boolean;
+  calendarReminders: boolean;
   marketingEmails: boolean;
 }
 
@@ -17,6 +19,7 @@ const DEFAULTS: Prefs = {
   volcanoAlerts: true,
   nyepiAlert: true,
   tripReminders: true,
+  calendarReminders: true,
   marketingEmails: false,
 };
 
@@ -26,6 +29,12 @@ const TOGGLES: { id: keyof Prefs; emoji: string; label: string; help: string }[]
     emoji: "📅",
     label: "Trip reminders",
     help: "Get an email 7 days and 1 day before each imported trip with weather + tips.",
+  },
+  {
+    id: "calendarReminders",
+    emoji: "🔔",
+    label: "Calendar event reminders",
+    help: "Push notification the day before any event you add to your trip calendar.",
   },
   {
     id: "volcanoAlerts",
@@ -72,6 +81,7 @@ export default function NotificationsPage() {
           volcanoAlerts: data.volcanoAlerts ?? true,
           nyepiAlert: data.nyepiAlert ?? true,
           tripReminders: data.tripReminders ?? true,
+          calendarReminders: data.calendarReminders ?? true,
           marketingEmails: !!data.marketingEmails,
         });
       } finally {
@@ -129,11 +139,9 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/profile" className="text-sm text-[#0071CE] hover:underline">
-            ← Back to Profile
-          </Link>
+          <BackLink href="/profile" label="Back to profile" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Notifications</h1>
         <p className="text-sm text-gray-500 mb-6">

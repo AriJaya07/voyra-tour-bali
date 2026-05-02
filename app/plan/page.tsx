@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 import { usePrefsStore } from "@/utils/hooks/useUserPreferences";
 import { buildViatorProductUrl } from "@/lib/config/viator";
+import BackLink from "@/components/common/BackLink";
 
 const STYLE_TAGS = [
   "adventure",
@@ -63,8 +65,30 @@ export default function PlanPage() {
   const [budget, setBudget] = useState<"budget" | "moderate" | "luxury">("moderate");
   const [interests, setInterests] = useState<string[]>([]);
   const [region, setRegion] = useState<string | null>(null);
+  const [mode, setMode] = useState<"days" | "dates">("days");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  const dateRangeError = useMemo(() => {
+    if (mode !== "dates" || !fromDate || !toDate) return null;
+    const f = new Date(fromDate);
+    const t = new Date(toDate);
+    if (Number.isNaN(f.getTime()) || Number.isNaN(t.getTime())) return null;
+    if (t < f) return "End date must be on or after start date";
+    const diff = Math.round((t.getTime() - f.getTime()) / 86400000) + 1;
+    if (diff > 14) return "Trip is limited to 14 days";
+    return null;
+  }, [mode, fromDate, toDate]);
+
+  useEffect(() => {
+    if (mode !== "dates" || !fromDate || !toDate || dateRangeError) return;
+    const f = new Date(fromDate);
+    const t = new Date(toDate);
+    const diff = Math.round((t.getTime() - f.getTime()) / 86400000) + 1;
+    setDays(Math.max(1, Math.min(14, diff)));
+  }, [mode, fromDate, toDate, dateRangeError]);
 
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<PlanResponse | null>(null);
@@ -103,8 +127,8 @@ export default function PlanPage() {
           budget,
           interests,
           region,
-          fromDate: fromDate || null,
-          toDate: toDate || null,
+          fromDate: mode === "dates" ? fromDate || null : null,
+          toDate: mode === "dates" ? toDate || null : null,
         }),
       });
       if (!res.ok) {
@@ -121,26 +145,69 @@ export default function PlanPage() {
     }
   };
 
+  const buildItineraryBody = (visibility: "PRIVATE" | "PUBLIC") => ({
+    title: plan?.title,
+    fromDate: mode === "dates" ? fromDate || null : null,
+    toDate: mode === "dates" ? toDate || null : null,
+    party: {
+      adults: prefs.partyAdults,
+      children: prefs.partyChildren,
+      seniors: prefs.partySeniors,
+      infants: prefs.partyInfants,
+    },
+    itemsJson: plan?.items,
+    visibility,
+  });
+
   const savePrivate = async () => {
     if (!plan) return;
-    const res = await fetch("/api/itineraries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: plan.title,
-        fromDate: fromDate || null,
-        toDate: toDate || null,
-        party: {
-          adults: prefs.partyAdults,
-          children: prefs.partyChildren,
-          seniors: prefs.partySeniors,
-          infants: prefs.partyInfants,
-        },
-        itemsJson: plan.items,
-        visibility: "PRIVATE",
-      }),
-    });
-    if (res.ok) setSaved(true);
+    try {
+      const res = await fetch("/api/itineraries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildItineraryBody("PRIVATE")),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error("We couldn't save your itinerary", {
+          description: data?.error || "Something went wrong on our side. Please try again in a moment.",
+        });
+        return;
+      }
+      setSaved(true);
+      toast.success("Itinerary saved to your profile", {
+        description: "You can revisit or share it any time from My Profile.",
+      });
+    } catch {
+      toast.error("Network problem", {
+        description: "Couldn't reach the server. Please check your connection and try again.",
+      });
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // fall through to legacy fallback
+      }
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
   };
 
   const saveAndShare = async () => {
@@ -150,32 +217,56 @@ export default function PlanPage() {
       const res = await fetch("/api/itineraries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: plan.title,
-          fromDate: fromDate || null,
-          toDate: toDate || null,
-          party: {
-            adults: prefs.partyAdults,
-            children: prefs.partyChildren,
-            seniors: prefs.partySeniors,
-            infants: prefs.partyInfants,
-          },
-          itemsJson: plan.items,
-          visibility: "PUBLIC",
-        }),
+        body: JSON.stringify(buildItineraryBody("PUBLIC")),
       });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data?.shareSlug) {
-        const url = `${window.location.origin}/share/itinerary/${data.shareSlug}`;
-        try {
-          await navigator.clipboard.writeText(url);
-          alert(`Shareable link copied:\n${url}`);
-        } catch {
-          prompt("Copy this share link:", url);
-        }
-        setSaved(true);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error("We couldn't create your share link", {
+          description: data?.error || "Something went wrong while saving. Please try again in a moment.",
+        });
+        return;
       }
+      const data = await res.json();
+      if (!data?.shareSlug) {
+        toast.error("Share link unavailable", {
+          description: "Your itinerary was saved, but we couldn't generate a public link. Try again from your profile.",
+        });
+        return;
+      }
+      const url = `${window.location.origin}/share/itinerary/${data.shareSlug}`;
+      const copied = await copyToClipboard(url);
+      setSaved(true);
+      if (copied) {
+        toast.success("Share link copied to your clipboard", {
+          description: url,
+          duration: 6000,
+          action: {
+            label: "Open",
+            onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
+          },
+        });
+      } else {
+        toast.success("Itinerary is ready to share", {
+          description: `Copy this link: ${url}`,
+          duration: 9000,
+          action: {
+            label: "Copy",
+            onClick: () => {
+              copyToClipboard(url).then((ok) => {
+                if (ok) toast.success("Link copied");
+                else
+                  toast.error("Copy not supported on this device", {
+                    description: "Long-press the link in the toast to copy it manually.",
+                  });
+              });
+            },
+          },
+        });
+      }
+    } catch {
+      toast.error("Network problem", {
+        description: "Couldn't reach the server. Please check your connection and try again.",
+      });
     } finally {
       setSavingShare(false);
     }
@@ -199,8 +290,11 @@ export default function PlanPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-10 pb-20 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="mb-4">
+          <BackLink href="/profile" label="Back to profile" />
+        </div>
         {/* Hero */}
         <div className="bg-gradient-to-br from-[#0071CE] to-[#005ba6] rounded-2xl p-6 sm:p-10 text-white mb-8 shadow-lg">
           <span className="inline-block bg-white/15 border border-white/25 text-blue-100 text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
@@ -219,36 +313,100 @@ export default function PlanPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-8">
           <h2 className="font-bold text-gray-900 text-lg mb-4">Plan settings</h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">From</label>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
-              />
+          <div className="mb-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+              <label className="block text-xs font-bold text-gray-700">Trip duration</label>
+              <div
+                role="tablist"
+                aria-label="Trip duration mode"
+                className="inline-flex bg-gray-100 rounded-lg p-0.5 self-start"
+              >
+                <button
+                  role="tab"
+                  aria-selected={mode === "days"}
+                  type="button"
+                  onClick={() => {
+                    setMode("days");
+                    setFromDate("");
+                    setToDate("");
+                  }}
+                  className={`px-3 py-1 text-xs font-bold rounded-md transition ${
+                    mode === "days"
+                      ? "bg-white text-[#0071CE] shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Days only
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={mode === "dates"}
+                  type="button"
+                  onClick={() => setMode("dates")}
+                  className={`px-3 py-1 text-xs font-bold rounded-md transition ${
+                    mode === "dates"
+                      ? "bg-white text-[#0071CE] shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Specific dates
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">To</label>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">Days</label>
-              <input
-                type="number"
-                min={1}
-                max={14}
-                value={days}
-                onChange={(e) => setDays(Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
-              />
-            </div>
+
+            {mode === "days" ? (
+              <div>
+                <input
+                  type="number"
+                  min={1}
+                  max={14}
+                  value={days}
+                  onChange={(e) => setDays(Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
+                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
+                  aria-label="Number of days"
+                />
+                <p className="mt-1.5 text-[11px] text-gray-500">
+                  {days} day{days === 1 ? "" : "s"} · 1–14
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 mb-1">From</label>
+                  <input
+                    type="date"
+                    value={fromDate}
+                    min={today}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 mb-1">To</label>
+                  <input
+                    type="date"
+                    value={toDate}
+                    min={fromDate || today}
+                    onChange={(e) => setToDate(e.target.value)}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
+                  />
+                </div>
+                <p className="sm:col-span-2 mt-0.5 text-[11px]">
+                  {dateRangeError ? (
+                    <span className="text-red-600 font-bold">{dateRangeError}</span>
+                  ) : fromDate && toDate ? (
+                    <span className="text-gray-500">
+                      <span className="font-bold text-gray-700">
+                        {days} day{days === 1 ? "" : "s"}
+                      </span>{" "}
+                      · AI tunes picks for season &amp; local events on these dates
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">Pick start and end dates (max 14 days)</span>
+                  )}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mb-5">
@@ -348,7 +506,7 @@ export default function PlanPage() {
             </div>
             <button
               onClick={generate}
-              disabled={loading}
+              disabled={loading || !!dateRangeError}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#0071CE] hover:bg-[#005ba6] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition shadow-sm shrink-0"
             >
               {loading ? (
@@ -370,7 +528,7 @@ export default function PlanPage() {
         {!plan && (
           <button
             onClick={generate}
-            disabled={loading}
+            disabled={loading || !!dateRangeError}
             className="sm:hidden fixed bottom-20 right-4 z-40 inline-flex items-center gap-2 px-5 py-3 bg-[#0071CE] hover:bg-[#005ba6] disabled:opacity-60 text-white text-sm font-bold rounded-full shadow-lg shadow-blue-500/30 transition"
             aria-label="Generate itinerary"
           >

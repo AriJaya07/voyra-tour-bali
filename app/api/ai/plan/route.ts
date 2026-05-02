@@ -176,6 +176,15 @@ BUDGET: ${budget}
 USER: ${user?.name || "Traveler"}
 ${fromDate ? `FROM: ${fromDate}` : ""}
 ${toDate ? `TO: ${toDate}` : ""}
+${
+  fromDate || toDate
+    ? `DATE-AWARE PLANNING:
+- Consider Bali's wet season (Nov–Mar) vs dry season (Apr–Oct) when selecting outdoor vs indoor activities.
+- Reflect Balinese cultural calendar in suggestions when relevant: Nyepi (Day of Silence), Galungan, Kuningan, Saraswati, Pagerwesi, Tumpek days, full-moon (Purnama) and dark-moon (Tilem) temple ceremonies, Bali Arts Festival (Jun–Jul), Ubud Writers & Readers Festival (Oct).
+- If the dates fall on or near a major ceremony, propose ceremony-friendly activities (temple visits, dance performances) and warn about closures (Nyepi: airport + roads closed, all activity stops).
+- Day 1 should account for travel/jetlag: lighter pace.`
+    : ""
+}
 
 CANDIDATE POOL (the ONLY valid productCodes; ${candidates.length} items):
 ${candidateLines || "(empty — use only tips with productCode=null)"}

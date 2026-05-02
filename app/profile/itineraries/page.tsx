@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+import BackLink from "@/components/common/BackLink";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 
 interface Itinerary {
   id: number;
@@ -21,6 +24,7 @@ const fmt = (d: string | null) =>
 
 export default function ItinerariesListPage() {
   const { status } = useSession();
+  const confirm = useConfirm();
   const [items, setItems] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,19 +42,91 @@ export default function ItinerariesListPage() {
     })();
   }, [status]);
 
-  const remove = async (id: number) => {
-    if (!confirm("Delete this itinerary?")) return;
-    await fetch(`/api/itineraries?id=${id}`, { method: "DELETE" });
-    setItems((s) => s.filter((x) => x.id !== id));
+  const copyToClipboard = async (text: string) => {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // fall through to legacy fallback
+      }
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+
+  const performRemove = async (id: number) => {
+    try {
+      const res = await fetch(`/api/itineraries?id=${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error("We couldn't delete this itinerary", {
+          description: data?.error || "Please try again in a moment.",
+        });
+        return;
+      }
+      setItems((s) => s.filter((x) => x.id !== id));
+      toast.success("Itinerary deleted");
+    } catch {
+      toast.error("Network problem", {
+        description: "Couldn't reach the server. Please check your connection and try again.",
+      });
+    }
+  };
+
+  const remove = async (id: number, title: string) => {
+    const ok = await confirm({
+      title: `Delete "${title}"?`,
+      description:
+        "This will permanently remove the itinerary from your account, including any public share link.",
+      confirmLabel: "Delete itinerary",
+      cancelLabel: "Keep it",
+      destructive: true,
+    });
+    if (ok) performRemove(id);
   };
 
   const copyShare = async (slug: string) => {
     const url = `${window.location.origin}/share/itinerary/${slug}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      alert(`Copied:\n${url}`);
-    } catch {
-      prompt("Copy link:", url);
+    const ok = await copyToClipboard(url);
+    if (ok) {
+      toast.success("Share link copied to your clipboard", {
+        description: url,
+        duration: 5000,
+        action: {
+          label: "Open",
+          onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
+        },
+      });
+    } else {
+      toast("Copy your share link", {
+        description: url,
+        duration: 9000,
+        action: {
+          label: "Copy",
+          onClick: () => {
+            copyToClipboard(url).then((done) => {
+              if (done) toast.success("Link copied");
+              else
+                toast.error("Copy not supported on this device", {
+                  description: "Long-press the link in this toast to copy it manually.",
+                });
+            });
+          },
+        },
+      });
     }
   };
 
@@ -82,9 +158,7 @@ export default function ItinerariesListPage() {
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/profile" className="text-sm text-[#0071CE] hover:underline">
-            ← Back to Profile
-          </Link>
+          <BackLink href="/profile" label="Back to profile" />
         </div>
         <div className="flex items-end justify-between mb-6 gap-3">
           <div>
@@ -157,8 +231,9 @@ export default function ItinerariesListPage() {
                     </Link>
                   )}
                   <button
-                    onClick={() => remove(it.id)}
+                    onClick={() => remove(it.id, it.title)}
                     className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition"
+                    aria-label={`Delete ${it.title}`}
                   >
                     ✕
                   </button>

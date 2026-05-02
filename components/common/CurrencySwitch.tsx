@@ -24,7 +24,7 @@ export default function CurrencySwitch({ size = "md" }: CurrencySwitchProps) {
             : "text-gray-400 hover:text-gray-600"
         }`}
       >
-        Rp IDR
+        IDR
       </button>
       <button
         onClick={() => setCurrency("USD")}
@@ -34,7 +34,7 @@ export default function CurrencySwitch({ size = "md" }: CurrencySwitchProps) {
             : "text-gray-400 hover:text-gray-600"
         }`}
       >
-        $ USD
+        USD
       </button>
     </div>
   );

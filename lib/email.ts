@@ -263,3 +263,50 @@ export async function sendBookingConfirmation(params: {
     `,
   })
 }
+
+// ── Generic notification (used by NotificationBroadcast) ───────────────
+
+export async function sendNotificationEmail(params: {
+  to: string;
+  userName: string;
+  title: string;
+  body: string;
+  url?: string;
+}) {
+  const ctaHref = params.url
+    ? params.url.startsWith("http")
+      ? params.url
+      : `${SITE_URL}${params.url}`
+    : null;
+  const cta = ctaHref
+    ? `<a href="${ctaHref}" style="display:inline-block; padding:12px 24px; background:#0071CE; color:#fff; text-decoration:none; font-weight:bold; border-radius:8px; margin-top:16px;">View details</a>`
+    : "";
+
+  const safeBody = params.body
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/\n/g, "<br>");
+
+  await transporter.sendMail({
+    from: FROM,
+    to: params.to,
+    subject: params.title,
+    html: `
+      <div style="max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #1f2937;">
+        <div style="background:linear-gradient(135deg,#0071CE,#005ba6); border-radius:16px; padding:24px; color:#fff; margin-bottom:24px;">
+          <h1 style="margin:0; font-size:22px; font-weight:800;">${params.title}</h1>
+        </div>
+        <p style="font-size:14px; color:#4b5563; margin-bottom:8px;">Hi ${params.userName},</p>
+        <div style="font-size:15px; line-height:1.6; color:#1f2937;">${safeBody}</div>
+        ${cta}
+        <p style="font-size:11px; color:#9ca3af; margin-top:32px; border-top:1px solid #e5e7eb; padding-top:16px;">
+          You're receiving this because you have notifications enabled.
+          <a href="${SITE_URL}/profile/notifications" style="color:#0071CE;">Manage preferences</a>
+        </p>
+      </div>
+    `,
+  });
+}

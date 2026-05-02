@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import BackLink from "@/components/common/BackLink";
 
 const STYLE_TAGS: { id: string; label: string; emoji: string }[] = [
   { id: "adventure", label: "Adventure", emoji: "🧗" },
@@ -130,11 +131,9 @@ export default function TravelProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/profile" className="text-sm text-[#0071CE] hover:underline">
-            ← Back to Profile
-          </Link>
+          <BackLink href="/profile" label="Back to profile" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Travel Profile</h1>
         <p className="text-sm text-gray-500 mb-6">

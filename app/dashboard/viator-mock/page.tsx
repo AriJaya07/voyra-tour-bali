@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { PlusIcon, TrashIcon, ExternalLinkIcon, CopyIcon } from "@/components/assets/Icon/shared";
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 
 interface MockBooking {
   id: number;
@@ -31,6 +32,7 @@ interface PaginatedResponse {
 const PAGE_LIMIT = 20;
 
 export default function ViatorMockAdminPage() {
+  const confirm = useConfirm();
   const [bookings, setBookings] = useState<MockBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -67,7 +69,14 @@ export default function ViatorMockAdminPage() {
   }, [fetchBookings]);
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this mock booking link?")) return;
+    const ok = await confirm({
+      title: "Delete this mock booking link?",
+      description: "This will permanently remove the mock booking. Existing payment links will stop working.",
+      confirmLabel: "Delete link",
+      cancelLabel: "Keep it",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/admin/mock-bookings/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTheme } from "@/components/Dashboard/ThemeProvider";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 
 type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -29,6 +30,7 @@ export default function AdminReviewsPage() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const { theme } = useTheme();
+  const confirm = useConfirm();
   const isDark = theme === "dark";
 
   const [statusFilter, setStatusFilter] = useState<ReviewStatus>("PENDING");
@@ -81,7 +83,14 @@ export default function AdminReviewsPage() {
   };
 
   const remove = async (id: number) => {
-    if (!confirm("Permanently delete this review?")) return;
+    const ok = await confirm({
+      title: "Delete this review?",
+      description: "The review will be permanently removed from the product page and your moderation queue.",
+      confirmLabel: "Delete review",
+      cancelLabel: "Keep it",
+      destructive: true,
+    });
+    if (!ok) return;
     setActingId(id);
     try {
       const res = await fetch(`/api/admin/reviews/${id}`, { method: "DELETE" });

@@ -28,7 +28,16 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const { targetType, targetKey, targetTitle, rating, body: noteBody, visibility, photos } = body ?? {};
+  const {
+    targetType,
+    targetKey,
+    targetTitle,
+    rating,
+    body: noteBody,
+    visibility,
+    photos,
+    date,
+  } = body ?? {};
 
   if (!TARGET_TYPES.includes(targetType)) {
     return NextResponse.json({ error: "invalid targetType" }, { status: 400 });
@@ -43,6 +52,7 @@ export async function POST(req: NextRequest) {
   const safeRating =
     typeof rating === "number" && rating >= 1 && rating <= 5 ? Math.floor(rating) : null;
   const safeVisibility = VISIBILITY.includes(visibility) ? visibility : "PRIVATE";
+  const safeDate = parseDateOnly(date);
 
   const created = await prisma.baliNote.create({
     data: {
@@ -54,9 +64,18 @@ export async function POST(req: NextRequest) {
       body: noteBody.trim().slice(0, 4000),
       photos: Array.isArray(photos) ? photos.slice(0, 6) : undefined,
       visibility: safeVisibility,
+      date: safeDate,
     },
   });
   return NextResponse.json(created);
+}
+
+function parseDateOnly(input: unknown): Date | null {
+  if (typeof input !== "string") return null;
+  const m = input.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const d = new Date(Date.UTC(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3])));
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 export async function PATCH(req: NextRequest) {
@@ -76,6 +95,7 @@ export async function PATCH(req: NextRequest) {
   if (typeof body?.rating === "number" && body.rating >= 1 && body.rating <= 5) data.rating = Math.floor(body.rating);
   if (VISIBILITY.includes(body?.visibility)) data.visibility = body.visibility;
   if (typeof body?.targetTitle === "string") data.targetTitle = body.targetTitle.slice(0, 200);
+  if ("date" in (body ?? {})) data.date = parseDateOnly(body.date);
 
   const updated = await prisma.baliNote.update({ where: { id }, data });
   return NextResponse.json(updated);

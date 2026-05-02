@@ -6,51 +6,19 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useWishlistStore } from "@/utils/hooks/useWishlist";
 import SearchModal from "./SearchModal";
+import {
+  MobileHomeIcon,
+  MobileSearchIcon,
+  MobileHeartIcon,
+  MobileTripsIcon,
+  MobilePersonIcon,
+} from "@/components/assets/Icon/MobileNavIcons";
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ReactNode;
   matchPrefix?: string;
-}
-
-function HomeIcon({ active }: { active: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" className="w-6 h-6" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9.5l9-7 9 7V20a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2V9.5z" />
-    </svg>
-  );
-}
-function SearchIcn() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="7" />
-      <path d="M21 21l-4.3-4.3" />
-    </svg>
-  );
-}
-function HeartIcn({ active }: { active: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" className="w-6 h-6" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
-  );
-}
-function TripsIcn({ active }: { active: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" className="w-6 h-6" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="6" width="18" height="14" rx="2" />
-      <path d="M16 2v4M8 2v4M3 10h18" />
-    </svg>
-  );
-}
-function PersonIcn({ active }: { active: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" className="w-6 h-6" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21a8 8 0 0 1 16 0" />
-    </svg>
-  );
 }
 
 export default function MobileBottomNav() {
@@ -67,11 +35,11 @@ export default function MobileBottomNav() {
   const tripsHref = session ? "/profile#my-bookings" : "/login";
 
   const items: NavItem[] = [
-    { href: "/", label: "Home", icon: <HomeIcon active={pathname === "/"} /> },
-    { href: "/search", label: "Search", icon: <SearchIcn />, matchPrefix: "/search" },
-    { href: "/wishlist", label: "Wishlist", icon: <HeartIcn active={pathname === "/wishlist"} />, matchPrefix: "/wishlist" },
-    { href: tripsHref, label: "Trips", icon: <TripsIcn active={pathname === "/profile" && typeof window !== "undefined" && window.location.hash === "#my-bookings"} /> },
-    { href: profileHref, label: "Account", icon: <PersonIcn active={pathname.startsWith("/profile") || pathname === "/login"} />, matchPrefix: "/profile" },
+    { href: "/", label: "Home", icon: <MobileHomeIcon active={pathname === "/"} /> },
+    { href: "/search", label: "Search", icon: <MobileSearchIcon />, matchPrefix: "/search" },
+    { href: "/wishlist", label: "Wishlist", icon: <MobileHeartIcon active={pathname === "/wishlist"} />, matchPrefix: "/wishlist" },
+    { href: tripsHref, label: "Trips", icon: <MobileTripsIcon active={pathname === "/profile" && typeof window !== "undefined" && window.location.hash === "#my-bookings"} /> },
+    { href: profileHref, label: "Account", icon: <MobilePersonIcon active={pathname.startsWith("/profile") || pathname === "/login"} />, matchPrefix: "/profile" },
   ];
 
   return (

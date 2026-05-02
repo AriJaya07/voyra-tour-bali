@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { useWishlistActions, type WishlistItem } from "@/utils/hooks/useWishlist";
+import HeartIcon from "@/components/assets/Icon/shared/HeartIcon";
 
 interface Props {
   item: WishlistItem;
@@ -43,15 +44,9 @@ export default function WishlistButton({ item, className = "", size = "md" }: Pr
       aria-pressed={active}
       className={`${dim} flex items-center justify-center rounded-full bg-white/95 backdrop-blur-sm shadow-md hover:scale-110 transition cursor-pointer ${className}`}
     >
-      <svg
-        viewBox="0 0 24 24"
+      <HeartIcon
         className={`${iconDim} transition ${active ? "fill-red-500 stroke-red-500" : "fill-none stroke-gray-700"}`}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-      </svg>
+      />
     </button>
   );
 }

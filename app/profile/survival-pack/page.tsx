@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import BackLink from "@/components/common/BackLink";
 import { useSession } from "next-auth/react";
 
 interface ImportedTrip {
@@ -159,9 +160,7 @@ export default function SurvivalPackPage() {
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4 print:bg-white print:pt-0">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-2 mb-2 print:hidden">
-          <Link href="/profile" className="text-sm text-[#0071CE] hover:underline">
-            ← Back to Profile
-          </Link>
+          <BackLink href="/profile" label="Back to profile" />
         </div>
 
         <div className="flex items-end justify-between mb-6 print:mb-3">

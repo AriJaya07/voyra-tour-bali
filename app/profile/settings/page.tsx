@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import BackLink from "@/components/common/BackLink";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 
@@ -27,10 +28,6 @@ export default function SettingsPage() {
       </div>
     );
   }
-
-  const exportData = () => {
-    window.location.href = "/api/account/export";
-  };
 
   const deleteAccount = async () => {
     if (confirmText !== "DELETE") return;
@@ -59,31 +56,14 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/profile" className="text-sm text-[#0071CE] hover:underline">
-            ← Back to Profile
-          </Link>
+          <BackLink href="/profile" label="Back to profile" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Account Settings</h1>
         <p className="text-sm text-gray-500 mb-6">
-          Export your data or close your account.
+          Manage your notifications or close your account.
         </p>
-
-        {/* Export */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-5">
-          <h2 className="font-bold text-gray-900 mb-1">Export your data</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Download a JSON file with everything we have on your account: profile, preferences, bookings,
-            wishlist, notes, itineraries.
-          </p>
-          <button
-            onClick={exportData}
-            className="px-5 py-2.5 bg-[#0071CE] hover:bg-[#005ba6] text-white text-sm font-bold rounded-xl transition shadow-sm"
-          >
-            ⬇ Download my data
-          </button>
-        </div>
 
         {/* Notifications */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-5">

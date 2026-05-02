@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/Dashboard/ThemeProvider";
 import { SearchIcon } from "@/components/assets/Icon/shared";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 
 // ─── Types ───────────────────────────────
 interface Subscriber {
@@ -64,6 +65,7 @@ export default function SubscribersAdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { theme } = useTheme();
+  const confirm = useConfirm();
   const t = useThemeClasses(theme);
 
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
@@ -129,7 +131,14 @@ export default function SubscribersAdminPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to permanently delete this subscriber?")) return;
+    const ok = await confirm({
+      title: "Delete this subscriber?",
+      description: "Their email address will be permanently removed from your list. They can re-subscribe later.",
+      confirmLabel: "Delete subscriber",
+      cancelLabel: "Keep it",
+      destructive: true,
+    });
+    if (!ok) return;
     const res = await fetch(`/api/admin/subscribers/${id}`, { method: "DELETE" });
     if (res.ok) {
       setSubscribers(prev => prev.filter(s => s.id !== id));

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 
 interface ImportedTrip {
   id: number;
@@ -26,6 +27,7 @@ const fmtDate = (d: string | null) => {
 };
 
 export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBookings: boolean }) {
+  const confirm = useConfirm();
   const [trips, setTrips] = useState<ImportedTrip[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -97,7 +99,15 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Remove this trip from your profile? Your booking on the partner site is unaffected.")) return;
+    const ok = await confirm({
+      title: "Remove this trip?",
+      description:
+        "It will be removed from your profile only. Your booking on the partner site is unaffected.",
+      confirmLabel: "Remove trip",
+      cancelLabel: "Keep it",
+      destructive: true,
+    });
+    if (!ok) return;
     await fetch(`/api/imported-trips?id=${id}`, { method: "DELETE" });
     setTrips((t) => t.filter((x) => x.id !== id));
   };

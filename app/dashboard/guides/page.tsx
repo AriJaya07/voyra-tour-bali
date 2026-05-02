@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 
 interface Guide {
   id: number;
@@ -21,6 +22,7 @@ const fmtDate = (d: string | null) =>
   d ? new Date(d).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
 export default function AdminGuidesPage() {
+  const confirm = useConfirm();
   const [list, setList] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -110,7 +112,14 @@ export default function AdminGuidesPage() {
   };
 
   const remove = async (id: number) => {
-    if (!confirm("Delete this guide?")) return;
+    const ok = await confirm({
+      title: "Delete this guide?",
+      description: "Published content will be removed and any deep links will break.",
+      confirmLabel: "Delete guide",
+      cancelLabel: "Keep it",
+      destructive: true,
+    });
+    if (!ok) return;
     await fetch(`/api/admin/guides/${id}`, { method: "DELETE" });
     setList((s) => s.filter((g) => g.id !== id));
   };

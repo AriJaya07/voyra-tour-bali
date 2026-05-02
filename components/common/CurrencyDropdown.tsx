@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useCurrency } from "@/utils/hooks/useCurrency";
 import { SUPPORTED_CURRENCIES, CURRENCY_LABELS, CURRENCY_SYMBOLS, type CurrencyCode } from "@/utils/formatPrice";
+import { ChevronDownIcon } from "@/components/assets/Icon/NavIcons";
 
 interface Props {
   variant?: "desktop" | "mobile";
@@ -36,15 +37,9 @@ export default function CurrencyDropdown({ variant = "desktop" }: Props) {
         aria-expanded={open}
         aria-label="Select currency"
       >
-        <span className="font-bold text-[#0071CE]">{CURRENCY_SYMBOLS[currency]}</span>
-        <span className="font-semibold text-gray-700">{currency}</span>
-        <svg className={`w-3 h-3 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor">
-          <path
-            fillRule="evenodd"
-            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-            clipRule="evenodd"
-          />
-        </svg>
+        {/* <span className="font-bold text-[#0071CE]">{CURRENCY_SYMBOLS[currency]}</span> */}
+        <span className="font-semibold text-gray-700 pr-3">{currency}</span>
+        <ChevronDownIcon className={`w-3 h-3 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (

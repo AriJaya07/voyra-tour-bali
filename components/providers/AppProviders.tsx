@@ -13,6 +13,7 @@ import RecentlyViewedSync from "@/components/providers/RecentlyViewedSync";
 import PreferencesSync from "@/components/providers/PreferencesSync";
 import PWARegister from "@/components/providers/PWARegister";
 import ExitIntentModal from "@/components/common/ExitIntentModal";
+import { ConfirmDialogProvider } from "@/components/common/ConfirmDialog";
 import AIChatWidget from "@/components/AIChatWidget";
 
 interface AppProvidersProps {
@@ -34,7 +35,7 @@ export default function AppProviders({ children, session }: AppProvidersProps) {
         <RecentlyViewedSync />
         <PreferencesSync />
         <PWARegister />
-        {children}
+        <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
         <Toaster
           position="top-right"
           richColors

@@ -92,7 +92,7 @@ export default function ContactPage() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Get in Touch</h2>
                 <p className="text-gray-500 text-sm leading-relaxed">
-                  Our team is based in Bali and available daily from <strong>08:00 – 20:00 WITA</strong>. We typically respond within a few hours.
+                  Our team is based in Bali and available daily from <strong>08:00 – 17:00 WITA</strong>. We typically respond within a few hours.
                 </p>
               </div>
 

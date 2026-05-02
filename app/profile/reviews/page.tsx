@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { toast } from "sonner";
+import BackLink from "@/components/common/BackLink";
 
 interface MyReview {
   id: number;
@@ -80,9 +81,7 @@ export default function MyReviewsPage() {
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">My Reviews</h1>
-          <Link href="/profile" className="text-sm text-[#0071CE] hover:underline">
-            ← Back to profile
-          </Link>
+          <BackLink href="/profile" label="Back to profile" />
         </div>
 
         {loading ? (
