@@ -173,6 +173,7 @@ Cron jobs added by the AI subsystem (register in Vercel dashboard or `vercel.jso
 - `/api/cron/ai-grace-sweep` — hourly
 - `/api/cron/ai-expire-credits` — daily 19:00 UTC
 - `/api/cron/ai-usage-rollup` — daily 20:00 UTC
+- `/api/cron/ai-welcome-followup` — daily 09:30 UTC (T-3 / T-1 / post-expire welcome emails)
 
 All gated by `Authorization: Bearer ${CRON_SECRET}`.
 

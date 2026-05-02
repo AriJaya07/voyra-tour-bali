@@ -9,6 +9,10 @@ import BackLink from "@/components/common/BackLink";
 import CreditMeter from "@/components/ai/CreditMeter";
 import TopupCard from "@/components/ai/TopupCard";
 import FamilySeatsPanel from "@/components/ai/FamilySeatsPanel";
+import BucketBreakdown from "@/components/ai/BucketBreakdown";
+import CreditTranslation from "@/components/ai/CreditTranslation";
+import NextRenewalCountdown from "@/components/ai/NextRenewalCountdown";
+import TrustStrip from "@/components/Homepage/TrustStrip";
 import {
   useAcceptFamilySeatMutation,
   useAiCatalog,
@@ -145,41 +149,44 @@ export default function AiWalletPage() {
         Manage your AI credits, top up instantly, and review recent usage.
       </p>
 
-      <section className="mt-6 grid gap-4 md:grid-cols-2">
+      <section className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <CreditMeter
           balance={w?.balance ?? 0}
           earned={w?.lifetimeEarned ?? 0}
           expiringIn7d={w?.expiringIn7d ?? 0}
           planLabel={w?.planLabel ?? "Free"}
         />
+
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Lifetime
+            What you can do right now
           </div>
-          <div className="mt-2 grid grid-cols-2 gap-3">
-            <div>
-              <div className="text-sm text-slate-500">Earned</div>
-              <div className="text-xl font-bold text-slate-900">
-                {(w?.lifetimeEarned ?? 0).toLocaleString()}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-slate-500">Spent</div>
-              <div className="text-xl font-bold text-slate-900">
-                {(w?.lifetimeSpent ?? 0).toLocaleString()}
-              </div>
-            </div>
-          </div>
-          {w?.subscription ? (
+          <CreditTranslation amount={w?.balance ?? 0} variant="full" className="mt-3" />
+          {w?.subscription && w.subscription.currentPeriodEnd ? (
             <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-              Subscription <span className="font-semibold text-slate-800">{w.subscription.status}</span>
-              {w.subscription.currentPeriodEnd ? (
-                <> · renews {fmtDate(w.subscription.currentPeriodEnd)}</>
-              ) : null}
+              {w.subscription.cancelAtPeriodEnd ? (
+                <>
+                  Subscription ends on{" "}
+                  <span className="font-semibold text-slate-800">
+                    {fmtDate(w.subscription.currentPeriodEnd)}
+                  </span>{" "}
+                  — credits keep their original expiry dates.
+                </>
+              ) : (
+                <>
+                  <NextRenewalCountdown at={w.subscription.currentPeriodEnd} />{" "}
+                  · Rp {w.subscription.priceIdr.toLocaleString("id-ID")} ·{" "}
+                  {w.subscription.monthlyCredits} credits
+                </>
+              )}
             </div>
           ) : null}
         </div>
       </section>
+
+      <BucketBreakdown buckets={w?.buckets ?? []} className="mt-4" />
+
+      <TrustStrip className="mt-4" compact />
 
       <FamilySeatsPanel />
 

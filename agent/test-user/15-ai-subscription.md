@@ -1,6 +1,6 @@
 # 15 · AI Subscription + Credit System
 
-> Updated: 2026-05-02
+> Updated: 2026-05-03
 
 Manual QA checklist for the AI subscription + credit subsystem (Phases 1–6).
 
@@ -53,11 +53,16 @@ Manual QA checklist for the AI subscription + credit subsystem (Phases 1–6).
 
 ## Acceptance criteria
 
-### Free tier
+### Welcome grant + free tier
+- [ ] New credentials signup → `User.aiWelcomeGrantedAt` populated and one `AiCreditGrant(source=WELCOME, amount=50, expiresAt = now+7d)` created
+- [ ] Google first-signin → same welcome grant fires through `auth.ts` callback
+- [ ] Re-firing register or signIn for same user does **not** double-grant (idempotent via `aiWelcomeGrantedAt` + dedupe by refId `WELCOME_<userId>`)
+- [ ] Legacy user with existing `BACKFILL` grant gets `aiWelcomeGrantedAt` set without a new welcome grant
 - [ ] First chat call of the UTC month grants 20 free credits via `ensureFreeMonthlyGrant`
 - [ ] Same user calling chat twice within the month does **not** double-grant
 - [ ] Free user calling `/api/ai/plan` → HTTP 402 `FEATURE_LOCKED`
 - [ ] Guest 6th chat call within 24h → HTTP 402 `QUOTA` with `upgradeUrl=/register`
+- [ ] Welcome cron `ai-welcome-followup` sends T-3 / T-1 / post-expire emails only to non-paid users
 
 ### Reservation lifecycle
 - [ ] Successful chat → ledger row `reservationStatus=SETTLED`, balance decrement matches actual cost (≤ reserved)

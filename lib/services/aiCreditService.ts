@@ -27,6 +27,8 @@ import {
   BACKFILL_GRANT_TTL_DAYS,
   LOYALTY_GRANT_TTL_DAYS,
   PROMO_GRANT_TTL_DAYS,
+  WELCOME_GRANT_AMOUNT,
+  WELCOME_GRANT_TTL_DAYS,
   subscriptionGrantTtlDays,
   type AiPackKey,
   type AiPlanKey,
@@ -37,6 +39,7 @@ import {
 // ---------------------------------------------------------------------------
 
 export type GrantSource =
+  | "WELCOME"
   | "SUBSCRIPTION"
   | "TOPUP"
   | "PROMO"
@@ -402,6 +405,70 @@ export async function ensureFreeMonthlyGrant(userId: number): Promise<{ granted:
   return { granted: true, refId };
 }
 
+/**
+ * Welcome grant for first-time signups. Grants WELCOME_GRANT_AMOUNT credits
+ * with WELCOME_GRANT_TTL_DAYS expiry. Idempotent via User.aiWelcomeGrantedAt.
+ *
+ * Skipped silently if:
+ *  - Kill switch is off.
+ *  - User already has aiWelcomeGrantedAt populated.
+ *  - User has any existing AiCreditGrant from "BACKFILL" source (legacy users
+ *    keep their backfill in lieu of a welcome grant).
+ */
+export async function ensureWelcomeGrant(userId: number): Promise<{ granted: boolean; reason?: string }> {
+  if (!AI_CREDIT_GUARD_ON) return { granted: false, reason: "guard_off" };
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, aiWelcomeGrantedAt: true },
+  });
+  if (!user) return { granted: false, reason: "user_not_found" };
+  if (user.aiWelcomeGrantedAt) return { granted: false, reason: "already_granted" };
+
+  // Legacy backfill protection: skip if user got the Phase-1 BACKFILL grant.
+  const legacy = await prisma.aiCreditGrant.findFirst({
+    where: { userId, source: "BACKFILL" },
+    select: { id: true },
+  });
+  if (legacy) {
+    // Mark grantedAt anyway so we don't re-check on every call.
+    await prisma.user.update({
+      where: { id: userId },
+      data: { aiWelcomeGrantedAt: new Date() },
+    });
+    return { granted: false, reason: "legacy_user" };
+  }
+
+  const refId = `WELCOME_${userId}`;
+  const dupe = await prisma.aiCreditGrant.findFirst({
+    where: { userId, source: "WELCOME", refId },
+    select: { id: true },
+  });
+  if (dupe) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { aiWelcomeGrantedAt: new Date() },
+    });
+    return { granted: false, reason: "grant_exists" };
+  }
+
+  await grantCredits({
+    userId,
+    source: "WELCOME",
+    amount: WELCOME_GRANT_AMOUNT,
+    expiresInDays: WELCOME_GRANT_TTL_DAYS,
+    refId,
+    reasonOverride: "GRANT_WELCOME",
+  });
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { aiWelcomeGrantedAt: new Date() },
+  });
+
+  return { granted: true };
+}
+
 /** Convenience: backfill grant on Phase 1 rollout (idempotent by refId). */
 export async function backfillGrantOnce(userId: number): Promise<{ granted: boolean }> {
   const refId = `BACKFILL_PHASE1_${userId}`;
@@ -541,9 +608,220 @@ export async function canUseFeature(
 // Type alias used by canUseFeature signature above (declaration-hoisted)
 type AiPlan = (typeof AI_PLANS)[AiPlanKey];
 
+// ---------------------------------------------------------------------------
+// Bucket breakdown — wallet UI transparency
+// ---------------------------------------------------------------------------
+
+export interface BucketGrantSummary {
+  id: number;
+  amount: number;
+  remaining: number;
+  grantedAt: string;
+  expiresAt: string;
+  daysToExpiry: number;
+  refId: string | null;
+}
+
+export interface CreditBucket {
+  source: GrantSource;
+  label: string;
+  description: string;
+  totalRemaining: number;
+  soonestExpiry: string | null;
+  grants: BucketGrantSummary[];
+}
+
+const BUCKET_META: Record<GrantSource, { label: string; description: string }> = {
+  WELCOME: {
+    label: "Welcome bonus",
+    description: "Free trial credits — try the AI for 7 days.",
+  },
+  SUBSCRIPTION: {
+    label: "Subscription",
+    description: "Monthly grant from your active subscription. Valid 365 days from grant.",
+  },
+  TOPUP: {
+    label: "Top-up pack",
+    description: "Credits you bought directly. Valid 365 days from purchase.",
+  },
+  PROMO: {
+    label: "Promo / Free monthly",
+    description: "Promotional credits or free-tier monthly grant.",
+  },
+  REFERRAL: {
+    label: "Referral bonus",
+    description: "Earned by inviting a friend who signed up.",
+  },
+  LOYALTY_REDEEM: {
+    label: "Loyalty redemption",
+    description: "Credits exchanged from loyalty points. Valid 90 days.",
+  },
+  REFUND: {
+    label: "Refund",
+    description: "Credits restored from a refund.",
+  },
+  ADJUST: {
+    label: "Manual adjustment",
+    description: "Granted by support / admin.",
+  },
+  BACKFILL: {
+    label: "Launch bonus",
+    description: "One-time legacy bonus from when the AI subsystem launched.",
+  },
+};
+
+function dayDiff(from: Date, to: Date): number {
+  return Math.max(0, Math.ceil((to.getTime() - from.getTime()) / 86_400_000));
+}
+
+/**
+ * Group all live grants by source for the wallet UI. Returns one bucket per
+ * source the user has any positive remaining in, ordered by total remaining
+ * descending. Within a bucket, grants are ordered oldest-expiry-first (which
+ * is also spend order).
+ */
+export async function getCreditBuckets(userId: number): Promise<CreditBucket[]> {
+  const now = new Date();
+  const grants = await prisma.aiCreditGrant.findMany({
+    where: { userId, remaining: { gt: 0 }, expiresAt: { gt: now } },
+    orderBy: { expiresAt: "asc" },
+  });
+
+  const groups = new Map<GrantSource, BucketGrantSummary[]>();
+  for (const g of grants) {
+    const src = g.source as GrantSource;
+    const list = groups.get(src) ?? [];
+    list.push({
+      id: g.id,
+      amount: g.amount,
+      remaining: g.remaining,
+      grantedAt: g.grantedAt.toISOString(),
+      expiresAt: g.expiresAt.toISOString(),
+      daysToExpiry: dayDiff(now, g.expiresAt),
+      refId: g.refId ?? null,
+    });
+    groups.set(src, list);
+  }
+
+  const buckets: CreditBucket[] = [];
+  for (const [source, list] of groups.entries()) {
+    const meta = BUCKET_META[source] ?? { label: source, description: "" };
+    const totalRemaining = list.reduce((acc, g) => acc + g.remaining, 0);
+    const soonestExpiry = list.reduce<string | null>(
+      (acc, g) => (acc == null || g.expiresAt < acc ? g.expiresAt : acc),
+      null
+    );
+    buckets.push({
+      source,
+      label: meta.label,
+      description: meta.description,
+      totalRemaining,
+      soonestExpiry,
+      grants: list,
+    });
+  }
+
+  buckets.sort((a, b) => b.totalRemaining - a.totalRemaining);
+  return buckets;
+}
+
+// ---------------------------------------------------------------------------
+// Cost preview — let the UI tell users exactly what they'll spend
+// ---------------------------------------------------------------------------
+
+export interface CostEstimate {
+  endpoint: AiEndpoint;
+  credits: number;
+  balance: number;
+  afterBalance: number;
+  ok: boolean;
+  freeForTraveler: boolean;
+  label: string;
+  reason?: DenialReason;
+}
+
+const ENDPOINT_LABELS: Record<AiEndpoint, string> = {
+  chat: "Quick chat with the AI assistant",
+  plan: "Generate a Bali itinerary",
+  plan_refine: "Refine one day of an itinerary",
+  search: "Smart product search",
+  concierge: "Concierge chat with memory",
+  day_of_trip: "Day-of-trip helper",
+  cultural: "Cultural calendar question",
+  voucher_read: "Read a booking voucher (vision)",
+};
+
+/**
+ * Compute the cost of an upcoming AI action without spending anything. Used by
+ * the UI to show a Cost / Balance preview before the user clicks Submit.
+ */
+export async function estimateCost(
+  userId: number,
+  endpoint: AiEndpoint,
+  params?: { days?: number }
+): Promise<CostEstimate> {
+  const wallet = await prisma.aiCreditWallet.findUnique({ where: { userId } });
+  const balance = wallet?.balance ?? 0;
+
+  // Variable-cost endpoints
+  let credits: number;
+  if (endpoint === "plan") {
+    const days = Math.max(1, Math.min(14, params?.days ?? 5));
+    credits = days <= 7 ? 8 : 12;
+  } else {
+    // Static cost map (mirrors AI_ENDPOINT_COST in aiCosts.ts)
+    const STATIC: Record<AiEndpoint, number> = {
+      chat: 2,
+      plan: 8,
+      plan_refine: 6,
+      search: 1,
+      concierge: 4,
+      day_of_trip: 3,
+      cultural: 2,
+      voucher_read: 5,
+    };
+    credits = STATIC[endpoint];
+  }
+
+  // Free-for-traveler bypass on day_of_trip
+  let freeForTraveler = false;
+  if (endpoint === "day_of_trip") {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today.getTime() - 86_400_000);
+    const fortnight = new Date(today.getTime() + 14 * 86_400_000);
+    const activeBooking = await prisma.booking.findFirst({
+      where: {
+        userId,
+        status: "CONFIRMED",
+        travelDate: { gte: yesterday, lte: fortnight },
+      },
+      select: { id: true },
+    });
+    freeForTraveler = !!activeBooking;
+  }
+
+  const effectiveCost = freeForTraveler ? 0 : credits;
+  const afterBalance = balance - effectiveCost;
+  const ok = afterBalance >= 0;
+
+  return {
+    endpoint,
+    credits: effectiveCost,
+    balance,
+    afterBalance: Math.max(0, afterBalance),
+    ok,
+    freeForTraveler,
+    label: ENDPOINT_LABELS[endpoint],
+    reason: ok ? undefined : "QUOTA",
+  };
+}
+
 export {
   PROMO_GRANT_TTL_DAYS,
   LOYALTY_GRANT_TTL_DAYS,
   BACKFILL_GRANT_AMOUNT,
   BACKFILL_GRANT_TTL_DAYS,
+  WELCOME_GRANT_AMOUNT,
+  WELCOME_GRANT_TTL_DAYS,
 };

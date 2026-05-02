@@ -318,6 +318,14 @@ Credit-based billing for AI endpoints. All AI routes funnel through one service 
 - `AI_CREDIT_GUARD=off` makes all guards return ok (incident response).
 - `AiSubscription.priceIdr/monthlyCredits` snapshot at signup — price changes in `aiPlans.ts` don't affect existing subscribers.
 
+### Onboarding + transparency layer (Phase 9)
+- **Welcome grant** — 50 credits / 7 days, fired idempotently on credentials register and first Google signIn via `aiCreditService.ensureWelcomeGrant`. Skips legacy users with existing BACKFILL grants. Tracked by `User.aiWelcomeGrantedAt`.
+- **Subscription credit TTL** — now 365 days from grant (was 30 + carryover). Snapshot fields `carryoverDays`/`carryoverCap` retained on `AiSubscription` for grandfathered rows but `subscriptionGrantTtlDays()` returns 365 for new grants.
+- **Wallet buckets** — `aiCreditService.getCreditBuckets(userId)` groups live grants by `source` (WELCOME / SUBSCRIPTION / TOPUP / PROMO / REFERRAL / LOYALTY_REDEEM / REFUND / ADJUST / BACKFILL). `/api/ai/wallet` returns `buckets[]`; profile UI renders `BucketBreakdown` for transparent per-source totals + expiry dates.
+- **Cost preview** — `aiCreditService.estimateCost(userId, endpoint, params)` is exposed via `POST /api/ai/preview-cost`. UI shows live `Cost: X · You have Y` pill on every AI action button (`components/ai/CostPill.tsx`).
+- **Funnel analytics** — `GET /api/admin/ai/funnel` reports signups → welcome granted → activated → 50%+ burned → converted to paid, plus per-bucket distribution and refund rate.
+- **Welcome follow-up cron** — `/api/cron/ai-welcome-followup` (daily 09:30 UTC) sends T-3, T-1, and post-expire upgrade emails for users still on the welcome bucket.
+
 ---
 
 ## 11. Build & Deployment

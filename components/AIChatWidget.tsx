@@ -9,6 +9,7 @@ import Image from "next/image";
 import { buildViatorProductUrl } from "@/lib/config/viator";
 import AiCreditBadge from "@/components/ai/AiCreditBadge";
 import AiUpgradeModal from "@/components/ai/AiUpgradeModal";
+import CostPill from "@/components/ai/CostPill";
 import { useQueryClient } from "@tanstack/react-query";
 import { AI_QUERY_KEYS, useAiWallet } from "@/utils/hooks/useAiWallet";
 
@@ -269,9 +270,10 @@ export default function AIChatWidget() {
   }
 
   return (
-    // Safe area padding for iOS home indicator; right-3/bottom-4 on mobile, right-6/bottom-6 on sm+
+    // Mobile: lifted above the 56px MobileBottomNav (lg:hidden) so the chat
+    // button never covers primary nav. Desktop: pinned bottom-right as before.
     <div
-      className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3"
+      className="fixed right-3 bottom-[72px] sm:right-6 lg:bottom-6 z-50 flex flex-col items-end gap-3"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <AnimatePresence>
@@ -438,26 +440,34 @@ export default function AIChatWidget() {
             </div>
 
             {/* Input */}
-            <div className="px-3 py-2.5 border-t border-gray-100 bg-white flex items-center gap-2 flex-shrink-0">
-              <input
-                ref={inputRef}
-                type="text"
-                inputMode="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask about Bali tours..."
-                disabled={isStreaming}
-                className="flex-1 min-w-0 text-sm px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 bg-gray-50 disabled:opacity-60"
-              />
-              <button
-                onClick={() => sendMessage()}
-                disabled={isStreaming || !inputValue.trim()}
-                className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-                aria-label="Send"
-              >
-                <IoSend size={15} />
-              </button>
+            <div className="border-t border-gray-100 bg-white flex-shrink-0">
+              {isAuthed ? (
+                <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1 text-[10px] text-slate-500">
+                  <span>Press Enter to send</span>
+                  <CostPill endpoint={mode === "concierge" ? "concierge" : "chat"} />
+                </div>
+              ) : null}
+              <div className="px-3 pb-2.5 pt-1 flex items-center gap-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  inputMode="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask about Bali tours..."
+                  disabled={isStreaming}
+                  className="flex-1 min-w-0 text-sm px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 bg-gray-50 disabled:opacity-60"
+                />
+                <button
+                  onClick={() => sendMessage()}
+                  disabled={isStreaming || !inputValue.trim()}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                  aria-label="Send"
+                >
+                  <IoSend size={15} />
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

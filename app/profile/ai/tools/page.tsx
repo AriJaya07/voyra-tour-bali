@@ -5,7 +5,10 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import BackLink from "@/components/common/BackLink";
+import CostPill from "@/components/ai/CostPill";
+import SpendConfirmDialog from "@/components/ai/SpendConfirmDialog";
 import {
+  useAiWallet,
   useCulturalMutation,
   useDayOfTripMutation,
   useVoucherReadMutation,
@@ -70,9 +73,12 @@ function CulturalCard() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-semibold text-slate-900">🛕 Cultural co-pilot</h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-base font-semibold text-slate-900">🛕 Cultural co-pilot</h2>
+        <CostPill endpoint="cultural" />
+      </div>
       <p className="mt-1 text-xs text-slate-500">
-        Explorer+ · 2 credits/turn. Grounded in `BaliEvent` data around your focus date.
+        Explorer+ · grounded in our Bali ceremony calendar.
       </p>
       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
         <input
@@ -147,9 +153,12 @@ function DayOfTripCard() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-semibold text-slate-900">🌧️ Day-of-Trip helper</h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-base font-semibold text-slate-900">🌧️ Day-of-Trip helper</h2>
+        <CostPill endpoint="day_of_trip" />
+      </div>
       <p className="mt-1 text-xs text-slate-500">
-        Free for confirmed travelers in trip window · Voyager+ otherwise (3 credits/turn).
+        Free for confirmed travelers in trip window · Voyager+ otherwise.
       </p>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <input
@@ -201,38 +210,68 @@ function DayOfTripCard() {
 }
 
 function VoucherReadCard() {
+  const wallet = useAiWallet({ enabled: true });
   const mut = useVoucherReadMutation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [extracted, setExtracted] = useState<AiVoucherExtracted | null>(null);
   const [addToTrips, setAddToTrips] = useState(true);
   const [addToCalendar, setAddToCalendar] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [created, setCreated] = useState<{ trip: number | null; calendar: number | null }>({
     trip: null,
     calendar: null,
   });
 
-  async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
     if (!file) return;
+    setPendingFile(file);
+    setConfirmOpen(true);
+  }
+
+  function cancel() {
+    setConfirmOpen(false);
+    setPendingFile(null);
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
+  async function onConfirm() {
+    if (!pendingFile) return;
     try {
-      const res = await mut.mutateAsync({ file, opts: { addToTrips, addToCalendar } });
+      const res = await mut.mutateAsync({ file: pendingFile, opts: { addToTrips, addToCalendar } });
       setExtracted(res.extracted);
       setCreated({ trip: res.createdImportedTripId, calendar: res.createdCalendarEventId });
       toast.success("Voucher extracted");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Voucher reader failed";
-      toast.error(msg);
+      toast.error(err instanceof Error ? err.message : "Voucher reader failed");
     } finally {
+      setConfirmOpen(false);
+      setPendingFile(null);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-semibold text-slate-900">📷 Voucher reader (vision)</h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-base font-semibold text-slate-900">📷 Voucher reader (vision)</h2>
+        <CostPill endpoint="voucher_read" />
+      </div>
       <p className="mt-1 text-xs text-slate-500">
-        Voyager+ · 5 credits/upload. JPG / PNG / WEBP, max 8 MB. Returns 503 if vision is not enabled on this deployment.
+        Voyager+ · JPG / PNG / WEBP, max 8 MB. Disabled when vision env not configured.
       </p>
+
+      <SpendConfirmDialog
+        open={confirmOpen}
+        cost={5}
+        balance={wallet.data?.balance ?? 0}
+        title="Read this voucher with AI?"
+        body="The vision model will extract booking metadata. Costs 5 credits per upload."
+        onCancel={cancel}
+        onConfirm={onConfirm}
+        busy={mut.isPending}
+      />
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
         <label className="inline-flex items-center gap-2">
@@ -260,7 +299,7 @@ function VoucherReadCard() {
           ref={inputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          onChange={onUpload}
+          onChange={onPickFile}
           disabled={mut.isPending}
           className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:hover:bg-blue-700 disabled:opacity-60"
         />

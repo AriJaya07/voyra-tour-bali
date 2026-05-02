@@ -1,7 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { aiService, type AiPackKey, type AiPlanKey } from "@/utils/service/ai.service";
+import {
+  aiService,
+  type AiCostEndpoint,
+  type AiPackKey,
+  type AiPlanKey,
+} from "@/utils/service/ai.service";
 
 export const AI_QUERY_KEYS = {
   wallet: ["ai", "wallet"] as const,
@@ -212,5 +217,18 @@ export function useAcceptFamilySeatMutation() {
       qc.invalidateQueries({ queryKey: AI_QUERY_KEYS.wallet });
       qc.invalidateQueries({ queryKey: AI_QUERY_KEYS.subscription });
     },
+  });
+}
+
+export function useEstimateCost(
+  endpoint: AiCostEndpoint,
+  params?: { days?: number },
+  enabled = true
+) {
+  return useQuery({
+    queryKey: ["ai", "estimate", endpoint, params?.days ?? null],
+    queryFn: () => aiService.estimateCost(endpoint, params),
+    enabled,
+    staleTime: 10_000,
   });
 }

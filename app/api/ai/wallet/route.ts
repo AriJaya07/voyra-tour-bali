@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
-import { getWalletSummary } from "@/lib/services/aiCreditService";
-import { AI_PLANS } from "@/lib/config/aiPlans";
+import {
+  ensureWelcomeGrant,
+  getCreditBuckets,
+  getWalletSummary,
+} from "@/lib/services/aiCreditService";
+import { AI_PLANS, translateCredits } from "@/lib/config/aiPlans";
 
 /**
  * GET /api/ai/wallet
@@ -19,25 +23,24 @@ export async function GET() {
     }
     const userId = parseInt(session.user.id);
 
-    const [summary, subscription, recentGrants] = await Promise.all([
+    // Lazy welcome-grant guarantee on first wallet read. Idempotent — skips when
+    // already granted or legacy backfill user. Keeps onboarding bulletproof if
+    // the register/signIn hook ever drops the call.
+    await ensureWelcomeGrant(userId).catch(() => {});
+
+    const [summary, subscription, buckets] = await Promise.all([
       getWalletSummary(userId),
       prisma.aiSubscription.findUnique({ where: { userId } }),
-      prisma.aiCreditGrant.findMany({
-        where: { userId, remaining: { gt: 0 } },
-        orderBy: { expiresAt: "asc" },
-        take: 10,
-        select: {
-          id: true,
-          source: true,
-          amount: true,
-          remaining: true,
-          grantedAt: true,
-          expiresAt: true,
-        },
-      }),
+      getCreditBuckets(userId),
     ]);
 
     const planDef = AI_PLANS[summary.plan];
+    const translation = translateCredits(summary.balance);
+
+    // Flatten the soonest-expiring grant (across all buckets) for hero callouts.
+    const upcomingExpiry = buckets
+      .flatMap((b) => b.grants)
+      .sort((a, b) => a.expiresAt.localeCompare(b.expiresAt))[0] ?? null;
 
     return NextResponse.json(
       {
@@ -48,16 +51,27 @@ export async function GET() {
         plan: summary.plan,
         planLabel: planDef.label,
         planFeatures: planDef.features,
+        translation,
         subscription: subscription
           ? {
+              plan: subscription.plan,
               status: subscription.status,
+              currentPeriodStart: subscription.currentPeriodStart,
               currentPeriodEnd: subscription.currentPeriodEnd,
               cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
               autoRenew: subscription.autoRenew,
               nextRenewalAt: subscription.nextRenewalAt,
+              priceIdr: subscription.priceIdr,
+              monthlyCredits: subscription.monthlyCredits,
+              pendingPlanKey: subscription.pendingPlanKey,
             }
           : null,
-        grants: recentGrants,
+        buckets,
+        // Legacy field kept for backwards-compat with v1 wallet UI consumers.
+        grants: buckets
+          .flatMap((b) => b.grants.map((g) => ({ ...g, source: b.source })))
+          .slice(0, 10),
+        soonestExpiry: upcomingExpiry,
       },
       {
         headers: { "Cache-Control": "private, max-age=15" },

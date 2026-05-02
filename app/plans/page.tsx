@@ -8,6 +8,11 @@ import { HiSparkles } from "react-icons/hi2";
 import BackLink from "@/components/common/BackLink";
 import PlanCard from "@/components/ai/PlanCard";
 import TopupCard from "@/components/ai/TopupCard";
+import UsageCalculator from "@/components/ai/UsageCalculator";
+import PlansFAQ from "@/components/ai/PlansFAQ";
+import CostComparisonTable from "@/components/ai/CostComparisonTable";
+import CreditTranslation from "@/components/ai/CreditTranslation";
+import TrustStrip from "@/components/Homepage/TrustStrip";
 import { MIDTRANS_CLIENT_KEY, MIDTRANS_SNAP_URL } from "@/lib/config/midtrans";
 import {
   useAiCatalog,
@@ -159,41 +164,67 @@ export default function PlansPage() {
         </section>
       )}
 
-      <section className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <TrustStrip className="mt-8" />
+
+      <div className="mt-10 grid gap-4 lg:grid-cols-2">
+        <UsageCalculator />
+        <CostComparisonTable />
+      </div>
+
+      <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">How credits work</h2>
         <ul className="mt-3 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
-          <li>
-            <span className="font-semibold">Chat:</span> ~2 credits per turn
-          </li>
-          <li>
-            <span className="font-semibold">Itinerary plan:</span> 8 credits (1–7 days), 12 credits (8–14 days)
-          </li>
-          <li>
-            <span className="font-semibold">Concierge with memory:</span> 4 credits per turn
-          </li>
-          <li>
-            <span className="font-semibold">Voucher reader (vision):</span> 5 credits per upload
-          </li>
+          <li><span className="font-semibold">Chat:</span> 2 credits per turn</li>
+          <li><span className="font-semibold">Itinerary plan:</span> 8 credits (≤7 days), 12 credits (8–14 days)</li>
+          <li><span className="font-semibold">Plan refine:</span> 6 credits per day refined (Voyager+)</li>
+          <li><span className="font-semibold">Concierge:</span> 4 credits per turn (Voyager+)</li>
+          <li><span className="font-semibold">Cultural co-pilot:</span> 2 credits per turn (Explorer+)</li>
+          <li><span className="font-semibold">Day-of-trip:</span> 3 credits — free for confirmed travelers</li>
+          <li><span className="font-semibold">Voucher reader (vision):</span> 5 credits per upload (Voyager+)</li>
+          <li><span className="font-semibold">Itinerary → bookings:</span> 0 credits — drives 5% off via promo</li>
         </ul>
-        <p className="mt-3 text-xs text-slate-500">
-          Subscription credits expire after the carryover window. Top-up credits last 1 year.
-          Unused credits are refunded automatically when an AI call costs less than estimated.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl bg-amber-50 p-3 text-xs">
+            <div className="font-bold text-amber-800">Welcome bonus</div>
+            <div className="mt-1 text-amber-900">50 credits, 7 days from signup.</div>
+            <CreditTranslation amount={50} className="mt-1 !text-amber-700" />
+          </div>
+          <div className="rounded-xl bg-blue-50 p-3 text-xs">
+            <div className="font-bold text-blue-800">Subscription credits</div>
+            <div className="mt-1 text-blue-900">Valid 365 days from grant. Stack across renewals.</div>
+          </div>
+          <div className="rounded-xl bg-emerald-50 p-3 text-xs">
+            <div className="font-bold text-emerald-800">Top-up packs</div>
+            <div className="mt-1 text-emerald-900">Valid 365 days from purchase. No subscription required.</div>
+          </div>
+        </div>
+      </section>
+
+      <PlansFAQ className="mt-10" />
+
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 p-5">
+        <div>
+          <h3 className="text-base font-bold text-slate-900">Ready to plan smarter?</h3>
+          <p className="mt-1 text-xs text-slate-600">
+            Cancel anytime · Credits keep their original expiry · 7-day refund window.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/profile/ai"
-            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             Open my wallet
           </Link>
           <Link
-            href="/help"
-            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            href="/profile/ai/tools"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
           >
-            FAQ
+            Try AI tools →
           </Link>
         </div>
-      </section>
+      </div>
     </main>
   );
 }

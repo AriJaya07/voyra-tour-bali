@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
 import { verifyTurnstile } from '@/utils/verifyTurnstile';
+import { ensureWelcomeGrant } from '@/lib/services/aiCreditService';
 
 export async function POST(request: Request) {
   try {
@@ -100,6 +101,13 @@ export async function POST(request: Request) {
       } catch (refErr) {
         console.error('[Referral] failed to apply code:', refErr);
       }
+    }
+
+    // AI welcome grant — idempotent, non-blocking
+    try {
+      await ensureWelcomeGrant(user.id);
+    } catch (welcomeErr) {
+      console.error('[AI] Failed to grant welcome credits:', welcomeErr);
     }
 
     // Send verification email (non-blocking — don't fail registration if email fails)

@@ -55,6 +55,55 @@ export interface AiSubscriptionDTO {
   nextRenewalAt: string | null;
 }
 
+export type GrantSource =
+  | "WELCOME"
+  | "SUBSCRIPTION"
+  | "TOPUP"
+  | "PROMO"
+  | "REFERRAL"
+  | "LOYALTY_REDEEM"
+  | "REFUND"
+  | "ADJUST"
+  | "BACKFILL";
+
+export interface BucketGrant {
+  id: number;
+  amount: number;
+  remaining: number;
+  grantedAt: string;
+  expiresAt: string;
+  daysToExpiry: number;
+  refId: string | null;
+}
+
+export interface CreditBucket {
+  source: GrantSource;
+  label: string;
+  description: string;
+  totalRemaining: number;
+  soonestExpiry: string | null;
+  grants: BucketGrant[];
+}
+
+export interface CreditTranslation {
+  chatTurns: number;
+  quickPlans: number;
+  longPlans: number;
+  refines: number;
+  conciergeTurns: number;
+  culturalTurns: number;
+  dayOfTripTurns: number;
+  voucherReads: number;
+}
+
+export interface AiSubscriptionExpandedDTO extends AiSubscriptionDTO {
+  plan: AiPlanKey;
+  currentPeriodStart: string;
+  priceIdr: number;
+  monthlyCredits: number;
+  pendingPlanKey: AiPlanKey | null;
+}
+
 export interface AiWalletDTO {
   balance: number;
   lifetimeEarned: number;
@@ -63,8 +112,32 @@ export interface AiWalletDTO {
   plan: AiPlanKey;
   planLabel: string;
   planFeatures: AiPlanFeatures;
-  subscription: AiSubscriptionDTO | null;
+  translation: CreditTranslation;
+  subscription: AiSubscriptionExpandedDTO | null;
+  buckets: CreditBucket[];
   grants: AiGrantSummary[];
+  soonestExpiry: BucketGrant | null;
+}
+
+export type AiCostEndpoint =
+  | "chat"
+  | "plan"
+  | "plan_refine"
+  | "search"
+  | "concierge"
+  | "day_of_trip"
+  | "cultural"
+  | "voucher_read";
+
+export interface AiCostEstimate {
+  endpoint: AiCostEndpoint;
+  credits: number;
+  balance: number;
+  afterBalance: number;
+  ok: boolean;
+  freeForTraveler: boolean;
+  label: string;
+  reason?: "QUOTA" | "AUTH" | "RATE_LIMIT" | "FEATURE_LOCKED" | "INVALID_AMOUNT";
 }
 
 export interface AiUsageRow {
@@ -257,6 +330,14 @@ export const aiService = {
 
   acceptFamilySeat: async (token: string): Promise<{ message: string; seatId: number }> => {
     const { data } = await api.post("/ai/family-seats/accept", { token });
+    return data;
+  },
+
+  estimateCost: async (
+    endpoint: AiCostEndpoint,
+    params?: { days?: number }
+  ): Promise<AiCostEstimate> => {
+    const { data } = await api.post("/ai/preview-cost", { endpoint, params });
     return data;
   },
 };

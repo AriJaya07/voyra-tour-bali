@@ -7,6 +7,9 @@ import PromotionApp from "@/components/Homepage/PromotionApp";
 import RecentlyViewedStrip from "@/components/common/RecentlyViewedStrip";
 import NextTripWidget from "@/components/Homepage/NextTripWidget";
 import TravelToolkit from "@/components/Homepage/TravelToolkit";
+import AiHero from "@/components/Homepage/AiHero";
+import AiShowcase from "@/components/Homepage/AiShowcase";
+import TrustStrip from "@/components/Homepage/TrustStrip";
 
 export default async function Home() {
   const categories = await getCategories();
@@ -20,7 +23,12 @@ export default async function Home() {
         <RecentlyViewedStrip minItems={2} title="Continue browsing" />
         <Destionation categories={categories} />
         <TrendingActivity categories={categories} />
-        <TravelToolkit />
+        <div className="my-10 sm:my-14 space-y-4">
+          <AiHero />
+          <TrustStrip />
+          <TravelToolkit />
+          <AiShowcase />
+        </div>
         <PromotionApp />
       </Container>
     </div>

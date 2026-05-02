@@ -13,7 +13,9 @@ export interface AiPlan {
   label: string;
   priceIdr: number;
   monthlyCredits: number;
+  /** Legacy field — retained for grandfathered AiSubscription rows. New grants use 365-day TTL. */
   carryoverDays: number;
+  /** Legacy field — retained for grandfathered AiSubscription rows. */
   carryoverCap: number;
   /** Feature flags read by aiCreditService.canUseFeature */
   features: {
@@ -124,16 +126,55 @@ export const AI_PACKS: Record<AiPackKey, AiPack> = {
   MEGA: { key: "MEGA", label: "Mega", priceIdr: 449_000, credits: 4_000, expiryDays: 365 },
 };
 
-/** Default TTL applied when granting subscription monthly credits. */
+/** Days that subscription credits remain spendable from the moment they're granted. */
+export const SUBSCRIPTION_GRANT_TTL_DAYS = 365;
+
+/**
+ * Default TTL applied when granting subscription monthly credits.
+ * Plan key is reserved for future per-plan TTL overrides.
+ */
 export function subscriptionGrantTtlDays(planKey: AiPlanKey): number {
-  // Period is 30 days; carryover lets unused credits live carryoverDays beyond that.
-  return 30 + AI_PLANS[planKey].carryoverDays;
+  void planKey;
+  return SUBSCRIPTION_GRANT_TTL_DAYS;
 }
 
 /** Default TTL for promo / referral / loyalty grants. */
 export const PROMO_GRANT_TTL_DAYS = 365;
 export const LOYALTY_GRANT_TTL_DAYS = 90;
 
+/** Welcome grant for first-time signups. */
+export const WELCOME_GRANT_AMOUNT = 50;
+export const WELCOME_GRANT_TTL_DAYS = 7;
+
 /** Backfill grant for legacy users on Phase 1 rollout. */
 export const BACKFILL_GRANT_AMOUNT = 500;
 export const BACKFILL_GRANT_TTL_DAYS = 365;
+
+/**
+ * Human translation: how many of each kind of AI action a credit pile buys.
+ * Cost-map source: lib/config/aiCosts.ts AI_ENDPOINT_COST.
+ */
+export interface CreditTranslation {
+  chatTurns: number;
+  quickPlans: number;
+  longPlans: number;
+  refines: number;
+  conciergeTurns: number;
+  culturalTurns: number;
+  dayOfTripTurns: number;
+  voucherReads: number;
+}
+
+export function translateCredits(amount: number): CreditTranslation {
+  // Costs aligned with lib/config/aiCosts.ts AI_ENDPOINT_COST.
+  return {
+    chatTurns: Math.floor(amount / 2),
+    quickPlans: Math.floor(amount / 8),
+    longPlans: Math.floor(amount / 12),
+    refines: Math.floor(amount / 6),
+    conciergeTurns: Math.floor(amount / 4),
+    culturalTurns: Math.floor(amount / 2),
+    dayOfTripTurns: Math.floor(amount / 3),
+    voucherReads: Math.floor(amount / 5),
+  };
+}

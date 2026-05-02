@@ -64,7 +64,7 @@ export default function PlanCard({ plan, current, onSelect, busy }: Props) {
         {plan.monthlyCredits.toLocaleString()} credits / month
       </div>
 
-      <ul className="mt-5 space-y-2 text-sm">
+      <ul className="mt-5 flex-1 space-y-2 text-sm">
         {FEATURE_LABELS.map((f) => {
           const value = plan.features[f.key];
           const enabled = typeof value === "boolean" ? value : value > 0;
@@ -95,7 +95,7 @@ export default function PlanCard({ plan, current, onSelect, busy }: Props) {
         {isFree
           ? "Default plan"
           : current
-          ? "You're on this plan"
+          ? "You’re on this plan"
           : busy
           ? "Opening payment…"
           : "Choose plan"}

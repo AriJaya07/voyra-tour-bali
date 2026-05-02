@@ -140,7 +140,10 @@ model User {
   loginAttempts    Int       @default(0)
   loginLockedUntil DateTime?
 
-  currency String @default("IDR")
+  currency String @default("USD")
+
+  // AI welcome grant idempotency. Set once at signup grant time.
+  aiWelcomeGrantedAt DateTime?
 
   bookings       Booking[]
   wishlistItems  WishlistItem[]
