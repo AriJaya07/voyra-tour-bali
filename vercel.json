@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/cron/notification-broadcasts",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 7 * * *"
     },
     {
       "path": "/api/cron/trip-reminders",
@@ -39,7 +39,7 @@
     },
     {
       "path": "/api/cron/volcano-alert",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 5 * * *"
     },
     {
       "path": "/api/cron/weather-alert",
@@ -55,7 +55,7 @@
     },
     {
       "path": "/api/cron/viator-sync",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 12 * * *"
     }
   ]
 }
