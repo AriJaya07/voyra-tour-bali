@@ -46,6 +46,14 @@ When adding a model or endpoint, append a row here.
 | `NotificationPref` | userId@id, weatherAlerts, volcanoAlerts, nyepiAlert, tripReminders, marketingEmails | `→ User CASCADE` | |
 | `SavedTraveler` | id, userId, name, dateOfBirth?, passportNo? | `→ User CASCADE` | |
 | `ImportedTrip` | id, userId, viatorBookingRef@unique-per-user, productCode, travelDate, totalPrice, currency, status | `→ User` | manual paste flow |
+| `AiSubscription` | userId@unique, plan, status, currentPeriodEnd, cancelAtPeriodEnd, autoRenew, pendingPlanKey?, priceIdr, monthlyCredits, carryoverDays, carryoverCap | `→ User CASCADE` | status: PENDING_PAYMENT \| ACTIVE \| GRACE \| CANCELLED \| EXPIRED |
+| `AiCreditWallet` | userId@id, balance, lifetimeEarned, lifetimeSpent | `→ User CASCADE` | denormalised totals; verify via ledger sum |
+| `AiCreditGrant` | id, userId, source, amount, remaining, refId?, expiresAt, expiredAt? | `→ User CASCADE` | source: SUBSCRIPTION \| TOPUP \| PROMO \| REFERRAL \| LOYALTY_REDEEM \| REFUND \| ADJUST \| BACKFILL |
+| `AiCreditLedger` | id, userId, delta, reason, refId?, reservationStatus?, settledAt?, meta? | `→ User CASCADE` | reservationStatus: RESERVED \| SETTLED \| CANCELLED |
+| `AiUsage` | id, userId?, ipHash?, endpoint, creditsCost, tokensIn?, tokensOut?, durationMs?, status, meta? | `→ User SET NULL` | status: OK \| DENIED_QUOTA \| DENIED_AUTH \| ERROR; rolled up daily into `_rollup_*` rows; raw rows purged at 90d |
+| `AiPayment` | id, userId, kind, plan?, pack?, paymentId@unique, idempotencyKey@unique, status, paidAt? | `→ User CASCADE` | kind: SUBSCRIPTION_NEW \| SUBSCRIPTION_RENEWAL \| TOPUP; paymentId prefix `AISUB-` / `AITOP-` routes shared webhook |
+| `AiChatMemory` | userId@id, messages(JSON, ≤20 turns), notes(JSON, ≤12), turnCount | `→ User CASCADE` | concierge per-user memory |
+| `AiFamilySeat` | id, ownerUserId, memberUserId?@unique, inviteEmail?, inviteToken?@unique, acceptedAt?, revokedAt? | `→ User CASCADE` (owner), `→ User SET NULL` (member) | Founder: max 3 active seats |
 
 ---
 
@@ -166,6 +174,35 @@ All POST. Every cron requires `Authorization: Bearer ${CRON_SECRET}`. Returns `2
 | POST `/api/contact` | `200 { message }` (sends mail to support) |
 | GET `/api/stats` | `200 { destinations, bookings, ... }` |
 | GET `/api/proxy-download` | `200 binary` (signed S3 download) |
+
+### AI Subsystem
+
+| Verb + path | Body / Query | Success |
+|---|---|---|
+| GET `/api/ai/wallet` | – | `200 { balance, plan, planFeatures, subscription, grants }` |
+| GET `/api/ai/plans` | – | `200 { plans, packs }` (public) |
+| GET `/api/ai/usage?range=` | – | `200 { usage, ledger, totals }` |
+| POST `/api/ai/topup` | `{ pack }` | `200 { paymentId, snapToken, amountIdr, pack }` |
+| GET/POST `/api/ai/subscription` | – / `{ plan }` | `200 { subscription }` / `200 { paymentId, snapToken, plan }` |
+| PATCH `/api/ai/subscription` | `{ plan }` | `200 { ... }` upgrade Snap or `{ deferred, pendingPlanKey }` |
+| POST `/api/ai/subscription/cancel`/`/resume` | – | `200 { message, subscription }` |
+| POST `/api/ai/chat` | `{ userMessage }` | `text/plain` stream; 2 credits |
+| POST `/api/ai/plan` | `{ days, interests, region, fromDate, toDate }` | `200 { items }`; 8/12 credits |
+| POST `/api/ai/plan-refine` | `{ itineraryId, day, instruction }` | `200 { refinedDay, items }`; 6 credits Voyager+ |
+| POST/GET/DELETE `/api/ai/concierge` | `{ userMessage }` / – | `200 { reply, remembered }`; 4 credits Voyager+ |
+| POST `/api/ai/cultural` | `{ userMessage, date? }` | `200 { reply, events }`; 2 credits Explorer+ |
+| POST `/api/ai/day-of-trip` | `{ userMessage, region?, weather? }` | `200 { reply, free, booking }`; 0 credits if traveler-in-window |
+| POST `/api/ai/voucher-read` | multipart `file` | `200 { extracted, ... }`; 5 credits Voyager+; `503` when vision unset |
+| POST `/api/ai/loyalty-redeem` | `{ points }` | `200 { creditsGranted, newPointsBalance }`; Voyager+ |
+| POST `/api/ai/itinerary/book` | `{ itineraryId, dayFilter? }` | `200 { bundle, totals, promoCode }`; 0 credits Explorer+ |
+| GET/POST/DELETE `/api/ai/family-seats` | – / `{ email }` / `?id=` | `200 { maxSeats, used, seats }` etc. Founder only |
+| POST `/api/ai/family-seats/accept` | `{ token }` | `200 { message, seatId }` |
+| GET `/api/admin/ai/{metrics,users,abuse}` | `?range=` | ADMIN-only aggregates |
+| POST `/api/admin/ai/grant` | `{ userId, amount, expiresInDays?, reason? }` | `200 { message, refId }` |
+| POST `/api/admin/ai/refund` | `{ paymentId, reason? }` | `200 { reclaimed, totalGranted, note }` |
+| GET `/api/cron/ai-{subscription-renewals,renewal-reminders,grace-sweep,expire-credits,usage-rollup}` | Bearer `${CRON_SECRET}` | various rollup counts |
+
+All metered endpoints return **HTTP 402** with `{ error, reason, balance, upgradeUrl }` on quota miss or feature lock.
 
 ---
 

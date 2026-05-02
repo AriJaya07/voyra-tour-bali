@@ -2,25 +2,27 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
+import { getEffectivePlan } from "@/lib/services/aiCreditService";
+
+const EMPTY = {
+  authed: false,
+  unreadInbox: 0,
+  upcomingEvents: 0,
+  nextEvent: null,
+  nextTrip: null,
+  wishlistCount: 0,
+  notesCount: 0,
+  itineraryCount: 0,
+  loyaltyPoints: 0,
+  aiCreditsRemaining: 0,
+  aiPlan: "FREE" as const,
+};
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          authed: false,
-          unreadInbox: 0,
-          upcomingEvents: 0,
-          nextEvent: null,
-          nextTrip: null,
-          wishlistCount: 0,
-          notesCount: 0,
-          itineraryCount: 0,
-          loyaltyPoints: 0,
-        },
-        { status: 200 }
-      );
+      return NextResponse.json(EMPTY, { status: 200 });
     }
     const userId = parseInt(session.user.id);
 
@@ -37,6 +39,8 @@ export async function GET() {
       nextEvent,
       nextTrip,
       loyalty,
+      aiWallet,
+      aiPlan,
     ] = await Promise.all([
       prisma.appNotification.count({
         where: { userId, readAt: null, dismissedAt: null },
@@ -61,6 +65,8 @@ export async function GET() {
         where: { userId },
         select: { pointsBalance: true, tier: true },
       }),
+      prisma.aiCreditWallet.findUnique({ where: { userId }, select: { balance: true } }),
+      getEffectivePlan(userId),
     ]);
 
     return NextResponse.json(
@@ -75,6 +81,8 @@ export async function GET() {
         itineraryCount,
         loyaltyPoints: loyalty?.pointsBalance ?? 0,
         loyaltyTier: loyalty?.tier ?? null,
+        aiCreditsRemaining: aiWallet?.balance ?? 0,
+        aiPlan,
       },
       {
         headers: { "Cache-Control": "private, max-age=30" },
@@ -82,19 +90,6 @@ export async function GET() {
     );
   } catch (error) {
     console.error("Error fetching toolkit data:", error);
-    return NextResponse.json(
-      {
-        authed: false,
-        unreadInbox: 0,
-        upcomingEvents: 0,
-        nextEvent: null,
-        nextTrip: null,
-        wishlistCount: 0,
-        notesCount: 0,
-        itineraryCount: 0,
-        loyaltyPoints: 0,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json(EMPTY, { status: 200 });
   }
 }

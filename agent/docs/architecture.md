@@ -280,6 +280,46 @@ These are **server-orchestrated, three-channel** modules added to drive repeat e
 
 ---
 
+## 10B. AI Subscription + Credit Subsystem
+
+Credit-based billing for AI endpoints. All AI routes funnel through one service so future endpoints get billing for free.
+
+### Models (Prisma)
+- `AiSubscription` — one per user. State machine: `PENDING_PAYMENT → ACTIVE → GRACE → EXPIRED/CANCELLED`. Snapshots price + monthly credits at signup. `pendingPlanKey` defers downgrades to next renewal.
+- `AiCreditWallet` — per-user denormalised running totals (balance, lifetimeEarned, lifetimeSpent).
+- `AiCreditGrant` — every credit grant (sub period, top-up, promo, loyalty redeem, refund, admin adjust, backfill). Each has `expiresAt`. Spend order: oldest expiry first (FIFO with TTL priority).
+- `AiCreditLedger` — append-only audit. `reservationStatus` ∈ `RESERVED | SETTLED | CANCELLED` for the reserve/settle pattern.
+- `AiUsage` — per-call telemetry (auth users + guests via `ipHash`). Rolled up daily into `_rollup_*` rows by `/api/cron/ai-usage-rollup`; raw rows purged after 90 days.
+- `AiPayment` — Midtrans payment row for subscriptions + top-ups. `paymentId` prefix (`AISUB-` / `AITOP-`) routes the shared webhook (`/api/payment/notification`) to `aiPaymentService` instead of `bookingService`.
+- `AiChatMemory` — per-user concierge memory: rolling 20 turns + max 12 long-term `notes`.
+- `AiFamilySeat` — Founder owner ↔ member relation. Inherits owner's plan features via `getEffectivePlan(userId)` while seat is active and not revoked. Each seat-holder spends own credits — no pooling.
+
+### Services (`lib/services/`)
+- `aiCreditService.ts` — single billing chokepoint. `reserveCredits → settleReservation | cancelReservation`. Plus `grantCredits`, `expireGrants`, `getEffectivePlan`, `canUseFeature`, `ensureFreeMonthlyGrant` (idempotent 20 credits/UTC-month for free users).
+- `aiPaymentService.ts` — `createTopupPayment`, `createSubscriptionPayment`, `handleAiPaymentSuccess` (idempotent grant + period extend; clears `pendingPlanKey`), `handleAiPaymentFailure`, `isAiPaymentId`.
+- `aiGuestQuota.ts` — IP-hash based guest cap (default 5 chat turns/24h via `AiUsage.ipHash`).
+
+### Config (`lib/config/`)
+- `aiCosts.ts` — single source of truth for credit costs per endpoint. Editable to absorb provider price drift.
+- `aiPlans.ts` — plan + pack catalog (`FREE`/`EXPLORER`/`VOYAGER`/`FOUNDER`; packs `STARTER`/`STANDARD`/`BIG`/`MEGA`).
+
+### Routes
+- User: `/api/ai/{wallet,plans,topup,subscription,subscription/cancel,subscription/resume,usage,concierge,cultural,day-of-trip,voucher-read,loyalty-redeem,family-seats,family-seats/accept,itinerary/book}` plus existing `/api/ai/{chat,plan}` (now wrapped in credit guard).
+- Admin: `/api/admin/ai/{metrics,users,grant,refund,abuse}`.
+- Cron: `/api/cron/ai-{subscription-renewals,renewal-reminders,grace-sweep,expire-credits,usage-rollup}`.
+
+### Frontend
+- `components/ai/{AiCreditBadge,AiUpgradeModal,CreditMeter,TopupCard,PlanCard,BookFromItineraryButton,FamilySeatsPanel}.tsx`.
+- Pages: `app/plans/page.tsx` (public catalog), `app/profile/ai/page.tsx` (wallet, top-up, subscription, family seats, usage history).
+- Hooks: `utils/hooks/useAiWallet.ts` (wallet, catalog, subscription, concierge memory, family seats, all mutations + query keys).
+- Service: `utils/service/ai.service.ts` (axios DTOs).
+
+### Kill switch + grandfathering
+- `AI_CREDIT_GUARD=off` makes all guards return ok (incident response).
+- `AiSubscription.priceIdr/monthlyCredits` snapshot at signup — price changes in `aiPlans.ts` don't affect existing subscribers.
+
+---
+
 ## 11. Build & Deployment
 
 - **Hosting**: Vercel.

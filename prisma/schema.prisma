@@ -165,6 +165,16 @@ model User {
   notificationTemplates   NotificationTemplate[]   @relation("TplCreatedBy")
   notificationBroadcasts  NotificationBroadcast[]  @relation("BroadcastCreatedBy")
 
+  aiSubscription   AiSubscription?
+  aiWallet         AiCreditWallet?
+  aiGrants         AiCreditGrant[]
+  aiLedger         AiCreditLedger[]
+  aiUsage          AiUsage[]
+  aiPayments       AiPayment[]
+  aiChatMemory     AiChatMemory?
+  aiFamilyOwned    AiFamilySeat[]   @relation("AiSeatOwner")
+  aiFamilySeat     AiFamilySeat?    @relation("AiSeatMember")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -753,4 +763,173 @@ model MockBooking {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ===========================================================================
+// AI SUBSCRIPTION + CREDIT SYSTEM
+// ---------------------------------------------------------------------------
+// Credit-based gating for AI endpoints. One credit ≈ 1,000 token-equivalents.
+// Spend order: oldest expiresAt grant first (FIFO with TTL priority).
+// Wallet.balance is a denormalised running total of sum(grants.remaining).
+// ===========================================================================
+
+model AiSubscription {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  plan   String // FREE | EXPLORER | VOYAGER | FOUNDER
+  status String // ACTIVE | GRACE | CANCELLED | EXPIRED | PENDING_PAYMENT
+
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+
+  autoRenew      Boolean   @default(true)
+  lastRenewalAt  DateTime?
+  nextRenewalAt  DateTime?
+  failedRenewals Int       @default(0)
+
+  // Snapshot of pricing at signup so legacy users keep grandfathered terms
+  priceIdr       Int
+  monthlyCredits Int
+  carryoverDays  Int
+  carryoverCap   Int
+
+  // Deferred plan change — applied at next renewal (downgrades). null = no pending change.
+  pendingPlanKey String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, currentPeriodEnd])
+}
+
+model AiCreditWallet {
+  userId         Int      @id
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance        Int      @default(0)
+  lifetimeEarned Int      @default(0)
+  lifetimeSpent  Int      @default(0)
+  updatedAt      DateTime @updatedAt
+}
+
+model AiCreditGrant {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  source    String  // SUBSCRIPTION | TOPUP | PROMO | REFERRAL | LOYALTY_REDEEM | REFUND | ADJUST | BACKFILL
+  amount    Int     // credits originally granted (positive)
+  remaining Int     // credits left from this grant
+  refId     String? // subscriptionId | aiPaymentId | referralCode | etc.
+
+  grantedAt DateTime  @default(now())
+  expiresAt DateTime
+  expiredAt DateTime? // when expiry actually fired
+
+  @@index([userId, expiresAt])
+  @@index([userId, remaining])
+}
+
+model AiCreditLedger {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  delta  Int     // negative = spend, positive = grant/refund
+  reason String  // GRANT_SUBSCRIPTION | GRANT_TOPUP | GRANT_BACKFILL | SPEND_CHAT | SPEND_PLAN | SPEND_REFUND | EXPIRE | ADJUST
+  refId  String? // grantId | reservationId | aiPaymentId
+  meta   Json?
+
+  // For reservation/settlement: open ledger rows have settledAt=null
+  reservationStatus String?  // RESERVED | SETTLED | CANCELLED
+  settledAt         DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([reservationStatus])
+}
+
+model AiUsage {
+  id          Int     @id @default(autoincrement())
+  userId      Int?
+  user        User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ipHash      String? // sha256(ip + salt) — guest rate-limit key
+  endpoint    String  // chat | plan | search | concierge
+  creditsCost Int
+  tokensIn    Int?
+  tokensOut   Int?
+  model       String?
+  durationMs  Int?
+  status      String  // OK | DENIED_QUOTA | DENIED_AUTH | ERROR
+  meta        Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([endpoint, status, createdAt])
+}
+
+model AiChatMemory {
+  userId    Int      @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Rolling window of recent assistant/user turns for /api/ai/concierge.
+  // Stored as Json: [{ role, content, ts }]. Capped to MAX_MEMORY_TURNS in service.
+  messages  Json     @default("[]")
+  /** Free-form profile snippets the assistant has remembered (preferences, names, etc.). */
+  notes     Json     @default("[]")
+  turnCount Int      @default(0)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+model AiFamilySeat {
+  id           Int      @id @default(autoincrement())
+  ownerUserId  Int
+  owner        User     @relation("AiSeatOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  // Either an existing User (memberUserId) or a pending email invite (inviteEmail).
+  memberUserId Int?     @unique
+  member       User?    @relation("AiSeatMember", fields: [memberUserId], references: [id], onDelete: SetNull)
+  inviteEmail  String?
+  inviteToken  String?  @unique
+
+  acceptedAt   DateTime?
+  revokedAt    DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([ownerUserId])
+  @@index([inviteEmail])
+}
+
+model AiPayment {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  kind           String  // SUBSCRIPTION_NEW | SUBSCRIPTION_RENEWAL | TOPUP
+  plan           String? // for subscription kinds
+  pack           String? // for topups
+  creditsToGrant Int
+  amountIdr      Int
+
+  paymentId       String  @unique // Midtrans order_id (e.g. AISUB-123-ts)
+  snapToken       String?
+  status          String  // PENDING | PAID | FAILED | EXPIRED | REFUNDED
+  paidAt          DateTime?
+  midtransPayload Json?
+
+  idempotencyKey String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
 }

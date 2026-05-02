@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import BackLink from "@/components/common/BackLink";
 import { useConfirm } from "@/components/common/ConfirmDialog";
+import BookFromItineraryButton from "@/components/ai/BookFromItineraryButton";
 
 interface Itinerary {
   id: number;
@@ -214,6 +215,7 @@ export default function ItinerariesListPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <BookFromItineraryButton itineraryId={it.id} />
                   {it.shareSlug && (
                     <button
                       onClick={() => copyShare(it.shareSlug!)}

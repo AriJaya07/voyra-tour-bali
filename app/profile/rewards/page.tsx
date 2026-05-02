@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import BackLink from "@/components/common/BackLink";
 import { useSession } from "next-auth/react";
+import LoyaltyRedeemCard from "@/components/ai/LoyaltyRedeemCard";
 
 interface Loyalty {
   pointsBalance: number;
@@ -251,6 +252,20 @@ export default function RewardsPage() {
             )}
           </div>
         )}
+
+        {/* AI credits redemption (Voyager+ feature gate inside) */}
+        <div className="mb-6">
+          <LoyaltyRedeemCard
+            pointsBalance={pts}
+            onRedeemed={() => {
+              // Refresh loyalty so balance reflects the deduction
+              fetch("/api/loyalty", { cache: "no-store" })
+                .then((res) => (res.ok ? res.json() : null))
+                .then((d) => d && setLoyalty(d))
+                .catch(() => {});
+            }}
+          />
+        </div>
 
         {/* Tier perks */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">

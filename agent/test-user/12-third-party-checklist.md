@@ -125,11 +125,28 @@ node -e "const w=require('web-push'); console.log(w.generateVAPIDKeys())"
 
 ### Groq (AI)
 
-- **Purpose**: chat assistant + itinerary planner.
+- **Purpose**: chat assistant, itinerary planner, concierge, cultural co-pilot, day-of-trip helper, plan refine.
 - **Read at**: [components/AIChatWidget.tsx](../../components/AIChatWidget.tsx), [app/api/ai/](../../app/api/ai/).
-- **Model**: `llama-3.3-70b-versatile` (kept per user preference; do not switch to Anthropic).
-- **Failure handling**: 503 from upstream → friendly message in UI; do not block page render.
+- **Model**: `llama-3.3-70b-versatile` (kept per user preference; do not switch text endpoints away from Groq).
+- **Failure handling**: 503 from upstream → `cancelReservation` refunds the user's credits, route returns 500, UI shows friendly toast.
 - **Smoke**: chat completions ping above.
+
+### Anthropic (AI vision — opt-in)
+
+- **Purpose**: voucher reader (`/api/ai/voucher-read`) — Groq does not host vision so a second provider is required for image extraction.
+- **Read at**: [app/api/ai/voucher-read/route.ts](../../app/api/ai/voucher-read/route.ts).
+- **Auth**: `x-api-key: ${ANTHROPIC_API_KEY}` + `anthropic-version: 2023-06-01`.
+- **Model**: `claude-haiku-4-5-20251001` (override via `AI_VISION_MODEL`).
+- **Activation gate**: `ENABLE_AI_VISION=true` AND `ANTHROPIC_API_KEY` set; otherwise the route returns `503 FEATURE_DISABLED` and no spend is reserved.
+- **Failure handling**: any non-2xx from Anthropic → `cancelReservation` refunds user, route returns 500.
+- **Smoke**: `curl -F file=@voucher.jpg -b $COOKIE http://localhost:3000/api/ai/voucher-read` (after enabling).
+
+### Midtrans (Snap) — AI subsystem reuse
+
+- **Purpose**: AI subscription + top-up payments piggyback on the existing Snap integration. Order ID prefix (`AISUB-` / `AITOP-`) routes the shared webhook (`/api/payment/notification`) into `aiPaymentService` instead of `bookingService`.
+- **Read at**: [lib/services/aiPaymentService.ts](../../lib/services/aiPaymentService.ts).
+- **Idempotency**: `AiPayment.idempotencyKey` is unique; webhook replays do not double-grant credits.
+- **Smoke**: subscribe in sandbox → verify `AiPayment.status=PAID` + grant + ledger row appear.
 
 ### Bali News API (external feed)
 

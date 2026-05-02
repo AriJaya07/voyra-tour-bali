@@ -7,6 +7,7 @@ import {
   ClipboardIcon,
   MapPinIcon,
 } from "@/components/assets/Icon/shared";
+import { HiSparkles } from "react-icons/hi2";
 import ToolkitTile from "./ToolkitTile";
 import ToolkitHero from "./ToolkitHero";
 import ToolkitFooterCTA from "./ToolkitFooterCTA";
@@ -119,6 +120,30 @@ export default function TravelToolkit() {
           badge={authed && data.itineraryCount > 0 ? data.itineraryCount : null}
           icon={<MapPinIcon className="w-5 h-5" />}
           accent="amber"
+        />
+
+        <ToolkitTile
+          href={authedHref(authed, "/profile/ai")}
+          title="AI Wallet"
+          description={
+            authed
+              ? (data.aiCreditsRemaining ?? 0) > 0
+                ? `Plan, refine, and chat — ${(data.aiCreditsRemaining ?? 0).toLocaleString()} credits ready.`
+                : "Top up credits or subscribe to unlock concierge + planner."
+              : "Subscribe for AI itinerary planning, concierge, voucher reader and more."
+          }
+          badge={
+            authed
+              ? (data.aiCreditsRemaining ?? 0) > 0
+                ? `${(data.aiCreditsRemaining ?? 0).toLocaleString()} cr`
+                : data.aiPlan && data.aiPlan !== "FREE"
+                ? data.aiPlan
+                : "Top up"
+              : null
+          }
+          icon={<HiSparkles className="w-5 h-5" />}
+          accent="violet"
+          ariaLabel="AI Wallet, opens credit balance and plan management"
         />
       </div>
 

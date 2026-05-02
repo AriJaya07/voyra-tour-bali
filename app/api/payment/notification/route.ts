@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { MIDTRANS_SERVER_KEY } from "@/lib/config/midtrans";
 import { handlePaymentSuccess } from "@/lib/services/postPaymentService";
+import {
+  handleAiPaymentFailure,
+  handleAiPaymentSuccess,
+  isAiPaymentId,
+} from "@/lib/services/aiPaymentService";
 
 /**
  * Verify Midtrans notification signature.
@@ -69,6 +74,21 @@ export async function POST(request: Request) {
     const newStatus = mapStatus(transaction_status, fraud_status);
     if (!newStatus) {
       return NextResponse.json({ message: "Acknowledged" });
+    }
+
+    // Dispatcher: AI subsystem payments take a separate path.
+    if (isAiPaymentId(order_id)) {
+      if (newStatus === "CONFIRMED") {
+        const result = await handleAiPaymentSuccess(order_id);
+        if (!result.success) {
+          console.error(`[AI Webhook] ${order_id} failed: ${result.error}`);
+        }
+      } else if (newStatus === "CANCELLED") {
+        await handleAiPaymentFailure(order_id, transaction_status === "expire" ? "EXPIRED" : "FAILED");
+      }
+      // PENDING is informational — nothing to do.
+      console.log(`[AI Webhook] ${order_id} → ${newStatus}`);
+      return NextResponse.json({ message: "OK" });
     }
 
     // Find booking by paymentId (order_id)

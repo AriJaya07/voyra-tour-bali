@@ -3,6 +3,14 @@ import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  cancelReservation,
+  ensureFreeMonthlyGrant,
+  reserveCredits,
+  settleReservation,
+} from "@/lib/services/aiCreditService";
+import { consumeGuest, logGuestUsage } from "@/lib/services/aiGuestQuota";
+import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
 
 interface ViatorImage {
   isCover?: boolean;
@@ -34,6 +42,12 @@ function getBestImageUrl(images: ViatorImage[]): string {
 }
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
+  let reservationId: number | null = null;
+  let billedUserId: number | null = null;
+  let guestIpHash: string | null = null;
+  const ENDPOINT = "chat" as const;
+
   try {
     const { messages, userMessage } = await req.json();
 
@@ -48,8 +62,8 @@ export async function POST(req: NextRequest) {
     let userName: string | null = null;
     let userCurrency = "IDR";
     let prefsLine = "";
+    const session = await getServerSession(authOptions);
     try {
-      const session = await getServerSession(authOptions);
       if (session?.user?.id) {
         const userId = parseInt(session.user.id);
         const [u, prefs] = await Promise.all([
@@ -85,6 +99,51 @@ export async function POST(req: NextRequest) {
       }
     } catch {
       // non-fatal — fallback to guest mode
+    }
+
+    // 0a. Credit gate (auth users → reserve credits; guests → IP quota)
+    if (session?.user?.id) {
+      const userId = parseInt(session.user.id);
+      // Free-tier auto-grant: 20 credits/UTC-month for users without paid sub.
+      await ensureFreeMonthlyGrant(userId).catch(() => {});
+      const reserved = await reserveCredits(userId, ENDPOINT, AI_ENDPOINT_COST.chat);
+      if (!reserved.ok) {
+        await prisma.aiUsage.create({
+          data: {
+            userId,
+            endpoint: ENDPOINT,
+            creditsCost: 0,
+            status: "DENIED_QUOTA",
+            meta: { reason: reserved.reason, balance: reserved.remainingBalance },
+          },
+        });
+        return new Response(
+          JSON.stringify({
+            error: "Out of AI credits",
+            reason: reserved.reason,
+            balance: reserved.remainingBalance,
+            upgradeUrl: "/plans",
+          }),
+          { status: 402, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      reservationId = reserved.reservationId ?? null;
+      billedUserId = userId;
+    } else {
+      const guest = await consumeGuest(req, ENDPOINT);
+      guestIpHash = guest.ipHash;
+      if (!guest.ok) {
+        return new Response(
+          JSON.stringify({
+            error: "Guest AI quota reached. Sign in for more.",
+            reason: "QUOTA",
+            used: guest.used,
+            limit: guest.limit,
+            upgradeUrl: "/register",
+          }),
+          { status: 402, headers: { "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // 1. Search Viator for relevant tours
@@ -211,8 +270,11 @@ RULES:
 
     // 4. Stream response: first line = product cards JSON, then stream AI text
     const encoder = new TextEncoder();
+    let outChars = 0;
+    const inputCharsApprox = JSON.stringify({ systemPrompt, messages, userMessage }).length;
     const readable = new ReadableStream({
       async start(controller) {
+        let streamFailed = false;
         try {
           // Send product cards as first line so the widget can render them immediately
           if (productCards.length > 0) {
@@ -223,10 +285,64 @@ RULES:
 
           for await (const chunk of stream) {
             const text = chunk.choices[0]?.delta?.content ?? "";
-            if (text) controller.enqueue(encoder.encode(text));
+            if (text) {
+              outChars += text.length;
+              controller.enqueue(encoder.encode(text));
+            }
           }
+        } catch (err) {
+          streamFailed = true;
+          console.error("[ai/chat] Stream error:", err instanceof Error ? err.message : err);
         } finally {
           controller.close();
+
+          // Settle / cancel reservation + log usage
+          const tokensIn = Math.ceil(inputCharsApprox / 4);
+          const tokensOut = Math.ceil(outChars / 4);
+          const durationMs = Date.now() - startedAt;
+
+          if (billedUserId !== null) {
+            if (streamFailed && reservationId !== null) {
+              await cancelReservation(reservationId).catch(() => {});
+              await prisma.aiUsage.create({
+                data: {
+                  userId: billedUserId,
+                  endpoint: ENDPOINT,
+                  creditsCost: 0,
+                  tokensIn,
+                  tokensOut,
+                  durationMs,
+                  model: "llama-3.3-70b-versatile",
+                  status: "ERROR",
+                },
+              }).catch(() => {});
+            } else if (reservationId !== null) {
+              const cost = settledChatCost(tokensIn, tokensOut);
+              await settleReservation(reservationId, cost, { tokensIn, tokensOut, durationMs }).catch(() => {});
+              await prisma.aiUsage.create({
+                data: {
+                  userId: billedUserId,
+                  endpoint: ENDPOINT,
+                  creditsCost: cost,
+                  tokensIn,
+                  tokensOut,
+                  durationMs,
+                  model: "llama-3.3-70b-versatile",
+                  status: "OK",
+                },
+              }).catch(() => {});
+            }
+          } else if (guestIpHash) {
+            await logGuestUsage({
+              ipHash: guestIpHash,
+              endpoint: ENDPOINT,
+              tokensIn,
+              tokensOut,
+              durationMs,
+              model: "llama-3.3-70b-versatile",
+              status: streamFailed ? "ERROR" : "OK",
+            }).catch(() => {});
+          }
         }
       },
     });
@@ -235,6 +351,9 @@ RULES:
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   } catch (error) {
+    if (reservationId !== null) {
+      await cancelReservation(reservationId).catch(() => {});
+    }
     console.error("[ai/chat] Error:", error instanceof Error ? error.message : "Unknown");
     return new Response(JSON.stringify({ error: "AI service unavailable." }), {
       status: 500,

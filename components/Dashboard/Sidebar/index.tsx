@@ -98,6 +98,12 @@ const BOTTOM_ITEMS = [
     icon: <BookingsIcon />,
     color: "amber",
   },
+  {
+    label: "AI Subsystem",
+    href: "/dashboard/ai",
+    icon: <BookingsIcon />,
+    color: "violet",
+  },
 ];
 
 
