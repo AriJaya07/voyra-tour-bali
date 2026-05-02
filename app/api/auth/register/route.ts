@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
 import { verifyTurnstile } from '@/utils/verifyTurnstile';
 import { ensureWelcomeGrant } from '@/lib/services/aiCreditService';
+import { recordSignupFingerprint } from '@/lib/services/signupFingerprintService';
 
 export async function POST(request: Request) {
   try {
@@ -102,6 +103,9 @@ export async function POST(request: Request) {
         console.error('[Referral] failed to apply code:', refErr);
       }
     }
+
+    // Capture signup fingerprint (anti-fraud) — non-blocking, best-effort
+    void recordSignupFingerprint({ userId: user.id, req: request, phone: null });
 
     // AI welcome grant — idempotent, non-blocking
     try {

@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { generateTicketToken } from "@/lib/ticket";
 import { sendBookingConfirmation } from "@/lib/email";
 import { VIATOR_API_KEY, VIATOR_API_URL, VIATOR_MOCK_BOOKING, viatorSignal } from "@/lib/config/viator";
+import { applyBookingRewards } from "@/lib/services/rewardService";
 
 /**
  * Confirm booking with Viator Partner API after payment success.
@@ -167,76 +168,14 @@ export async function handlePaymentSuccess(orderId: string): Promise<{
 
     console.log(`[PostPayment] ${orderId} → CONFIRMED`);
 
-    // Loyalty — accrue points (1 pt per Rp 1,000 base; tier multiplier applied at write time)
+    // Booking + referral rewards (Phase 10: all rewards now mint AI credits)
     try {
-      const totalIDR = booking.totalPrice;
-      const account = await prisma.loyaltyAccount.upsert({
-        where: { userId: booking.userId },
-        update: {},
-        create: { userId: booking.userId },
-      });
-      const tierMultiplier = account.tier === "GOLD" ? 2 : account.tier === "SILVER" ? 1.5 : 1;
-      const earned = Math.floor((totalIDR / 1000) * tierMultiplier);
-      const newSpend = account.lifetimeSpend + totalIDR;
-      const newTier =
-        newSpend >= 20_000_000 ? "GOLD" : newSpend >= 5_000_000 ? "SILVER" : "BRONZE";
-      await prisma.loyaltyAccount.update({
-        where: { userId: booking.userId },
-        data: {
-          pointsBalance: account.pointsBalance + earned,
-          lifetimeSpend: newSpend,
-          tier: newTier,
-        },
-      });
-      await prisma.loyaltyLedger.create({
-        data: {
-          userId: booking.userId,
-          delta: earned,
-          reason: "BOOKING",
-          refId: booking.bookingRef,
-        },
-      });
-    } catch (e: any) {
-      console.error("[Loyalty] failed to accrue:", e?.message);
-    }
-
-    // Referral conversion — credit the inviter if this is invitee's first confirmed booking
-    try {
-      const otherBookings = await prisma.booking.count({
-        where: {
-          userId: booking.userId,
-          status: { in: ["CONFIRMED", "COMPLETED"] },
-          id: { not: booking.id },
-        },
-      });
-      if (otherBookings === 0) {
-        const ref = await prisma.referral.findFirst({
-          where: { inviteeId: booking.userId, status: "SIGNED_UP", rewardGiven: false },
-        });
-        if (ref) {
-          await prisma.referral.update({
-            where: { id: ref.id },
-            data: { status: "CONVERTED", rewardGiven: true },
-          });
-          // Reward inviter 500 pts
-          await prisma.loyaltyAccount.upsert({
-            where: { userId: ref.inviterId },
-            update: { pointsBalance: { increment: 500 } },
-            create: { userId: ref.inviterId, pointsBalance: 500 },
-          });
-          await prisma.loyaltyLedger.create({
-            data: {
-              userId: ref.inviterId,
-              delta: 500,
-              reason: "REFERRAL",
-              refId: ref.code,
-            },
-          });
-          console.log(`[Referral] Inviter ${ref.inviterId} credited 500 pts for ${booking.bookingRef}`);
-        }
+      const fullBooking = await prisma.booking.findUnique({ where: { id: booking.id } });
+      if (fullBooking) {
+        await applyBookingRewards(fullBooking);
       }
-    } catch (e: any) {
-      console.error("[Referral] auto-credit failed:", e?.message);
+    } catch (e) {
+      console.error("[Reward] failed to apply booking rewards:", e instanceof Error ? e.message : e);
     }
 
     // Confirm with Viator (skip for mock bookings, local source, or already-booked)

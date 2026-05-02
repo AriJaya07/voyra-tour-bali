@@ -101,6 +101,15 @@ export const BUCKET_TOKENS: Record<GrantSource, BucketTokens> = {
     barClass: "bg-teal-500",
     iconBgClass: "bg-teal-100 text-teal-700",
   },
+  BOOKING: {
+    labelShort: "Trip rewards",
+    emoji: "🎒",
+    ringClass: "ring-orange-200",
+    textClass: "text-orange-800",
+    pillClass: "bg-orange-50 text-orange-700 border-orange-200",
+    barClass: "bg-orange-500",
+    iconBgClass: "bg-orange-100 text-orange-700",
+  },
 };
 
 export interface PlanTokens {

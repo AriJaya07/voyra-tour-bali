@@ -8,6 +8,7 @@ import {
   handleAiPaymentSuccess,
   isAiPaymentId,
 } from "@/lib/services/aiPaymentService";
+import { clawbackBookingRewards } from "@/lib/services/rewardService";
 
 /**
  * Verify Midtrans notification signature.
@@ -113,11 +114,28 @@ export async function POST(request: Request) {
 
     // Handle non-confirmation statuses (PENDING, CANCELLED)
     if (newStatus !== "CONFIRMED") {
+      const wasConfirmed = booking.status === "CONFIRMED";
       await prisma.booking.update({
         where: { paymentId: order_id },
         data: { status: newStatus },
       });
       console.log(`Midtrans webhook: ${order_id} → ${newStatus} (was ${booking.status})`);
+
+      // If a previously-CONFIRMED booking just flipped to CANCELLED, claw back
+      // any unspent BOOKING + REFERRAL credits we minted on confirmation.
+      if (newStatus === "CANCELLED" && wasConfirmed) {
+        try {
+          const fullBooking = await prisma.booking.findUnique({
+            where: { paymentId: order_id },
+          });
+          if (fullBooking) {
+            await clawbackBookingRewards(fullBooking);
+          }
+        } catch (e) {
+          console.error("[Reward] Clawback on webhook cancel failed:", e instanceof Error ? e.message : e);
+        }
+      }
+
       return NextResponse.json({ message: "OK" });
     }
 

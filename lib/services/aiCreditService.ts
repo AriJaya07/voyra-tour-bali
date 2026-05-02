@@ -47,7 +47,8 @@ export type GrantSource =
   | "LOYALTY_REDEEM"
   | "REFUND"
   | "ADJUST"
-  | "BACKFILL";
+  | "BACKFILL"
+  | "BOOKING";
 
 export type DenialReason =
   | "QUOTA"
@@ -667,6 +668,10 @@ const BUCKET_META: Record<GrantSource, { label: string; description: string }> =
   BACKFILL: {
     label: "Launch bonus",
     description: "One-time legacy bonus from when the AI subsystem launched.",
+  },
+  BOOKING: {
+    label: "Trip rewards",
+    description: "Earned automatically on every confirmed booking. Multiplied by your loyalty tier (Bronze 1× / Silver 1.5× / Gold 2×).",
   },
 };
 

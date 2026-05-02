@@ -177,6 +177,7 @@ model User {
   aiChatMemory     AiChatMemory?
   aiFamilyOwned    AiFamilySeat[]   @relation("AiSeatOwner")
   aiFamilySeat     AiFamilySeat?    @relation("AiSeatMember")
+  signupFingerprint SignupFingerprint?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -469,14 +470,35 @@ model Referral {
   inviteeEmail String
   inviteeId    Int?
   code         String   @unique
-  status       String   @default("PENDING") // PENDING | SIGNED_UP | CONVERTED
+  status       String   @default("PENDING") // PENDING | SIGNED_UP | ACTIVE | DECLINED
   rewardGiven  Boolean  @default(false)
+
+  // Per-booking referral tally — every confirmed invitee booking pays the inviter.
+  bookingsCount  Int       @default(0)
+  totalRewarded  Int       @default(0)
+  firstBookingAt DateTime?
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([inviterId])
   @@unique([inviterId, inviteeEmail])
+}
+
+model SignupFingerprint {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ipHash    String?
+  uaHash    String?
+  phoneHash String?
+
+  createdAt DateTime @default(now())
+
+  @@index([ipHash])
+  @@index([phoneHash])
+  @@index([uaHash, createdAt])
 }
 
 model NotificationPref {

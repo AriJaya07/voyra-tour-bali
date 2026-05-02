@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { HiSparkles } from "react-icons/hi2";
-import { useAiWallet, useLoyaltyRedeemMutation } from "@/utils/hooks/useAiWallet";
+import { useLoyaltyRedeemMutation } from "@/utils/hooks/useAiWallet";
 
 interface Props {
   pointsBalance: number;
@@ -13,13 +12,10 @@ interface Props {
 }
 
 const STEP = 1_000;
-const CREDITS_PER_STEP = 50;
+const CREDITS_PER_STEP = 100;
 
 export default function LoyaltyRedeemCard({ pointsBalance, onRedeemed }: Props) {
-  const wallet = useAiWallet({ enabled: true });
   const redeem = useLoyaltyRedeemMutation();
-  const planFeatures = wallet.data?.planFeatures;
-  const concierge = !!planFeatures?.concierge;
   const [points, setPoints] = useState(STEP);
 
   const maxSteps = Math.floor(pointsBalance / STEP);
@@ -49,14 +45,7 @@ export default function LoyaltyRedeemCard({ pointsBalance, onRedeemed }: Props) 
         {STEP.toLocaleString()} points → {CREDITS_PER_STEP} AI credits. Credits valid 90 days.
       </p>
 
-      {!concierge ? (
-        <div className="mt-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">
-          Loyalty redemption is for Voyager / Founder subscribers.{" "}
-          <Link href="/plans" className="font-semibold underline">
-            See plans →
-          </Link>
-        </div>
-      ) : maxSteps === 0 ? (
+      {maxSteps === 0 ? (
         <p className="mt-4 text-xs text-slate-500">
           You need at least {STEP.toLocaleString()} points to redeem. Earn more by booking tours.
         </p>

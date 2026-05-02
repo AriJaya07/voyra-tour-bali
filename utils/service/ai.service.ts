@@ -64,7 +64,8 @@ export type GrantSource =
   | "LOYALTY_REDEEM"
   | "REFUND"
   | "ADJUST"
-  | "BACKFILL";
+  | "BACKFILL"
+  | "BOOKING";
 
 export interface BucketGrant {
   id: number;

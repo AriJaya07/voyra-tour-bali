@@ -55,6 +55,14 @@ export const FAQ_ITEMS: { q: string; a: string }[] = [
     q: "Which model does the AI use?",
     a: "Llama 3.3 70B via Groq (fast + good for travel knowledge). Voucher Reader uses Claude Haiku 4.5 for vision when enabled.",
   },
+  {
+    q: "How can I earn AI credits without paying?",
+    a: "Welcome bonus on signup (50 credits / 7 days). Every confirmed booking earns 5 AI credits per Rp 100,000 spent — multiplied by your loyalty tier (Bronze 1× / Silver 1.5× / Gold 2×). Refer a friend — when they book a tour, you earn up to 200 credits per their booking, lifetime. Plus 1,000 legacy loyalty points → 100 AI credits at the Rewards page.",
+  },
+  {
+    q: "How does the referral reward work?",
+    a: "You share your code from the Rewards page. Friend signs up — they get the standard 50-credit welcome bonus. The reward kicks in when they make a confirmed booking: you earn 10 credits per Rp 100,000 of their booking (up to 200 per booking, every booking). Their first booking also unlocks a 50-credit thank-you for them. We don't pay on signup alone — only real travel triggers payouts. That keeps the system fair.",
+  },
 ];
 
 export const COMPARISON_ROWS: {

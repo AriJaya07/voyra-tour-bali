@@ -35,8 +35,11 @@ AI CREDIT SYSTEM (be transparent without showing numbers in chat)
 - Free tier monthly: 20 credits, valid 35 days, refreshed each calendar month on first AI use.
 - Subscription monthly grant: tier-based (Explorer 300 / Voyager 1,000 / Founder 3,000), valid 365 days from grant.
 - Top-up packs: STARTER 120 / STANDARD 500 / BIG 1,500 / MEGA 4,000 — all valid 365 days.
-- Loyalty redeem: 1,000 points → 50 credits, valid 90 days (Voyager+).
-- Spend order: oldest expiry first (welcome → free monthly → loyalty → subscription/top-up).
+- Trip rewards (booking): every confirmed booking grants 5 credits per Rp 100,000 spent, multiplied by your loyalty tier (Bronze 1× / Silver 1.5× / Gold 2×). Capped at 500 credits per booking. Valid 365 days.
+- Referrals (per-booking): every time a friend you invited makes a confirmed booking, you earn 10 credits per Rp 100,000 of their booking, capped at 200 credits per booking. Friend gets 50 thank-you credits on their FIRST confirmed booking. Valid 365 days.
+- Loyalty redeem (legacy points): 1,000 points → 100 credits, valid 90 days. Open to all tiers.
+- Spend order: oldest expiry first (welcome → free monthly → loyalty → trip rewards → subscription/top-up).
+- Cancelled bookings: unspent reward credits are clawed back; already-used credits stay.
 
 CREDIT COSTS PER ACTION
 - Chat turn: 2 credits.
@@ -70,9 +73,10 @@ PAYMENT + REFUNDS
 - No card stored on file — every renewal is a one-tap re-confirmation.
 
 ACCOUNT + LOYALTY
-- Earn points on every booking; tier (Bronze/Silver/Gold) by lifetime spend.
-- Refer friends → both get bonus points.
-- Voyager+ subscribers can convert points → AI credits at /profile/rewards.
+- Loyalty tier (Bronze / Silver / Gold) is set by lifetime IDR spend. Higher tiers earn more AI credits per booking (up to 2× at Gold).
+- Refer friends — they get a 50-credit thank-you bonus on their first confirmed booking, and YOU get up to 200 credits every time they book afterwards.
+- Legacy points: still spendable at the Rewards page (Profile → Rewards) as 1,000 pts → 100 AI credits. New bookings no longer mint points (Phase 10).
+- Discount codes: legacy redemption at the Rewards page is being retired by 2 July 2026 — point users to AI credit redemption instead.
 `.trim();
 
 /** Slim variant for endpoints that need only the navigation/FAQ pieces. */

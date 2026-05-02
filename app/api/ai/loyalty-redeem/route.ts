@@ -2,19 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
-import { canUseFeature, grantCredits, LOYALTY_GRANT_TTL_DAYS } from "@/lib/services/aiCreditService";
+import { grantCredits, LOYALTY_GRANT_TTL_DAYS } from "@/lib/services/aiCreditService";
 
 /**
  * POST /api/ai/loyalty-redeem  Body: { points }
  *
  * Convert loyalty points → AI credits at a fixed ratio.
- * 1,000 pts → 50 AI credits. Voyager+ feature only (entices upgrades).
+ * 1,000 pts → 100 AI credits. Open to all tiers (Phase 10 — booking accrual
+ * no longer mints points, so legacy balances are a one-time stock; sweetened
+ * rate clears them quickly).
  *
  * Atomic: deducts loyalty + writes ledger row + grants AI credits in one TX.
  */
 
 const POINTS_PER_REDEMPTION = 1_000;
-const CREDITS_PER_REDEMPTION = 50;
+const CREDITS_PER_REDEMPTION = 100;
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,15 +25,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const userId = parseInt(session.user.id);
-
-    // Voyager+ feature — concierge flag is the discriminator
-    const ok = await canUseFeature(userId, "concierge");
-    if (!ok) {
-      return NextResponse.json(
-        { error: "Loyalty → AI credit redemption is for Voyager / Founder.", reason: "FEATURE_LOCKED", upgradeUrl: "/plans" },
-        { status: 402 }
-      );
-    }
 
     const body = await req.json().catch(() => ({}));
     const points = Math.floor(Number(body?.points));

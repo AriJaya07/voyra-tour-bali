@@ -144,6 +144,16 @@ export const authOptions: NextAuthOptions = {
           } catch (welcomeErr) {
             console.error("[AI] Welcome grant failed during Google signIn:", welcomeErr);
           }
+
+          // Best-effort signup fingerprint — Google callback has no NextRequest,
+          // so we capture only the userId. IP / UA hashes go in via the next
+          // authenticated route (e.g. /api/profile) when needed.
+          try {
+            const { recordSignupFingerprint } = await import("@/lib/services/signupFingerprintService");
+            await recordSignupFingerprint({ userId: dbUser.id });
+          } catch (fpErr) {
+            console.error("[Fingerprint] Google signIn fingerprint failed:", fpErr);
+          }
         } catch (error) {
           console.error("Google signIn callback error:", error);
           return false;
