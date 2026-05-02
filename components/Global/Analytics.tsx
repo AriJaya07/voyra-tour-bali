@@ -26,6 +26,28 @@ export function AnalyticsHead() {
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
+              window.gtag = gtag;
+              gtag('consent', 'default', {
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                analytics_storage: 'denied',
+                wait_for_update: 500,
+              });
+              try {
+                var raw = window.localStorage.getItem('voyra_cookie_consent_v1');
+                if (raw) {
+                  var parsed = JSON.parse(raw);
+                  if (parsed && parsed.choice === 'accepted') {
+                    gtag('consent', 'update', {
+                      ad_storage: 'granted',
+                      ad_user_data: 'granted',
+                      ad_personalization: 'granted',
+                      analytics_storage: 'granted',
+                    });
+                  }
+                }
+              } catch (e) {}
               gtag('js', new Date());
               gtag('config', '${GA_MEASUREMENT_ID}', {
                 send_page_view: true,

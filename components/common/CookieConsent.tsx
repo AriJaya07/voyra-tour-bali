@@ -28,6 +28,18 @@ export default function CookieConsent() {
       );
     } catch {}
     setShow(false);
+
+    const w = window as any;
+    if (typeof w.gtag === "function") {
+      const state = choice === "accepted" ? "granted" : "denied";
+      w.gtag("consent", "update", {
+        ad_storage: state,
+        ad_user_data: state,
+        ad_personalization: state,
+        analytics_storage: state,
+      });
+    }
+
     if (choice === "accepted") {
       window.dispatchEvent(new CustomEvent("voyra:cookie-accepted"));
     }
