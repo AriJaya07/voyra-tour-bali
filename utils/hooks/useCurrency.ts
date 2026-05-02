@@ -14,7 +14,7 @@ interface CurrencyStore {
 }
 
 export const useCurrency = create<CurrencyStore>()((set, get) => ({
-  currency: "IDR",
+  currency: "USD",
   exchangeRates: null,
   setCurrency: (currency) => set({ currency }),
   setExchangeRates: (exchangeRates) => set({ exchangeRates }),

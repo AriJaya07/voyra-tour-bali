@@ -3,6 +3,12 @@ import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { MIDTRANS_SERVER_KEY } from "@/lib/config/midtrans";
 import { handlePaymentSuccess } from "@/lib/services/postPaymentService";
+import {
+  handleAiPaymentFailure,
+  handleAiPaymentSuccess,
+  isAiPaymentId,
+} from "@/lib/services/aiPaymentService";
+import { clawbackBookingRewards } from "@/lib/services/rewardService";
 
 /**
  * Verify Midtrans notification signature.
@@ -71,6 +77,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Acknowledged" });
     }
 
+    // Dispatcher: AI subsystem payments take a separate path.
+    if (isAiPaymentId(order_id)) {
+      if (newStatus === "CONFIRMED") {
+        const result = await handleAiPaymentSuccess(order_id);
+        if (!result.success) {
+          console.error(`[AI Webhook] ${order_id} failed: ${result.error}`);
+        }
+      } else if (newStatus === "CANCELLED") {
+        await handleAiPaymentFailure(order_id, transaction_status === "expire" ? "EXPIRED" : "FAILED");
+      }
+      // PENDING is informational — nothing to do.
+      console.log(`[AI Webhook] ${order_id} → ${newStatus}`);
+      return NextResponse.json({ message: "OK" });
+    }
+
     // Find booking by paymentId (order_id)
     const booking = await prisma.booking.findUnique({
       where: { paymentId: order_id },
@@ -93,11 +114,28 @@ export async function POST(request: Request) {
 
     // Handle non-confirmation statuses (PENDING, CANCELLED)
     if (newStatus !== "CONFIRMED") {
+      const wasConfirmed = booking.status === "CONFIRMED";
       await prisma.booking.update({
         where: { paymentId: order_id },
         data: { status: newStatus },
       });
       console.log(`Midtrans webhook: ${order_id} → ${newStatus} (was ${booking.status})`);
+
+      // If a previously-CONFIRMED booking just flipped to CANCELLED, claw back
+      // any unspent BOOKING + REFERRAL credits we minted on confirmation.
+      if (newStatus === "CANCELLED" && wasConfirmed) {
+        try {
+          const fullBooking = await prisma.booking.findUnique({
+            where: { paymentId: order_id },
+          });
+          if (fullBooking) {
+            await clawbackBookingRewards(fullBooking);
+          }
+        } catch (e) {
+          console.error("[Reward] Clawback on webhook cancel failed:", e instanceof Error ? e.message : e);
+        }
+      }
+
       return NextResponse.json({ message: "OK" });
     }
 

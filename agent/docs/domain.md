@@ -30,6 +30,12 @@
 | **NotificationBroadcast** | One fan-out job: title/body snapshot + audience (`ALL`/`ROLE_USER`/`ROLE_ADMIN`/`USER_LIST`) + channels (`inApp` always, `push`, `email`) + scheduling. State machine: `DRAFT → SCHEDULED → SENDING → SENT \| FAILED \| CANCELLED`. |
 | **PushSubscription** | Web-push subscription per user/device. Stale entries (HTTP 404/410 from push service) are auto-pruned on send. |
 | **Calendar Share Slug** | `User.calendarShareSlug` — opaque token granting public read-only access to a user's `visibility=PUBLIC` calendar events at `/share/calendar/[slug]`. Rotatable via `DELETE /api/profile/calendar-share`. |
+| **AI Credit** | Voyra's billing unit for AI endpoints. ~1,000 token-equivalents (~$0.001). Costs are fixed per endpoint in `lib/config/aiCosts.ts`; spend order is oldest-expiry-first across `AiCreditGrant` rows. |
+| **AI Grant** | A single batched credit deposit on a user's wallet (subscription period, top-up pack, promo, loyalty redeem, refund, admin adjust, backfill). Each has its own `expiresAt`. |
+| **Reserve / Settle** | Reservation pattern in `aiCreditService`. Routes call `reserveCredits` before invoking the LLM, then `settleReservation(actualCost)` after success (refunds the unused portion automatically) or `cancelReservation` on failure. |
+| **Family Seat** | A Founder-tier benefit. Owner can invite up to N seats (default 3); seat-holder inherits the owner's plan features while seat is active, but spends their own credit balance. |
+| **AI Concierge** | Voyager+ chat endpoint with per-user memory (`AiChatMemory`). Assistant emits `__MEMO__:` markers to persist long-term facts across sessions. |
+| **AI Vision (opt-in)** | `/api/ai/voucher-read` extracts booking metadata from an image. Uses Anthropic Claude vision (Groq does not host vision). Disabled unless `ENABLE_AI_VISION=true` + `ANTHROPIC_API_KEY`. |
 
 ---
 

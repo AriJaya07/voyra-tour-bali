@@ -26,8 +26,8 @@ export default function BannerHome() {
             Discover the Beauty of <span className="text-[#02ACBE]">BALI</span>
           </h1>
 
-          <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-xs sm:max-w-md md:max-w-xl">
-            Explore the diverse culture of Bali and unforgettable experiences.
+          <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-md md:max-w-xl">
+            Plan your Bali trip with AI in minutes — itineraries, ceremony calendar, and bookable tours, all in one place.
           </p>
         </div>
 

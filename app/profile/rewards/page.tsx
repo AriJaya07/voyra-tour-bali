@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import BackLink from "@/components/common/BackLink";
 import { useSession } from "next-auth/react";
+import LoyaltyRedeemCard from "@/components/ai/LoyaltyRedeemCard";
 
 interface Loyalty {
   pointsBalance: number;
@@ -49,10 +50,6 @@ export default function RewardsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState<string | null>(null);
-  const [redeemPts, setRedeemPts] = useState(1000);
-  const [redeeming, setRedeeming] = useState(false);
-  const [redeemResult, setRedeemResult] = useState<{ code: string; idrValue: number } | null>(null);
-  const [redeemError, setRedeemError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -95,31 +92,6 @@ export default function RewardsPage() {
       setInviteMsg("Invite saved. Share the code below with your friend.");
     } finally {
       setInviting(false);
-    }
-  };
-
-  const redeem = async () => {
-    setRedeeming(true);
-    setRedeemError(null);
-    setRedeemResult(null);
-    try {
-      const res = await fetch("/api/loyalty/redeem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ points: redeemPts }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        setRedeemError(d?.error || "Redemption failed");
-        return;
-      }
-      const data = await res.json();
-      setRedeemResult({ code: data.code, idrValue: data.idrValue });
-      // Refresh loyalty
-      const lr = await fetch("/api/loyalty", { cache: "no-store" });
-      if (lr.ok) setLoyalty(await lr.json());
-    } finally {
-      setRedeeming(false);
     }
   };
 
@@ -207,50 +179,57 @@ export default function RewardsPage() {
           )}
         </div>
 
-        {/* Redeem points */}
-        {pts >= 1000 && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-6">
-            <h2 className="font-bold text-gray-900 text-lg mb-1">Redeem points</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              1,000 points = Rp 50,000 off. Get a one-time code to paste at checkout.
+        {/* Trip rewards explainer — replaces booking-points accrual messaging */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-6">
+          <h2 className="font-bold text-gray-900 text-lg mb-1">Trip rewards</h2>
+          <p className="text-sm text-gray-500 mb-3">
+            Every confirmed booking earns AI credits — automatically deposited in your AI Wallet.
+          </p>
+          <ul className="text-sm text-gray-700 space-y-1 mb-3">
+            <li>• 5 AI credits per Rp 100,000 spent (×{tier === "GOLD" ? "2" : tier === "SILVER" ? "1.5" : "1"} on your current {tier.toLowerCase()} tier)</li>
+            <li>• Capped at 500 credits per booking; valid 365 days</li>
+          </ul>
+          <Link
+            href="/profile/ai"
+            className="text-xs font-bold text-[#0071CE] hover:underline"
+          >
+            See balance + bucket breakdown in AI Wallet →
+          </Link>
+        </div>
+
+        {/* Refer-a-friend earner explainer */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-6">
+          <h2 className="font-bold text-gray-900 text-lg mb-1">Earn from referrals</h2>
+          <p className="text-sm text-gray-500 mb-3">
+            Share your code below — when a friend confirms a booking, we pay you AI credits. Every booking, not just the first.
+          </p>
+          <ol className="text-sm text-gray-700 space-y-1 mb-3 list-decimal list-inside">
+            <li>Friend signs up — they get a 50-credit welcome bonus.</li>
+            <li>Friend books a tour — you earn 10 credits per Rp 100,000 (capped 200 per booking).</li>
+            <li>Their first confirmed booking unlocks an extra 50 thank-you credits for them.</li>
+          </ol>
+          <p className="text-[11px] text-gray-500">
+            Real travel only — no payouts on signup alone. Credits valid 365 days.
+          </p>
+        </div>
+
+        {/* Legacy points → AI credits */}
+        {pts > 0 ? (
+          <div className="mb-6">
+            <LoyaltyRedeemCard
+              pointsBalance={pts}
+              onRedeemed={() => {
+                fetch("/api/loyalty", { cache: "no-store" })
+                  .then((res) => (res.ok ? res.json() : null))
+                  .then((d) => d && setLoyalty(d))
+                  .catch(() => {});
+              }}
+            />
+            <p className="mt-2 text-[11px] text-gray-500">
+              Bookings now earn AI credits directly — your existing point balance is a one-time stock you can convert here.
             </p>
-            <div className="flex items-center gap-3 mb-3">
-              <input
-                type="number"
-                min={1000}
-                max={Math.min(50000, pts)}
-                step={1000}
-                value={redeemPts}
-                onChange={(e) => setRedeemPts(Math.max(1000, Math.min(50000, parseInt(e.target.value) || 1000)))}
-                className="w-32 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
-              />
-              <span className="text-sm text-gray-500">pts → Rp {((redeemPts / 1000) * 50000).toLocaleString("id-ID")}</span>
-              <button
-                onClick={redeem}
-                disabled={redeeming || redeemPts > pts}
-                className="ml-auto px-5 py-2.5 bg-[#0071CE] hover:bg-[#005ba6] disabled:opacity-60 text-white text-sm font-bold rounded-lg transition shadow-sm"
-              >
-                {redeeming ? "…" : "Redeem"}
-              </button>
-            </div>
-            {redeemError && <p className="text-xs text-red-600">{redeemError}</p>}
-            {redeemResult && (
-              <div className="mt-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm">
-                <p className="font-bold text-green-800">Code generated</p>
-                <p className="font-mono text-base text-gray-900 my-1">{redeemResult.code}</p>
-                <p className="text-xs text-green-700">
-                  Saves Rp {redeemResult.idrValue.toLocaleString("id-ID")} — paste at checkout.
-                </p>
-                <button
-                  onClick={() => copyCode(redeemResult.code)}
-                  className="mt-2 px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
-                >
-                  Copy code
-                </button>
-              </div>
-            )}
           </div>
-        )}
+        ) : null}
 
         {/* Tier perks */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">

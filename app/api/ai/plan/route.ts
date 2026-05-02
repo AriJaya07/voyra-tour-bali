@@ -4,6 +4,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import { buildViatorProductUrl, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
+import {
+  cancelReservation,
+  canUseFeature,
+  ensureFreeMonthlyGrant,
+  reserveCredits,
+  settleReservation,
+} from "@/lib/services/aiCreditService";
+import { planCost } from "@/lib/config/aiCosts";
 
 interface ViatorImage {
   isCover?: boolean;
@@ -100,6 +108,10 @@ async function gatherCandidates(
 }
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
+  let reservationId: number | null = null;
+  let billedUserId: number | null = null;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -114,6 +126,63 @@ export async function POST(req: NextRequest) {
     const region: string | null = typeof body?.region === "string" ? body.region : null;
     const fromDate: string | null = typeof body?.fromDate === "string" ? body.fromDate : null;
     const toDate: string | null = typeof body?.toDate === "string" ? body.toDate : null;
+
+    // Free-tier auto-grant before quota check
+    await ensureFreeMonthlyGrant(userId).catch(() => {});
+
+    // Plan feature gate: subscribers only (Explorer+). Free users → 402 with FEATURE_LOCKED.
+    const allowedPlan = await canUseFeature(userId, "plan");
+    if (!allowedPlan) {
+      return NextResponse.json(
+        {
+          error: "AI itinerary planner is a paid feature.",
+          reason: "FEATURE_LOCKED",
+          upgradeUrl: "/plans",
+        },
+        { status: 402 }
+      );
+    }
+
+    // Plan length gate: Explorer caps at 7 days. Voyager+ unlocks 14.
+    if (days > 7) {
+      const longPlanOk = await canUseFeature(userId, "concierge"); // Voyager+ marker
+      if (!longPlanOk) {
+        return NextResponse.json(
+          {
+            error: "Plans longer than 7 days require Voyager or Founder.",
+            reason: "FEATURE_LOCKED",
+            upgradeUrl: "/plans",
+          },
+          { status: 402 }
+        );
+      }
+    }
+
+    // Credit gate: reserve before any expensive work (Viator searches + LLM)
+    const cost = planCost(days);
+    const reserved = await reserveCredits(userId, "plan", cost);
+    if (!reserved.ok) {
+      await prisma.aiUsage.create({
+        data: {
+          userId,
+          endpoint: "plan",
+          creditsCost: 0,
+          status: "DENIED_QUOTA",
+          meta: { reason: reserved.reason, balance: reserved.remainingBalance, days },
+        },
+      });
+      return NextResponse.json(
+        {
+          error: "Out of AI credits",
+          reason: reserved.reason,
+          balance: reserved.remainingBalance,
+          upgradeUrl: "/plans",
+        },
+        { status: 402 }
+      );
+    }
+    reservationId = reserved.reservationId ?? null;
+    billedUserId = userId;
 
     const [user, prefs] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
@@ -212,6 +281,20 @@ Respond with the JSON object only.`;
     try {
       parsed = JSON.parse(raw);
     } catch {
+      if (reservationId !== null) await cancelReservation(reservationId).catch(() => {});
+      if (billedUserId !== null) {
+        await prisma.aiUsage.create({
+          data: {
+            userId: billedUserId,
+            endpoint: "plan",
+            creditsCost: 0,
+            durationMs: Date.now() - startedAt,
+            model: "llama-3.3-70b-versatile",
+            status: "ERROR",
+            meta: { reason: "INVALID_JSON" },
+          },
+        }).catch(() => {});
+      }
       return NextResponse.json({ error: "Plan generation failed; try again" }, { status: 502 });
     }
 
@@ -271,6 +354,30 @@ Respond with the JSON object only.`;
         };
       });
 
+    // Settle reservation with actual cost (use planned cost — plan is fixed-budget).
+    const tokensIn = (completion.usage?.prompt_tokens ?? null);
+    const tokensOut = (completion.usage?.completion_tokens ?? null);
+    const durationMs = Date.now() - startedAt;
+    const actualCost = planCost(days);
+    if (reservationId !== null) {
+      await settleReservation(reservationId, actualCost, { tokensIn, tokensOut, durationMs }).catch(() => {});
+    }
+    if (billedUserId !== null) {
+      await prisma.aiUsage.create({
+        data: {
+          userId: billedUserId,
+          endpoint: "plan",
+          creditsCost: actualCost,
+          tokensIn,
+          tokensOut,
+          durationMs,
+          model: "llama-3.3-70b-versatile",
+          status: "OK",
+          meta: { days, budget, candidates: candidates.length },
+        },
+      }).catch(() => {});
+    }
+
     return NextResponse.json({
       title: typeof parsed.title === "string" ? parsed.title : `${days}-day Bali plan`,
       days,
@@ -278,6 +385,19 @@ Respond with the JSON object only.`;
       items: enriched,
     });
   } catch (err) {
+    if (reservationId !== null) await cancelReservation(reservationId).catch(() => {});
+    if (billedUserId !== null) {
+      await prisma.aiUsage.create({
+        data: {
+          userId: billedUserId,
+          endpoint: "plan",
+          creditsCost: 0,
+          durationMs: Date.now() - startedAt,
+          status: "ERROR",
+          meta: { error: err instanceof Error ? err.message : "Unknown" },
+        },
+      }).catch(() => {});
+    }
     console.error("[ai/plan]", err);
     return NextResponse.json({ error: "Plan unavailable" }, { status: 500 });
   }

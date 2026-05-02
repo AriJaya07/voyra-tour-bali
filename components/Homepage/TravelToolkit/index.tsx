@@ -7,6 +7,7 @@ import {
   ClipboardIcon,
   MapPinIcon,
 } from "@/components/assets/Icon/shared";
+import { HiSparkles } from "react-icons/hi2";
 import ToolkitTile from "./ToolkitTile";
 import ToolkitHero from "./ToolkitHero";
 import ToolkitFooterCTA from "./ToolkitFooterCTA";

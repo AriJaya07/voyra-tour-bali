@@ -257,6 +257,34 @@ npx prisma db seed
 
 ---
 
+## AI Subscription + Credit Subsystem
+
+Voyra meters AI usage with a credit ledger. Free users get 20 credits/UTC-month; subscribers earn monthly credits at `Explorer (300)`, `Voyager (1,000)`, or `Founder (3,000)` tiers, plus on-demand top-up packs.
+
+- **Routes** — see `app/api/ai/**` (chat, plan, plan-refine, concierge, cultural, day-of-trip, voucher-read, itinerary/book, loyalty-redeem, family-seats, wallet, plans, topup, subscription, usage). Admin under `app/api/admin/ai/**`. Cron under `app/api/cron/ai-*`.
+- **Pages** — `/plans` (public catalog), `/profile/ai` (wallet + top-up + subscription + family seats), `/profile/ai/tools` (Cultural / Day-of-Trip / Voucher Reader), `/dashboard/ai` (admin metrics + grant + refund + abuse).
+- **Service core** — `lib/services/aiCreditService.ts` (single billing chokepoint: `reserveCredits → settleReservation | cancelReservation`), `lib/services/aiPaymentService.ts` (Midtrans webhook dispatcher).
+- **Schema** — `AiSubscription`, `AiCreditWallet`, `AiCreditGrant`, `AiCreditLedger`, `AiUsage`, `AiPayment`, `AiChatMemory`, `AiFamilySeat` (see `prisma/schema.prisma`).
+- **Kill switch** — `AI_CREDIT_GUARD=off` makes `reserveCredits` a no-op; useful for incident response.
+- **Vision (opt-in)** — `/api/ai/voucher-read` requires `ENABLE_AI_VISION=true` + `ANTHROPIC_API_KEY`. Other AI endpoints stay on Groq.
+
+Smoke check the credit lifecycle end-to-end:
+
+```bash
+npx tsx prisma/_smoke-ai.ts
+```
+
+Backfill 500 free credits to existing users on first rollout (idempotent):
+
+```bash
+npx tsx prisma/backfill-ai-credits.ts
+```
+
+Full surface area + acceptance criteria: [`agent/test-user/15-ai-subscription.md`](./agent/test-user/15-ai-subscription.md).
+Architecture deep-dive: [`agent/docs/architecture.md` §10B](./agent/docs/architecture.md).
+
+---
+
 ## Deploying to Vercel
 
 ### Deploy to Preview (staging)

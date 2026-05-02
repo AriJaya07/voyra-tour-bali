@@ -24,6 +24,8 @@ export interface ToolkitData {
   itineraryCount: number;
   loyaltyPoints: number;
   loyaltyTier?: string | null;
+  aiCreditsRemaining?: number;
+  aiPlan?: "FREE" | "EXPLORER" | "VOYAGER" | "FOUNDER";
 }
 
 export const EMPTY_TOOLKIT: ToolkitData = {
@@ -37,4 +39,6 @@ export const EMPTY_TOOLKIT: ToolkitData = {
   itineraryCount: 0,
   loyaltyPoints: 0,
   loyaltyTier: null,
+  aiCreditsRemaining: 0,
+  aiPlan: "FREE",
 };

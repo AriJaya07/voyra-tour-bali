@@ -158,6 +158,25 @@ Configure Vercel Cron jobs in the dashboard with that header.
 |---|---|
 | `NEXT_PUBLIC_WA_NUMBER` | WhatsApp number used in floating CTA (`+62...`) |
 
+### 3.16 AI subscription + credits
+| Name | Example | Notes |
+|---|---|---|
+| `AI_CREDIT_GUARD` *(optional, default `on`)* | `off` | Kill switch — when `off`, `aiCreditService.reserveCredits` always returns ok and bills no credits. Use only for incident response; metrics still write to `AiUsage`. |
+| `AI_GUEST_HASH_SALT` *(optional)* | random hex | Salt used to SHA-256 guest IPs in `AiUsage.ipHash`. Falls back to `NEXTAUTH_SECRET` if unset. |
+| `ENABLE_AI_VISION` *(optional, default `false`)* | `true` | Enables `/api/ai/voucher-read`. Requires `ANTHROPIC_API_KEY`. |
+| `ANTHROPIC_API_KEY` *(required when vision enabled)* | `sk-ant-...` | console.anthropic.com → API Keys. |
+| `AI_VISION_MODEL` *(optional)* | `claude-haiku-4-5-20251001` | Override default vision model. |
+
+Cron jobs added by the AI subsystem (register in Vercel dashboard or `vercel.json`):
+- `/api/cron/ai-subscription-renewals` — daily 18:00 UTC
+- `/api/cron/ai-renewal-reminders` — daily 01:00 UTC
+- `/api/cron/ai-grace-sweep` — hourly
+- `/api/cron/ai-expire-credits` — daily 19:00 UTC
+- `/api/cron/ai-usage-rollup` — daily 20:00 UTC
+- `/api/cron/ai-welcome-followup` — daily 09:30 UTC (T-3 / T-1 / post-expire welcome emails)
+
+All gated by `Authorization: Bearer ${CRON_SECRET}`.
+
 ---
 
 ## 4. `.env.local` — copy-paste template

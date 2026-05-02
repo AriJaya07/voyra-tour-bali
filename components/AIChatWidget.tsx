@@ -7,6 +7,9 @@ import { HiSparkles } from "react-icons/hi2";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { buildViatorProductUrl } from "@/lib/config/viator";
+import AiUpgradeModal from "@/components/ai/AiUpgradeModal";
+import { useQueryClient } from "@tanstack/react-query";
+import { AI_QUERY_KEYS, useAiWallet } from "@/utils/hooks/useAiWallet";
 
 interface ProductCard {
   productCode: string;
@@ -55,8 +58,19 @@ export default function AIChatWidget() {
   const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{
+    open: boolean;
+    variant: "user_quota" | "guest_quota";
+    balance: number;
+    reason?: string;
+  }>({ open: false, variant: "user_quota", balance: 0 });
+  const [mode, setMode] = useState<"chat" | "concierge">("chat");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const qc = useQueryClient();
+  const isAuthed = !!session?.user?.id;
+  const wallet = useAiWallet({ enabled: isAuthed });
+  const conciergeUnlocked = !!wallet.data?.planFeatures?.concierge;
 
   // Refresh welcome when session resolves (avoid stale "Hi!" for signed-in user)
   useEffect(() => {
@@ -111,8 +125,10 @@ export default function AIChatWidget() {
     setInputValue("");
     setIsStreaming(true);
 
+    const useConcierge = mode === "concierge" && conciergeUnlocked && isAuthed;
+
     try {
-      const res = await fetch("/api/ai/chat", {
+      const res = await fetch(useConcierge ? "/api/ai/concierge" : "/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -121,7 +137,49 @@ export default function AIChatWidget() {
         }),
       });
 
+      if (res.status === 402) {
+        const payload = await res.json().catch(() => ({}));
+        const variant = isAuthed ? "user_quota" : "guest_quota";
+        setUpgradeModal({
+          open: true,
+          variant,
+          balance: typeof payload?.balance === "number" ? payload.balance : 0,
+          reason: payload?.reason,
+        });
+        // Drop the in-flight assistant placeholder, restore last user msg
+        setMessages((prev) => {
+          const trimmed = [...prev];
+          // Remove trailing empty assistant placeholder
+          if (trimmed.length > 0 && trimmed[trimmed.length - 1].role === "assistant" && !trimmed[trimmed.length - 1].content) {
+            trimmed.pop();
+          }
+          trimmed.push({
+            role: "assistant",
+            content: variant === "guest_quota"
+              ? "Looks like you've hit the free guest limit. Sign up to keep chatting."
+              : "You're out of AI credits — top up or upgrade to continue.",
+          });
+          return trimmed;
+        });
+        return;
+      }
+
       if (!res.ok || !res.body) throw new Error("Request failed");
+
+      // Concierge endpoint is JSON, not streaming — branch out.
+      if (useConcierge) {
+        const json = await res.json();
+        const reply = typeof json?.reply === "string" ? json.reply : "(no reply)";
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            ...updated[updated.length - 1],
+            content: reply,
+          };
+          return updated;
+        });
+        return;
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -198,6 +256,7 @@ export default function AIChatWidget() {
       });
     } finally {
       setIsStreaming(false);
+      if (isAuthed) qc.invalidateQueries({ queryKey: AI_QUERY_KEYS.wallet });
     }
   }
 
@@ -209,9 +268,10 @@ export default function AIChatWidget() {
   }
 
   return (
-    // Safe area padding for iOS home indicator; right-3/bottom-4 on mobile, right-6/bottom-6 on sm+
+    // Mobile: lifted above the 56px MobileBottomNav (lg:hidden) so the chat
+    // button never covers primary nav. Desktop: pinned bottom-right as before.
     <div
-      className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3"
+      className="fixed right-3 bottom-[72px] sm:right-6 lg:bottom-6 z-50 flex flex-col items-end gap-3"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <AnimatePresence>
@@ -241,6 +301,20 @@ export default function AIChatWidget() {
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
+                {conciergeUnlocked ? (
+                  <button
+                    type="button"
+                    onClick={() => setMode((m) => (m === "concierge" ? "chat" : "concierge"))}
+                    title={mode === "concierge" ? "Concierge mode (memory on)" : "Switch to concierge mode"}
+                    className={`text-[10px] font-bold px-2 py-1 rounded-full border transition ${
+                      mode === "concierge"
+                        ? "bg-white text-blue-700 border-white"
+                        : "bg-white/10 text-white border-white/30 hover:bg-white/20"
+                    }`}
+                  >
+                    {mode === "concierge" ? "★ MEM" : "MEM"}
+                  </button>
+                ) : null}
                 <button
                   onClick={resetChat}
                   disabled={isStreaming || messages.length <= 1}
@@ -357,26 +431,28 @@ export default function AIChatWidget() {
             </div>
 
             {/* Input */}
-            <div className="px-3 py-2.5 border-t border-gray-100 bg-white flex items-center gap-2 flex-shrink-0">
-              <input
-                ref={inputRef}
-                type="text"
-                inputMode="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask about Bali tours..."
-                disabled={isStreaming}
-                className="flex-1 min-w-0 text-sm px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 bg-gray-50 disabled:opacity-60"
-              />
-              <button
-                onClick={() => sendMessage()}
-                disabled={isStreaming || !inputValue.trim()}
-                className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-                aria-label="Send"
-              >
-                <IoSend size={15} />
-              </button>
+            <div className="border-t border-gray-100 bg-white flex-shrink-0">
+              <div className="px-3 py-2.5 flex items-center gap-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  inputMode="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask about Bali tours..."
+                  disabled={isStreaming}
+                  className="flex-1 min-w-0 text-sm px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 bg-gray-50 disabled:opacity-60"
+                />
+                <button
+                  onClick={() => sendMessage()}
+                  disabled={isStreaming || !inputValue.trim()}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                  aria-label="Send"
+                >
+                  <IoSend size={15} />
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -427,6 +503,14 @@ export default function AIChatWidget() {
           )}
         </AnimatePresence>
       </motion.button>
+
+      <AiUpgradeModal
+        open={upgradeModal.open}
+        onClose={() => setUpgradeModal((s) => ({ ...s, open: false }))}
+        variant={upgradeModal.variant}
+        balance={upgradeModal.balance}
+        reason={upgradeModal.reason}
+      />
     </div>
   );
 }

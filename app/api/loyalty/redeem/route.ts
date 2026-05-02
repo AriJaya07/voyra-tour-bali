@@ -4,16 +4,31 @@ import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Redeem loyalty points for an IDR discount code.
- * Conversion: 1000 pts = Rp 50,000 (5% effective when spending Rp 1M earned points back).
+ * Legacy: redeem loyalty points for an IDR discount code.
  *
- * Returns a one-time discount code the user pastes at checkout.
+ * Phase 10 (2026-05-03): all rewards now mint AI credits. This endpoint is in
+ * a 60-day sunset window — it returns 410 Gone after `DISCOUNT_CODE_SUNSET_AT`.
+ * Until then, existing balances can still mint a discount code so users with
+ * outstanding points aren't left holding nothing.
+ *
+ * The new path: POST /api/ai/loyalty-redeem (1,000 pts → 100 AI credits).
  */
 const RATE_PER_1000PTS_IDR = 50_000;
 const MIN_REDEEM = 1000;
 const MAX_REDEEM = 50_000;
+const DISCOUNT_CODE_SUNSET_AT = new Date("2026-07-02T00:00:00Z"); // 60 days from cutover
 
 export async function POST(req: NextRequest) {
+  if (Date.now() >= DISCOUNT_CODE_SUNSET_AT.getTime()) {
+    return NextResponse.json(
+      {
+        error: "Discount-code redemption has been retired. Redeem points for AI credits instead at Profile → AI Wallet.",
+        replacement: "/api/ai/loyalty-redeem",
+      },
+      { status: 410 }
+    );
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

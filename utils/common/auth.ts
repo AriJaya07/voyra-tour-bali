@@ -117,7 +117,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           // Upsert: create user if not exists, otherwise update Google profile data
-          await prisma.user.upsert({
+          const dbUser = await prisma.user.upsert({
             where: { email },
             update: {
               name: user.name ?? undefined,
@@ -133,7 +133,27 @@ export const authOptions: NextAuthOptions = {
               emailVerified: true,
               // password is null for Google users
             },
+            select: { id: true },
           });
+
+          // AI welcome grant — idempotent (skipped if already granted or legacy user).
+          // Lazy-import to keep this callback off the LLM cold path during route handlers.
+          try {
+            const { ensureWelcomeGrant } = await import("@/lib/services/aiCreditService");
+            await ensureWelcomeGrant(dbUser.id);
+          } catch (welcomeErr) {
+            console.error("[AI] Welcome grant failed during Google signIn:", welcomeErr);
+          }
+
+          // Best-effort signup fingerprint — Google callback has no NextRequest,
+          // so we capture only the userId. IP / UA hashes go in via the next
+          // authenticated route (e.g. /api/profile) when needed.
+          try {
+            const { recordSignupFingerprint } = await import("@/lib/services/signupFingerprintService");
+            await recordSignupFingerprint({ userId: dbUser.id });
+          } catch (fpErr) {
+            console.error("[Fingerprint] Google signIn fingerprint failed:", fpErr);
+          }
         } catch (error) {
           console.error("Google signIn callback error:", error);
           return false;
