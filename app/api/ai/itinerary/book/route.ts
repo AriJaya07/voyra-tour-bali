@@ -3,15 +3,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import { buildViatorProductUrl } from "@/lib/config/viator";
-import { canUseFeature } from "@/lib/services/aiCreditService";
 
 /**
  * POST /api/ai/itinerary/book  Body: { itineraryId, dayFilter?: number }
  *
- * Subscriber-only convenience: turn a saved AI itinerary into a one-click
- * checklist of bookable items, each with a 5% promo applied (BUNDLE5) and an
- * affiliate-tracked Viator deep-link. Also writes ImportedTrip rows so the
- * user's profile/itineraries page picks them up automatically.
+ * Open to any signed-in user with a saved AI itinerary: turn it into a
+ * one-click checklist of bookable items, each with a 5% promo applied
+ * (BUNDLE5) and an affiliate-tracked Viator deep-link. Also writes
+ * ImportedTrip rows so the user's profile/itineraries page picks them up
+ * automatically.
  *
  * Costs 0 credits — the whole point is to drive Viator commission.
  */
@@ -42,19 +42,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const userId = parseInt(session.user.id);
-
-    // Subscriber-only — Explorer tier and above (gate via the `plan` feature flag).
-    const subscriber = await canUseFeature(userId, "plan");
-    if (!subscriber) {
-      return NextResponse.json(
-        {
-          error: "Bundle booking is for Explorer / Voyager / Founder subscribers.",
-          reason: "FEATURE_LOCKED",
-          upgradeUrl: "/plans",
-        },
-        { status: 402 }
-      );
-    }
 
     const body = await req.json().catch(() => ({}));
     const itineraryId = Number(body?.itineraryId);

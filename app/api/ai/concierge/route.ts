@@ -7,7 +7,6 @@ import { prisma } from "@/lib/prisma";
 import { VOYRA_KNOWLEDGE_BASE } from "@/lib/config/aiKnowledgeBase";
 import {
   cancelReservation,
-  canUseFeature,
   ensureFreeMonthlyGrant,
   reserveCredits,
   settleReservation,
@@ -17,7 +16,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
 /**
  * AI Concierge — multi-turn chat with persistent memory.
  *
- * Voyager+ feature. 4 credits per turn (4× chat cost). Memory window keeps the
+ * Credit-gated only. 4 credits per turn (4× chat cost). Memory window keeps the
  * last MAX_MEMORY_TURNS messages plus a free-form `notes` array the assistant
  * can update via JSON tool-call style markers we strip from the user-facing
  * response.
@@ -117,15 +116,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     }
     const userId = parseInt(session.user.id);
-
-    // Voyager+ feature gate
-    const ok = await canUseFeature(userId, "concierge");
-    if (!ok) {
-      return NextResponse.json(
-        { error: "Concierge is a Voyager / Founder feature.", reason: "FEATURE_LOCKED", upgradeUrl: "/plans" },
-        { status: 402 }
-      );
-    }
 
     const body = await req.json().catch(() => ({}));
     const userMessage = typeof body?.userMessage === "string" ? body.userMessage.trim() : "";

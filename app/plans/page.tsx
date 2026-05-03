@@ -12,7 +12,6 @@ import UsageCalculator from "@/components/ai/UsageCalculator";
 import PlansFAQ from "@/components/ai/PlansFAQ";
 import CostComparisonTable from "@/components/ai/CostComparisonTable";
 import CreditTranslation from "@/components/ai/CreditTranslation";
-import TrustStrip from "@/components/Homepage/TrustStrip";
 import { MIDTRANS_CLIENT_KEY, MIDTRANS_SNAP_URL } from "@/lib/config/midtrans";
 import {
   useAiCatalog,
@@ -163,8 +162,6 @@ export default function PlansPage() {
           ))}
         </section>
       )}
-
-      <TrustStrip className="mt-8" />
 
       <div className="mt-10 grid gap-4 lg:grid-cols-2">
         <UsageCalculator />

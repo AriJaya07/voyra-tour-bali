@@ -37,6 +37,22 @@ export async function GET() {
     const planDef = AI_PLANS[summary.plan];
     const translation = translateCredits(summary.balance);
 
+    // Credit-only gating: any signed-in user with credits can use chat, plan,
+    // plan_refine, concierge, cultural, dayOfTrip, voucherRead. Subscription-
+    // exclusive perks (familySeats seat count, priorityRouting) stay anchored
+    // to the user's actual plan.
+    const planFeatures = {
+      plan: true,
+      planMaxDays: 14,
+      saveItineraries: planDef.features.saveItineraries > 0 ? planDef.features.saveItineraries : 5,
+      concierge: true,
+      dayOfTrip: true,
+      cultural: true,
+      voucherRead: true,
+      familySeats: planDef.features.familySeats,
+      priorityRouting: planDef.features.priorityRouting,
+    };
+
     // Flatten the soonest-expiring grant (across all buckets) for hero callouts.
     const upcomingExpiry = buckets
       .flatMap((b) => b.grants)
@@ -50,7 +66,7 @@ export async function GET() {
         expiringIn7d: summary.expiringIn7d,
         plan: summary.plan,
         planLabel: planDef.label,
-        planFeatures: planDef.features,
+        planFeatures,
         translation,
         subscription: subscription
           ? {

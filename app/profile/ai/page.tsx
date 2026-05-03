@@ -12,7 +12,6 @@ import FamilySeatsPanel from "@/components/ai/FamilySeatsPanel";
 import BucketBreakdown from "@/components/ai/BucketBreakdown";
 import CreditTranslation from "@/components/ai/CreditTranslation";
 import NextRenewalCountdown from "@/components/ai/NextRenewalCountdown";
-import TrustStrip from "@/components/Homepage/TrustStrip";
 import {
   useAcceptFamilySeatMutation,
   useAiCatalog,
@@ -185,8 +184,6 @@ export default function AiWalletPage() {
       </section>
 
       <BucketBreakdown buckets={w?.buckets ?? []} className="mt-4" />
-
-      <TrustStrip className="mt-4" compact />
 
       <FamilySeatsPanel />
 

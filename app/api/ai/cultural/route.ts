@@ -5,7 +5,6 @@ import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import {
   cancelReservation,
-  canUseFeature,
   ensureFreeMonthlyGrant,
   reserveCredits,
   settleReservation,
@@ -15,7 +14,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
 /**
  * Cultural Co-Pilot — answers questions about Bali ceremonies + cultural calendar.
  * Pulls relevant BaliEvent rows around the user's mentioned date / current date
- * to ground the LLM. 2 credits/turn. Explorer+ feature.
+ * to ground the LLM. 2 credits/turn. Credit-gated only — any user with balance.
  */
 
 const MODEL = "llama-3.3-70b-versatile";
@@ -38,14 +37,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     }
     const userId = parseInt(session.user.id);
-
-    const ok = await canUseFeature(userId, "cultural");
-    if (!ok) {
-      return NextResponse.json(
-        { error: "Cultural co-pilot is for Explorer / Voyager / Founder.", reason: "FEATURE_LOCKED", upgradeUrl: "/plans" },
-        { status: 402 }
-      );
-    }
 
     const body = await req.json().catch(() => ({}));
     const userMessage = typeof body?.userMessage === "string" ? body.userMessage.trim() : "";

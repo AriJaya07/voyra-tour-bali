@@ -7,7 +7,6 @@ import { Prisma } from "@prisma/client";
 import { buildViatorProductUrl, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
 import {
   cancelReservation,
-  canUseFeature,
   ensureFreeMonthlyGrant,
   reserveCredits,
   settleReservation,
@@ -17,7 +16,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
 /**
  * Plan Refine — modify a single day of an existing SavedItinerary.
  *
- * Voyager+ feature. Cheaper than full plan generation (6 credits) because we
+ * Credit-gated only (6 credits). Cheaper than full plan generation because we
  * keep the surrounding days untouched and only ask the LLM to swap items in
  * the targeted day. Reuses the candidate-pool guardrails from /api/ai/plan to
  * stop the model from hallucinating productCodes.
@@ -101,15 +100,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     }
     const userId = parseInt(session.user.id);
-
-    // Voyager+ feature gate (concierge flag is the discriminator)
-    const ok = await canUseFeature(userId, "concierge");
-    if (!ok) {
-      return NextResponse.json(
-        { error: "Plan refine is a Voyager / Founder feature.", reason: "FEATURE_LOCKED", upgradeUrl: "/plans" },
-        { status: 402 }
-      );
-    }
 
     const body = await req.json().catch(() => ({}));
     const itineraryId = Number(body?.itineraryId);

@@ -4,7 +4,6 @@ import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import {
   cancelReservation,
-  canUseFeature,
   reserveCredits,
   settleReservation,
 } from "@/lib/services/aiCreditService";
@@ -13,9 +12,11 @@ import { AI_ENDPOINT_COST } from "@/lib/config/aiCosts";
 /**
  * AI Voucher Reader (Vision)
  *
- * Voyager+ feature. Accepts an image upload (booking voucher screenshot/PDF
- * page) and returns structured booking metadata. Optionally writes an
- * ImportedTrip row + CalendarEvent so the user's profile picks it up.
+ * Credit-gated only (5 credits). Vision endpoint additionally requires
+ * ENABLE_AI_VISION=true and ANTHROPIC_API_KEY at the deployment level.
+ * Accepts an image upload (booking voucher screenshot/PDF page) and returns
+ * structured booking metadata. Optionally writes an ImportedTrip row +
+ * CalendarEvent so the user's profile picks it up.
  *
  * Vision is not provided by Groq — opt-in via env:
  *   ENABLE_AI_VISION=true
@@ -88,14 +89,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     }
     const userId = parseInt(session.user.id);
-
-    const ok = await canUseFeature(userId, "voucherRead");
-    if (!ok) {
-      return NextResponse.json(
-        { error: "Voucher reader is a Voyager / Founder feature.", reason: "FEATURE_LOCKED", upgradeUrl: "/plans" },
-        { status: 402 }
-      );
-    }
 
     const form = await req.formData().catch(() => null);
     if (!form) return NextResponse.json({ error: "Multipart form expected" }, { status: 400 });

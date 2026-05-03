@@ -3,11 +3,17 @@
 import { useSession } from "next-auth/react";
 import {
   CalendarIcon,
-  ShieldIcon,
   ClipboardIcon,
   MapPinIcon,
 } from "@/components/assets/Icon/shared";
 import { HiSparkles } from "react-icons/hi2";
+
+const PLAN_LABELS: Record<"FREE" | "EXPLORER" | "VOYAGER" | "FOUNDER", string> = {
+  FREE: "Free",
+  EXPLORER: "Explorer",
+  VOYAGER: "Voyager",
+  FOUNDER: "Founder",
+};
 import ToolkitTile from "./ToolkitTile";
 import ToolkitHero from "./ToolkitHero";
 import ToolkitFooterCTA from "./ToolkitFooterCTA";
@@ -78,18 +84,20 @@ export default function TravelToolkit() {
         />
 
         <ToolkitTile
-          href={authedHref(authed, "/profile/survival-pack")}
-          title="Survival Pack"
+          href="/plans"
+          title="AI Subscription"
           description={
             authed
-              ? "Emergency numbers, Bali belly tips, scam list, ATM safety — offline-ready."
-              : "Emergency numbers, scam alerts, health tips — pocket-ready for Bali."
+              ? data.aiPlan && data.aiPlan !== "FREE"
+                ? `You're on ${PLAN_LABELS[data.aiPlan]} — ${(data.aiCreditsRemaining ?? 0).toLocaleString()} credits ready.`
+                : `${(data.aiCreditsRemaining ?? 0).toLocaleString()} credits left. Subscribe for monthly top-ups + cheaper credits.`
+              : "Monthly AI credits, family seats, premium concierge — pick a plan to fit your trip."
           }
-          badge={authed ? "Offline-ready" : "Free"}
-          badgeTone="success"
-          icon={<ShieldIcon className="w-5 h-5" />}
-          accent="pink"
-          ariaLabel="Survival Pack, opens emergency tips and contacts"
+          badge={authed && data.aiPlan ? PLAN_LABELS[data.aiPlan] : "Subscribe"}
+          badgeTone={authed && data.aiPlan && data.aiPlan !== "FREE" ? "success" : "default"}
+          icon={<HiSparkles className="w-5 h-5" />}
+          accent="violet"
+          ariaLabel="AI Subscription plans, opens pricing page"
         />
 
         <ToolkitTile

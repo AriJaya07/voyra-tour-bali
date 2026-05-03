@@ -6,7 +6,6 @@ import { prisma } from "@/lib/prisma";
 import { buildViatorProductUrl, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
 import {
   cancelReservation,
-  canUseFeature,
   ensureFreeMonthlyGrant,
   reserveCredits,
   settleReservation,
@@ -130,35 +129,8 @@ export async function POST(req: NextRequest) {
     // Free-tier auto-grant before quota check
     await ensureFreeMonthlyGrant(userId).catch(() => {});
 
-    // Plan feature gate: subscribers only (Explorer+). Free users → 402 with FEATURE_LOCKED.
-    const allowedPlan = await canUseFeature(userId, "plan");
-    if (!allowedPlan) {
-      return NextResponse.json(
-        {
-          error: "AI itinerary planner is a paid feature.",
-          reason: "FEATURE_LOCKED",
-          upgradeUrl: "/plans",
-        },
-        { status: 402 }
-      );
-    }
-
-    // Plan length gate: Explorer caps at 7 days. Voyager+ unlocks 14.
-    if (days > 7) {
-      const longPlanOk = await canUseFeature(userId, "concierge"); // Voyager+ marker
-      if (!longPlanOk) {
-        return NextResponse.json(
-          {
-            error: "Plans longer than 7 days require Voyager or Founder.",
-            reason: "FEATURE_LOCKED",
-            upgradeUrl: "/plans",
-          },
-          { status: 402 }
-        );
-      }
-    }
-
-    // Credit gate: reserve before any expensive work (Viator searches + LLM)
+    // Credit gate: reserve before any expensive work (Viator searches + LLM).
+    // Plan length differential (8 cr ≤7d, 12 cr 8–14d) preserved via planCost.
     const cost = planCost(days);
     const reserved = await reserveCredits(userId, "plan", cost);
     if (!reserved.ok) {
