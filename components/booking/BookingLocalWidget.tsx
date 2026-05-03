@@ -10,7 +10,7 @@ import { formatPrice } from "@/utils/formatPrice"
 import type { CurrencyCode } from "@/utils/formatPrice"
 import { useCurrency } from "@/utils/hooks/useCurrency"
 import CurrencySwitch from "@/components/common/CurrencySwitch"
-import { trackBeginCheckout, trackPurchase } from "@/utils/analytics"
+import { trackBeginCheckout } from "@/utils/analytics"
 import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon"
 import VoryaIcon from "../assets/Icon/VoyraIcon"
 import { CalendarIcon, CheckmarkIcon, SpinnerIcon, LockIcon } from "@/components/assets/Icon/shared"
@@ -174,7 +174,7 @@ export default function BookingLocalWidget({
       },
       {
         onSuccess: (data) => {
-          trackPurchase({ transactionId: data.orderId || `txn-${Date.now()}`, productCode, title, price: totalPrice, currency: pricingCurrency, travelers: totalTravelers })
+          // purchase event fires from /booking-success once payment confirmed.
           window.location.href = data.redirectUrl
         },
       }

@@ -118,6 +118,8 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
     const { getSession } = await import("next-auth/react");
     const freshSession = await getSession();
     const role = (freshSession?.user as { role?: string })?.role;
+    const { trackLogin } = await import("@/utils/analytics");
+    trackLogin("email");
     onRedirect(getRedirectUrl(role));
   };
 

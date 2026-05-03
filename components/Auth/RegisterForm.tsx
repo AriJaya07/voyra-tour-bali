@@ -156,7 +156,10 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
       const emailLower = email.toLowerCase().trim();
       setRegisteredEmail(emailLower);
       setIsSuccess(true);
-      
+
+      const { trackSignUp } = await import("@/utils/analytics");
+      trackSignUp("email");
+
       // Immediately lock the resend button for 5 minutes since an email was just dispatched
       const cooldownSecs = 300;
       localStorage.setItem(`resendCooldown_${emailLower}`, (Date.now() + cooldownSecs * 1000).toString());

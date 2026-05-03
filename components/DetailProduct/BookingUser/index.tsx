@@ -16,7 +16,7 @@ import {
   extractPriceMap,
 } from '@/utils/hooks/useViator'
 import type { ViatorAgeBand, AvailabilityPaxMix } from '@/utils/hooks/useViator'
-import { trackBeginCheckout, trackPurchase } from '@/utils/analytics'
+import { trackBeginCheckout } from '@/utils/analytics'
 import WhatsAppIcon from '@/components/assets/sosmed/WhatsAppIcon'
 import { CheckmarkIcon, SpinnerIcon, ArrowRightIcon, ExternalLinkIcon, ShieldIcon, LightningIcon, PaymentIcon } from '@/components/assets/Icon/shared'
 
@@ -307,15 +307,7 @@ export default function BookingUser({
       },
       {
         onSuccess: (data) => {
-          // GA4: purchase
-          trackPurchase({
-            transactionId: data.orderId || `txn-${Date.now()}`,
-            productCode,
-            title,
-            price: totalPrice,
-            currency: pricingCurrency,
-            travelers: totalTravelers,
-          })
+          // purchase event fires from /booking-success once payment confirmed.
           window.location.href = data.redirectUrl
         },
       }

@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Container from '@/components/Container';
 import { CheckmarkIcon, ClockIcon } from "@/components/assets/Icon/shared";
+import { trackPurchase } from "@/utils/analytics";
 
 export default function BookingSuccessClient() {
   const searchParams = useSearchParams();
@@ -15,6 +16,28 @@ export default function BookingSuccessClient() {
   const currency = searchParams.get('currency') || "USD";
   const status = searchParams.get('status') || "PENDING";
   const voucher = searchParams.get('voucher');
+  const productCode = searchParams.get('productCode') || ref || '';
+
+  // Fire purchase only once per booking ref, only on CONFIRMED status.
+  // Server-side webhook follow-up (P2) will dedupe via transaction_id.
+  const firedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!ref) return;
+    if (status !== 'CONFIRMED') return;
+    if (firedRef.current === ref) return;
+    firedRef.current = ref;
+    const priceNum = Number(total);
+    const paxNum = Number(pax) || 1;
+    if (!Number.isFinite(priceNum) || priceNum <= 0) return;
+    trackPurchase({
+      transactionId: ref,
+      productCode,
+      title: title ?? 'Tour',
+      price: priceNum / paxNum,
+      currency,
+      travelers: paxNum,
+    });
+  }, [ref, status, total, pax, productCode, title, currency]);
 
   if (!ref) {
     return (

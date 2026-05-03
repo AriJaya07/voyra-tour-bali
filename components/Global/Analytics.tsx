@@ -1,14 +1,38 @@
 import React from "react";
 import Script from "next/script";
 import { GtmBodyNoScript, GtmHead } from "@/components/Global/Gtm";
-import { GA_MEASUREMENT_ID, buildOrganizationJsonLd } from "@/lib/config";
+import {
+  GA_MEASUREMENT_ID,
+  SITE_NAME,
+  SITE_URL,
+  buildOrganizationJsonLd,
+} from "@/lib/config";
+
+/** WebSite JSON-LD with sitelinks SearchAction (Google sitelink search box). */
+function buildWebSiteJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    url: SITE_URL,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+}
 
 /**
  * AnalyticsHead: Handles all <head> script components,
  * including GTM, GA4, and JSON-LD.
  */
 export function AnalyticsHead() {
-  const jsonLd = buildOrganizationJsonLd();
+  const orgJsonLd = buildOrganizationJsonLd();
+  const websiteJsonLd = buildWebSiteJsonLd();
 
   return (
     <>
@@ -18,11 +42,13 @@ export function AnalyticsHead() {
       {/* Google Analytics 4 */}
       {GA_MEASUREMENT_ID && (
         <>
-          <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-            strategy="beforeInteractive"
-          />
-          <Script id="google-analytics" strategy="beforeInteractive">
+          {/*
+           * Consent Mode v2 must initialize BEFORE gtag.js loads, so the
+           * default-denied state is applied to the very first hit. Inline
+           * snippet runs synchronously (no strategy override) — the heavier
+           * gtag.js library loads afterInteractive to keep LCP fast.
+           */}
+          <Script id="google-analytics-consent" strategy="beforeInteractive">
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
@@ -48,6 +74,16 @@ export function AnalyticsHead() {
                   }
                 }
               } catch (e) {}
+            `}
+          </Script>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="google-analytics-config" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', '${GA_MEASUREMENT_ID}', {
                 send_page_view: true,
@@ -57,10 +93,16 @@ export function AnalyticsHead() {
         </>
       )}
 
-      {/* JSON-LD Structured Data */}
+      {/* JSON-LD: Organization */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+      />
+
+      {/* JSON-LD: WebSite + SearchAction (sitelinks search box) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
       />
     </>
   );
