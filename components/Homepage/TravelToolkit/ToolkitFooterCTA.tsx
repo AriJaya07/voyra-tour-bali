@@ -16,7 +16,7 @@ export default function ToolkitFooterCTA({ authed, loyaltyPoints, loyaltyTier }:
       >
         <div
           aria-hidden
-          className="absolute inset-0 bg-[url('/images/banner-reward.png')] bg-cover bg-center pointer-events-none transition group-hover:scale-105 motion-reduce:group-hover:scale-100"
+          className="absolute inset-0 bg-[url('/images/banner/banner-reward.png')] bg-cover bg-center pointer-events-none transition group-hover:scale-105 motion-reduce:group-hover:scale-100"
         />
         <div
           aria-hidden
@@ -48,7 +48,7 @@ export default function ToolkitFooterCTA({ authed, loyaltyPoints, loyaltyTier }:
     <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-gray-900 to-gray-800 text-white p-5 sm:p-6 shadow-sm">
       <div
         aria-hidden
-        className="absolute inset-0 bg-[url('/images/banner-reward.png')] bg-cover bg-center pointer-events-none"
+        className="absolute inset-0 bg-[url('/images/banner/banner-reward.png')] bg-cover bg-center pointer-events-none"
       />
       <div
         aria-hidden

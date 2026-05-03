@@ -19,7 +19,7 @@ export default function AiGuideHero({ authed }: Props) {
     >
       <div
         aria-hidden
-        className="absolute inset-0 bg-[url('/images/banner-ai.png')] bg-cover bg-center pointer-events-none"
+        className="absolute inset-0 bg-[url('/images/banner/banner-ai.png')] bg-cover bg-center pointer-events-none"
       />
       <div
         aria-hidden

@@ -114,6 +114,7 @@ export default function StatusPage() {
         badge="Transparency"
         title="Status & Limitations"
         subtitle="Honest snapshot of what works today, what's partial, and what's coming."
+        bannerImage="/images/banner/banner-status.png"
       />
 
       <Container>

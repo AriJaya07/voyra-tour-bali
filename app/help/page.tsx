@@ -206,6 +206,7 @@ export default function HelpCenterPage() {
         badge="Help"
         title="Help Center"
         subtitle="Step-by-step answers for using your account, managing bookings, and getting around Bali."
+        bannerImage="/images/banner/banner-help.png"
       />
 
       <Container>

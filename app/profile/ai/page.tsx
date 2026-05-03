@@ -12,6 +12,7 @@ import FamilySeatsPanel from "@/components/ai/FamilySeatsPanel";
 import BucketBreakdown from "@/components/ai/BucketBreakdown";
 import CreditTranslation from "@/components/ai/CreditTranslation";
 import NextRenewalCountdown from "@/components/ai/NextRenewalCountdown";
+import { useMemo } from "react";
 import {
   useAcceptFamilySeatMutation,
   useAiCatalog,
@@ -36,26 +37,12 @@ const ENDPOINT_LABEL: Record<string, string> = {
   voucher_read: "Voucher reader",
 };
 
-const REASON_LABEL: Record<string, string> = {
-  GRANT_BACKFILL: "Welcome credits",
-  GRANT_TOPUP: "Top-up",
-  GRANT_SUBSCRIPTION: "Subscription grant",
-  GRANT_PROMO: "Promo",
-  GRANT_REFERRAL: "Referral bonus",
-  GRANT_LOYALTY_REDEEM: "Loyalty redeemed",
-  GRANT_REFUND: "Refund",
-  GRANT_ADJUST: "Manual adjust",
-  EXPIRE: "Expired",
-  SPEND_CHAT: "Chat",
-  SPEND_PLAN: "Itinerary plan",
-};
-
 export default function AiWalletPage() {
   const { status } = useSession();
   const params = useSearchParams();
   const wallet = useAiWallet({ enabled: status === "authenticated" });
   const catalog = useAiCatalog();
-  const usage = useAiUsage("30d", status === "authenticated");
+  const usage = useAiUsage("7d", status === "authenticated");
   const subQ = useAiSubscription(status === "authenticated");
   const cancelMut = useCancelSubscriptionMutation();
   const resumeMut = useResumeSubscriptionMutation();
@@ -94,6 +81,19 @@ export default function AiWalletPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [acceptSeatToken, status]);
 
+  const totals = useMemo(() => {
+    const rows = usage.data?.usage ?? [];
+    const map = new Map<string, { calls: number; creditsSpent: number }>();
+    for (const row of rows) {
+      if (row.status !== "OK") continue;
+      const cur = map.get(row.endpoint) ?? { calls: 0, creditsSpent: 0 };
+      cur.calls += 1;
+      cur.creditsSpent += row.creditsCost;
+      map.set(row.endpoint, cur);
+    }
+    return Array.from(map.entries()).map(([endpoint, v]) => ({ endpoint, ...v }));
+  }, [usage.data?.usage]);
+
   if (status === "loading") {
     return (
       <main className="mx-auto max-w-5xl px-4 py-10">
@@ -120,8 +120,6 @@ export default function AiWalletPage() {
   const w = wallet.data;
   const packs = catalog.data?.packs ?? [];
   const usageRows = usage.data?.usage ?? [];
-  const ledgerRows = usage.data?.ledger ?? [];
-  const totals = usage.data?.totals ?? [];
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -274,7 +272,7 @@ export default function AiWalletPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-lg font-semibold text-slate-900">Usage (last 30 days)</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Recent activity</h2>
         {totals.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {totals.map((t) => (
@@ -341,37 +339,6 @@ export default function AiWalletPage() {
         </div>
       </section>
 
-      <section className="mt-10">
-        <h2 className="text-lg font-semibold text-slate-900">Credit history</h2>
-        <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <ul className="divide-y divide-slate-100">
-            {ledgerRows.length === 0 ? (
-              <li className="px-4 py-6 text-center text-sm text-slate-500">
-                No credit movements in the last 30 days.
-              </li>
-            ) : (
-              ledgerRows.map((row) => (
-                <li key={row.id} className="flex items-center justify-between px-4 py-2 text-sm">
-                  <div>
-                    <div className="font-medium text-slate-800">
-                      {REASON_LABEL[row.reason] ?? row.reason}
-                    </div>
-                    <div className="text-xs text-slate-500">{fmtDate(row.createdAt)}</div>
-                  </div>
-                  <div
-                    className={`font-mono text-sm font-bold ${
-                      row.delta > 0 ? "text-emerald-600" : "text-rose-600"
-                    }`}
-                  >
-                    {row.delta > 0 ? "+" : ""}
-                    {row.delta}
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
-      </section>
     </main>
   );
 }

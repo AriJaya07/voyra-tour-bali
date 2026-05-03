@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import crypto from "crypto";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
-import { canUseFeature } from "@/lib/services/aiCreditService";
 import { AI_PLANS } from "@/lib/config/aiPlans";
 import { sendNotificationEmail } from "@/lib/email";
 
@@ -34,15 +33,12 @@ export async function GET() {
     }
     const userId = parseInt(session.user.id);
 
-    const allowed = await canUseFeature(userId, "familySeats");
-    if (!allowed) {
-      return NextResponse.json(
-        { error: "Family seats are a Founder feature.", reason: "FEATURE_LOCKED", upgradeUrl: "/plans" },
-        { status: 402 }
-      );
+    const owner = await ownerInfo(userId);
+    if (!owner) {
+      // Non-Founder: silent empty list. UI panel hides on maxSeats <= 0.
+      return NextResponse.json({ maxSeats: 0, used: 0, seats: [] });
     }
 
-    const owner = await ownerInfo(userId);
     const seats = await prisma.aiFamilySeat.findMany({
       where: { ownerUserId: userId, revokedAt: null },
       include: { member: { select: { id: true, name: true, email: true } } },
@@ -50,7 +46,7 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      maxSeats: owner?.maxSeats ?? 0,
+      maxSeats: owner.maxSeats,
       used: seats.length,
       seats: seats.map((s) => ({
         id: s.id,
