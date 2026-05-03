@@ -91,23 +91,23 @@ export default function AiUpgradeModal({ open, onClose, variant = "user_quota", 
                 </h3>
                 <p className="mt-2 text-sm text-slate-600">
                   You have <span className="font-semibold">{balance.toLocaleString()}</span>{" "}
-                  credits left. Top up instantly or subscribe for monthly credits + premium AI features.
+                  credits left. Top up instantly to keep using AI features, or subscribe for monthly credits at a lower per-credit price.
                   {reason ? (
                     <span className="ml-1 block text-xs text-slate-400">Reason: {reason}</span>
                   ) : null}
                 </p>
                 <div className="mt-5 grid gap-2">
                   <Link
-                    href="/plans"
+                    href="/profile/ai"
                     className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                   >
-                    See subscription plans
+                    Top up credits
                   </Link>
                   <Link
-                    href="/profile/ai"
+                    href="/plans"
                     className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
-                    Top up credits
+                    See subscription plans
                   </Link>
                 </div>
               </>

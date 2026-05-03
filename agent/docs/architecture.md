@@ -318,6 +318,13 @@ Credit-based billing for AI endpoints. All AI routes funnel through one service 
 - `AI_CREDIT_GUARD=off` makes all guards return ok (incident response).
 - `AiSubscription.priceIdr/monthlyCredits` snapshot at signup — price changes in `aiPlans.ts` don't affect existing subscribers.
 
+### Gating model — credit-only (Phase 10)
+All consumable AI endpoints (`chat`, `plan`, `plan_refine`, `concierge`, `cultural`, `day_of_trip`, `voucher_read`) gate on **credit balance only** — `canUseFeature` is no longer called inside these routes. A FREE-plan user with sufficient credits gets 200 OK; insufficient credits returns 402 `QUOTA`. Subscription-exclusive perks that don't consume credits stay tier-gated:
+- `/api/ai/family-seats` — Founder only (manages 3 invitees, not consumable).
+- `voucher_read` requires `ENABLE_AI_VISION=true` env (cost guard).
+
+`/api/ai/wallet` returns a synthesised `planFeatures` with all consumable features `true` so the UI no longer locks tabs/buttons for FREE users with credits. `familySeats`/`priorityRouting` stay anchored to actual plan.
+
 ### Onboarding + transparency layer (Phase 9)
 - **Welcome grant** — 50 credits / 7 days, fired idempotently on credentials register and first Google signIn via `aiCreditService.ensureWelcomeGrant`. Skips legacy users with existing BACKFILL grants. Tracked by `User.aiWelcomeGrantedAt`.
 - **Subscription credit TTL** — now 365 days from grant (was 30 + carryover). Snapshot fields `carryoverDays`/`carryoverCap` retained on `AiSubscription` for grandfathered rows but `subscriptionGrantTtlDays()` returns 365 for new grants.

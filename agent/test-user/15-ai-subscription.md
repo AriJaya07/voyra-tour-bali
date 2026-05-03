@@ -1,6 +1,6 @@
 # 15 · AI Subscription + Credit System
 
-> Updated: 2026-05-03
+> Updated: 2026-05-03 (credit-only gating)
 
 Manual QA checklist for the AI subscription + credit subsystem (Phases 1–6).
 
@@ -23,15 +23,18 @@ Manual QA checklist for the AI subscription + credit subsystem (Phases 1–6).
 | `POST /api/ai/family-seats/accept` | Invitee redeems token |
 
 ### AI endpoints (gated)
+Credit-only gating (Phase 10): any signed-in user with a sufficient AI credit balance can use these endpoints regardless of subscription tier. Subscriptions remain a way to buy bulk monthly credits at a discount + the family-seats perk.
+
 | Route | Cost | Gate |
 |---|---|---|
-| `POST /api/ai/chat` | 2 credits | Auth or guest IP quota (5/day) |
-| `POST /api/ai/plan` | 8 credits (≤7d) / 12 (8–14d) | Explorer+ for plan, Voyager+ for >7d |
-| `POST /api/ai/concierge` | 4 credits | Voyager+ |
-| `POST /api/ai/cultural` | 2 credits | Explorer+ |
-| `POST /api/ai/day-of-trip` | 0 credits if confirmed traveler in window, else 3 | Voyager+ when no booking |
-| `POST /api/ai/voucher-read` | 5 credits | Voyager+ + `ENABLE_AI_VISION=true` |
-| `POST /api/ai/itinerary/book` | 0 credits | Explorer+ |
+| `POST /api/ai/chat` | 2 credits | Auth credits OR guest IP quota (5/day) |
+| `POST /api/ai/plan` | 8 credits (≤7d) / 12 (8–14d) | Credits |
+| `POST /api/ai/plan-refine` | 6 credits | Credits |
+| `POST /api/ai/concierge` | 4 credits | Credits |
+| `POST /api/ai/cultural` | 2 credits | Credits |
+| `POST /api/ai/day-of-trip` | 0 credits if confirmed traveler in window, else 3 | Credits |
+| `POST /api/ai/voucher-read` | 5 credits | Credits + `ENABLE_AI_VISION=true` env |
+| `POST /api/ai/itinerary/book` | 0 credits | Auth only |
 
 ### Admin
 | Route | Notes |
@@ -60,7 +63,11 @@ Manual QA checklist for the AI subscription + credit subsystem (Phases 1–6).
 - [ ] Legacy user with existing `BACKFILL` grant gets `aiWelcomeGrantedAt` set without a new welcome grant
 - [ ] First chat call of the UTC month grants 20 free credits via `ensureFreeMonthlyGrant`
 - [ ] Same user calling chat twice within the month does **not** double-grant
-- [ ] Free user calling `/api/ai/plan` → HTTP 402 `FEATURE_LOCKED`
+- [ ] Free user with ≥8 credits calling `/api/ai/plan` (≤7d) → HTTP 200 (credit-only gate)
+- [ ] Free user with 0 credits calling `/api/ai/plan` → HTTP 402 `QUOTA`
+- [ ] Free user with ≥4 credits calling `/api/ai/concierge` → HTTP 200
+- [ ] Free user with ≥2 credits calling `/api/ai/cultural` → HTTP 200
+- [ ] Free user calling `/api/ai/family-seats` → HTTP 402 `FEATURE_LOCKED` (Founder-only retained)
 - [ ] Guest 6th chat call within 24h → HTTP 402 `QUOTA` with `upgradeUrl=/register`
 - [ ] Welcome cron `ai-welcome-followup` sends T-3 / T-1 / post-expire emails only to non-paid users
 

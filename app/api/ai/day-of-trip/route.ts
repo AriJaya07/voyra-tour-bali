@@ -5,7 +5,6 @@ import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import {
   cancelReservation,
-  canUseFeature,
   ensureFreeMonthlyGrant,
   reserveCredits,
   settleReservation,
@@ -18,7 +17,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
  * Pricing model:
  *  - Free for users with a CONFIRMED Booking whose travelDate ∈ [today−1, today+14d]
  *    (loss leader → drives review submission + repeat visits).
- *  - Otherwise Voyager+ feature, 3 credits/turn.
+ *  - Otherwise credit-gated, 3 credits/turn.
  */
 
 const MODEL = "llama-3.3-70b-versatile";
@@ -60,21 +59,6 @@ export async function POST(req: NextRequest) {
       orderBy: { travelDate: "asc" },
       select: { id: true, productTitle: true, travelDate: true, meetingPoint: true },
     });
-
-    if (!activeBooking) {
-      // Voyager+ paywall when not in trip window
-      const ok = await canUseFeature(userId, "dayOfTrip");
-      if (!ok) {
-        return NextResponse.json(
-          {
-            error: "Day-of-trip assistant unlocks free with any confirmed booking, or with Voyager+.",
-            reason: "FEATURE_LOCKED",
-            upgradeUrl: "/plans",
-          },
-          { status: 402 }
-        );
-      }
-    }
 
     await ensureFreeMonthlyGrant(userId).catch(() => {});
 
