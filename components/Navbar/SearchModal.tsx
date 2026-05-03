@@ -101,7 +101,15 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     return () => window.removeEventListener("keydown", handleKey)
   }, [onClose])
 
-  if (!isOpen) return null
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -114,14 +122,19 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       />
 
       {/* Centered Modal Wrapper */}
-      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-16 sm:pt-4">
+      <div
+        className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 pt-6 sm:p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search"
+      >
         <div
           className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-          style={{ maxHeight: "min(85vh, 600px)" }}
+          style={{ maxHeight: "min(85dvh, 600px)" }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Search Input */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
             <SearchIcon />
 
             <input
@@ -130,24 +143,27 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search destinations, tour packages..."
-              className="flex-1 text-base text-gray-900 placeholder-gray-400 bg-transparent outline-none"
+              className="flex-1 min-w-0 text-base text-gray-900 placeholder-gray-400 bg-transparent outline-none"
             />
 
             {query && (
               <button
+                type="button"
                 onClick={() => setQuery("")}
-                className="text-gray-400 hover:text-gray-700 transition cursor-pointer"
-                aria-label="Clear"
+                className="shrink-0 inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-700 rounded-full transition cursor-pointer"
+                aria-label="Clear search"
               >
-                <CloseIcon className="w-5 h-5" />
+                <CloseIcon className="w-4 h-4" />
               </button>
             )}
 
             <button
+              type="button"
               onClick={onClose}
-              className="ml-2 px-2.5 py-1 text-xs font-bold text-gray-500 transition cursor-pointer hidden sm:inline-flex items-center"
+              className="shrink-0 inline-flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 ml-1 rounded-full text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition cursor-pointer"
+              aria-label="Close search"
             >
-              <CloseIcon />
+              <CloseIcon className="w-5 h-5" />
             </button>
           </div>
 

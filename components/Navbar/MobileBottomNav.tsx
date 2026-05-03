@@ -17,8 +17,8 @@ import {
 interface NavItem {
   href: string;
   label: string;
-  icon: React.ReactNode;
-  matchPrefix?: string;
+  icon: (active: boolean) => React.ReactNode;
+  match: (pathname: string) => boolean;
 }
 
 export default function MobileBottomNav() {
@@ -31,15 +31,25 @@ export default function MobileBottomNav() {
     return null;
   }
 
-  const profileHref = session ? "/profile" : "/login";
-  const tripsHref = session ? "/profile#my-bookings" : "/login";
+  const authed = !!session;
+
+  // Trips → /profile/itineraries (saved + imported trip list). Always exists,
+  // no hash-anchor flake. Account → /profile root (or sub-routes that aren't
+  // itineraries). Login fallback for guests.
+  const tripsHref = authed ? "/profile/itineraries" : "/login?callbackUrl=%2Fprofile%2Fitineraries";
+  const profileHref = authed ? "/profile" : "/login?callbackUrl=%2Fprofile";
+
+  const tripsActive = (p: string) => p.startsWith("/profile/itineraries");
+  const profileActive = (p: string) =>
+    (p === "/profile" || (p.startsWith("/profile/") && !p.startsWith("/profile/itineraries"))) ||
+    (!authed && p.startsWith("/login"));
 
   const items: NavItem[] = [
-    { href: "/", label: "Home", icon: <MobileHomeIcon active={pathname === "/"} /> },
-    { href: "/search", label: "Search", icon: <MobileSearchIcon />, matchPrefix: "/search" },
-    { href: "/wishlist", label: "Wishlist", icon: <MobileHeartIcon active={pathname === "/wishlist"} />, matchPrefix: "/wishlist" },
-    { href: tripsHref, label: "Trips", icon: <MobileTripsIcon active={pathname === "/profile" && typeof window !== "undefined" && window.location.hash === "#my-bookings"} /> },
-    { href: profileHref, label: "Account", icon: <MobilePersonIcon active={pathname.startsWith("/profile") || pathname === "/login"} />, matchPrefix: "/profile" },
+    { href: "/", label: "Home", icon: (active) => <MobileHomeIcon active={active} />, match: (p) => p === "/" },
+    { href: "/search", label: "Search", icon: () => <MobileSearchIcon />, match: (p) => p.startsWith("/search") },
+    { href: "/wishlist", label: "Wishlist", icon: (active) => <MobileHeartIcon active={active} />, match: (p) => p.startsWith("/wishlist") },
+    { href: tripsHref, label: "Trips", icon: (active) => <MobileTripsIcon active={active} />, match: tripsActive },
+    { href: profileHref, label: "Account", icon: (active) => <MobilePersonIcon active={active} />, match: profileActive },
   ];
 
   return (
@@ -51,21 +61,20 @@ export default function MobileBottomNav() {
       >
         <div className="grid grid-cols-5 h-14">
           {items.map((it) => {
-            const active = it.matchPrefix
-              ? pathname.startsWith(it.matchPrefix)
-              : pathname === it.href;
+            const active = it.match(pathname);
 
             if (it.label === "Search") {
               return (
                 <button
                   key={it.label}
+                  type="button"
                   onClick={() => setSearchOpen(true)}
                   className={`flex flex-col items-center justify-center gap-0.5 transition ${
                     searchOpen ? "text-[#0071CE]" : "text-gray-500 hover:text-[#0071CE]"
                   }`}
                   aria-label="Search"
                 >
-                  <span className="relative">{it.icon}</span>
+                  <span className="relative">{it.icon(searchOpen)}</span>
                   <span className="text-[10px] font-medium">{it.label}</span>
                 </button>
               );
@@ -75,13 +84,14 @@ export default function MobileBottomNav() {
               <Link
                 key={it.label}
                 href={it.href}
+                prefetch={false}
                 className={`flex flex-col items-center justify-center gap-0.5 transition ${
                   active ? "text-[#0071CE]" : "text-gray-500 hover:text-[#0071CE]"
                 }`}
                 aria-current={active ? "page" : undefined}
               >
                 <span className="relative">
-                  {it.icon}
+                  {it.icon(active)}
                   {it.label === "Wishlist" && wishlistCount > 0 && (
                     <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-pink-500 text-white text-[10px] font-bold flex items-center justify-center">
                       {wishlistCount > 99 ? "99+" : wishlistCount}

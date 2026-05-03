@@ -8,10 +8,10 @@ const HOLD_MS = 1800;
 const CLEAR_DELAY_MS = 700;
 
 /**
- * Self-typing "user prompt" demo for the homepage hero. Cycles through
- * AI_HERO_GUEST_PROMPTS, types each char-by-char, holds, then erases.
+ * Self-typing "user prompt" demo. Cycles through AI_HERO_GUEST_PROMPTS,
+ * types each char-by-char, holds, then erases. Pauses while tab is hidden.
  *
- * Pure CSS-friendly: no canvas, no streaming. Pauses when tab hidden.
+ * Pure CSS-friendly: no canvas, no streaming. Used by the AI guide hero.
  */
 export default function AiPromptDemo() {
   const prompts = useMemo(() => AI_HERO_GUEST_PROMPTS, []);
@@ -23,7 +23,6 @@ export default function AiPromptDemo() {
     const target = prompts[promptIndex] ?? "";
 
     if (typeof document !== "undefined" && document.hidden) {
-      // Skip animation while tab is hidden — saves CPU.
       const id = setTimeout(() => setPhase("typing"), 200);
       return () => clearTimeout(id);
     }

@@ -36,6 +36,7 @@ const EXPLORE_LINKS: NavLink[] = [
 
 const LEGAL_LINKS: NavLink[] = [
   { label: "Help Center",          href: "/help",                ready: true  },
+  { label: "How Voyra AI works",   href: "/ai",                  ready: true  },
   { label: "Trust & Safety",       href: "/trust-and-safety",    ready: true  },
   { label: "Booking & Refunds",    href: "/cancellation-policy", ready: true  },
   { label: "Terms of Service",     href: "/terms",               ready: true  },
