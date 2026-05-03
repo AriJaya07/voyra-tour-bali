@@ -152,20 +152,10 @@ export interface AiUsageRow {
   createdAt: string;
 }
 
-export interface AiLedgerRow {
-  id: number;
-  delta: number;
-  reason: string;
-  reservationStatus: string | null;
-  createdAt: string;
-}
-
 export interface AiUsageDTO {
   range: string;
   since: string;
   usage: AiUsageRow[];
-  ledger: AiLedgerRow[];
-  totals: { endpoint: string; calls: number; creditsSpent: number }[];
 }
 
 export interface AiTopupResponse {
@@ -215,7 +205,7 @@ export const aiService = {
     return data;
   },
 
-  getUsage: async (range: "7d" | "30d" | "90d" = "30d"): Promise<AiUsageDTO> => {
+  getUsage: async (range: "7d" | "30d" | "90d" = "7d"): Promise<AiUsageDTO> => {
     const { data } = await api.get(`/ai/usage`, { params: { range } });
     return data;
   },

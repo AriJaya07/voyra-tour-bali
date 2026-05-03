@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 
@@ -75,14 +76,14 @@ export default function ExitIntentModal() {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), source: "EXIT_INTENT" }),
+        body: JSON.stringify({ email: email.trim(), source: "EXIT_INTENT_AI_CREDITS" }),
       });
       if (!res.ok && res.status !== 409) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Subscription failed");
       }
       setDone(true);
-      toast.success("Thanks! Check your inbox for the discount code.");
+      toast.success("Reserved! Sign up with this email to unlock your AI credits.");
       if (typeof window !== "undefined") {
         localStorage.setItem(STORAGE_KEY, String(Date.now()));
       }
@@ -111,30 +112,56 @@ export default function ExitIntentModal() {
           >
             ✕
           </button>
-          <div className="text-4xl mb-2">🌴</div>
+          <div className="text-4xl mb-2">✨</div>
           <h2 id="exit-modal-title" className="text-2xl font-black leading-tight">
-            Wait — get 5% off your first Bali tour
+            Plan Bali smarter — free AI credits inside
           </h2>
           <p className="text-blue-100 text-sm mt-2">
-            Drop your email. We&apos;ll send a discount code + a free 1-week Bali planning guide.
+            Drop your email. We&apos;ll reserve 50 bonus AI credits so your first itinerary is on us.
           </p>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <span className="rounded-full bg-white/15 border border-white/25 px-2.5 py-0.5 text-[11px] font-semibold">
+              ≈ 6 itineraries
+            </span>
+            <span className="rounded-full bg-white/15 border border-white/25 px-2.5 py-0.5 text-[11px] font-semibold">
+              25 chats
+            </span>
+            <span className="rounded-full bg-white/15 border border-white/25 px-2.5 py-0.5 text-[11px] font-semibold">
+              8 day-tweaks
+            </span>
+          </div>
         </div>
         <div className="p-6">
           {done ? (
             <div className="text-center py-4">
-              <div className="text-3xl mb-2">✅</div>
-              <p className="font-bold text-gray-900 mb-1">You&apos;re on the list!</p>
-              <p className="text-sm text-gray-500 mb-4">Check your inbox in a minute.</p>
-              <button
-                onClick={close}
-                className="px-6 py-2.5 bg-[#0071CE] text-white font-bold rounded-xl hover:bg-[#005ba6] transition"
-              >
-                Continue browsing
-              </button>
+              <div className="text-3xl mb-2">🎁</div>
+              <p className="font-bold text-gray-900 mb-1">50 credits reserved!</p>
+              <p className="text-sm text-gray-500 mb-4">
+                Sign up with <span className="font-semibold text-gray-700">{email}</span> to unlock them and start planning.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Link
+                  href="/register"
+                  onClick={close}
+                  className="px-5 py-2.5 bg-[#0071CE] text-white font-bold rounded-xl hover:bg-[#005ba6] transition"
+                >
+                  Claim my credits →
+                </Link>
+                <button
+                  onClick={close}
+                  className="px-5 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition"
+                >
+                  Keep browsing
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={submit} className="space-y-3">
+              <label htmlFor="exit-email" className="block text-xs font-bold text-gray-700">
+                Where should we send your AI credits?
+              </label>
               <input
+                id="exit-email"
                 type="email"
                 required
                 value={email}
@@ -148,17 +175,17 @@ export default function ExitIntentModal() {
                 disabled={submitting}
                 className="w-full py-3 bg-[#0071CE] hover:bg-[#005ba6] disabled:opacity-60 text-white font-bold rounded-xl transition shadow-sm"
               >
-                {submitting ? "Sending…" : "Send my discount code"}
+                {submitting ? "Reserving…" : "Reserve my 50 AI credits"}
               </button>
               <button
                 type="button"
                 onClick={close}
                 className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 transition"
               >
-                No thanks, I don&apos;t want a discount
+                No thanks, I&apos;ll plan manually
               </button>
               <p className="text-[11px] text-gray-400 text-center leading-relaxed">
-                We&apos;ll never spam. Unsubscribe in one click.
+                Credits unlock when you create a free Voyra account. No spam, unsubscribe in one click.
               </p>
             </form>
           )}

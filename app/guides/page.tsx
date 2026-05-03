@@ -24,13 +24,23 @@ export default async function GuidesIndexPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <section className="bg-gradient-to-br from-[#0071CE] via-[#005bb5] to-[#003d80] text-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <section className="relative overflow-hidden text-white">
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[url('/images/banner/banner-guide.png')] bg-cover bg-center pointer-events-none"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-br from-[#0071CE]/80 via-[#005bb5]/65 to-[#003d80]/85 pointer-events-none"
+        />
+        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
           <span className="inline-block bg-white/15 border border-white/25 text-blue-100 text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
             Travel Guides
           </span>
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight mb-2">Bali, by region & theme</h1>
-          <p className="text-sm text-blue-100">
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight mb-2 drop-shadow">
+            Bali, by region & theme
+          </h1>
+          <p className="text-sm text-blue-50 drop-shadow-sm">
             Long-form guides written by our local team. No fluff, no SEO listicles — just useful detail.
           </p>
         </div>

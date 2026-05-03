@@ -296,17 +296,27 @@ export default function PlanPage() {
           <BackLink href="/profile" label="Back to profile" />
         </div>
         {/* Hero */}
-        <div className="bg-gradient-to-br from-[#0071CE] to-[#005ba6] rounded-2xl p-6 sm:p-10 text-white mb-8 shadow-lg">
-          <span className="inline-block bg-white/15 border border-white/25 text-blue-100 text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
-            AI Trip Planner
-          </span>
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight mb-2">
-            Build your perfect Bali plan
-          </h1>
-          <p className="text-blue-100 text-sm sm:text-base max-w-xl">
-            Tell us your dates, budget, and what you love. We&apos;ll combine real bookable tours with
-            local tips into a day-by-day itinerary.
-          </p>
+        <div className="relative overflow-hidden rounded-2xl p-6 sm:p-10 text-white mb-8 shadow-lg">
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-[url('/images/banner/banner-plan.png')] bg-cover bg-center pointer-events-none"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-br from-[#0071CE]/80 via-[#0071CE]/55 to-[#005ba6]/80 pointer-events-none"
+          />
+          <div className="relative z-10">
+            <span className="inline-block bg-white/15 border border-white/25 text-blue-100 text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
+              AI Trip Planner
+            </span>
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight mb-2 drop-shadow">
+              Build your perfect Bali plan
+            </h1>
+            <p className="text-blue-50 text-sm sm:text-base max-w-xl drop-shadow-sm">
+              Tell us your dates, budget, and what you love. We&apos;ll combine real bookable tours with
+              local tips into a day-by-day itinerary.
+            </p>
+          </div>
         </div>
 
         {/* Form */}

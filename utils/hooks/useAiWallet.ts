@@ -33,12 +33,12 @@ export function useAiCatalog() {
   });
 }
 
-export function useAiUsage(range: "7d" | "30d" | "90d" = "30d", enabled = true) {
+export function useAiUsage(range: "7d" | "30d" | "90d" = "7d", enabled = true) {
   return useQuery({
     queryKey: AI_QUERY_KEYS.usage(range),
     queryFn: () => aiService.getUsage(range),
     enabled,
-    staleTime: 30_000,
+    staleTime: 120_000,
   });
 }
 

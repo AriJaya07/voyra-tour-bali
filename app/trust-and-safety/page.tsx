@@ -133,6 +133,7 @@ export default function TrustAndSafetyPage() {
         title="Travel Bali with Confidence"
         subtitle="How we protect your money, your data, and your trip — from the first click to your last sunset."
         lastUpdated="1 May 2026"
+        bannerImage="/images/banner/banner-trust.png"
       />
 
       <Container>
@@ -256,26 +257,36 @@ export default function TrustAndSafetyPage() {
           </SectionBlock>
 
           {/* CTA */}
-          <div className="mt-12 bg-gradient-to-br from-[#0071CE]/5 to-blue-50 border border-[#0071CE]/20 rounded-2xl p-6 sm:p-8 text-center">
-            <h3 className="font-bold text-gray-900 text-lg mb-2">Still have a concern?</h3>
-            <p className="text-gray-600 text-sm mb-5 max-w-md mx-auto">
-              Our local team responds in minutes. Ask anything before you book — or once you arrive in Bali.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <a
-                href={buildWhatsAppUrl("Hello, I have a Trust & Safety question.")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
-              >
-                💬 WhatsApp our team
-              </a>
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-[#0071CE] text-gray-700 hover:text-[#0071CE] font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
-              >
-                Contact form
-              </Link>
+          <div className="relative mt-12 overflow-hidden rounded-2xl border border-white/30 p-6 sm:p-8 text-center shadow-lg min-h-[220px] flex items-center justify-center">
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[url('/images/banner/sub-banner-trust.png')] bg-cover bg-center pointer-events-none"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-br from-[#0071CE]/65 via-[#003d80]/55 to-[#0a1f44]/70 pointer-events-none"
+            />
+            <div className="relative z-10 w-full">
+              <h3 className="font-bold text-white text-lg mb-2 drop-shadow">Still have a concern?</h3>
+              <p className="text-blue-50 text-sm mb-5 max-w-md mx-auto drop-shadow-sm">
+                Our local team responds in minutes. Ask anything before you book — or once you arrive in Bali.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <a
+                  href={buildWhatsAppUrl("Hello, I have a Trust & Safety question.")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors shadow-sm"
+                >
+                  💬 WhatsApp our team
+                </a>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-[#0071CE] text-gray-700 hover:text-[#0071CE] font-semibold text-sm px-6 py-3 rounded-xl transition-colors shadow-sm"
+                >
+                  Contact form
+                </Link>
+              </div>
             </div>
           </div>
         </div>

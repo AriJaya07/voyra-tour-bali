@@ -40,7 +40,7 @@ export default function ToolkitHero({
     >
       <div
         aria-hidden
-        className="absolute inset-0 bg-[url('/images/banner-travel.png')] bg-cover bg-center pointer-events-none transition group-hover:scale-105 motion-reduce:group-hover:scale-100"
+        className="absolute inset-0 bg-[url('/images/banner/banner-travel.png')] bg-cover bg-center pointer-events-none transition group-hover:scale-105 motion-reduce:group-hover:scale-100"
       />
       <div
         aria-hidden

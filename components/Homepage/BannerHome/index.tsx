@@ -16,7 +16,7 @@ export default function BannerHome() {
     <section
       id="home"
       className="relative min-h-[420px] sm:min-h-[470px] md:min-h-[516px] flex items-center bg-cover bg-center"
-      style={{ backgroundImage: "url('/images/banner.png')" }}
+      style={{ backgroundImage: "url('/images/banner/banner.png')" }}
     >
       <div className="absolute inset-0 bg-black/50 sm:bg-black/40 md:bg-black/30" />
 

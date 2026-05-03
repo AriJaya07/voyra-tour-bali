@@ -219,32 +219,42 @@ export default function CancellationPolicyPage() {
             </p>
           </SectionBlock>
 
-          <div className="mt-4 bg-gradient-to-br from-[#0071CE]/5 to-blue-50 border border-[#0071CE]/20 rounded-2xl p-6 sm:p-8">
-            <h3 className="font-bold text-gray-900 text-lg mb-2">Questions about a booking?</h3>
-            <p className="text-gray-600 text-sm mb-5">
-              Send your booking reference — we respond fast and stay with you until it&apos;s sorted.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <a
-                href={buildWhatsAppUrl("Hello, I need help with a booking. My reference is: ")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
-              >
-                💬 WhatsApp Support
-              </a>
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-[#0071CE] text-gray-700 hover:text-[#0071CE] font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
-              >
-                Contact Us
-              </Link>
-              <Link
-                href="/trust-and-safety"
-                className="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-[#0071CE] text-gray-700 hover:text-[#0071CE] font-semibold text-sm px-6 py-3 rounded-xl transition-colors"
-              >
-                Trust & Safety
-              </Link>
+          <div className="relative mt-4 overflow-hidden rounded-2xl border border-white/30 p-6 sm:p-8 shadow-lg min-h-[220px]">
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[url('/images/banner/sub-banner-cancel.png')] bg-cover bg-center pointer-events-none"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-br from-[#0071CE]/65 via-[#003d80]/55 to-[#0a1f44]/70 pointer-events-none"
+            />
+            <div className="relative z-10">
+              <h3 className="font-bold text-white text-lg mb-2 drop-shadow">Questions about a booking?</h3>
+              <p className="text-blue-50 text-sm mb-5 drop-shadow-sm">
+                Send your booking reference — we respond fast and stay with you until it&apos;s sorted.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href={buildWhatsAppUrl("Hello, I need help with a booking. My reference is: ")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors shadow-sm"
+                >
+                  💬 WhatsApp Support
+                </a>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-[#0071CE] text-gray-700 hover:text-[#0071CE] font-semibold text-sm px-6 py-3 rounded-xl transition-colors shadow-sm"
+                >
+                  Contact Us
+                </Link>
+                <Link
+                  href="/trust-and-safety"
+                  className="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-[#0071CE] text-gray-700 hover:text-[#0071CE] font-semibold text-sm px-6 py-3 rounded-xl transition-colors shadow-sm"
+                >
+                  Trust & Safety
+                </Link>
+              </div>
             </div>
           </div>
         </div>

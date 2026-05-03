@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     title: "How Voyra AI works · Plan Bali smarter",
     description:
       "Step-by-step guide to Voyra's Bali AI tools, credit costs, and accuracy best-practices.",
-    images: ["/images/banner-ai.png"],
+    images: ["/images/banner/banner-ai.png"],
     type: "article",
   },
 };
