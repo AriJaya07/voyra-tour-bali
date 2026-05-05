@@ -159,13 +159,14 @@ export default function SurvivalPackPage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4 print:bg-white print:pt-0">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-2 mb-2 print:hidden">
+        <div className="flex flex-row items-center gap-4 mb-2 flex-wrap print:hidden">
           <BackLink href="/profile" label="Back to profile" />
+          <h1 className="text-2xl font-bold text-gray-900">Bali Survival Pack</h1>
         </div>
 
         <div className="flex items-end justify-between mb-6 print:mb-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Bali Survival Pack</h1>
+            <h1 className="hidden print:block text-2xl font-bold text-gray-900">Bali Survival Pack</h1>
             <p className="text-sm text-gray-500 mt-1">
               Pre-trip cheat sheet — money, transport, safety, etiquette. Print-friendly.
             </p>

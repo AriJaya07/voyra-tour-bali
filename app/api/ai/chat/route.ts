@@ -12,19 +12,14 @@ import {
 import { consumeGuest, logGuestUsage } from "@/lib/services/aiGuestQuota";
 import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
 import { VOYRA_KNOWLEDGE_BASE } from "@/lib/config/aiKnowledgeBase";
+import {
+  searchViatorProducts,
+  type ViatorProductImage,
+  type ViatorProductSummary,
+} from "@/lib/services/viatorSearch";
 
-interface ViatorImage {
-  isCover?: boolean;
-  variants?: { url: string; width: number; height: number }[];
-}
-
-interface ViatorProduct {
-  productCode?: string;
-  title?: string;
-  description?: string;
-  pricing?: { summary?: { fromPrice?: number } };
-  images?: ViatorImage[];
-}
+type ViatorImage = ViatorProductImage;
+type ViatorProduct = ViatorProductSummary;
 
 interface ProductCard {
   productCode: string;
@@ -123,7 +118,7 @@ export async function POST(req: NextRequest) {
             error: "Out of AI credits",
             reason: reserved.reason,
             balance: reserved.remainingBalance,
-            upgradeUrl: "/plans",
+            upgradeUrl: "/ai/pricing",
           }),
           { status: 402, headers: { "Content-Type": "application/json" } }
         );
@@ -152,47 +147,29 @@ export async function POST(req: NextRequest) {
     let productCards: ProductCard[] = [];
 
     try {
-      const viatorRes = await fetch(
-        `${process.env.VIATOR_API_URL}/products/search`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json;version=2.0",
-            "Accept-Language": "en-US",
-            "Content-Type": "application/json",
-            "exp-api-key": process.env.VIATOR_API_KEY!,
-          },
-          body: JSON.stringify({
-            filtering: { destination: 98 },
-            searchTerm: userMessage,
-            currency: "USD",
-            pagination: { start: 1, count: 4 },
-          }),
-          signal: AbortSignal.timeout(10000),
-        }
-      );
+      const result = await searchViatorProducts({
+        query: userMessage,
+        currency: "USD",
+        count: 4,
+      });
+      const products: ViatorProduct[] = result.products;
 
-      if (viatorRes.ok) {
-        const viatorData = await viatorRes.json();
-        const products: ViatorProduct[] = viatorData.products?.results ?? [];
+      if (products.length > 0) {
+        tourContext = products
+          .map(
+            (p) =>
+              `- ${p.title ?? "Tour"}: ${(p.description ?? "").slice(0, 150)} | From $${p.pricing?.summary?.fromPrice ?? "?"} USD`
+          )
+          .join("\n");
 
-        if (products.length > 0) {
-          tourContext = products
-            .map(
-              (p) =>
-                `- ${p.title ?? "Tour"}: ${(p.description ?? "").slice(0, 150)} | From $${p.pricing?.summary?.fromPrice ?? "?"} USD`
-            )
-            .join("\n");
-
-          productCards = products
-            .filter((p) => p.productCode && p.title)
-            .map((p) => ({
-              productCode: p.productCode!,
-              title: p.title!,
-              imageUrl: getBestImageUrl(p.images ?? []),
-              price: p.pricing?.summary?.fromPrice ?? null,
-            }));
-        }
+        productCards = products
+          .filter((p) => p.productCode && p.title)
+          .map((p) => ({
+            productCode: p.productCode!,
+            title: p.title!,
+            imageUrl: getBestImageUrl(p.images ?? []),
+            price: p.pricing?.summary?.fromPrice ?? null,
+          }));
       }
     } catch {
       console.warn("[ai/chat] Viator search failed, continuing without context");
@@ -214,7 +191,7 @@ STYLE:
 - Default under 150 words; expand only when user asks for details.
 - When discussing prices, prefer ${userCurrency} unless the user mentions another currency.
 - Use the user's language if they write in Indonesian, Chinese, Japanese, Korean, or Russian. Otherwise English.
-- When the answer involves a Voyra page, refer to it by its friendly name with the breadcrumb path (e.g. "the AI Wallet — Profile → AI Wallet"). NEVER dump a raw URL like "/profile/ai" in chat.
+- When the answer involves a Voyra page, refer to it by its friendly name with the breadcrumb path (e.g. "the AI Wallet — AI Tools → Wallet"). NEVER dump a raw URL like "/ai/wallet" in chat.
 ${
   tourContext
     ? `\nTOURS MATCHING THE USER'S INTEREST (from our platform):\n${tourContext}\n\nMention these tours by name and price when they fit. The UI will render product cards below your reply.`

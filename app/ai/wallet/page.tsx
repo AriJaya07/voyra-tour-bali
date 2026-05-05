@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import Link from "next/link";
 import BackLink from "@/components/common/BackLink";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 import CreditMeter from "@/components/ai/CreditMeter";
 import TopupCard from "@/components/ai/TopupCard";
 import FamilySeatsPanel from "@/components/ai/FamilySeatsPanel";
@@ -47,6 +48,7 @@ export default function AiWalletPage() {
   const cancelMut = useCancelSubscriptionMutation();
   const resumeMut = useResumeSubscriptionMutation();
   const acceptSeatMut = useAcceptFamilySeatMutation();
+  const confirm = useConfirm();
 
   const paidStatus = params.get("status");
   useEffect(() => {
@@ -123,17 +125,20 @@ export default function AiWalletPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <BackLink href="/profile" />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-row items-center gap-4 flex-wrap">
+          <BackLink href="/profile" />
+          <h1 className="text-2xl font-bold text-slate-900">AI Wallet</h1>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href="/profile/ai/tools"
+            href="/ai/tools"
             className="inline-flex items-center justify-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-100"
           >
             Open AI tools →
           </Link>
           <Link
-            href="/plans"
+            href="/ai/pricing"
             className="inline-flex items-center justify-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
           >
             View subscription plans →
@@ -141,8 +146,7 @@ export default function AiWalletPage() {
         </div>
       </div>
 
-      <h1 className="mt-6 text-2xl font-bold text-slate-900">AI Wallet</h1>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-slate-600">
         Manage your AI credits, top up instantly, and review recent usage.
       </p>
 
@@ -209,7 +213,7 @@ export default function AiWalletPage() {
             </div>
             <div className="flex items-center gap-2">
               <Link
-                href="/plans"
+                href="/ai/pricing"
                 className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
               >
                 Change plan
@@ -233,7 +237,14 @@ export default function AiWalletPage() {
                 <button
                   type="button"
                   onClick={async () => {
-                    if (!window.confirm("Cancel auto-renew? You keep credits until the period ends.")) return;
+                    const ok = await confirm({
+                      title: "Cancel auto-renew?",
+                      description: "You keep credits until the current period ends.",
+                      confirmLabel: "Cancel auto-renew",
+                      cancelLabel: "Keep subscription",
+                      destructive: true,
+                    });
+                    if (!ok) return;
                     try {
                       const res = await cancelMut.mutateAsync();
                       toast.success(res.message);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useConfirm } from "@/components/common/ConfirmDialog";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 
 interface ImportedTrip {
   id: number;
@@ -224,10 +225,19 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => !submitting && setShowModal(false)}>
           <div
-            className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="relative bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] px-5 py-4 text-white">
+            <button
+              type="button"
+              onClick={() => !submitting && setShowModal(false)}
+              disabled={submitting}
+              aria-label="Close"
+              className="absolute top-3 right-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full text-white/90 hover:bg-white/20 transition disabled:opacity-50"
+            >
+              <CloseIcon className="w-5 h-5" />
+            </button>
+            <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] px-5 py-4 pr-14 text-white">
               <h3 className="font-bold text-base">Add a Booking</h3>
               <p className="text-xs text-blue-100 mt-0.5">
                 Paste details from your partner confirmation email.
@@ -308,19 +318,11 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
                 <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">{error}</div>
               )}
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => !submitting && setShowModal(false)}
-                  disabled={submitting}
-                  className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition disabled:opacity-50"
-                >
-                  Cancel
-                </button>
+              <div className="flex justify-end pt-2">
                 <button
                   type="submit"
                   disabled={submitting || productTitle.trim().length < 2}
-                  className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition disabled:opacity-60 shadow-sm"
+                  className="px-5 py-2.5 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition disabled:opacity-60 shadow-sm"
                 >
                   {submitting ? "Saving…" : "Save"}
                 </button>

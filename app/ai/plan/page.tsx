@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { usePrefsStore } from "@/utils/hooks/useUserPreferences";
@@ -32,10 +33,17 @@ interface PlanItem {
   source: "viator" | "tip" | "free";
   notes?: string;
   href?: string | null;
+  localHref?: string | null;
   imageUrl?: string;
   price?: number | null;
   rating?: number | null;
   durationMinutes?: number | null;
+}
+
+interface PlanMeta {
+  viatorCount: number;
+  candidatePoolSize: number;
+  lowCoverage: boolean;
 }
 
 interface PlanResponse {
@@ -43,6 +51,26 @@ interface PlanResponse {
   days: number;
   summary: string;
   items: PlanItem[];
+  meta?: PlanMeta;
+}
+
+interface BookBundleItem {
+  day?: number;
+  slot?: string;
+  productCode: string;
+  title: string;
+  href: string | null;
+  originalPrice: number | null;
+  discountedPrice: number | null;
+}
+
+interface BookBundle {
+  itineraryId: number;
+  title: string;
+  promoCode: string;
+  promoDiscount: number;
+  bundle: BookBundleItem[];
+  totals: { currency: string; original: number; afterPromo: number; savings: number };
 }
 
 const SLOT_LABEL: Record<PlanItem["slot"], string> = {
@@ -60,8 +88,10 @@ const SLOT_EMOJI: Record<PlanItem["slot"], string> = {
 export default function PlanPage() {
   const { status } = useSession();
   const prefs = usePrefsStore((s) => s.prefs);
+  const searchParams = useSearchParams();
 
   const [days, setDays] = useState(5);
+  const [daysDraft, setDaysDraft] = useState("5");
   const [budget, setBudget] = useState<"budget" | "moderate" | "luxury">("moderate");
   const [interests, setInterests] = useState<string[]>([]);
   const [region, setRegion] = useState<string | null>(null);
@@ -69,7 +99,35 @@ export default function PlanPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  // One-shot ingest of ?region=&interests=&days= from incoming links
+  // (e.g. the AI handoff CTA on /guides/[slug]). Runs before prefs hydrate
+  // so guide-supplied values win over default state but lose to user edits.
+  const urlSeededRef = useRef(false);
+  useEffect(() => {
+    if (urlSeededRef.current) return;
+    urlSeededRef.current = true;
+    const r = searchParams.get("region");
+    const i = searchParams.get("interests");
+    const d = searchParams.get("days");
+    if (r) setRegion(r);
+    if (i) {
+      const list = i
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean);
+      if (list.length > 0) setInterests(list.slice(0, 6));
+    }
+    if (d) {
+      const n = parseInt(d, 10);
+      if (!Number.isNaN(n)) setDays(Math.max(1, Math.min(14, n)));
+    }
+  }, [searchParams]);
+
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  useEffect(() => {
+    setDaysDraft(String(days));
+  }, [days]);
 
   const dateRangeError = useMemo(() => {
     if (mode !== "dates" || !fromDate || !toDate) return null;
@@ -94,7 +152,11 @@ export default function PlanPage() {
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [savedItineraryId, setSavedItineraryId] = useState<number | null>(null);
   const [savingShare, setSavingShare] = useState(false);
+  const [bundle, setBundle] = useState<BookBundle | null>(null);
+  const [bundleOpen, setBundleOpen] = useState(false);
+  const [bundleBusy, setBundleBusy] = useState(false);
 
   useEffect(() => {
     if (prefs.styleTags.length > 0 && interests.length === 0) {
@@ -118,6 +180,8 @@ export default function PlanPage() {
     setError(null);
     setPlan(null);
     setSaved(false);
+    setSavedItineraryId(null);
+    setBundle(null);
     try {
       const res = await fetch("/api/ai/plan", {
         method: "POST",
@@ -159,8 +223,8 @@ export default function PlanPage() {
     visibility,
   });
 
-  const savePrivate = async () => {
-    if (!plan) return;
+  const savePrivate = async (): Promise<number | null> => {
+    if (!plan) return null;
     try {
       const res = await fetch("/api/itineraries", {
         method: "POST",
@@ -172,16 +236,65 @@ export default function PlanPage() {
         toast.error("We couldn't save your itinerary", {
           description: data?.error || "Something went wrong on our side. Please try again in a moment.",
         });
-        return;
+        return null;
       }
+      const data = await res.json();
+      const id = typeof data?.id === "number" ? data.id : null;
       setSaved(true);
+      setSavedItineraryId(id);
       toast.success("Itinerary saved to your profile", {
         description: "You can revisit or share it any time from My Profile.",
+        action: id
+          ? {
+              label: "Open",
+              onClick: () => {
+                window.location.href = `/trips#it-${id}`;
+              },
+            }
+          : undefined,
       });
+      return id;
     } catch {
       toast.error("Network problem", {
         description: "Couldn't reach the server. Please check your connection and try again.",
       });
+      return null;
+    }
+  };
+
+  const bookEverything = async () => {
+    if (!plan) return;
+    setBundleBusy(true);
+    try {
+      let id = savedItineraryId;
+      if (!id) {
+        id = await savePrivate();
+        if (!id) {
+          setBundleBusy(false);
+          return;
+        }
+      }
+      const res = await fetch("/api/ai/itinerary/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itineraryId: id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error("Could not build the bundle", {
+          description: data?.error || "Try saving and opening from My Itineraries.",
+        });
+        return;
+      }
+      const data: BookBundle = await res.json();
+      setBundle(data);
+      setBundleOpen(true);
+    } catch {
+      toast.error("Network problem", {
+        description: "Couldn't reach the server. Please try again.",
+      });
+    } finally {
+      setBundleBusy(false);
     }
   };
 
@@ -279,7 +392,7 @@ export default function PlanPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Trip Planner</h1>
           <p className="text-gray-600 mb-6">Sign in to plan your perfect Bali itinerary.</p>
           <Link
-            href="/login?callbackUrl=/plan"
+            href="/login?callbackUrl=/ai/plan"
             className="inline-block px-6 py-3 bg-[#0071CE] text-white font-bold rounded-full hover:bg-[#005ba6] transition"
           >
             Sign In
@@ -293,7 +406,7 @@ export default function PlanPage() {
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="mb-4">
-          <BackLink href="/profile" label="Back to profile" />
+          <BackLink href="/ai" label="Back to AI hub" />
         </div>
         {/* Hero */}
         <div className="relative overflow-hidden rounded-2xl p-6 sm:p-10 text-white mb-8 shadow-lg">
@@ -368,10 +481,23 @@ export default function PlanPage() {
               <div>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   max={14}
-                  value={days}
-                  onChange={(e) => setDays(Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
+                  value={daysDraft}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setDaysDraft(raw);
+                    if (raw === "") return;
+                    const n = parseInt(raw, 10);
+                    if (!Number.isNaN(n)) setDays(Math.max(1, Math.min(14, n)));
+                  }}
+                  onBlur={() => {
+                    const n = parseInt(daysDraft, 10);
+                    const clamped = Number.isNaN(n) ? days : Math.max(1, Math.min(14, n));
+                    setDays(clamped);
+                    setDaysDraft(String(clamped));
+                  }}
                   className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
                   aria-label="Number of days"
                 />
@@ -510,7 +636,7 @@ export default function PlanPage() {
               {interests.length > 0 && (
                 <>
                   {" · "}
-                  <span className="truncate">{interests.length} interest{interests.length === 1 ? "" : "s"}</span>
+                  <span>{interests.join(", ")}</span>
                 </>
               )}
             </div>
@@ -558,10 +684,31 @@ export default function PlanPage() {
               <div className="min-w-0">
                 <h2 className="text-xl font-bold text-gray-900">{plan.title}</h2>
                 {plan.summary && <p className="text-sm text-gray-600 mt-1">{plan.summary}</p>}
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-50 text-[#0071CE] border border-blue-100">
+                    {plan.days} day{plan.days === 1 ? "" : "s"}
+                  </span>
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-50 text-[#0071CE] border border-blue-100 capitalize">
+                    {budget}
+                  </span>
+                  {region && (
+                    <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      📍 {region} only
+                    </span>
+                  )}
+                  {interests.map((i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 capitalize"
+                    >
+                      {i}
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className="flex flex-wrap gap-2 shrink-0">
                 <button
-                  onClick={savePrivate}
+                  onClick={() => void savePrivate()}
                   disabled={saved}
                   className="px-4 py-2 text-sm font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition disabled:opacity-60"
                 >
@@ -570,12 +717,31 @@ export default function PlanPage() {
                 <button
                   onClick={saveAndShare}
                   disabled={savingShare || saved}
-                  className="px-4 py-2 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition shadow-sm disabled:opacity-60"
+                  className="px-4 py-2 text-sm font-bold text-[#0071CE] bg-white hover:bg-blue-50 rounded-lg border border-blue-200 transition disabled:opacity-60"
                 >
                   {savingShare ? "Saving…" : "🔗 Save & Share"}
                 </button>
+                {plan.items.some((it) => it.source === "viator") && (
+                  <button
+                    onClick={bookEverything}
+                    disabled={bundleBusy}
+                    className="px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-[#0071CE] to-[#005ba6] hover:opacity-90 rounded-lg transition shadow-sm disabled:opacity-60"
+                  >
+                    {bundleBusy ? "Preparing…" : "✨ Book all tours"}
+                  </button>
+                )}
               </div>
             </div>
+
+            {plan.meta?.lowCoverage && (
+              <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                <p className="font-bold mb-0.5">Few bookable tours matched your filters.</p>
+                <p>
+                  We filled gaps with local tips. To get more bookable picks, try removing the region lock
+                  or fewer specific interests.
+                </p>
+              </div>
+            )}
 
             {/* Group by day */}
             {Array.from({ length: plan.days }).map((_, idx) => {
@@ -642,16 +808,26 @@ export default function PlanPage() {
                                 {durationLabel && <span>· {durationLabel}</span>}
                               </div>
                             </div>
-                            {href && (
-                              <a
-                                href={href}
-                                target={href.startsWith("http") ? "_blank" : undefined}
-                                rel="noopener noreferrer sponsored"
-                                className="self-center px-3 py-1.5 text-xs font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition shrink-0"
-                              >
-                                Book
-                              </a>
-                            )}
+                            <div className="self-center flex flex-col gap-1.5 shrink-0">
+                              {href && (
+                                <a
+                                  href={href}
+                                  target={href.startsWith("http") ? "_blank" : undefined}
+                                  rel="noopener noreferrer sponsored"
+                                  className="px-3 py-1.5 text-xs font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition text-center"
+                                >
+                                  Book
+                                </a>
+                              )}
+                              {it.localHref && (
+                                <Link
+                                  href={it.localHref}
+                                  className="px-3 py-1.5 text-xs font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition text-center"
+                                >
+                                  On Voyra
+                                </Link>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -667,6 +843,114 @@ export default function PlanPage() {
           </div>
         )}
       </div>
+
+      {bundleOpen && bundle && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+          onClick={() => setBundleOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <div
+                  aria-hidden
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xl"
+                >
+                  ✨
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-slate-900 leading-tight">
+                    Your bundle is ready
+                  </h3>
+                  <p className="mt-0.5 text-xs text-slate-500 truncate">{bundle.title}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBundleOpen(false)}
+                className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="mt-5 mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+              {bundle.bundle.length} {bundle.bundle.length === 1 ? "tour" : "tours"} ready to book
+            </p>
+            <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+              {bundle.bundle.map((b) => {
+                const slotLabel =
+                  b.slot && b.slot !== "any"
+                    ? b.slot.charAt(0).toUpperCase() + b.slot.slice(1)
+                    : "Anytime";
+                const dayLabel = b.day ? `Day ${b.day}` : "Flexible";
+                return (
+                  <li key={b.productCode} className="flex items-start justify-between gap-3 p-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold text-slate-900 leading-snug">
+                        {b.title}
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                          {dayLabel}
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                          {slotLabel}
+                        </span>
+                      </div>
+                      {b.originalPrice != null && (
+                        <div className="mt-2">
+                          <span className="font-mono text-sm font-semibold text-slate-900">
+                            From ${b.originalPrice}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {b.href && (
+                      <a
+                        href={b.href}
+                        target="_blank"
+                        rel="noopener noreferrer sponsored"
+                        className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#0071CE] px-3 py-2 text-xs font-bold text-white hover:bg-[#005ba6] transition shadow-sm"
+                      >
+                        Book
+                        <span aria-hidden>↗</span>
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-sm font-semibold text-slate-900">Estimated total</span>
+                <span className="font-mono text-base font-bold text-slate-900">
+                  From {bundle.totals.currency} ${bundle.totals.original}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Final price set by Viator at checkout. Each tour is booked separately.
+              </p>
+            </div>
+
+            <p className="mt-4 text-xs text-slate-500 leading-relaxed">
+              Tap <strong>Book</strong> on each tour to complete payment on Viator. We've also
+              saved everything to your{" "}
+              <Link href="/trips" className="font-semibold text-[#0071CE] hover:underline">
+                My Trips
+              </Link>{" "}
+              so you can come back to it anytime.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

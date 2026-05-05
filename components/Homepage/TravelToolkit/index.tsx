@@ -66,7 +66,7 @@ export default function TravelToolkit() {
         />
 
         <ToolkitTile
-          href={authedHref(authed, "/profile/calendar")}
+          href={authedHref(authed, "/trips/calendar")}
           title="Trip Calendar"
           description={
             authed
@@ -84,7 +84,7 @@ export default function TravelToolkit() {
         />
 
         <ToolkitTile
-          href="/plans"
+          href="/ai/pricing"
           title="AI Subscription"
           description={
             authed
@@ -116,7 +116,7 @@ export default function TravelToolkit() {
         />
 
         <ToolkitTile
-          href={authedHref(authed, "/profile/itineraries")}
+          href={authedHref(authed, "/trips")}
           title="Saved Itineraries"
           description={
             authed

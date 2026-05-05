@@ -88,7 +88,7 @@ export default async function SharedItineraryPage({ params }: { params: Promise<
               ← Browse Bali tours
             </Link>
             <Link
-              href="/plan"
+              href="/ai/plan"
               className="text-sm font-bold text-[#0071CE] hover:underline"
             >
               Build your own ✨
@@ -157,7 +157,7 @@ export default async function SharedItineraryPage({ params }: { params: Promise<
             <p className="text-gray-900 font-bold text-base mb-2">Like this plan?</p>
             <p className="text-gray-600 text-sm mb-4">Build your own personalised Bali itinerary in seconds.</p>
             <Link
-              href="/plan"
+              href="/ai/plan"
               className="inline-block px-6 py-3 bg-[#0071CE] text-white text-sm font-bold rounded-xl hover:bg-[#005ba6] transition shadow-sm"
             >
               ✨ Plan my Bali trip

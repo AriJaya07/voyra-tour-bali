@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import BackLink from "@/components/common/BackLink";
 import { useConfirm } from "@/components/common/ConfirmDialog";
 import BookFromItineraryButton from "@/components/ai/BookFromItineraryButton";
 
@@ -89,12 +88,12 @@ export default function ItinerariesListPage() {
 
   const remove = async (id: number, title: string) => {
     const ok = await confirm({
-      title: `Delete "${title}"?`,
-      description:
-        "This will permanently remove the itinerary from your account, including any public share link.",
-      confirmLabel: "Delete itinerary",
-      cancelLabel: "Keep it",
+      title: "Delete this itinerary?",
+      description: `"${title}" will be permanently removed from your account. Any public share link will stop working. This can't be undone.`,
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
       destructive: true,
+      icon: "🗑️",
     });
     if (ok) performRemove(id);
   };
@@ -156,30 +155,22 @@ export default function ItinerariesListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-2 mb-2">
-          <BackLink href="/profile" label="Back to profile" />
-        </div>
-        <div className="flex items-end justify-between mb-6 gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Itineraries</h1>
-            <p className="text-sm text-gray-500 mt-1">Saved AI plans, ready to revisit or share.</p>
-          </div>
-          <Link
-            href="/plan"
-            className="shrink-0 px-4 py-2.5 bg-[#0071CE] hover:bg-[#005ba6] text-white text-sm font-bold rounded-lg transition shadow-sm"
-          >
-            + New Plan
-          </Link>
-        </div>
+    <>
+      <div className="flex justify-end mb-4">
+        <Link
+          href="/ai/plan"
+          className="shrink-0 px-4 py-2 bg-[#0071CE] hover:bg-[#005ba6] text-white text-sm font-bold rounded-lg transition shadow-sm"
+        >
+          + New Plan
+        </Link>
+      </div>
 
         {items.length === 0 ? (
           <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
             <p className="text-gray-900 font-bold text-lg mb-1">No itineraries yet</p>
             <p className="text-sm text-gray-500 mb-6">Build your first AI Bali plan in 30 seconds.</p>
             <Link
-              href="/plan"
+              href="/ai/plan"
               className="inline-block px-6 py-3 bg-[#0071CE] text-white text-sm font-bold rounded-xl hover:bg-[#005ba6] transition shadow-sm"
             >
               ✨ Plan a trip
@@ -244,7 +235,6 @@ export default function ItinerariesListPage() {
             ))}
           </div>
         )}
-      </div>
-    </div>
+    </>
   );
 }

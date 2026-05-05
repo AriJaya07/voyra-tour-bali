@@ -45,7 +45,7 @@ export default function CostPill({ endpoint, params, className = "", showOnlyWhe
   if (!ok) {
     return (
       <Link
-        href="/plans"
+        href="/ai/pricing"
         className={`inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 hover:bg-rose-100 ${className}`}
       >
         Need {credits} credits · Top up →

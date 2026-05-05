@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { toast } from "sonner";
 import BackLink from "@/components/common/BackLink";
+import { StarSolidIcon } from "@/components/assets/Icon/shared";
 
 interface MyReview {
   id: number;
@@ -79,9 +80,9 @@ export default function MyReviewsPage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">My Reviews</h1>
+        <div className="flex flex-row items-center gap-4 mb-6 flex-wrap">
           <BackLink href="/profile" label="Back to profile" />
+          <h1 className="text-2xl font-bold text-gray-900">My Reviews</h1>
         </div>
 
         {loading ? (
@@ -178,9 +179,7 @@ function Stars({ value, onChange }: { value: number; onChange?: (v: number) => v
           className={onChange ? "cursor-pointer" : "cursor-default"}
           aria-label={`${n} star`}
         >
-          <svg viewBox="0 0 20 20" className={`w-5 h-5 ${n <= value ? "fill-amber-400" : "fill-gray-200"}`}>
-            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-          </svg>
+          <StarSolidIcon className={`w-5 h-5 ${n <= value ? "fill-amber-400" : "fill-gray-200"}`} />
         </button>
       ))}
     </div>

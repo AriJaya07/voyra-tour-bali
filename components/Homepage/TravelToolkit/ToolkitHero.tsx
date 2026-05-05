@@ -29,7 +29,7 @@ export default function ToolkitHero({
       : "Build a 5-day itinerary in 30 seconds — bookable tours + local tips."
     : "Build a 5-day itinerary in 30 seconds — bookable tours + local tips.";
 
-  const ctaHref = authed ? "/plan" : "/login?callbackUrl=%2Fplan";
+  const ctaHref = authed ? "/ai/plan" : "/login?callbackUrl=%2Fai%2Fplan";
   const ctaLabel = authed ? "Build my itinerary" : "Sign in to plan";
 
   return (

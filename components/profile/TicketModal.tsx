@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { Booking, BookingStatus } from "@/types/booking";
 import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import PayNowButton from "@/components/Global/booking/PayNowButton";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 
 interface TicketModalProps {
   booking: Booking;
@@ -124,6 +125,7 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+        onClick={onClose}
       >
         <motion.div
           ref={ticketRef}
@@ -131,8 +133,17 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
+          onClick={(e) => e.stopPropagation()}
           className="bg-gray-100 w-full max-w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl flex flex-col relative ticket-print-container"
         >
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="absolute top-3 right-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-600 hover:bg-white hover:text-slate-900 transition shadow-sm print:hidden"
+          >
+            <CloseIcon className="w-5 h-5" />
+          </button>
           {/* Print Styles Injection */}
           <style dangerouslySetInnerHTML={{__html: `
             @media print {
@@ -363,13 +374,6 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                 </p>
               </div>
             ) : null}
-
-            <button
-              onClick={onClose}
-              className="w-full py-3 bg-red-600 text-white rounded-xl text-sm font-black uppercase tracking-wider hover:bg-red-700 transition mb-4"
-            >
-              ✕ Close
-            </button>
 
             <div className="text-center opacity-60">
               <p className="text-[10px] text-gray-400 font-medium">Powered by Viator / Tripadvisor</p>

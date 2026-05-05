@@ -33,15 +33,15 @@ export default function MobileBottomNav() {
 
   const authed = !!session;
 
-  // Trips → /profile/itineraries (saved + imported trip list). Always exists,
-  // no hash-anchor flake. Account → /profile root (or sub-routes that aren't
-  // itineraries). Login fallback for guests.
-  const tripsHref = authed ? "/profile/itineraries" : "/login?callbackUrl=%2Fprofile%2Fitineraries";
+  // Trips → /trips unified hub (saved plans + bookings + calendar).
+  // Account → /profile root (or sub-routes that aren't trip-related).
+  // Login fallback for guests.
+  const tripsHref = authed ? "/trips" : "/login?callbackUrl=%2Ftrips";
   const profileHref = authed ? "/profile" : "/login?callbackUrl=%2Fprofile";
 
-  const tripsActive = (p: string) => p.startsWith("/profile/itineraries");
+  const tripsActive = (p: string) => p.startsWith("/trips");
   const profileActive = (p: string) =>
-    (p === "/profile" || (p.startsWith("/profile/") && !p.startsWith("/profile/itineraries"))) ||
+    (p === "/profile" || p.startsWith("/profile/")) ||
     (!authed && p.startsWith("/login"));
 
   const items: NavItem[] = [

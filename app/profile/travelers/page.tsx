@@ -145,13 +145,11 @@ export default function SavedTravelersPage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Saved Travelers</h1>
-            <p className="text-sm text-gray-500 mt-1">Reuse traveler details across bookings.</p>
-          </div>
+        <div className="flex flex-row items-center gap-4 mb-2 flex-wrap">
           <BackLink href="/profile" label="Back to profile" />
+          <h1 className="text-2xl font-bold text-gray-900">Saved Travelers</h1>
         </div>
+        <p className="text-sm text-gray-500 mb-6">Reuse traveler details across bookings.</p>
 
         {loading ? (
           <div className="flex justify-center py-12">

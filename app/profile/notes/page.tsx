@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { toast } from "sonner";
 import BackLink from "@/components/common/BackLink";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 import EventFormDialog from "@/components/calendar/EventFormDialog";
+import EventViewDialog from "@/components/calendar/EventViewDialog";
+import NoteViewDialog from "@/components/notes/NoteViewDialog";
 import { useConfirm } from "@/components/common/ConfirmDialog";
+import { COLOR_CLASSES, type CalendarEventDTO, type EventColor } from "@/components/calendar/types";
 
 interface BaliNote {
   id: number;
@@ -20,6 +24,10 @@ interface BaliNote {
   createdAt: string;
 }
 
+type FeedItem =
+  | { kind: "note"; createdAt: string; note: BaliNote }
+  | { kind: "event"; createdAt: string; event: CalendarEventDTO };
+
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 
@@ -27,6 +35,7 @@ export default function BaliNotesPage() {
   const { status } = useSession();
   const confirm = useConfirm();
   const [notes, setNotes] = useState<BaliNote[]>([]);
+  const [events, setEvents] = useState<CalendarEventDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -49,12 +58,25 @@ export default function BaliNotesPage() {
     defaultDate: string;
   } | null>(null);
 
+  // View dialogs
+  const [viewingNote, setViewingNote] = useState<BaliNote | null>(null);
+  const [viewingEvent, setViewingEvent] = useState<CalendarEventDTO | null>(null);
+  const [editingEvent, setEditingEvent] = useState<CalendarEventDTO | null>(null);
+
   const load = async () => {
     try {
-      const res = await fetch("/api/notes", { cache: "no-store" });
-      if (!res.ok) return;
-      const data = await res.json();
-      setNotes(Array.isArray(data) ? data : []);
+      const [notesRes, eventsRes] = await Promise.all([
+        fetch("/api/notes", { cache: "no-store" }),
+        fetch("/api/calendar-events", { cache: "no-store" }),
+      ]);
+      if (notesRes.ok) {
+        const data = await notesRes.json();
+        setNotes(Array.isArray(data) ? data : []);
+      }
+      if (eventsRes.ok) {
+        const data = await eventsRes.json();
+        setEvents(Array.isArray(data) ? data : []);
+      }
     } finally {
       setLoading(false);
     }
@@ -136,6 +158,77 @@ export default function BaliNotesPage() {
     if (ok) performDelete(id);
   };
 
+  const performDeleteEvent = async (id: number) => {
+    try {
+      const res = await fetch(`/api/calendar-events?id=${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error("Could not delete event", {
+          description: data?.error || "Please try again in a moment.",
+        });
+        return false;
+      }
+      setEvents((e) => e.filter((x) => x.id !== id));
+      toast.success("Event deleted");
+      return true;
+    } catch {
+      toast.error("Network problem", {
+        description: "Couldn't reach the server. Please try again.",
+      });
+      return false;
+    }
+  };
+
+  const handleDeleteEvent = async (id: number, title: string) => {
+    const ok = await confirm({
+      title: `Delete "${title}"?`,
+      description: "This will remove the calendar event. This action cannot be undone.",
+      confirmLabel: "Delete event",
+      cancelLabel: "Keep it",
+      destructive: true,
+    });
+    if (!ok) return;
+    await performDeleteEvent(id);
+  };
+
+  const handleEventEditSubmit = async (input: {
+    title: string;
+    date: string;
+    notes: string | null;
+    startTime: string | null;
+    endTime: string | null;
+    location: string | null;
+    color: string;
+    noteId: number | null;
+    recurrence: string | null;
+    recurrenceUntil: string | null;
+    visibility: "PRIVATE" | "PUBLIC";
+  }) => {
+    if (!editingEvent) return;
+    const res = await fetch(`/api/calendar-events?id=${editingEvent.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error || "Could not update event");
+    }
+    toast.success("Event updated");
+    await load();
+  };
+
+  const feed = useMemo<FeedItem[]>(() => {
+    const items: FeedItem[] = [
+      ...notes.map<FeedItem>((n) => ({ kind: "note", createdAt: n.createdAt, note: n })),
+      ...events
+        .filter((e) => !e.noteId)
+        .map<FeedItem>((e) => ({ kind: "event", createdAt: e.createdAt, event: e })),
+    ];
+    items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    return items;
+  }, [notes, events]);
+
   const addToCalendar = (note: BaliNote) => {
     let dateStr: string;
     if (note.date) {
@@ -188,10 +281,11 @@ export default function BaliNotesPage() {
       action: {
         label: "Open calendar",
         onClick: () => {
-          window.location.href = "/profile/calendar";
+          window.location.href = "/trips/calendar";
         },
       },
     });
+    await load();
   };
 
   if (status === "loading" || loading) {
@@ -222,13 +316,13 @@ export default function BaliNotesPage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex flex-row items-center gap-4 mb-2 flex-wrap">
           <BackLink href="/profile" label="Back to profile" />
+          <h1 className="text-2xl font-bold text-gray-900">Bali Notes</h1>
         </div>
         <div className="flex items-end justify-between mb-6 gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Bali Notes</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500">
               Personal travel journal — places visited, tours done, tips for next time.
             </p>
           </div>
@@ -240,7 +334,7 @@ export default function BaliNotesPage() {
           </button>
         </div>
 
-        {notes.length === 0 ? (
+        {feed.length === 0 ? (
           <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
             <p className="text-gray-900 font-bold text-lg mb-1">No notes yet</p>
             <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
@@ -255,10 +349,95 @@ export default function BaliNotesPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {notes.map((n) => (
+            {feed.map((item) => {
+              if (item.kind === "event") {
+                const e = item.event;
+                const color: EventColor = (e.color as EventColor) || "blue";
+                const chipCls = COLOR_CLASSES[color].chip;
+                const calendarHref = `/trips/calendar?date=${e.date.slice(0, 10)}`;
+                return (
+                  <div
+                    key={`event-${e.id}`}
+                    id={`event-${e.id}`}
+                    className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition scroll-mt-24"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                          Calendar event
+                        </p>
+                        <h3 className="font-bold text-gray-900 leading-snug">{e.title}</h3>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span
+                          className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                            e.visibility === "PUBLIC"
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : "bg-gray-50 text-gray-600 border border-gray-200"
+                          }`}
+                        >
+                          {e.visibility === "PUBLIC" ? "Public" : "Private"}
+                        </span>
+                        <button
+                          onClick={() => setViewingEvent(e)}
+                          className="px-2 py-1 text-[11px] font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded transition border border-blue-100"
+                          title="View event"
+                          aria-label="View event"
+                        >
+                          👁 View
+                        </button>
+                        <Link
+                          href={calendarHref}
+                          className="px-2 py-1 text-[11px] font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 rounded transition border border-gray-200"
+                          title="Open in calendar"
+                        >
+                          📅 Calendar
+                        </Link>
+                        <button
+                          onClick={() => handleDeleteEvent(e.id, e.title)}
+                          className="px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-50 rounded transition"
+                          aria-label="Delete event"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                    {e.notes && (
+                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                        {e.notes}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2 mt-3 text-[11px]">
+                      <span className={`px-2 py-0.5 rounded-full border font-bold ${chipCls}`}>
+                        📅 {fmtDate(e.date)}
+                      </span>
+                      {e.startTime && (
+                        <span className="px-2 py-0.5 rounded-full border border-gray-200 text-gray-600 font-bold">
+                          🕒 {e.startTime}
+                          {e.endTime ? `–${e.endTime}` : ""}
+                        </span>
+                      )}
+                      {e.location && (
+                        <span className="px-2 py-0.5 rounded-full border border-gray-200 text-gray-600 font-bold">
+                          📍 {e.location}
+                        </span>
+                      )}
+                      {e.recurrence && (
+                        <span className="px-2 py-0.5 rounded-full border border-gray-200 text-gray-600 font-bold">
+                          🔁 Repeats
+                        </span>
+                      )}
+                      <span className="text-gray-400">Saved {fmtDate(e.createdAt)}</span>
+                    </div>
+                  </div>
+                );
+              }
+              const n = item.note;
+              return (
               <div
-                key={n.id}
-                className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition"
+                key={`note-${n.id}`}
+                id={`note-${n.id}`}
+                className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition scroll-mt-24"
               >
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="min-w-0">
@@ -269,7 +448,7 @@ export default function BaliNotesPage() {
                       {n.targetTitle || n.targetKey}
                     </h3>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <span
                       className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
                         n.visibility === "PUBLIC"
@@ -280,8 +459,16 @@ export default function BaliNotesPage() {
                       {n.visibility === "PUBLIC" ? "Public" : "Private"}
                     </span>
                     <button
-                      onClick={() => addToCalendar(n)}
+                      onClick={() => setViewingNote(n)}
                       className="px-2 py-1 text-[11px] font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded transition border border-blue-100"
+                      title="View note"
+                      aria-label="View note"
+                    >
+                      👁 View
+                    </button>
+                    <button
+                      onClick={() => addToCalendar(n)}
+                      className="px-2 py-1 text-[11px] font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 rounded transition border border-gray-200"
                       title="Add to calendar"
                     >
                       📅 Calendar
@@ -317,7 +504,8 @@ export default function BaliNotesPage() {
                   <span>Saved {fmtDate(n.createdAt)}</span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -328,10 +516,19 @@ export default function BaliNotesPage() {
             onClick={() => !submitting && setShowModal(false)}
           >
             <div
-              className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+              className="relative bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-hide shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] px-5 py-4 text-white">
+              <button
+                type="button"
+                onClick={() => !submitting && setShowModal(false)}
+                disabled={submitting}
+                aria-label="Close"
+                className="absolute top-3 right-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full text-white/90 hover:bg-white/20 transition disabled:opacity-50"
+              >
+                <CloseIcon className="w-5 h-5" />
+              </button>
+              <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] px-5 py-4 pr-14 text-white">
                 <h3 className="font-bold text-base">New Bali Note</h3>
                 <p className="text-xs text-blue-100 mt-0.5">
                   Anything you want to remember from your trip.
@@ -446,19 +643,11 @@ export default function BaliNotesPage() {
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => !submitting && setShowModal(false)}
-                    disabled={submitting}
-                    className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
+                <div className="flex justify-end pt-2">
                   <button
                     type="submit"
                     disabled={submitting || targetTitle.trim().length < 2 || body.trim().length < 4}
-                    className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition disabled:opacity-60 shadow-sm"
+                    className="px-5 py-2.5 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition disabled:opacity-60 shadow-sm"
                   >
                     {submitting ? "Saving…" : "Save"}
                   </button>
@@ -484,6 +673,50 @@ export default function BaliNotesPage() {
             : null
         }
         onSubmit={handleCalendarSubmit}
+      />
+
+      <NoteViewDialog
+        open={!!viewingNote}
+        note={viewingNote}
+        onClose={() => setViewingNote(null)}
+        onAddToCalendar={(n) => {
+          setViewingNote(null);
+          addToCalendar(n);
+        }}
+        onDelete={(n) => {
+          setViewingNote(null);
+          handleDelete(n.id, n.targetTitle || n.targetKey);
+        }}
+      />
+
+      <EventViewDialog
+        open={!!viewingEvent}
+        event={viewingEvent}
+        onClose={() => setViewingEvent(null)}
+        onEdit={(ev) => {
+          setViewingEvent(null);
+          setEditingEvent(ev);
+        }}
+        onDelete={(ev) => {
+          setViewingEvent(null);
+          handleDeleteEvent(ev.id, ev.title);
+        }}
+      />
+
+      <EventFormDialog
+        open={!!editingEvent}
+        onClose={() => setEditingEvent(null)}
+        defaultDate={editingEvent ? editingEvent.date.slice(0, 10) : ""}
+        initial={editingEvent}
+        onSubmit={handleEventEditSubmit}
+        onDelete={
+          editingEvent
+            ? async () => {
+                const ok = await performDeleteEvent(editingEvent.id);
+                if (ok) setEditingEvent(null);
+              }
+            : undefined
+        }
       />
     </div>
   );

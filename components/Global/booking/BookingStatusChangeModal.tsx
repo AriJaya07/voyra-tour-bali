@@ -8,6 +8,15 @@ import BookingStatusBadge from "./BookingStatusBadge";
 import BookingFlowSteps from "./BookingFlowSteps";
 import DashboardModal from "@/components/Dashboard/common/DashboardModal";
 import { toast } from "sonner";
+import {
+  CloseIcon,
+  InfoIcon,
+  AlertIcon,
+  ChevronRightIcon,
+  ArrowRightIcon,
+  CheckmarkIcon,
+  ImageIcon,
+} from "@/components/assets/Icon/shared";
 
 // Context notes per current status — shown in the select step
 const STATUS_CONTEXT_NOTE: Partial<Record<BookingStatus, { type: "info" | "warning"; text: string }>> = {
@@ -139,9 +148,7 @@ export default function BookingStatusChangeModal({
               onClick={onClose}
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -165,9 +172,7 @@ export default function BookingStatusChangeModal({
                     ? "bg-blue-500/10 border border-blue-500/20"
                     : "bg-amber-500/10 border border-amber-500/20"
                 }`}>
-                  <svg className={`w-4 h-4 shrink-0 mt-0.5 ${contextNote.type === "info" ? "text-blue-400" : "text-amber-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <InfoIcon className={`w-4 h-4 shrink-0 mt-0.5 ${contextNote.type === "info" ? "text-blue-400" : "text-amber-400"}`} />
                   <p className={`text-[11px] leading-relaxed ${contextNote.type === "info" ? "text-blue-300" : "text-amber-300"}`}>
                     {contextNote.text}
                   </p>
@@ -175,9 +180,7 @@ export default function BookingStatusChangeModal({
               )}
 
               <div className="flex gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <svg className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                </svg>
+                <AlertIcon className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-amber-300 leading-relaxed">
                   Manual status changes override automatic flow. Only change if there is a specific reason.
                 </p>
@@ -213,9 +216,7 @@ export default function BookingStatusChangeModal({
                           </span>
                         </div>
                         {isAvailable && (
-                          <svg className="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
+                          <ChevronRightIcon className="w-4 h-4 text-slate-500 shrink-0" />
                         )}
                       </button>
                     );
@@ -237,9 +238,7 @@ export default function BookingStatusChangeModal({
                   </span>
                   <span className="text-[10px] text-slate-500 uppercase tracking-widest">From</span>
                 </div>
-                <svg className="w-5 h-5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
+                <ArrowRightIcon className="w-5 h-5 text-slate-500 shrink-0" />
                 <div className="flex flex-col items-center gap-2">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border ${BOOKING_STATUS_DARK[targetStatus]}`}>
                     <span>{targetConfig.icon}</span>
@@ -279,9 +278,7 @@ export default function BookingStatusChangeModal({
                         </button>
                       </div>
                       <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                        </svg>
+                        <CheckmarkIcon className="w-3.5 h-3.5" />
                         {needsProof ? "Proof uploaded — ready to confirm" : "Ticket uploaded — ready to complete"}
                       </div>
                     </div>
@@ -298,9 +295,7 @@ export default function BookingStatusChangeModal({
                         </>
                       ) : (
                         <>
-                          <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
+                          <ImageIcon className="w-7 h-7" />
                           <span className="text-xs font-semibold">
                             {needsProof ? "Click to upload screenshot" : "Click to upload ticket image"}
                           </span>

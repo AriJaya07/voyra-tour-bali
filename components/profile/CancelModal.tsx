@@ -166,13 +166,24 @@ export default function CancelModal({ booking, onClose, onSuccess }: CancelModal
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onClick={() => !cancelling && onClose()}
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
           className="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden relative"
         >
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={cancelling}
+            aria-label="Close"
+            className="absolute top-3 right-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 bg-white/80 hover:bg-slate-100 hover:text-slate-700 transition disabled:opacity-50"
+          >
+            <CloseIcon className="w-5 h-5" />
+          </button>
           {/* Header */}
           <div className="bg-red-50 p-6 text-center border-b border-red-100">
             <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -283,14 +294,6 @@ export default function CancelModal({ booking, onClose, onSuccess }: CancelModal
                   {cancelling ? "Processing..." : "Yes, Cancel Booking"}
                 </button>
               )}
-
-              <button
-                onClick={onClose}
-                disabled={cancelling}
-                className="w-full py-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition"
-              >
-                Keep Booking
-              </button>
             </div>
           </div>
         </motion.div>

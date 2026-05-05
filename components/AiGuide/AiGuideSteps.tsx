@@ -42,7 +42,7 @@ const STEPS: Step[] = [
     title: "Refine and save",
     body:
       "Use Plan Refine to edit a single day instead of regenerating the whole trip. Save the itinerary so you can come back to it — or share with the people travelling with you.",
-    cta: { href: "/plan", label: "Build my itinerary" },
+    cta: { href: "/ai/plan", label: "Build my itinerary" },
   },
 ];
 

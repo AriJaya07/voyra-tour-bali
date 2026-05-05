@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { buildViatorProductUrl, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
+import { buildViatorProductUrl } from "@/lib/config/viator";
 import {
   cancelReservation,
   ensureFreeMonthlyGrant,
@@ -12,6 +12,11 @@ import {
   settleReservation,
 } from "@/lib/services/aiCreditService";
 import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
+import {
+  searchViatorProducts,
+  type ViatorProductImage,
+  type ViatorProductSummary,
+} from "@/lib/services/viatorSearch";
 
 /**
  * Plan Refine — modify a single day of an existing SavedItinerary.
@@ -26,18 +31,8 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
 
 const MODEL = "llama-3.3-70b-versatile";
 
-interface ViatorImage {
-  isCover?: boolean;
-  variants?: { url: string; width: number; height: number }[];
-}
-interface ViatorProduct {
-  productCode?: string;
-  title?: string;
-  pricing?: { summary?: { fromPrice?: number } };
-  reviews?: { totalReviews?: number; combinedAverageRating?: number };
-  duration?: { fixedDurationInMinutes?: number };
-  images?: ViatorImage[];
-}
+type ViatorImage = ViatorProductImage;
+type ViatorProduct = ViatorProductSummary;
 
 interface PlanItem {
   day: number;
@@ -65,27 +60,8 @@ function getBestImageUrl(images: ViatorImage[]): string {
 }
 
 async function viatorSearch(query: string, count: number): Promise<ViatorProduct[]> {
-  if (!process.env.VIATOR_API_KEY) return [];
-  try {
-    const res = await fetch(`${process.env.VIATOR_API_URL}/products/search`, {
-      method: "POST",
-      headers: { ...VIATOR_HEADERS, "Accept-Currency": "USD" },
-      body: JSON.stringify({
-        filtering: { destination: 98 },
-        searchTerm: query,
-        currency: "USD",
-        sorting: { sort: "TRAVELER_RATING", order: "DESCENDING" },
-        pagination: { start: 1, count },
-      }),
-      signal: viatorSignal(),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    const arr = Array.isArray(data?.products) ? data.products : [];
-    return arr as ViatorProduct[];
-  } catch {
-    return [];
-  }
+  const result = await searchViatorProducts({ query, count, currency: "USD" });
+  return result.products;
 }
 
 export async function POST(req: NextRequest) {
@@ -138,7 +114,7 @@ export async function POST(req: NextRequest) {
     const reserved = await reserveCredits(userId, ENDPOINT, AI_ENDPOINT_COST.plan_refine);
     if (!reserved.ok) {
       return NextResponse.json(
-        { error: "Out of AI credits", reason: reserved.reason, balance: reserved.remainingBalance, upgradeUrl: "/plans" },
+        { error: "Out of AI credits", reason: reserved.reason, balance: reserved.remainingBalance, upgradeUrl: "/ai/pricing" },
         { status: 402 }
       );
     }

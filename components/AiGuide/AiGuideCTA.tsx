@@ -48,13 +48,13 @@ export default function AiGuideCTA({ authed }: Props) {
           {authed ? (
             <>
               <Link
-                href="/profile/ai/tools"
+                href="/ai/tools"
                 className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-amber-100 sm:w-auto"
               >
                 Open AI tools →
               </Link>
               <Link
-                href="/plans"
+                href="/ai/pricing"
                 className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20 sm:w-auto"
               >
                 See plans
@@ -69,7 +69,7 @@ export default function AiGuideCTA({ authed }: Props) {
                 Create free account →
               </Link>
               <Link
-                href="/plans"
+                href="/ai/pricing"
                 className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20 sm:w-auto"
               >
                 See plans

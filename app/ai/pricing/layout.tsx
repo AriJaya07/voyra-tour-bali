@@ -5,12 +5,12 @@ export const metadata: Metadata = {
   title: "AI Subscription Plans — Voyra",
   description:
     "Pick the AI plan that fits your trip. Free, Explorer, Voyager, and Founder tiers — monthly credits, premium tools, family seats. Cancel anytime.",
-  alternates: { canonical: `${SITE_URL}/plans` },
+  alternates: { canonical: `${SITE_URL}/ai/pricing` },
   openGraph: {
     title: "AI Subscription Plans — Voyra",
     description:
       "Compare Voyra AI plans: Free, Explorer, Voyager, Founder. Cancel anytime.",
-    url: `${SITE_URL}/plans`,
+    url: `${SITE_URL}/ai/pricing`,
     type: "website",
   },
   twitter: {

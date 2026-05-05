@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import BackLink from "@/components/common/BackLink";
 import CalendarMonthGrid from "@/components/calendar/CalendarMonthGrid";
 import MonthSwitcher from "@/components/calendar/MonthSwitcher";
 import DayPanel from "@/components/calendar/DayPanel";
 import EventFormDialog from "@/components/calendar/EventFormDialog";
+import EventViewDialog from "@/components/calendar/EventViewDialog";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 import { useCalendarEvents } from "@/utils/hooks/useCalendarEvents";
 import type { CalendarEventDTO, DayEntry } from "@/components/calendar/types";
 import PlusIcon from "@/components/assets/dashboard/PlusIcon";
@@ -55,14 +57,27 @@ function monthRange(cursor: Date) {
 
 export default function CalendarPage() {
   const { status } = useSession();
-  const [cursor, setCursor] = useState(() => new Date());
+  const params = useSearchParams();
+  const confirm = useConfirm();
+  const [cursor, setCursor] = useState(() => {
+    const q = params.get("date");
+    if (q && /^\d{4}-\d{2}-\d{2}$/.test(q)) {
+      const [y, m] = q.split("-").map((n) => parseInt(n, 10));
+      return new Date(y, m - 1, 1);
+    }
+    return new Date();
+  });
   const [trips, setTrips] = useState<ImportedTrip[]>([]);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [notes, setNotes] = useState<DatedNote[]>([]);
   const [staticLoading, setStaticLoading] = useState(true);
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(() => {
+    const q = params.get("date");
+    return q && /^\d{4}-\d{2}-\d{2}$/.test(q) ? q : null;
+  });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEventDTO | null>(null);
+  const [viewing, setViewing] = useState<CalendarEventDTO | null>(null);
 
   const { from, to } = useMemo(() => monthRange(cursor), [cursor]);
   const {
@@ -180,8 +195,35 @@ export default function CalendarPage() {
   };
 
   const openEdit = (event: CalendarEventDTO) => {
+    setViewing(null);
     setEditing(event);
     setDialogOpen(true);
+  };
+
+  const openView = (event: CalendarEventDTO) => {
+    setViewing(event);
+  };
+
+  const handleDeleteFromView = async (event: CalendarEventDTO) => {
+    const ok = await confirm({
+      title: `Delete "${event.title}"?`,
+      description: event.recurrence
+        ? "This will permanently remove the event series and every occurrence on your calendar."
+        : "This will permanently remove this event from your calendar.",
+      confirmLabel: "Delete event",
+      cancelLabel: "Keep it",
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await remove(event.id);
+      setViewing(null);
+      toast.success("Event deleted");
+    } catch (err) {
+      toast.error("Could not delete event", {
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
+    }
   };
 
   const handleSubmit = async (input: Parameters<typeof create>[0]) => {
@@ -345,15 +387,10 @@ export default function CalendarPage() {
   const defaultDialogDate = selectedKey || todayKey;
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-2 mb-2">
-          <BackLink href="/profile" label="Back to profile" />
-        </div>
-        <div className="flex items-end justify-between mb-6 gap-3">
+    <>
+        <div className="flex items-end justify-between mb-4 gap-3">
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900">Trip Calendar</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500">
               Bookings, itineraries, and your own events — all in one view.
             </p>
           </div>
@@ -424,6 +461,7 @@ export default function CalendarPage() {
           date={selectedDate}
           entries={selectedEntries}
           onAdd={() => openCreate(selectedKey || todayKey)}
+          onViewEvent={openView}
           onEditEvent={openEdit}
           onClose={() => setSelectedKey(null)}
         />
@@ -471,7 +509,6 @@ export default function CalendarPage() {
             </div>
           )}
         </div>
-      </div>
 
       <EventFormDialog
         open={dialogOpen}
@@ -481,6 +518,14 @@ export default function CalendarPage() {
         onSubmit={handleSubmit}
         onDelete={editing ? handleDelete : undefined}
       />
-    </div>
+
+      <EventViewDialog
+        open={!!viewing}
+        event={viewing}
+        onClose={() => setViewing(null)}
+        onEdit={openEdit}
+        onDelete={handleDeleteFromView}
+      />
+    </>
   );
 }

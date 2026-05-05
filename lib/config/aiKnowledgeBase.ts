@@ -12,16 +12,17 @@ export const VOYRA_KNOWLEDGE_BASE = `
 VOYRA WEBSITE — KNOWLEDGE BASE (use these facts when users ask about credits, plans, features, or how the site works).
 
 PAGES + WHERE THINGS LIVE — user-friendly names + breadcrumb path
-When pointing users to a page, use the friendly name first; add the path in soft brackets if helpful (e.g. "AI Wallet (Profile → AI Wallet)"). Never dump a raw URL like "/profile/ai".
+When pointing users to a page, use the friendly name first; add the path in soft brackets if helpful (e.g. "AI Wallet (AI → Wallet)"). Never dump a raw URL like "/ai/wallet".
 
 - "Home" — Voyra homepage (tour search + AI hero + featured destinations).
 - "About" — About Voyra (Profile → top menu).
-- "Plans" — Pricing page (subscription plans + top-up packs + FAQ + usage calculator).
-- "Profile" — your member dashboard root (bookings + quick links).
-- "AI Wallet" (Profile → AI Wallet) — your credit balance, bucket breakdown, expiry dates, top-ups + subscription. ONLY place that shows the credit number.
-- "AI Tools" (Profile → AI Wallet → AI Tools) — Cultural co-pilot, Day-of-Trip helper, Voucher reader.
-- "Trip Calendar" (Profile → Trip Calendar) — events + reminders.
-- "My Itineraries" (Profile → My Itineraries) — saved AI plans + one-click bundle booking.
+- "AI Hub" (Navbar → AI Tools) — landing page that lists every AI tool plus pricing + wallet shortcuts.
+- "AI Trip Planner" (AI Tools → Plan a Trip) — generates day-by-day Bali itinerary.
+- "AI Pricing" (AI Tools → Pricing) — subscription plans + top-up packs + FAQ + usage calculator.
+- "AI Wallet" (AI Tools → Wallet) — credit balance, bucket breakdown, expiry dates, top-ups + subscription. ONLY place that shows the credit number.
+- "AI Tools" (AI Tools → individual tools) — Cultural co-pilot, Day-of-Trip helper, Voucher reader.
+- "My Trips" (Navbar → My Trips) — unified hub for saved itineraries, bookings, and trip calendar.
+- "Profile" — member dashboard root (account, preferences, rewards).
 - "Bali Notes" (Profile → Bali Notes) — your travel journal.
 - "Rewards" (Profile → Rewards) — loyalty points + referrals + redeem points → AI credits (Voyager+).
 - "Inbox" (Profile → Inbox) — in-app notifications.

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import type { Booking } from "@/types/booking";
-import { CheckmarkIcon } from "@/components/assets/Icon/shared";
+import { CheckmarkIcon, ClockIcon, DownloadIcon } from "@/components/assets/Icon/shared";
 
 export default function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -34,9 +34,7 @@ export default function PaymentSuccessContent() {
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
         <div className={`w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center ${isPending ? "bg-yellow-100" : "bg-green-100"}`}>
           {isPending ? (
-            <svg className="w-10 h-10 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <ClockIcon className="w-10 h-10 text-yellow-500" />
           ) : (
             <CheckmarkIcon className="w-10 h-10 text-green-500" />
           )}
@@ -144,9 +142,7 @@ export default function PaymentSuccessContent() {
               rel="noopener noreferrer"
               className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition text-sm flex items-center justify-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+              <DownloadIcon className="w-4 h-4" />
               Download Voucher (PDF)
             </a>
           )}
