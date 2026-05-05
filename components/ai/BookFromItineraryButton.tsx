@@ -166,7 +166,7 @@ export default function BookFromItineraryButton({
 
               {/* Footer note */}
               <p className="mt-4 text-xs text-slate-500 leading-relaxed">
-                Tap <strong>Book</strong> on each tour to complete payment on Viator. We've also
+                Tap <strong>Book</strong> on each tour to complete payment on Viator. We&apos;ve also
                 saved everything to your{" "}
                 <Link
                   href="/trips"
