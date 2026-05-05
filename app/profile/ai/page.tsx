@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import Link from "next/link";
 import BackLink from "@/components/common/BackLink";
+import { useConfirm } from "@/components/common/ConfirmDialog";
 import CreditMeter from "@/components/ai/CreditMeter";
 import TopupCard from "@/components/ai/TopupCard";
 import FamilySeatsPanel from "@/components/ai/FamilySeatsPanel";
@@ -47,6 +48,7 @@ export default function AiWalletPage() {
   const cancelMut = useCancelSubscriptionMutation();
   const resumeMut = useResumeSubscriptionMutation();
   const acceptSeatMut = useAcceptFamilySeatMutation();
+  const confirm = useConfirm();
 
   const paidStatus = params.get("status");
   useEffect(() => {
@@ -233,7 +235,14 @@ export default function AiWalletPage() {
                 <button
                   type="button"
                   onClick={async () => {
-                    if (!window.confirm("Cancel auto-renew? You keep credits until the period ends.")) return;
+                    const ok = await confirm({
+                      title: "Cancel auto-renew?",
+                      description: "You keep credits until the current period ends.",
+                      confirmLabel: "Cancel auto-renew",
+                      cancelLabel: "Keep subscription",
+                      destructive: true,
+                    });
+                    if (!ok) return;
                     try {
                       const res = await cancelMut.mutateAsync();
                       toast.success(res.message);

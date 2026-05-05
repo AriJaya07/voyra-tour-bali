@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
-import { buildViatorProductUrl, VIATOR_HEADERS, viatorSignal } from "@/lib/config/viator";
+import { buildViatorProductUrl } from "@/lib/config/viator";
 import {
   cancelReservation,
   ensureFreeMonthlyGrant,
@@ -11,22 +11,14 @@ import {
   settleReservation,
 } from "@/lib/services/aiCreditService";
 import { planCost } from "@/lib/config/aiCosts";
+import {
+  searchViatorProducts,
+  type ViatorProductImage,
+  type ViatorProductSummary,
+} from "@/lib/services/viatorSearch";
 
-interface ViatorImage {
-  isCover?: boolean;
-  variants?: { url: string; width: number; height: number }[];
-}
-
-interface ViatorProduct {
-  productCode?: string;
-  title?: string;
-  description?: string;
-  pricing?: { summary?: { fromPrice?: number }; currency?: string };
-  reviews?: { totalReviews?: number; combinedAverageRating?: number };
-  duration?: { fixedDurationInMinutes?: number };
-  images?: ViatorImage[];
-  tags?: number[];
-}
+type ViatorImage = ViatorProductImage;
+type ViatorProduct = ViatorProductSummary;
 
 function getBestImageUrl(images: ViatorImage[]): string {
   const cover = images.find((img) => img.isCover) ?? images[0];
@@ -45,6 +37,7 @@ interface PlanItem {
   source: "viator" | "tip" | "free";
   notes?: string;
   href?: string | null;
+  localHref?: string | null;
   imageUrl?: string;
   price?: number | null;
   rating?: number | null;
@@ -58,29 +51,54 @@ interface PlanResponse {
   summary: string;
 }
 
-async function viatorSearch(query: string, count: number): Promise<ViatorProduct[]> {
-  if (!process.env.VIATOR_API_KEY) return [];
+interface LocalDestRow {
+  slug: string | null;
+  title: string;
+}
+
+async function fetchLocalDestinations(): Promise<LocalDestRow[]> {
   try {
-    const res = await fetch(`${process.env.VIATOR_API_URL}/products/search`, {
-      method: "POST",
-      headers: { ...VIATOR_HEADERS, "Accept-Currency": "USD" },
-      body: JSON.stringify({
-        filtering: { destination: 98 },
-        searchTerm: query,
-        currency: "USD",
-        sorting: { sort: "TRAVELER_RATING", order: "DESCENDING" },
-        pagination: { start: 1, count },
-      }),
-      signal: viatorSignal(),
+    return await prisma.destination.findMany({
+      select: { slug: true, title: true },
+      where: { slug: { not: null } },
     });
-    if (!res.ok) return [];
-    const data = await res.json();
-    // Viator returns products as a flat array. Older shape `products.results` is empty here.
-    const arr = Array.isArray(data?.products) ? data.products : [];
-    return arr as ViatorProduct[];
   } catch {
     return [];
   }
+}
+
+function tokenize(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t.length >= 4);
+}
+
+function matchLocalDestination(
+  title: string,
+  locals: LocalDestRow[]
+): string | null {
+  if (!title || locals.length === 0) return null;
+  const haystack = title.toLowerCase();
+  let best: { slug: string; score: number } | null = null;
+  for (const d of locals) {
+    if (!d.slug) continue;
+    const localTokens = tokenize(d.title);
+    if (localTokens.length === 0) continue;
+    const hits = localTokens.filter((t) => haystack.includes(t)).length;
+    if (hits === 0) continue;
+    const score = hits / localTokens.length;
+    if (score >= 0.5 && (!best || score > best.score)) {
+      best = { slug: d.slug, score };
+    }
+  }
+  return best ? `/detail/${best.slug}` : null;
+}
+
+async function viatorSearch(query: string, count: number): Promise<ViatorProduct[]> {
+  const result = await searchViatorProducts({ query, count, currency: "USD" });
+  return result.products;
 }
 
 async function gatherCandidates(
@@ -89,13 +107,26 @@ async function gatherCandidates(
 ): Promise<ViatorProduct[]> {
   const seen = new Map<string, ViatorProduct>();
   const queries: string[] = [];
-  if (region) queries.push(region);
-  for (const i of interests) queries.push(i);
-  if (queries.length === 0) queries.push("Bali highlights");
-  // Always seed with broad pool so AI has something to fall back to.
-  queries.push("Bali tour");
 
-  const results = await Promise.all(queries.slice(0, 6).map((q) => viatorSearch(q, 12)));
+  if (region) {
+    // Region-locked: every query must include region keyword so Viator search
+    // biases results toward that area. No generic "Bali tour" fallback — that
+    // dilutes the pool with Ubud / Uluwatu / Nusa Penida items the user did
+    // not ask for.
+    queries.push(region);
+    for (const i of interests) queries.push(`${region} ${i}`);
+    queries.push(`${region} half day tour`);
+    queries.push(`${region} private guide`);
+  } else {
+    if (interests.length > 0) {
+      for (const i of interests) queries.push(i);
+    } else {
+      queries.push("Bali highlights");
+    }
+    queries.push("Bali tour");
+  }
+
+  const results = await Promise.all(queries.slice(0, 8).map((q) => viatorSearch(q, 20)));
   for (const list of results) {
     for (const p of list) {
       if (p.productCode && p.title && !seen.has(p.productCode)) {
@@ -103,7 +134,21 @@ async function gatherCandidates(
       }
     }
   }
-  return [...seen.values()].slice(0, 30);
+
+  let pool = [...seen.values()];
+
+  if (region) {
+    const needle = region.toLowerCase();
+    const matches = pool.filter((p) => {
+      const hay = `${p.title || ""} ${p.description || ""}`.toLowerCase();
+      return hay.includes(needle);
+    });
+    // Only swap to filtered pool when it has enough breadth, otherwise keep
+    // the broader region-biased queries — empty pool forces all-tip plans.
+    if (matches.length >= 6) pool = matches;
+  }
+
+  return pool.slice(0, 40);
 }
 
 export async function POST(req: NextRequest) {
@@ -161,7 +206,10 @@ export async function POST(req: NextRequest) {
       prisma.userPreferences.findUnique({ where: { userId } }),
     ]);
 
-    const candidates = await gatherCandidates(region, interests);
+    const [candidates, localDests] = await Promise.all([
+      gatherCandidates(region, interests),
+      fetchLocalDestinations(),
+    ]);
 
     const candidateLines = candidates
       .map(
@@ -174,9 +222,20 @@ export async function POST(req: NextRequest) {
       ? `${prefs.partyAdults} adult, ${prefs.partyChildren} child, ${prefs.partySeniors} senior, ${prefs.partyInfants} infant`
       : "2 adult";
     const styleLine = prefs?.styleTags?.length ? prefs.styleTags.join(", ") : "general";
+    const interestLine = interests.length > 0 ? interests.join(", ") : "none selected";
     const dietary = prefs?.dietary || "none";
     const mobility = prefs?.mobility || "no constraint";
-    const regionHint = region || prefs?.regionPref || "no preference";
+    const effectiveRegion = region || prefs?.regionPref || null;
+    const regionHint = effectiveRegion || "no preference";
+    const regionLocked = !!effectiveRegion;
+
+    const regionRule = regionLocked
+      ? `10. REGION LOCK (CRITICAL): every item — Viator AND tip — MUST be physically located in or walking/short-drive distance (≤20 min) of "${effectiveRegion}". DO NOT recommend day trips to other regions (no Ubud, Uluwatu, Nusa Penida, Kintamani, Sidemen, Munduk, Lovina, etc. unless one of those IS the locked region). All ${days} days stay in "${effectiveRegion}". If a Viator candidate is not in this area, skip it and use a tip instead.`
+      : `10. No region lock — user did not pick one. You may mix areas, but cluster nearby items per day to avoid long transfers.`;
+
+    const interestRule = interests.length > 0
+      ? `11. INTEREST LOCK: every item must clearly map to ONE of these user-selected interests: ${interests.join(", ")}. Do not insert categories outside this list (e.g. if user picked only "beaches", do not add temple tours or cooking classes).`
+      : `11. No interests selected — pick a balanced mix of culture, food, nature, relaxation.`;
 
     const systemPrompt = `You are an expert Bali trip planner.
 
@@ -207,12 +266,16 @@ HARD RULES (non-negotiable):
 7. Travel time aware: Ubud↔Uluwatu = 2-3h; do not schedule both in one day. Nusa Penida is a full day.
 8. Mix paid Viator tours with free tips (cafes, beaches, sunset spots, temples) so a "${budget}" budget makes sense.
 9. Mornings: outdoor / activity. Afternoons: culture / food / wellness. Evenings: dinner / sunset / relax.
+${regionRule}
+${interestRule}
+12. Title and summary MUST mention "${effectiveRegion || "Bali"}" so the user sees the region they picked is honored.
 
 PARTY: ${partyLine}
-STYLE: ${styleLine}
+STYLE (stored profile): ${styleLine}
+INTERESTS (this trip — strict): ${interestLine}
 DIETARY: ${dietary}
 MOBILITY: ${mobility}
-BASE REGION: ${regionHint}
+BASE REGION: ${regionHint}${regionLocked ? " (LOCKED — do not leave)" : ""}
 BUDGET: ${budget}
 USER: ${user?.name || "Traveler"}
 ${fromDate ? `FROM: ${fromDate}` : ""}
@@ -241,7 +304,11 @@ Respond with the JSON object only.`;
         { role: "system", content: systemPrompt },
         {
           role: "user",
-          content: `Plan my ${days}-day Bali trip. Interests: ${
+          content: `Plan my ${days}-day Bali trip. ${
+            regionLocked
+              ? `I want to stay in ${effectiveRegion} the WHOLE time — every day, every slot. No day trips out of ${effectiveRegion}.`
+              : "No region preference."
+          } Interests (strict, do not add others): ${
             interests.join(", ") || "general"
           }. Budget: ${budget}. Build the JSON now.`,
         },
@@ -303,6 +370,7 @@ Respond with the JSON object only.`;
             notes: typeof it.notes === "string" ? it.notes : "",
             source: "viator" as const,
             href: buildViatorProductUrl(cand.productCode, cand.title),
+            localHref: matchLocalDestination(cand.title, localDests),
             imageUrl: getBestImageUrl(cand.images ?? []),
             price: cand.pricing?.summary?.fromPrice ?? null,
             rating: cand.reviews?.combinedAverageRating ?? null,
@@ -319,6 +387,7 @@ Respond with the JSON object only.`;
           notes: typeof it.notes === "string" ? it.notes : "",
           source: it.source === "free" ? "free" : ("tip" as const),
           href: null,
+          localHref: matchLocalDestination(it.title, localDests),
           imageUrl: undefined,
           price: null,
           rating: null,
@@ -350,11 +419,19 @@ Respond with the JSON object only.`;
       }).catch(() => {});
     }
 
+    const viatorCount = enriched.filter((it) => it.source === "viator").length;
+    const lowCoverage = candidates.length < days || viatorCount < Math.max(1, Math.floor(days / 2));
+
     return NextResponse.json({
       title: typeof parsed.title === "string" ? parsed.title : `${days}-day Bali plan`,
       days,
       summary: typeof parsed.summary === "string" ? parsed.summary : "",
       items: enriched,
+      meta: {
+        viatorCount,
+        candidatePoolSize: candidates.length,
+        lowCoverage,
+      },
     });
   } catch (err) {
     if (reservationId !== null) await cancelReservation(reservationId).catch(() => {});

@@ -14,6 +14,7 @@ interface Props {
   date: Date | null;
   entries: DayEntry[];
   onAdd: () => void;
+  onViewEvent: (event: CalendarEventDTO) => void;
   onEditEvent: (event: CalendarEventDTO) => void;
   onClose?: () => void;
 }
@@ -27,7 +28,14 @@ function fmtFullDate(d: Date) {
   });
 }
 
-export default function DayPanel({ date, entries, onAdd, onEditEvent, onClose }: Props) {
+export default function DayPanel({
+  date,
+  entries,
+  onAdd,
+  onViewEvent,
+  onEditEvent,
+  onClose,
+}: Props) {
   if (!date) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center text-sm text-gray-500">
@@ -105,22 +113,39 @@ export default function DayPanel({ date, entries, onAdd, onEditEvent, onClose }:
                     </p>
                   )}
                 </div>
-                {editable && (
-                  <PencilIcon className="w-4 h-4 text-gray-400 shrink-0 mt-1" />
-                )}
               </div>
             );
 
             if (entry.type === "event" && entry.event) {
+              const ev = entry.event;
               return (
-                <button
-                  key={`event-${entry.event.id}`}
-                  type="button"
-                  onClick={() => onEditEvent(entry.event!)}
-                  className="w-full text-left rounded-xl border border-gray-100 p-3 hover:border-[#0071CE]/40 hover:bg-blue-50/30 transition"
+                <div
+                  key={`event-${ev.id}`}
+                  className="rounded-xl border border-gray-100 p-3 hover:border-[#0071CE]/40 hover:bg-blue-50/30 transition flex items-start gap-2"
                 >
-                  {inner}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => onViewEvent(ev)}
+                    className="flex-1 text-left min-w-0"
+                    aria-label={`View ${ev.title}`}
+                  >
+                    {inner}
+                  </button>
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditEvent(ev);
+                      }}
+                      className="shrink-0 mt-0.5 p-1.5 rounded-md text-gray-400 hover:text-[#0071CE] hover:bg-blue-50 transition"
+                      aria-label={`Edit ${ev.title}`}
+                      title="Edit event"
+                    >
+                      <PencilIcon className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               );
             }
             if (entry.href) {

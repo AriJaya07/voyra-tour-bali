@@ -458,110 +458,157 @@ export default function ProfilePage() {
 
         )}
 
-        <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Link
-            href="/plan"
-            className="bg-gradient-to-br from-[#0071CE] to-[#005ba6] rounded-2xl p-4 hover:shadow-md transition text-white"
-          >
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mb-2">
-              <span className="text-lg">✨</span>
-            </div>
-            <p className="font-bold text-sm leading-tight">AI Trip Planner</p>
-            <p className="text-xs text-blue-100 mt-0.5">Build itinerary</p>
-          </Link>
-          <Link
-            href="/wishlist"
-            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition group"
-          >
-            <div className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center mb-2">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-pink-500" strokeWidth={0}>
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">My Wishlist</p>
-            <p className="text-xs text-gray-500 mt-0.5">Saved tours</p>
-          </Link>
-          <Link
-            href="/profile/itineraries"
-            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
-          >
-            <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center mb-2">
-              <span className="text-lg">🗺️</span>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">My Itineraries</p>
-            <p className="text-xs text-gray-500 mt-0.5">Saved plans</p>
-          </Link>
-          <Link
-            href="/profile/calendar"
-            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
-          >
-            <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center mb-2">
-              <span className="text-lg">📅</span>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">Trip Calendar</p>
-            <p className="text-xs text-gray-500 mt-0.5">All upcoming</p>
-          </Link>
-          <Link
-            href="/profile/travel-profile"
-            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
-          >
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center mb-2">
-              <span className="text-lg">🧭</span>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">Travel Profile</p>
-            <p className="text-xs text-gray-500 mt-0.5">Party + interests</p>
-          </Link>
-          <Link
-            href="/profile/notes"
-            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
-          >
-            <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center mb-2">
-              <span className="text-lg">📓</span>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">Bali Notes</p>
-            <p className="text-xs text-gray-500 mt-0.5">Travel journal</p>
-          </Link>
-          <Link
-            href="/profile/survival-pack"
-            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
-          >
-            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center mb-2">
-              <span className="text-lg">🎒</span>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">Survival Pack</p>
-            <p className="text-xs text-gray-500 mt-0.5">Pre-trip cheatsheet</p>
-          </Link>
-          <Link
-            href="/profile/rewards"
-            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
-          >
-            <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center mb-2">
-              <span className="text-lg">🎁</span>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">Rewards</p>
-            <p className="text-xs text-gray-500 mt-0.5">Points + referrals</p>
-          </Link>
-          <Link
-            href="/profile/ai"
-            className="bg-white rounded-2xl border border-violet-100 p-4 hover:border-violet-400/60 hover:shadow-md transition"
-          >
-            <div className="w-10 h-10 rounded-full bg-violet-50 flex items-center justify-center mb-2">
-              <span className="text-lg">✨</span>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">AI Wallet</p>
-            <p className="text-xs text-gray-500 mt-0.5">Credits + plan</p>
-          </Link>
-          <Link
-            href="/profile/settings"
-            className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
-          >
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-2">
-              <span className="text-lg">⚙️</span>
-            </div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">Settings</p>
-            <p className="text-xs text-gray-500 mt-0.5">Account + data</p>
-          </Link>
-        </div>
+        {/* Section: AI Suite */}
+        <section className="mt-8">
+          <div className="flex items-baseline gap-2 mb-3">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-violet-700">AI Suite</h2>
+            <span className="text-[11px] text-gray-400">Plan, manage credits, run AI tools.</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Link
+              href="/plan"
+              className="bg-gradient-to-br from-[#0071CE] to-[#005ba6] rounded-2xl p-4 hover:shadow-md transition text-white"
+            >
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mb-2">
+                <span className="text-lg">✨</span>
+              </div>
+              <p className="font-bold text-sm leading-tight">AI Trip Planner</p>
+              <p className="text-xs text-blue-100 mt-0.5">Build a Bali itinerary</p>
+            </Link>
+            <Link
+              href="/profile/ai"
+              className="bg-white rounded-2xl border border-violet-100 p-4 hover:border-violet-400/60 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-violet-50 flex items-center justify-center mb-2">
+                <span className="text-lg">💳</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">AI Wallet</p>
+              <p className="text-xs text-gray-500 mt-0.5">Credits, plan, usage</p>
+            </Link>
+            <Link
+              href="/profile/ai/tools"
+              className="bg-white rounded-2xl border border-violet-100 p-4 hover:border-violet-400/60 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-violet-50 flex items-center justify-center mb-2">
+                <span className="text-lg">🛠️</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">AI Tools</p>
+              <p className="text-xs text-gray-500 mt-0.5">Cultural · Day-of · Voucher</p>
+            </Link>
+            <Link
+              href="/profile/travel-profile"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center mb-2">
+                <span className="text-lg">🧭</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">Travel Profile</p>
+              <p className="text-xs text-gray-500 mt-0.5">Feeds the AI planner</p>
+            </Link>
+          </div>
+        </section>
+
+        {/* Section: My Trips */}
+        <section className="mt-8">
+          <div className="flex items-baseline gap-2 mb-3">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-[#0071CE]">My Trips</h2>
+            <span className="text-[11px] text-gray-400">Plans, schedule, saved tours.</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Link
+              href="/profile/calendar"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center mb-2">
+                <span className="text-lg">📅</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">Trip Calendar</p>
+              <p className="text-xs text-gray-500 mt-0.5">Bookings + events</p>
+            </Link>
+            <Link
+              href="/profile/itineraries"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center mb-2">
+                <span className="text-lg">🗺️</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">My Itineraries</p>
+              <p className="text-xs text-gray-500 mt-0.5">Saved AI plans</p>
+            </Link>
+            <Link
+              href="/wishlist"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center mb-2">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-pink-500" strokeWidth={0}>
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">My Wishlist</p>
+              <p className="text-xs text-gray-500 mt-0.5">Saved tours</p>
+            </Link>
+            <Link
+              href="/profile/survival-pack"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center mb-2">
+                <span className="text-lg">🎒</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">Survival Pack</p>
+              <p className="text-xs text-gray-500 mt-0.5">Pre-trip cheatsheet</p>
+            </Link>
+          </div>
+        </section>
+
+        {/* Section: Memory + Account */}
+        <section className="mt-8">
+          <div className="flex items-baseline gap-2 mb-3">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-amber-700">Memory &amp; Account</h2>
+            <span className="text-[11px] text-gray-400">Notes, rewards, account settings.</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Link
+              href="/profile/notes"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center mb-2">
+                <span className="text-lg">📓</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">Bali Notes</p>
+              <p className="text-xs text-gray-500 mt-0.5">Travel journal</p>
+            </Link>
+            <Link
+              href="/profile/reviews"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center mb-2">
+                <span className="text-lg">⭐</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">My Reviews</p>
+              <p className="text-xs text-gray-500 mt-0.5">Tour ratings</p>
+            </Link>
+            <Link
+              href="/profile/rewards"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center mb-2">
+                <span className="text-lg">🎁</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">Rewards</p>
+              <p className="text-xs text-gray-500 mt-0.5">Points + referrals</p>
+            </Link>
+            <Link
+              href="/profile/settings"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+                <span className="text-lg">⚙️</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">Settings</p>
+              <p className="text-xs text-gray-500 mt-0.5">Account + data</p>
+            </Link>
+          </div>
+        </section>
 
         <div className="mt-8 text-center">
           <Link href="/" className="text-[#0071CE] font-medium hover:underline">

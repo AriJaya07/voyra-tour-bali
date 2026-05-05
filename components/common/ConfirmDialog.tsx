@@ -76,7 +76,7 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
           onClick={() => close(false)}
         >
           <div
-            className="bg-white w-full sm:max-w-md max-h-[92vh] overflow-y-auto shadow-2xl rounded-t-2xl sm:rounded-2xl"
+            className="bg-white w-full sm:max-w-md max-h-[92vh] overflow-y-auto scrollbar-hide shadow-2xl rounded-t-2xl sm:rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div

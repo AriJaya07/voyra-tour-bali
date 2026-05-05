@@ -32,10 +32,17 @@ interface PlanItem {
   source: "viator" | "tip" | "free";
   notes?: string;
   href?: string | null;
+  localHref?: string | null;
   imageUrl?: string;
   price?: number | null;
   rating?: number | null;
   durationMinutes?: number | null;
+}
+
+interface PlanMeta {
+  viatorCount: number;
+  candidatePoolSize: number;
+  lowCoverage: boolean;
 }
 
 interface PlanResponse {
@@ -43,6 +50,26 @@ interface PlanResponse {
   days: number;
   summary: string;
   items: PlanItem[];
+  meta?: PlanMeta;
+}
+
+interface BookBundleItem {
+  day?: number;
+  slot?: string;
+  productCode: string;
+  title: string;
+  href: string | null;
+  originalPrice: number | null;
+  discountedPrice: number | null;
+}
+
+interface BookBundle {
+  itineraryId: number;
+  title: string;
+  promoCode: string;
+  promoDiscount: number;
+  bundle: BookBundleItem[];
+  totals: { currency: string; original: number; afterPromo: number; savings: number };
 }
 
 const SLOT_LABEL: Record<PlanItem["slot"], string> = {
@@ -62,6 +89,7 @@ export default function PlanPage() {
   const prefs = usePrefsStore((s) => s.prefs);
 
   const [days, setDays] = useState(5);
+  const [daysDraft, setDaysDraft] = useState("5");
   const [budget, setBudget] = useState<"budget" | "moderate" | "luxury">("moderate");
   const [interests, setInterests] = useState<string[]>([]);
   const [region, setRegion] = useState<string | null>(null);
@@ -70,6 +98,10 @@ export default function PlanPage() {
   const [toDate, setToDate] = useState("");
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  useEffect(() => {
+    setDaysDraft(String(days));
+  }, [days]);
 
   const dateRangeError = useMemo(() => {
     if (mode !== "dates" || !fromDate || !toDate) return null;
@@ -94,7 +126,11 @@ export default function PlanPage() {
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [savedItineraryId, setSavedItineraryId] = useState<number | null>(null);
   const [savingShare, setSavingShare] = useState(false);
+  const [bundle, setBundle] = useState<BookBundle | null>(null);
+  const [bundleOpen, setBundleOpen] = useState(false);
+  const [bundleBusy, setBundleBusy] = useState(false);
 
   useEffect(() => {
     if (prefs.styleTags.length > 0 && interests.length === 0) {
@@ -118,6 +154,8 @@ export default function PlanPage() {
     setError(null);
     setPlan(null);
     setSaved(false);
+    setSavedItineraryId(null);
+    setBundle(null);
     try {
       const res = await fetch("/api/ai/plan", {
         method: "POST",
@@ -159,8 +197,8 @@ export default function PlanPage() {
     visibility,
   });
 
-  const savePrivate = async () => {
-    if (!plan) return;
+  const savePrivate = async (): Promise<number | null> => {
+    if (!plan) return null;
     try {
       const res = await fetch("/api/itineraries", {
         method: "POST",
@@ -172,16 +210,65 @@ export default function PlanPage() {
         toast.error("We couldn't save your itinerary", {
           description: data?.error || "Something went wrong on our side. Please try again in a moment.",
         });
-        return;
+        return null;
       }
+      const data = await res.json();
+      const id = typeof data?.id === "number" ? data.id : null;
       setSaved(true);
+      setSavedItineraryId(id);
       toast.success("Itinerary saved to your profile", {
         description: "You can revisit or share it any time from My Profile.",
+        action: id
+          ? {
+              label: "Open",
+              onClick: () => {
+                window.location.href = `/profile/itineraries#it-${id}`;
+              },
+            }
+          : undefined,
       });
+      return id;
     } catch {
       toast.error("Network problem", {
         description: "Couldn't reach the server. Please check your connection and try again.",
       });
+      return null;
+    }
+  };
+
+  const bookEverything = async () => {
+    if (!plan) return;
+    setBundleBusy(true);
+    try {
+      let id = savedItineraryId;
+      if (!id) {
+        id = await savePrivate();
+        if (!id) {
+          setBundleBusy(false);
+          return;
+        }
+      }
+      const res = await fetch("/api/ai/itinerary/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itineraryId: id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error("Could not build the bundle", {
+          description: data?.error || "Try saving and opening from My Itineraries.",
+        });
+        return;
+      }
+      const data: BookBundle = await res.json();
+      setBundle(data);
+      setBundleOpen(true);
+    } catch {
+      toast.error("Network problem", {
+        description: "Couldn't reach the server. Please try again.",
+      });
+    } finally {
+      setBundleBusy(false);
     }
   };
 
@@ -368,10 +455,23 @@ export default function PlanPage() {
               <div>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   max={14}
-                  value={days}
-                  onChange={(e) => setDays(Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
+                  value={daysDraft}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setDaysDraft(raw);
+                    if (raw === "") return;
+                    const n = parseInt(raw, 10);
+                    if (!Number.isNaN(n)) setDays(Math.max(1, Math.min(14, n)));
+                  }}
+                  onBlur={() => {
+                    const n = parseInt(daysDraft, 10);
+                    const clamped = Number.isNaN(n) ? days : Math.max(1, Math.min(14, n));
+                    setDays(clamped);
+                    setDaysDraft(String(clamped));
+                  }}
                   className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
                   aria-label="Number of days"
                 />
@@ -510,7 +610,7 @@ export default function PlanPage() {
               {interests.length > 0 && (
                 <>
                   {" · "}
-                  <span className="truncate">{interests.length} interest{interests.length === 1 ? "" : "s"}</span>
+                  <span>{interests.join(", ")}</span>
                 </>
               )}
             </div>
@@ -558,10 +658,31 @@ export default function PlanPage() {
               <div className="min-w-0">
                 <h2 className="text-xl font-bold text-gray-900">{plan.title}</h2>
                 {plan.summary && <p className="text-sm text-gray-600 mt-1">{plan.summary}</p>}
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-50 text-[#0071CE] border border-blue-100">
+                    {plan.days} day{plan.days === 1 ? "" : "s"}
+                  </span>
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-50 text-[#0071CE] border border-blue-100 capitalize">
+                    {budget}
+                  </span>
+                  {region && (
+                    <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      📍 {region} only
+                    </span>
+                  )}
+                  {interests.map((i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 capitalize"
+                    >
+                      {i}
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className="flex flex-wrap gap-2 shrink-0">
                 <button
-                  onClick={savePrivate}
+                  onClick={() => void savePrivate()}
                   disabled={saved}
                   className="px-4 py-2 text-sm font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition disabled:opacity-60"
                 >
@@ -570,12 +691,31 @@ export default function PlanPage() {
                 <button
                   onClick={saveAndShare}
                   disabled={savingShare || saved}
-                  className="px-4 py-2 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition shadow-sm disabled:opacity-60"
+                  className="px-4 py-2 text-sm font-bold text-[#0071CE] bg-white hover:bg-blue-50 rounded-lg border border-blue-200 transition disabled:opacity-60"
                 >
                   {savingShare ? "Saving…" : "🔗 Save & Share"}
                 </button>
+                {plan.items.some((it) => it.source === "viator") && (
+                  <button
+                    onClick={bookEverything}
+                    disabled={bundleBusy}
+                    className="px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-[#0071CE] to-[#005ba6] hover:opacity-90 rounded-lg transition shadow-sm disabled:opacity-60"
+                  >
+                    {bundleBusy ? "Building…" : "✨ Book all (5% off)"}
+                  </button>
+                )}
               </div>
             </div>
+
+            {plan.meta?.lowCoverage && (
+              <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                <p className="font-bold mb-0.5">Few bookable tours matched your filters.</p>
+                <p>
+                  We filled gaps with local tips. To get more bookable picks, try removing the region lock
+                  or fewer specific interests.
+                </p>
+              </div>
+            )}
 
             {/* Group by day */}
             {Array.from({ length: plan.days }).map((_, idx) => {
@@ -642,16 +782,26 @@ export default function PlanPage() {
                                 {durationLabel && <span>· {durationLabel}</span>}
                               </div>
                             </div>
-                            {href && (
-                              <a
-                                href={href}
-                                target={href.startsWith("http") ? "_blank" : undefined}
-                                rel="noopener noreferrer sponsored"
-                                className="self-center px-3 py-1.5 text-xs font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition shrink-0"
-                              >
-                                Book
-                              </a>
-                            )}
+                            <div className="self-center flex flex-col gap-1.5 shrink-0">
+                              {href && (
+                                <a
+                                  href={href}
+                                  target={href.startsWith("http") ? "_blank" : undefined}
+                                  rel="noopener noreferrer sponsored"
+                                  className="px-3 py-1.5 text-xs font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition text-center"
+                                >
+                                  Book
+                                </a>
+                              )}
+                              {it.localHref && (
+                                <Link
+                                  href={it.localHref}
+                                  className="px-3 py-1.5 text-xs font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition text-center"
+                                >
+                                  On Voyra
+                                </Link>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -667,6 +817,83 @@ export default function PlanPage() {
           </div>
         )}
       </div>
+
+      {bundleOpen && bundle && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+          onClick={() => setBundleOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-slate-900">{bundle.title} — bundle ready</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Promo <span className="font-mono">{bundle.promoCode}</span> applied (
+                  {(bundle.promoDiscount * 100).toFixed(0)}% off)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBundleOpen(false)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <ul className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-200">
+              {bundle.bundle.map((b) => (
+                <li key={b.productCode} className="flex items-start justify-between gap-3 p-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-slate-900 truncate">{b.title}</div>
+                    <div className="text-xs text-slate-500">
+                      Day {b.day ?? "?"} · {b.slot ?? "any"}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    {b.discountedPrice != null && b.originalPrice != null && (
+                      <div className="text-right text-xs">
+                        <div className="font-mono text-slate-400 line-through">${b.originalPrice}</div>
+                        <div className="font-mono font-semibold text-emerald-600">${b.discountedPrice}</div>
+                      </div>
+                    )}
+                    {b.href && (
+                      <a
+                        href={b.href}
+                        target="_blank"
+                        rel="noopener noreferrer sponsored"
+                        className="rounded-lg bg-[#0071CE] px-2.5 py-1 text-[10px] font-bold uppercase text-white hover:bg-[#005ba6]"
+                      >
+                        Book →
+                      </a>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
+              You save <strong>${bundle.totals.savings}</strong> with the bundle.
+              <br />
+              Total {bundle.totals.currency} ${bundle.totals.afterPromo} (was ${bundle.totals.original}).
+            </div>
+
+            <p className="mt-3 text-xs text-slate-500">
+              These items have been mirrored to your{" "}
+              <Link href="/profile/itineraries" className="text-[#0071CE] underline">
+                Imported Trips
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

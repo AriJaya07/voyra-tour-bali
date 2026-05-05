@@ -203,7 +203,7 @@ export default function EventFormDialog({
       onClick={() => !submitting && !deleting && onClose()}
     >
       <div
-        className="bg-white w-full sm:max-w-md max-h-[92vh] overflow-y-auto shadow-2xl rounded-t-2xl sm:rounded-2xl"
+        className="bg-white w-full sm:max-w-md max-h-[92vh] overflow-y-auto scrollbar-hide shadow-2xl rounded-t-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] px-5 py-4 text-white">
@@ -374,6 +374,10 @@ export default function EventFormDialog({
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-[10px] text-gray-400 leading-relaxed">
+                Linked notes appear inside the event preview, and the event card shows a 📝 badge so you
+                can jump to the original note.
+              </p>
             </div>
           )}
 
