@@ -6,7 +6,7 @@ import WishlistButton from "@/components/common/WishlistButton"
 import StyleMatchBadge from "@/components/common/StyleMatchBadge"
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
 import type { UnifiedActivity } from "@/types/tourism"
-import { ClockIcon } from "@/components/assets/Icon/shared"
+import { ClockIcon, StarSolidIcon } from "@/components/assets/Icon/shared"
 import { buildViatorProductUrl } from "@/lib/config/viator"
 
 function getDiscountPercent(price: number, before?: number): number | null {
@@ -84,9 +84,7 @@ export function ActivityCard({ item, currency }: ActivityCardProps) {
                     className="flex items-center gap-0.5"
                     title="Total review count and overall rating based on Viator and Tripadvisor reviews"
                   >
-                    <svg className="w-3.5 h-3.5 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                    </svg>
+                    <StarSolidIcon className="w-3.5 h-3.5 text-yellow-400 fill-current" />
                     <span className="font-semibold text-gray-700">{item.rating.toFixed(1)}</span>
                     <span>({(item.reviewCount ?? 0).toLocaleString()})</span>
                   </span>

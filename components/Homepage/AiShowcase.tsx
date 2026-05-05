@@ -25,7 +25,7 @@ const TABS: ShowcaseTab[] = [
       "Day 4 · Sidemen: Rice paddy bike tour + bamboo cooking class + fireflies.",
       "Day 5 · Nusa Penida: Kelingking viewpoint + Crystal Bay snorkel.",
     ],
-    cta: { href: "/plan", label: "Build my plan →" },
+    cta: { href: "/ai/plan", label: "Build my plan →" },
   },
   {
     key: "concierge",
@@ -37,7 +37,7 @@ const TABS: ShowcaseTab[] = [
       "Half-day option: Tegenungan Falls upper-deck café (no stairs) + lunch at Locavore",
       "+ a 1h Balinese massage at COMO Shambhala. Total Rp ~1.8M for the family.",
     ],
-    cta: { href: "/profile/ai", label: "Unlock with Voyager →" },
+    cta: { href: "/ai/wallet", label: "Unlock with Voyager →" },
   },
   {
     key: "voucher",
@@ -49,7 +49,7 @@ const TABS: ShowcaseTab[] = [
       "→ Lead: Sarah Mitchell · 2 pax · Voucher #VRT-87421",
       "✓ Saved to Trip Calendar · ✓ Added to Imported Trips",
     ],
-    cta: { href: "/profile/ai/tools", label: "Try voucher reader →" },
+    cta: { href: "/ai/tools", label: "Try voucher reader →" },
   },
 ];
 

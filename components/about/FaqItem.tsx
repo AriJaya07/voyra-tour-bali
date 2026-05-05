@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDownIcon } from "@/components/assets/Icon/shared";
 
 interface FaqItemProps {
   question: string;
@@ -36,9 +37,7 @@ export default function FaqItem({ question, answer }: FaqItemProps) {
               : "bg-gray-100 text-gray-500"
           }`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-          </svg>
+          <ChevronDownIcon className="w-4 h-4" />
         </span>
       </button>
       <div

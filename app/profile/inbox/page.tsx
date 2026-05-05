@@ -98,13 +98,13 @@ export default function InboxPage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex flex-row items-center gap-4 mb-2 flex-wrap">
           <BackLink href="/profile" label="Back to profile" />
+          <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
         </div>
         <div className="flex items-end justify-between mb-6 gap-3">
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500">
               {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"} · Notifications, alerts, and deals.
             </p>
           </div>

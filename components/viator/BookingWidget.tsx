@@ -10,7 +10,7 @@ import type { ViatorProductOption, ViatorLogistics, ViatorLanguageGuide } from "
 import { useBookingStore, type AvailabilitySlot } from "@/utils/hooks/useBookingStore";
 import type { ProductSource } from "@/types/bookingFlow";
 import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon";
-import { SpinnerIcon, CloseIcon } from "../assets/Icon/shared";
+import { SpinnerIcon, CloseIcon, ArrowRightIcon } from "../assets/Icon/shared";
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
 
@@ -454,9 +454,7 @@ export default function BookingWidget({
                 ) : (
                   <>
                     Book Now
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
+                    <ArrowRightIcon className="w-4 h-4" />
                   </>
                 )}
               </button>

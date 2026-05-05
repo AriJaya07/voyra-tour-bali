@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     const reserved = await reserveCredits(userId, ENDPOINT, AI_ENDPOINT_COST.cultural);
     if (!reserved.ok) {
       return NextResponse.json(
-        { error: "Out of AI credits", reason: reserved.reason, balance: reserved.remainingBalance, upgradeUrl: "/plans" },
+        { error: "Out of AI credits", reason: reserved.reason, balance: reserved.remainingBalance, upgradeUrl: "/ai/pricing" },
         { status: 402 }
       );
     }

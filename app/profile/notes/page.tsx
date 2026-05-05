@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { toast } from "sonner";
 import BackLink from "@/components/common/BackLink";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 import EventFormDialog from "@/components/calendar/EventFormDialog";
 import EventViewDialog from "@/components/calendar/EventViewDialog";
 import NoteViewDialog from "@/components/notes/NoteViewDialog";
@@ -280,7 +281,7 @@ export default function BaliNotesPage() {
       action: {
         label: "Open calendar",
         onClick: () => {
-          window.location.href = "/profile/calendar";
+          window.location.href = "/trips/calendar";
         },
       },
     });
@@ -315,13 +316,13 @@ export default function BaliNotesPage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex flex-row items-center gap-4 mb-2 flex-wrap">
           <BackLink href="/profile" label="Back to profile" />
+          <h1 className="text-2xl font-bold text-gray-900">Bali Notes</h1>
         </div>
         <div className="flex items-end justify-between mb-6 gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Bali Notes</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500">
               Personal travel journal — places visited, tours done, tips for next time.
             </p>
           </div>
@@ -353,7 +354,7 @@ export default function BaliNotesPage() {
                 const e = item.event;
                 const color: EventColor = (e.color as EventColor) || "blue";
                 const chipCls = COLOR_CLASSES[color].chip;
-                const calendarHref = `/profile/calendar?date=${e.date.slice(0, 10)}`;
+                const calendarHref = `/trips/calendar?date=${e.date.slice(0, 10)}`;
                 return (
                   <div
                     key={`event-${e.id}`}
@@ -515,10 +516,19 @@ export default function BaliNotesPage() {
             onClick={() => !submitting && setShowModal(false)}
           >
             <div
-              className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-hide shadow-2xl"
+              className="relative bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-hide shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] px-5 py-4 text-white">
+              <button
+                type="button"
+                onClick={() => !submitting && setShowModal(false)}
+                disabled={submitting}
+                aria-label="Close"
+                className="absolute top-3 right-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full text-white/90 hover:bg-white/20 transition disabled:opacity-50"
+              >
+                <CloseIcon className="w-5 h-5" />
+              </button>
+              <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] px-5 py-4 pr-14 text-white">
                 <h3 className="font-bold text-base">New Bali Note</h3>
                 <p className="text-xs text-blue-100 mt-0.5">
                   Anything you want to remember from your trip.
@@ -633,19 +643,11 @@ export default function BaliNotesPage() {
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => !submitting && setShowModal(false)}
-                    disabled={submitting}
-                    className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
+                <div className="flex justify-end pt-2">
                   <button
                     type="submit"
                     disabled={submitting || targetTitle.trim().length < 2 || body.trim().length < 4}
-                    className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition disabled:opacity-60 shadow-sm"
+                    className="px-5 py-2.5 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-lg transition disabled:opacity-60 shadow-sm"
                   >
                     {submitting ? "Saving…" : "Save"}
                   </button>

@@ -52,7 +52,7 @@ export default function PlansPage() {
 
   async function onSelectPlan(plan: AiPlan) {
     if (!isAuthed) {
-      window.location.href = `/login?next=${encodeURIComponent("/plans")}`;
+      window.location.href = `/login?next=${encodeURIComponent("/ai/pricing")}`;
       return;
     }
     if (plan.priceIdr === 0) return;
@@ -82,7 +82,7 @@ export default function PlansPage() {
       w.snap.pay(res.snapToken, {
         onSuccess: () => {
           toast.success("Payment received — your plan is being activated.");
-          window.location.href = "/profile/ai?status=success";
+          window.location.href = "/ai/wallet?status=success";
         },
         onPending: () => {
           toast.info("Payment pending; we'll activate once Midtrans confirms.");
@@ -173,12 +173,12 @@ export default function PlansPage() {
         <ul className="mt-3 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
           <li><span className="font-semibold">Chat:</span> 2 credits per turn</li>
           <li><span className="font-semibold">Itinerary plan:</span> 8 credits (≤7 days), 12 credits (8–14 days)</li>
-          <li><span className="font-semibold">Plan refine:</span> 6 credits per day refined (Voyager+)</li>
-          <li><span className="font-semibold">Concierge:</span> 4 credits per turn (Voyager+)</li>
-          <li><span className="font-semibold">Cultural co-pilot:</span> 2 credits per turn (Explorer+)</li>
+          <li><span className="font-semibold">Plan refine:</span> 6 credits per day refined</li>
+          <li><span className="font-semibold">Concierge:</span> 4 credits per turn</li>
+          <li><span className="font-semibold">Cultural co-pilot:</span> 2 credits per turn</li>
           <li><span className="font-semibold">Day-of-trip:</span> 3 credits — free for confirmed travelers</li>
-          <li><span className="font-semibold">Voucher reader (vision):</span> 5 credits per upload (Voyager+)</li>
-          <li><span className="font-semibold">Itinerary → bookings:</span> 0 credits — drives 5% off via promo</li>
+          <li><span className="font-semibold">Voucher reader (vision):</span> 5 credits per upload</li>
+          <li><span className="font-semibold">Itinerary → bookings:</span> 0 credits — one-tap booking on Viator</li>
         </ul>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -209,13 +209,13 @@ export default function PlansPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/profile/ai"
+            href="/ai/wallet"
             className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             Open my wallet
           </Link>
           <Link
-            href="/profile/ai/tools"
+            href="/ai/tools"
             className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
           >
             Try AI tools →

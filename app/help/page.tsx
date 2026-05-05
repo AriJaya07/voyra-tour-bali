@@ -4,6 +4,7 @@ import { SITE_NAME, SITE_URL, buildWhatsAppUrl } from "@/lib/config";
 import PageHero from "@/components/legal/PageHero";
 import SectionBlock from "@/components/legal/SectionBlock";
 import Container from "@/components/Container";
+import { ChevronDownIcon } from "@/components/assets/Icon/shared";
 
 export const metadata: Metadata = {
   title: `Help Center | ${SITE_NAME}`,
@@ -235,20 +236,7 @@ export default function HelpCenterPage() {
                     <summary className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer list-none select-none">
                       <span className="text-sm sm:text-base font-semibold text-gray-900">{item.q}</span>
                       <span className="text-gray-400 shrink-0 transition-transform duration-200 group-open:rotate-180">
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          aria-hidden="true"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
+                        <ChevronDownIcon className="w-5 h-5" />
                       </span>
                     </summary>
                     <div className="px-5 pb-4 text-sm text-gray-600 leading-relaxed">{item.a}</div>

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import BackLink from "@/components/common/BackLink";
 import CalendarMonthGrid from "@/components/calendar/CalendarMonthGrid";
 import MonthSwitcher from "@/components/calendar/MonthSwitcher";
 import DayPanel from "@/components/calendar/DayPanel";
@@ -388,15 +387,10 @@ export default function CalendarPage() {
   const defaultDialogDate = selectedKey || todayKey;
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-2 mb-2">
-          <BackLink href="/profile" label="Back to profile" />
-        </div>
-        <div className="flex items-end justify-between mb-6 gap-3">
+    <>
+        <div className="flex items-end justify-between mb-4 gap-3">
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900">Trip Calendar</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500">
               Bookings, itineraries, and your own events — all in one view.
             </p>
           </div>
@@ -515,7 +509,6 @@ export default function CalendarPage() {
             </div>
           )}
         </div>
-      </div>
 
       <EventFormDialog
         open={dialogOpen}
@@ -533,6 +526,6 @@ export default function CalendarPage() {
         onEdit={openEdit}
         onDelete={handleDeleteFromView}
       />
-    </div>
+    </>
   );
 }

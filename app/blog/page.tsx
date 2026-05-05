@@ -6,6 +6,7 @@ import SectionHeader from '@/components/Blog/SectionHeader';
 import ErrorState from '@/components/Blog/ErrorState';
 import BlogPagination from '@/components/Blog/BlogPagination';
 import PromotionApp from '@/components/Homepage/PromotionApp';
+import { NewspaperIcon } from '@/components/assets/Icon/shared';
 
 export const metadata: Metadata = {
   title: 'Blog & Travel Guide | Bali Travel Now',
@@ -121,9 +122,7 @@ export default async function BlogPage(props: {
           ) : (
             <div className="py-20 text-center bg-white rounded-3xl border border-gray-100 ">
               <div className="text-gray-400 mb-4">
-                <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5L18.5 7H20" />
-                </svg>
+                <NewspaperIcon className="w-16 h-16 mx-auto" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No Articles Found</h3>
               <p className="text-gray-500 max-w-md mx-auto">We couldn't found any articles in this category. Check back later for more updates.</p>

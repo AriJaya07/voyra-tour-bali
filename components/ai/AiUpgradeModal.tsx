@@ -98,13 +98,13 @@ export default function AiUpgradeModal({ open, onClose, variant = "user_quota", 
                 </p>
                 <div className="mt-5 grid gap-2">
                   <Link
-                    href="/profile/ai"
+                    href="/ai/wallet"
                     className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                   >
                     Top up credits
                   </Link>
                   <Link
-                    href="/plans"
+                    href="/ai/pricing"
                     className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     See subscription plans

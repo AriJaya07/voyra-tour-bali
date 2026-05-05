@@ -37,10 +37,12 @@ export default function AiToolsPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      <BackLink href="/profile/ai" label="Back to AI Wallet" />
-      <h1 className="mt-6 text-2xl font-bold text-slate-900">AI Tools</h1>
-      <p className="mt-1 text-sm text-slate-600">
-        Premium assistants powered by Voyra AI. Each tool checks your plan + balance before charging.
+      <div className="flex flex-row items-center gap-4 flex-wrap">
+        <BackLink href="/ai" label="Back to AI hub" />
+        <h1 className="text-2xl font-bold text-slate-900">AI Tools</h1>
+      </div>
+      <p className="mt-2 text-sm text-slate-600">
+        Premium assistants powered by Voyra AI. Every tool charges credits only — no plan upgrade required.
       </p>
 
       <div className="mt-6 grid gap-4">
@@ -74,7 +76,7 @@ function CulturalCard() {
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-base font-semibold text-slate-900">🛕 Cultural co-pilot</h2>
       <p className="mt-1 text-xs text-slate-500">
-        Explorer+ · grounded in our Bali ceremony calendar.
+        2 credits per question · grounded in our Bali ceremony calendar.
       </p>
       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
         <input
@@ -151,7 +153,7 @@ function DayOfTripCard() {
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-base font-semibold text-slate-900">🌧️ Day-of-Trip helper</h2>
       <p className="mt-1 text-xs text-slate-500">
-        Free for confirmed travelers in trip window · Voyager+ otherwise.
+        Free for confirmed travelers in trip window · 3 credits otherwise.
       </p>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <input
@@ -249,7 +251,7 @@ function VoucherReadCard() {
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-base font-semibold text-slate-900">📷 Voucher reader (vision)</h2>
       <p className="mt-1 text-xs text-slate-500">
-        Voyager+ · JPG / PNG / WEBP, max 8 MB. Disabled when vision env not configured.
+        5 credits per scan · JPG / PNG / WEBP, max 8 MB. Disabled when vision env not configured.
       </p>
 
       <SpendConfirmDialog
@@ -311,13 +313,13 @@ function VoucherReadCard() {
           </ul>
           {created.trip ? (
             <p className="mt-3 text-xs text-emerald-700">
-              ✓ Saved to <Link href="/profile/itineraries" className="underline">Imported Trips</Link>{" "}
+              ✓ Saved to <Link href="/trips" className="underline">My Trips</Link>{" "}
               (#{created.trip})
             </p>
           ) : null}
           {created.calendar ? (
             <p className="mt-1 text-xs text-emerald-700">
-              ✓ Added to <Link href="/profile/calendar" className="underline">Trip Calendar</Link>{" "}
+              ✓ Added to <Link href="/trips/calendar" className="underline">Trip Calendar</Link>{" "}
               (#{created.calendar})
             </p>
           ) : null}

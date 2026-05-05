@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { StarSolidIcon, ThumbsUpIcon } from "@/components/assets/Icon/shared";
 
 interface ReviewItem {
   id: number;
@@ -205,9 +206,7 @@ function HelpfulButton({ reviewId, initialCount }: { reviewId: number; initialCo
       aria-pressed={voted}
       aria-label={voted ? "You marked this helpful" : "Mark as helpful"}
     >
-      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill={voted ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-      </svg>
+      <ThumbsUpIcon className="w-3.5 h-3.5" fill={voted ? "currentColor" : "none"} />
       {voted ? "Helpful" : "Mark helpful"}
       {count > 0 && <span className="opacity-70">· {count}</span>}
     </button>
@@ -218,9 +217,7 @@ function Stars({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
-        <svg key={n} viewBox="0 0 20 20" className={`w-4 h-4 ${n <= value ? "fill-amber-400" : "fill-gray-200"}`}>
-          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-        </svg>
+        <StarSolidIcon key={n} className={`w-4 h-4 ${n <= value ? "fill-amber-400" : "fill-gray-200"}`} />
       ))}
     </div>
   );

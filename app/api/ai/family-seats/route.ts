@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     const owner = await ownerInfo(userId);
     if (!owner) {
       return NextResponse.json(
-        { error: "Family seats require an active Founder subscription.", reason: "FEATURE_LOCKED", upgradeUrl: "/plans" },
+        { error: "Family seats require an active Founder subscription.", reason: "FEATURE_LOCKED", upgradeUrl: "/ai/pricing" },
         { status: 402 }
       );
     }

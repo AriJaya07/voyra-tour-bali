@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { IoClose } from "react-icons/io5";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 
 interface Props {
   open: boolean;
@@ -53,9 +53,9 @@ export default function SpendConfirmDialog({
               type="button"
               onClick={onCancel}
               aria-label="Close"
-              className="absolute right-3 top-3 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              className="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
             >
-              <IoClose className="h-5 w-5" />
+              <CloseIcon className="w-5 h-5" />
             </button>
 
             <h3 className="text-lg font-bold text-slate-900">{title}</h3>
@@ -76,21 +76,14 @@ export default function SpendConfirmDialog({
               </div>
             </div>
 
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row-reverse">
+            <div className="mt-4 flex justify-end">
               <button
                 type="button"
                 onClick={onConfirm}
                 disabled={busy || balance - cost < 0}
-                className="inline-flex flex-1 items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
               >
                 {busy ? "Working…" : `Spend ${cost} credits`}
-              </button>
-              <button
-                type="button"
-                onClick={onCancel}
-                className="inline-flex flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Not now
               </button>
             </div>
           </motion.div>

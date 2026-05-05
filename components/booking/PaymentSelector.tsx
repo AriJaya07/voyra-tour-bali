@@ -2,7 +2,7 @@
 
 import type React from "react";
 import type { ViatorPaymentAccount } from "@/types/bookingFlow";
-import { PaymentIcon, CheckmarkIcon } from "@/components/assets/Icon/shared";
+import { PaymentIcon, CheckmarkIcon, BankIcon, ChatBubbleIcon } from "@/components/assets/Icon/shared";
 
 interface PaymentSelectorProps {
   methods: ViatorPaymentAccount[];
@@ -15,16 +15,8 @@ const PAYMENT_ICONS: Record<string, React.ReactNode> = {
   CARD: (
     <PaymentIcon className="w-6 h-6" strokeWidth={1.5} />
   ),
-  PAYPAL: (
-    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-    </svg>
-  ),
-  BANK_TRANSFER: (
-    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-    </svg>
-  ),
+  PAYPAL: <ChatBubbleIcon className="w-6 h-6" />,
+  BANK_TRANSFER: <BankIcon className="w-6 h-6" />,
 };
 
 export default function PaymentSelector({

@@ -50,7 +50,7 @@ export default function AiCreditBadge({ className = "", inline = false, refetchI
   if (inline) return body;
 
   return (
-    <Link href="/profile/ai" className="inline-flex">
+    <Link href="/ai/wallet" className="inline-flex">
       {body}
     </Link>
   );

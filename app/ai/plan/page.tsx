@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { usePrefsStore } from "@/utils/hooks/useUserPreferences";
@@ -87,6 +88,7 @@ const SLOT_EMOJI: Record<PlanItem["slot"], string> = {
 export default function PlanPage() {
   const { status } = useSession();
   const prefs = usePrefsStore((s) => s.prefs);
+  const searchParams = useSearchParams();
 
   const [days, setDays] = useState(5);
   const [daysDraft, setDaysDraft] = useState("5");
@@ -96,6 +98,30 @@ export default function PlanPage() {
   const [mode, setMode] = useState<"days" | "dates">("days");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  // One-shot ingest of ?region=&interests=&days= from incoming links
+  // (e.g. the AI handoff CTA on /guides/[slug]). Runs before prefs hydrate
+  // so guide-supplied values win over default state but lose to user edits.
+  const urlSeededRef = useRef(false);
+  useEffect(() => {
+    if (urlSeededRef.current) return;
+    urlSeededRef.current = true;
+    const r = searchParams.get("region");
+    const i = searchParams.get("interests");
+    const d = searchParams.get("days");
+    if (r) setRegion(r);
+    if (i) {
+      const list = i
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean);
+      if (list.length > 0) setInterests(list.slice(0, 6));
+    }
+    if (d) {
+      const n = parseInt(d, 10);
+      if (!Number.isNaN(n)) setDays(Math.max(1, Math.min(14, n)));
+    }
+  }, [searchParams]);
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -222,7 +248,7 @@ export default function PlanPage() {
           ? {
               label: "Open",
               onClick: () => {
-                window.location.href = `/profile/itineraries#it-${id}`;
+                window.location.href = `/trips#it-${id}`;
               },
             }
           : undefined,
@@ -366,7 +392,7 @@ export default function PlanPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Trip Planner</h1>
           <p className="text-gray-600 mb-6">Sign in to plan your perfect Bali itinerary.</p>
           <Link
-            href="/login?callbackUrl=/plan"
+            href="/login?callbackUrl=/ai/plan"
             className="inline-block px-6 py-3 bg-[#0071CE] text-white font-bold rounded-full hover:bg-[#005ba6] transition"
           >
             Sign In
@@ -380,7 +406,7 @@ export default function PlanPage() {
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="mb-4">
-          <BackLink href="/profile" label="Back to profile" />
+          <BackLink href="/ai" label="Back to AI hub" />
         </div>
         {/* Hero */}
         <div className="relative overflow-hidden rounded-2xl p-6 sm:p-10 text-white mb-8 shadow-lg">
@@ -701,7 +727,7 @@ export default function PlanPage() {
                     disabled={bundleBusy}
                     className="px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-[#0071CE] to-[#005ba6] hover:opacity-90 rounded-lg transition shadow-sm disabled:opacity-60"
                   >
-                    {bundleBusy ? "Building…" : "✨ Book all (5% off)"}
+                    {bundleBusy ? "Preparing…" : "✨ Book all tours"}
                   </button>
                 )}
               </div>
@@ -830,66 +856,97 @@ export default function PlanPage() {
             className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h3 className="text-base font-bold text-slate-900">{bundle.title} — bundle ready</h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  Promo <span className="font-mono">{bundle.promoCode}</span> applied (
-                  {(bundle.promoDiscount * 100).toFixed(0)}% off)
-                </p>
+              <div className="flex items-start gap-3 min-w-0">
+                <div
+                  aria-hidden
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xl"
+                >
+                  ✨
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-slate-900 leading-tight">
+                    Your bundle is ready
+                  </h3>
+                  <p className="mt-0.5 text-xs text-slate-500 truncate">{bundle.title}</p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setBundleOpen(false)}
-                className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
+                className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
                 aria-label="Close"
               >
                 ✕
               </button>
             </div>
 
-            <ul className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-200">
-              {bundle.bundle.map((b) => (
-                <li key={b.productCode} className="flex items-start justify-between gap-3 p-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium text-slate-900 truncate">{b.title}</div>
-                    <div className="text-xs text-slate-500">
-                      Day {b.day ?? "?"} · {b.slot ?? "any"}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    {b.discountedPrice != null && b.originalPrice != null && (
-                      <div className="text-right text-xs">
-                        <div className="font-mono text-slate-400 line-through">${b.originalPrice}</div>
-                        <div className="font-mono font-semibold text-emerald-600">${b.discountedPrice}</div>
+            <p className="mt-5 mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+              {bundle.bundle.length} {bundle.bundle.length === 1 ? "tour" : "tours"} ready to book
+            </p>
+            <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+              {bundle.bundle.map((b) => {
+                const slotLabel =
+                  b.slot && b.slot !== "any"
+                    ? b.slot.charAt(0).toUpperCase() + b.slot.slice(1)
+                    : "Anytime";
+                const dayLabel = b.day ? `Day ${b.day}` : "Flexible";
+                return (
+                  <li key={b.productCode} className="flex items-start justify-between gap-3 p-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold text-slate-900 leading-snug">
+                        {b.title}
                       </div>
-                    )}
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                          {dayLabel}
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                          {slotLabel}
+                        </span>
+                      </div>
+                      {b.originalPrice != null && (
+                        <div className="mt-2">
+                          <span className="font-mono text-sm font-semibold text-slate-900">
+                            From ${b.originalPrice}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     {b.href && (
                       <a
                         href={b.href}
                         target="_blank"
                         rel="noopener noreferrer sponsored"
-                        className="rounded-lg bg-[#0071CE] px-2.5 py-1 text-[10px] font-bold uppercase text-white hover:bg-[#005ba6]"
+                        className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#0071CE] px-3 py-2 text-xs font-bold text-white hover:bg-[#005ba6] transition shadow-sm"
                       >
-                        Book →
+                        Book
+                        <span aria-hidden>↗</span>
                       </a>
                     )}
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
 
-            <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
-              You save <strong>${bundle.totals.savings}</strong> with the bundle.
-              <br />
-              Total {bundle.totals.currency} ${bundle.totals.afterPromo} (was ${bundle.totals.original}).
+            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-sm font-semibold text-slate-900">Estimated total</span>
+                <span className="font-mono text-base font-bold text-slate-900">
+                  From {bundle.totals.currency} ${bundle.totals.original}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Final price set by Viator at checkout. Each tour is booked separately.
+              </p>
             </div>
 
-            <p className="mt-3 text-xs text-slate-500">
-              These items have been mirrored to your{" "}
-              <Link href="/profile/itineraries" className="text-[#0071CE] underline">
-                Imported Trips
-              </Link>
-              .
+            <p className="mt-4 text-xs text-slate-500 leading-relaxed">
+              Tap <strong>Book</strong> on each tour to complete payment on Viator. We've also
+              saved everything to your{" "}
+              <Link href="/trips" className="font-semibold text-[#0071CE] hover:underline">
+                My Trips
+              </Link>{" "}
+              so you can come back to it anytime.
             </p>
           </div>
         </div>

@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
             error: "Out of AI credits",
             reason: reserved.reason,
             balance: reserved.remainingBalance,
-            upgradeUrl: "/plans",
+            upgradeUrl: "/ai/pricing",
           }),
           { status: 402, headers: { "Content-Type": "application/json" } }
         );
@@ -191,7 +191,7 @@ STYLE:
 - Default under 150 words; expand only when user asks for details.
 - When discussing prices, prefer ${userCurrency} unless the user mentions another currency.
 - Use the user's language if they write in Indonesian, Chinese, Japanese, Korean, or Russian. Otherwise English.
-- When the answer involves a Voyra page, refer to it by its friendly name with the breadcrumb path (e.g. "the AI Wallet — Profile → AI Wallet"). NEVER dump a raw URL like "/profile/ai" in chat.
+- When the answer involves a Voyra page, refer to it by its friendly name with the breadcrumb path (e.g. "the AI Wallet — AI Tools → Wallet"). NEVER dump a raw URL like "/ai/wallet" in chat.
 ${
   tourContext
     ? `\nTOURS MATCHING THE USER'S INTEREST (from our platform):\n${tourContext}\n\nMention these tours by name and price when they fit. The UI will render product cards below your reply.`

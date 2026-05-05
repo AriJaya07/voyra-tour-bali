@@ -8,7 +8,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import Container from "@/components/Container";
 import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon";
-import { CheckmarkIcon, CalendarIcon, ClockIcon, PeopleIcon, UserIcon, ClipboardIcon, ShieldIcon, LightningIcon, CloseIcon, SpinnerIcon, MapPinIcon, InfoIcon, ChatIcon, GlobeIcon, TranslateIcon } from "@/components/assets/Icon/shared";
+import { CheckmarkIcon, CalendarIcon, ClockIcon, PeopleIcon, UserIcon, ClipboardIcon, ShieldIcon, LightningIcon, CloseIcon, SpinnerIcon, MapPinIcon, InfoIcon, ChatIcon, GlobeIcon, TranslateIcon, ShoppingBagIcon } from "@/components/assets/Icon/shared";
 import { useViatorProductDetail } from "@/utils/hooks/useViator";
 import type { ViatorProductOption, ViatorLanguageGuide } from "@/utils/hooks/useViator";
 
@@ -256,7 +256,7 @@ function StepOptions({
     <div className="space-y-5 relative">
       <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-[#F0F0F0]">
         <SectionHeader
-          icon={<svg className="w-4 h-4 text-[#0071CE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>}
+          icon={<ShoppingBagIcon className="w-4 h-4 text-[#0071CE]" />}
           title="Select Your Tour Option"
         />
         <div className="space-y-3">

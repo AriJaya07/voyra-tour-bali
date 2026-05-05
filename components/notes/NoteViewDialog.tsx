@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 
 interface NoteForView {
   id: number;
@@ -39,8 +40,8 @@ export default function NoteViewDialog({ open, note, onClose, onAddToCalendar, o
   if (!open || !note) return null;
 
   const calendarHref = note.date
-    ? `/profile/calendar?date=${note.date.slice(0, 10)}`
-    : "/profile/calendar";
+    ? `/trips/calendar?date=${note.date.slice(0, 10)}`
+    : "/trips/calendar";
 
   return (
     <div
@@ -50,10 +51,18 @@ export default function NoteViewDialog({ open, note, onClose, onAddToCalendar, o
       aria-modal="true"
     >
       <div
-        className="bg-white w-full sm:max-w-md max-h-[92vh] overflow-y-auto scrollbar-hide shadow-2xl rounded-t-2xl sm:rounded-2xl"
+        className="relative bg-white w-full sm:max-w-md max-h-[92vh] overflow-y-auto scrollbar-hide shadow-2xl rounded-t-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 py-4 bg-gradient-to-r from-amber-50 to-white border-l-4 border-amber-400">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-3 right-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
+        >
+          <CloseIcon className="w-5 h-5" />
+        </button>
+        <div className="px-5 py-4 pr-14 bg-gradient-to-r from-amber-50 to-white border-l-4 border-amber-400">
           <p className="text-[10px] uppercase tracking-wider text-amber-700 font-bold">{note.targetType}</p>
           <h3 className="font-bold text-base text-gray-900 mt-0.5 leading-snug">
             {note.targetTitle || note.targetKey}
@@ -117,13 +126,6 @@ export default function NoteViewDialog({ open, note, onClose, onAddToCalendar, o
               Delete
             </button>
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition"
-          >
-            Close
-          </button>
         </div>
       </div>
     </div>

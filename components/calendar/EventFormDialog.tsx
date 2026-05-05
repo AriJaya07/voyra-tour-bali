@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { EVENT_COLORS, COLOR_CLASSES, type CalendarEventDTO, type EventColor } from "./types";
 import { buildRRule, parseRRule, type Frequency } from "@/lib/calendar/recurrence";
 import { useConfirm } from "@/components/common/ConfirmDialog";
+import { CloseIcon } from "@/components/assets/Icon/shared";
 
 type RepeatPreset = "none" | "daily" | "weekly" | "monthly";
 
@@ -203,10 +204,19 @@ export default function EventFormDialog({
       onClick={() => !submitting && !deleting && onClose()}
     >
       <div
-        className="bg-white w-full sm:max-w-md max-h-[92vh] overflow-y-auto scrollbar-hide shadow-2xl rounded-t-2xl sm:rounded-2xl"
+        className="relative bg-white w-full sm:max-w-md max-h-[92vh] overflow-y-auto scrollbar-hide shadow-2xl rounded-t-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] px-5 py-4 text-white">
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={submitting || deleting}
+          aria-label="Close"
+          className="absolute top-3 right-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full text-white/90 hover:bg-white/20 transition disabled:opacity-50"
+        >
+          <CloseIcon className="w-5 h-5" />
+        </button>
+        <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] px-5 py-4 pr-14 text-white">
           <h3 className="font-bold text-base">{initial ? "Edit event" : "New event"}</h3>
           <p className="text-xs text-blue-100 mt-0.5">
             {initial ? "Update or remove this entry." : "Plan an activity, meal, or reminder."}
@@ -399,14 +409,6 @@ export default function EventFormDialog({
                 {deleting ? "Deleting…" : "Delete"}
               </button>
             )}
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={submitting || deleting}
-              className="px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition"
-            >
-              Cancel
-            </button>
           </div>
         </form>
       </div>

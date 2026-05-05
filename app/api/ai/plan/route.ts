@@ -193,7 +193,7 @@ export async function POST(req: NextRequest) {
           error: "Out of AI credits",
           reason: reserved.reason,
           balance: reserved.remainingBalance,
-          upgradeUrl: "/plans",
+          upgradeUrl: "/ai/pricing",
         },
         { status: 402 }
       );

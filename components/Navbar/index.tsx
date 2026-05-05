@@ -15,9 +15,9 @@ import { useWishlistStore } from "@/utils/hooks/useWishlist"
 
 const NAV_ITEMS = [
   { label: "Home", id: "home" },
-  { label: "Destinations", id: "destinasi" },
-  { label: "Travel Packages", id: "paket" },
-  { label: "About Us", id: "tentang", href: "/about" },
+  { label: "Guides", id: "guides", href: "/guides" },
+  { label: "AI Tools", id: "ai", href: "/ai" },
+  { label: "My Trips", id: "trips", href: "/trips" },
 ]
 
 const NAVBAR_HEIGHT = 64
@@ -39,7 +39,7 @@ export default function Navbar() {
   useEffect(() => {
     if (!isHomePage) return
 
-    const sectionIds = NAV_ITEMS.map((item) => item.id)
+    const sectionIds = NAV_ITEMS.filter((i) => !("href" in i && i.href)).map((item) => item.id)
 
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
@@ -321,6 +321,14 @@ export default function Navbar() {
                             Dashboard Admin
                           </Link>
                         )}
+                        <Link
+                          href="/profile"
+                          onClick={() => setIsMobileProfileOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
+                        >
+                          <ProfileIcon className="w-4 h-4 text-gray-400" />
+                          My Profile
+                        </Link>
                         <button
                           onClick={() => {
                             setIsMobileProfileOpen(false)

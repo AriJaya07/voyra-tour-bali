@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { EyeIcon } from "@/components/assets/Icon/shared";
 
 interface Props {
   productCode: string;
@@ -43,10 +44,7 @@ export default async function SocialProofBadge({ productCode, windowDays = 7 }: 
         </div>
       )}
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-800">
-        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
+        <EyeIcon className="w-3.5 h-3.5" />
         <span className="text-xs font-bold">{viewers} viewing right now</span>
       </div>
     </div>

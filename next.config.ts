@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/plan", destination: "/ai/plan", permanent: true },
+      { source: "/plans", destination: "/ai/pricing", permanent: true },
+      { source: "/profile/ai", destination: "/ai/wallet", permanent: true },
+      { source: "/profile/ai/tools", destination: "/ai/tools", permanent: true },
+      { source: "/profile/itineraries", destination: "/trips", permanent: true },
+      { source: "/profile/calendar", destination: "/trips/calendar", permanent: true },
+    ];
+  },
   images: {
     deviceSizes: [640, 1080, 1920],
     imageSizes: [64, 256, 512],

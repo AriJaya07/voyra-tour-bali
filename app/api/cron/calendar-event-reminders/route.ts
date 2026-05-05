@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
         body: `${e.title}${e.startTime ? ` at ${e.startTime}` : ""}${
           e.location ? ` · ${e.location}` : ""
         }`,
-        url: "/profile/calendar",
+        url: "/trips/calendar",
         tag: `calendar-event-${e.id}`,
       });
       await prisma.calendarEvent.update({
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
         body: `${e.title}${e.startTime ? ` at ${e.startTime}` : ""}${
           e.location ? ` · ${e.location}` : ""
         }`,
-        url: "/profile/calendar",
+        url: "/trips/calendar",
         tag: `calendar-event-${e.id}-${tomorrowKey}`,
       });
       sent++;

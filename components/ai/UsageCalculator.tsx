@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { translateCredits } from "@/lib/config/aiPlans";
+import { AI_PLANS, translateCredits } from "@/lib/config/aiPlans";
+import { AI_ENDPOINT_COST } from "@/lib/config/aiCosts";
 
-const CHAT_COST = 2;
-const PLAN_COST = 8;
-const CONCIERGE_COST = 4;
+const CHAT_COST = AI_ENDPOINT_COST.chat;
+const PLAN_COST = AI_ENDPOINT_COST.plan;
+const CONCIERGE_COST = AI_ENDPOINT_COST.concierge;
 
 interface UsagePick {
   chats: number;
@@ -20,12 +21,14 @@ interface PlanPick {
   monthlyCredits: number;
 }
 
-const RECOMMENDED: PlanPick[] = [
-  { key: "FREE", label: "Free", priceIdr: 0, monthlyCredits: 20 },
-  { key: "EXPLORER", label: "Explorer", priceIdr: 49_000, monthlyCredits: 300 },
-  { key: "VOYAGER", label: "Voyager", priceIdr: 129_000, monthlyCredits: 1_000 },
-  { key: "FOUNDER", label: "Founder", priceIdr: 299_000, monthlyCredits: 3_000 },
-];
+// Derived from AI_PLANS so price + credit edits in lib/config/aiPlans.ts
+// propagate here without manual sync.
+const RECOMMENDED: PlanPick[] = (["FREE", "EXPLORER", "VOYAGER", "FOUNDER"] as const).map((key) => ({
+  key,
+  label: AI_PLANS[key].label,
+  priceIdr: AI_PLANS[key].priceIdr,
+  monthlyCredits: AI_PLANS[key].monthlyCredits,
+}));
 
 function recommend(monthlyCredits: number): PlanPick {
   for (const p of RECOMMENDED) {
@@ -72,7 +75,7 @@ export default function UsageCalculator({ className = "" }: { className?: string
         />
         <Slider
           label="Concierge turns"
-          help={`${CONCIERGE_COST} credits each (Voyager+)`}
+          help={`${CONCIERGE_COST} credits each`}
           value={picks.concierge}
           min={0}
           max={60}

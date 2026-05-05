@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     const totalsUsd = bundle.reduce((acc, b) => acc + (b.originalPrice ?? 0), 0);
     const totalsAfterPromo = bundle.reduce((acc, b) => acc + (b.discountedPrice ?? 0), 0);
 
-    // Mirror to ImportedTrip so /profile/itineraries picks them up. Idempotent
+    // Mirror to ImportedTrip so /trips picks them up. Idempotent
     // by (userId, externalRef): skip duplicates silently.
     const fromDate = itin.fromDate ?? null;
     for (const b of bundle) {
