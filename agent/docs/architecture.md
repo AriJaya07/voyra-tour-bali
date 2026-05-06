@@ -239,6 +239,9 @@ Routes under `app/api/cron/*`. Each requires `Authorization: Bearer ${CRON_SECRE
 | `/api/cron/viator-daily-sync` | Daily reconciliation |
 | `/api/cron/calendar-event-reminders` | T-1 push reminder for `CalendarEvent` rows (one-off and recurring); respects `NotificationPref.calendarReminders` |
 | `/api/cron/notification-broadcasts` | Every 5 min: pick `SCHEDULED` `NotificationBroadcast` rows whose `scheduledAt` elapsed and fan-out via `lib/services/notificationService.sendBroadcast` |
+| `/api/cron/cleanup-ai-ledger` | Daily: purge `AiCreditLedger` SETTLED/CANCELLED rows >180d + plain closed rows >365d. RESERVED kept forever. Supports `?dryRun=1`. |
+| `/api/cron/cleanup-app-notifications` | Daily: purge `AppNotification` — dismissed >30d, read >90d, unread >180d. Supports `?dryRun=1`. |
+| `/api/cron/cleanup-email-delivery` | Weekly: purge `EmailDelivery` rows >180d. Supports `?dryRun=1`. |
 
 ---
 
@@ -335,6 +338,24 @@ All consumable AI endpoints (`chat`, `plan`, `plan_refine`, `concierge`, `cultur
 
 ---
 
+## 10C. DB Health (admin observability)
+
+Heavy-table growth is monitored from the admin dashboard so retention drift is caught without psql.
+
+- API: `app/api/admin/db-stats/route.ts` (ADMIN gate) — returns row counts + oldest-row dates for `AiUsage`, `AiCreditLedger`, `AppNotification`, `EmailDelivery`, `RecentlyViewedItem`, `AiChatMemory`, `Booking` (reference).
+- Manual cleanup proxy: `app/api/admin/db-stats/cleanup/route.ts` — POST `{ target, dryRun }` triggers the corresponding cleanup cron with `CRON_SECRET` server-side. Targets: `ledger`, `appNotifications`, `emailDelivery`.
+- Page: `app/dashboard/db-health/page.tsx` — card grid with dry-run + run-cleanup buttons. Uses `useConfirm()` for destructive confirmation.
+
+`EmailCampaign` was removed — never wired to any code path. `EmailDelivery.campaignId` retained as plain `String?` for legacy rows.
+
+`MockBooking` table + admin demo flow (`/dashboard/viator-mock`, `/v/[slug]`, `/api/viator/mock-booking`, `MockCheckoutClient`) were removed — pre-launch Viator demo tooling, zero rows in prod. The `lib/viatorMock.ts` env-toggled mock for the live Viator checkout API stays.
+
+`TourGuide.operatorId` column was dropped — never wired to a relation, no writers. `TourGuide` model retained.
+
+`/compare` page removed — no inbound links, dead path.
+
+---
+
 ## 11. Build & Deployment
 
 - **Hosting**: Vercel.
@@ -371,6 +392,6 @@ All consumable AI endpoints (`chat`, `plan`, `plan_refine`, `concierge`, `cultur
 | How does referral conversion fire? | `app/api/auth/register/route.ts` (signup leg) + `lib/services/postPaymentService.ts` (conversion leg on first CONFIRMED booking) |
 | How do tracked emails work? | `lib/services/emailService.ts` → writes `EmailDelivery`, injects pixel + click rewriter |
 | How do push notifications work? | `lib/services/pushService.ts` (lazy `web-push`) + `public/sw.js` (push + notificationclick) |
-| What's in `/compare` / `/notes` / `/bali-events` / `/guides/profiles`? | Phase 16+ pages — see `app/compare/page.tsx`, `app/notes/page.tsx`, `app/bali-events/page.tsx`, `app/guides/profiles/[slug]/page.tsx` |
+| What's in `/notes` / `/bali-events` / `/guides/profiles`? | Phase 16+ pages — see `app/notes/page.tsx`, `app/bali-events/page.tsx`, `app/guides/profiles/[slug]/page.tsx` |
 | Where do test specs live? | [test-user/](../test-user/) (one file per feature area) |
 | What environment variables exist? | [environment.md](./environment.md) |

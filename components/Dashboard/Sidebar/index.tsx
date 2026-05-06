@@ -60,12 +60,6 @@ const NAV_ITEMS = [
     color: "amber",
   },
   {
-    label: "Reviews",
-    href: "/dashboard/reviews",
-    icon: <BookingsIcon />,
-    color: "violet",
-  },
-  {
     label: "Contents",
     href: "/dashboard/contents",
     icon: <ContentsIcon />,
@@ -93,16 +87,16 @@ const BOTTOM_ITEMS = [
     color: "teal",
   },
   {
-    label: "Mock Booking",
-    href: "/dashboard/viator-mock",
-    icon: <BookingsIcon />,
-    color: "amber",
-  },
-  {
     label: "AI Subsystem",
     href: "/dashboard/ai",
     icon: <BookingsIcon />,
     color: "violet",
+  },
+  {
+    label: "DB Health",
+    href: "/dashboard/db-health",
+    icon: <BookingsIcon />,
+    color: "rose",
   },
 ];
 

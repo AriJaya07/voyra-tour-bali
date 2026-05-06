@@ -149,7 +149,6 @@ model User {
   wishlistItems  WishlistItem[]
   recentlyViewed RecentlyViewedItem[]
   savedTravelers SavedTraveler[]
-  reviews        Review[]
   importedTrips  ImportedTrip[]
   preferences    UserPreferences?
   baliNotes      BaliNote[]
@@ -336,7 +335,6 @@ model BaliEvent {
 
 model TourGuide {
   id          Int      @id @default(autoincrement())
-  operatorId  Int?
   name        String
   slug        String   @unique
   photo       String?
@@ -347,8 +345,6 @@ model TourGuide {
   reviewCount Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  @@index([operatorId])
 }
 
 model PushSubscription {
@@ -410,16 +406,6 @@ model Guide {
 
   @@index([status, publishedAt])
   @@index([region, status])
-}
-
-model EmailCampaign {
-  id          String   @id @default(uuid())
-  type        String   // WELCOME | ABANDONED_WISHLIST | TRIP_ANNIVERSARY | NEWSLETTER | PRE_TRIP
-  subject     String
-  body        String
-  scheduledAt DateTime?
-  status      String   @default("DRAFT") // DRAFT | SCHEDULED | SENT | FAILED
-  createdAt   DateTime @default(now())
 }
 
 model EmailDelivery {
@@ -632,36 +618,6 @@ model SavedTraveler {
   @@index([userId])
 }
 
-model Review {
-  id     Int  @id @default(autoincrement())
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  bookingId Int?     @unique
-  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-
-  productCode  String
-  source       String // "viator" | "local" | "tourcms"
-  rating       Int // 1-5
-  title        String?
-  body         String
-  photos       Json? // array of S3 URLs
-  status       ReviewStatus @default(PENDING)
-  helpfulCount Int          @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([productCode, source, status])
-  @@index([userId])
-}
-
-enum ReviewStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
 model Booking {
   id            Int           @id @default(autoincrement())
   bookingRef    String
@@ -726,7 +682,6 @@ model Booking {
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   travelers BookingTraveler[]
-  review    Review?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -771,23 +726,6 @@ model Subscription {
 
   @@index([email])
   @@index([status])
-}
-
-model MockBooking {
-  id                 Int     @id @default(autoincrement())
-  slug               String  @unique
-  productCode        String
-  productTitle       String
-  productImage       String?
-  price              Float?
-  currency           String  @default("IDR")
-  username           String?
-  promoCode          String?
-  productOptionCode  String?
-  productOptionTitle String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 // ===========================================================================
@@ -875,6 +813,7 @@ model AiCreditLedger {
 
   @@index([userId, createdAt])
   @@index([reservationStatus])
+  @@index([reservationStatus, settledAt])
 }
 
 model AiUsage {
