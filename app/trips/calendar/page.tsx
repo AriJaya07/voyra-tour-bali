@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -71,10 +71,15 @@ export default function CalendarPage() {
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [notes, setNotes] = useState<DatedNote[]>([]);
   const [staticLoading, setStaticLoading] = useState(true);
+  // Default-select today on first mount when no ?date= is provided. Means the
+  // DayPanel renders immediately on landing instead of after the first click.
   const [selectedKey, setSelectedKey] = useState<string | null>(() => {
     const q = params.get("date");
-    return q && /^\d{4}-\d{2}-\d{2}$/.test(q) ? q : null;
+    if (q && /^\d{4}-\d{2}-\d{2}$/.test(q)) return q;
+    return isoDay(new Date());
   });
+  const dayPanelRef = useRef<HTMLDivElement | null>(null);
+  const camFromUrlRef = useRef(!!params.get("date"));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEventDTO | null>(null);
   const [viewing, setViewing] = useState<CalendarEventDTO | null>(null);
@@ -187,6 +192,32 @@ export default function CalendarPage() {
 
   const selectedDate = selectedKey ? new Date(`${selectedKey}T00:00:00`) : null;
   const selectedEntries = selectedKey ? entriesByDay.get(selectedKey) ?? [] : [];
+
+  const handleSelectDay = useCallback((key: string, dateObj?: Date) => {
+    setSelectedKey(key);
+    // If user picks a day in another month via grid padding, jump cursor too.
+    if (dateObj && (dateObj.getMonth() !== cursor.getMonth() || dateObj.getFullYear() !== cursor.getFullYear())) {
+      setCursor(new Date(dateObj.getFullYear(), dateObj.getMonth(), 1));
+    }
+    // Scroll DayPanel into view on small screens — the calendar grid takes full
+    // viewport, so without this the new selection sits below the fold silently.
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      requestAnimationFrame(() => {
+        dayPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [cursor]);
+
+  // When the page is opened with ?date= from another surface (note, trip, AI plan),
+  // smooth-scroll once after first paint so the user lands on the right context.
+  useEffect(() => {
+    if (!camFromUrlRef.current) return;
+    camFromUrlRef.current = false;
+    const t = setTimeout(() => {
+      dayPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+    return () => clearTimeout(t);
+  }, []);
 
   const openCreate = (dateKey: string) => {
     setEditing(null);
@@ -432,7 +463,7 @@ export default function CalendarPage() {
             cursor={cursor}
             entriesByDay={entriesByDay}
             selectedKey={selectedKey}
-            onSelectDay={(key) => setSelectedKey(key)}
+            onSelectDay={handleSelectDay}
             onMoveEvent={handleMoveEvent}
           />
 
@@ -440,7 +471,20 @@ export default function CalendarPage() {
             Tip: drag a blue event chip to another day to reschedule.
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-gray-500">
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-gray-500">
+            {/* Day-state cues */}
+            <span className="flex items-center gap-1.5">
+              <span className="inline-flex w-4 h-4 items-center justify-center rounded-full bg-amber-500 text-white text-[8px] font-black">
+                {new Date().getDate()}
+              </span>
+              <span className="font-semibold text-gray-700">Today</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-4 h-4 rounded bg-blue-50 border border-[#0071CE] ring-1 ring-[#0071CE]/40" />
+              <span className="font-semibold text-gray-700">Selected</span>
+            </span>
+            <span className="hidden sm:inline-block w-px h-4 bg-gray-200" />
+            {/* Entry types */}
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-sky-500" /> Booking
             </span>
@@ -453,18 +497,20 @@ export default function CalendarPage() {
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500" /> Note
             </span>
-            {eventsLoading && <span className="text-gray-400">Loading events…</span>}
+            {eventsLoading && <span className="text-gray-400 ml-auto">Loading events…</span>}
           </div>
         </div>
 
-        <DayPanel
-          date={selectedDate}
-          entries={selectedEntries}
-          onAdd={() => openCreate(selectedKey || todayKey)}
-          onViewEvent={openView}
-          onEditEvent={openEdit}
-          onClose={() => setSelectedKey(null)}
-        />
+        <div ref={dayPanelRef} id="day-panel" className="scroll-mt-20">
+          <DayPanel
+            date={selectedDate}
+            entries={selectedEntries}
+            onAdd={() => openCreate(selectedKey || todayKey)}
+            onViewEvent={openView}
+            onEditEvent={openEdit}
+            onClose={() => setSelectedKey(null)}
+          />
+        </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm mt-5">
           <div className="flex items-start justify-between gap-3 flex-wrap">

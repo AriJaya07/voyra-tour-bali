@@ -2,8 +2,45 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useConfirm } from "@/components/common/ConfirmDialog";
 import { CloseIcon } from "@/components/assets/Icon/shared";
+import { buildViatorProductUrl } from "@/lib/config/viator";
+
+// Extracts a Viator productCode from either a raw code or a Viator URL.
+//   https://www.viator.com/tours/Bali/.../d98-12345PROD?...  →  "12345PROD"
+//   12345PROD                                                  →  "12345PROD"
+function extractProductCode(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  const urlMatch = trimmed.match(/d\d+-([A-Za-z0-9_]+)/);
+  if (urlMatch) return urlMatch[1];
+  if (/^[A-Za-z0-9_]+$/.test(trimmed) && trimmed.length >= 3 && trimmed.length <= 32) {
+    return trimmed;
+  }
+  return null;
+}
+
+interface ViatorImageVariant {
+  height: number;
+  width: number;
+  url: string;
+}
+interface ViatorImage {
+  isCover?: boolean;
+  variants?: ViatorImageVariant[];
+}
+
+function pickBestImage(images: ViatorImage[] | undefined): string {
+  if (!images?.length) return "";
+  const cover = images.find((img) => img.isCover) ?? images[0];
+  if (!cover?.variants?.length) return "";
+  // Pick variant closest to 720px wide (matches plan output).
+  const sorted = [...cover.variants].sort(
+    (a, b) => Math.abs(a.width - 720) - Math.abs(b.width - 720)
+  );
+  return sorted[0]?.url ?? "";
+}
 
 interface ImportedTrip {
   id: number;
@@ -43,6 +80,53 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
   const [href, setHref] = useState("");
   const [notes, setNotes] = useState("");
 
+  // Viator auto-lookup
+  const [viatorInput, setViatorInput] = useState("");
+  const [lookupBusy, setLookupBusy] = useState(false);
+  const [lookupOk, setLookupOk] = useState(false);
+
+  const lookupViator = async () => {
+    const code = extractProductCode(viatorInput);
+    if (!code) {
+      toast.error("Couldn't read Viator code", {
+        description: "Paste the full Viator product URL or just the product code.",
+      });
+      return;
+    }
+    setLookupBusy(true);
+    setLookupOk(false);
+    try {
+      const res = await fetch(`/api/viator?action=product_detail&productCode=${encodeURIComponent(code)}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error("Viator lookup failed", {
+          description: data?.error || "We couldn't find that product. Try the manual fields below.",
+        });
+        return;
+      }
+      const data = await res.json();
+      const imgUrl = pickBestImage(data?.images);
+      const t = typeof data?.title === "string" ? data.title : "";
+      if (t) setProductTitle(t);
+      if (imgUrl) setProductImage(imgUrl);
+      setHref(buildViatorProductUrl(code, t || null));
+      // If user hasn't typed a booking ref yet, seed it with the productCode.
+      if (!externalRef.trim()) setExternalRef(code);
+      setLookupOk(true);
+      toast.success("Pulled from Viator", {
+        description: t ? `Loaded: ${t}` : "Image and link filled in.",
+      });
+    } catch {
+      toast.error("Network problem", {
+        description: "Couldn't reach the server. Try again in a moment.",
+      });
+    } finally {
+      setLookupBusy(false);
+    }
+  };
+
   const load = async () => {
     try {
       const res = await fetch("/api/imported-trips", { cache: "no-store" });
@@ -65,6 +149,8 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
     setProductImage("");
     setHref("");
     setNotes("");
+    setViatorInput("");
+    setLookupOk(false);
     setError(null);
   };
 
@@ -147,17 +233,30 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
             <div className="animate-spin rounded-full h-7 w-7 border-2 border-[#0071CE] border-t-transparent" />
           </div>
         ) : trips.length === 0 ? (
-          <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-            <p className="text-gray-900 font-bold text-base mb-1">No imported trips yet</p>
-            <p className="text-sm text-gray-500 mb-5 max-w-sm mx-auto">
-              After you book a tour, paste the reference here so it shows up in your profile.
-            </p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="px-5 py-2.5 bg-[#0071CE] hover:bg-[#005ba6] text-white text-sm font-bold rounded-xl transition shadow-sm"
-            >
-              + Add Your First Booking
-            </button>
+          <div className="relative overflow-hidden text-center py-12 px-4 rounded-2xl border border-gray-200">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/banner/banner-travel.png"
+              alt=""
+              aria-hidden
+              className="absolute inset-0 w-full h-full object-cover opacity-30"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-white/40"
+            />
+            <div className="relative">
+              <p className="text-gray-900 font-bold text-base mb-1">No imported trips yet</p>
+              <p className="text-sm text-gray-600 mb-5 max-w-sm mx-auto">
+                After you book a tour, paste the reference here so it shows up in your profile.
+              </p>
+              <button
+                onClick={() => setShowModal(true)}
+                className="px-5 py-2.5 bg-[#0071CE] hover:bg-[#005ba6] text-white text-sm font-bold rounded-xl transition shadow-sm"
+              >
+                + Add Your First Booking
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -167,15 +266,22 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
                 className="border border-gray-200 rounded-2xl overflow-hidden hover:border-[#0071CE]/40 hover:shadow-sm transition flex flex-col"
               >
                 <div className="relative h-32 bg-gray-100">
-                  {t.productImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={t.productImage} alt={t.productTitle} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-3xl">
-                      🌴
-                    </div>
-                  )}
-                  <span className="absolute top-2 left-2 px-2 py-0.5 bg-white/95 text-[10px] font-bold uppercase tracking-wider text-gray-600 rounded-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={t.productImage || "/images/banner/banner-travel.png"}
+                    alt={t.productTitle}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const el = e.currentTarget;
+                      if (el.src.endsWith("/images/banner/banner-travel.png")) return;
+                      el.src = "/images/banner/banner-travel.png";
+                    }}
+                  />
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"
+                  />
+                  <span className="absolute top-2 left-2 px-2 py-0.5 bg-white/95 text-[10px] font-bold uppercase tracking-wider text-gray-600 rounded-full shadow-sm">
                     Imported
                   </span>
                 </div>
@@ -244,6 +350,57 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
               </p>
             </div>
             <form onSubmit={handleAdd} className="p-5 space-y-4">
+              {/* Viator quick-fill */}
+              <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-3">
+                <label className="flex items-center justify-between text-xs font-bold text-blue-900 mb-1.5">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span aria-hidden>⚡</span>
+                    Quick-fill from Viator
+                  </span>
+                  {lookupOk && (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-1.5 py-0.5 rounded-full">
+                      ✓ Loaded
+                    </span>
+                  )}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={viatorInput}
+                    onChange={(e) => {
+                      setViatorInput(e.target.value);
+                      setLookupOk(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void lookupViator();
+                      }
+                    }}
+                    placeholder="Paste Viator URL or product code"
+                    maxLength={500}
+                    className="flex-1 px-3 py-2 text-sm bg-white border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE] focus:border-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={lookupViator}
+                    disabled={lookupBusy || !viatorInput.trim()}
+                    className="px-4 py-2 text-xs font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition shadow-sm whitespace-nowrap"
+                  >
+                    {lookupBusy ? "Looking…" : "Look up"}
+                  </button>
+                </div>
+                <p className="text-[10px] text-blue-700/80 mt-1.5 leading-relaxed">
+                  We&apos;ll pull the real tour image, title, and manage-link from Viator. You can still edit below.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                <span className="flex-1 h-px bg-gray-200" />
+                Or fill manually
+                <span className="flex-1 h-px bg-gray-200" />
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Tour title *</label>
                 <input
@@ -291,6 +448,21 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
                   />
                 </div>
               </div>
+
+              {productImage && (
+                <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={productImage}
+                    alt="Preview"
+                    className="w-full h-32 object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Manage-booking link</label>
                 <input

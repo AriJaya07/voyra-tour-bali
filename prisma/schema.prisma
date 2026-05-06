@@ -149,7 +149,6 @@ model User {
   wishlistItems  WishlistItem[]
   recentlyViewed RecentlyViewedItem[]
   savedTravelers SavedTraveler[]
-  reviews        Review[]
   importedTrips  ImportedTrip[]
   preferences    UserPreferences?
   baliNotes      BaliNote[]
@@ -619,36 +618,6 @@ model SavedTraveler {
   @@index([userId])
 }
 
-model Review {
-  id     Int  @id @default(autoincrement())
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  bookingId Int?     @unique
-  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-
-  productCode  String
-  source       String // "viator" | "local" | "tourcms"
-  rating       Int // 1-5
-  title        String?
-  body         String
-  photos       Json? // array of S3 URLs
-  status       ReviewStatus @default(PENDING)
-  helpfulCount Int          @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([productCode, source, status])
-  @@index([userId])
-}
-
-enum ReviewStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
 model Booking {
   id            Int           @id @default(autoincrement())
   bookingRef    String
@@ -713,7 +682,6 @@ model Booking {
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   travelers BookingTraveler[]
-  review    Review?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

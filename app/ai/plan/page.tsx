@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -24,6 +24,8 @@ const STYLE_TAGS = [
 ];
 
 const REGIONS = ["Ubud", "Canggu", "Seminyak", "Kuta", "Sanur", "Nusa Dua", "Uluwatu", "Lovina", "Amed", "Nusa Penida"];
+
+const MAX_INTERESTS = 8;
 
 interface PlanItem {
   day: number;
@@ -85,23 +87,56 @@ const SLOT_EMOJI: Record<PlanItem["slot"], string> = {
   evening: "🌙",
 };
 
+const LOADING_STAGES = [
+  { key: "search",   label: "Searching Bali tour catalog…",  delayMs: 0 },
+  { key: "filter",   label: "Filtering by your interests…",   delayMs: 1800 },
+  { key: "assemble", label: "Assembling day-by-day plan…",    delayMs: 3800 },
+  { key: "polish",   label: "Adding local tips & timing…",    delayMs: 5800 },
+];
+
+const HOW_IT_WORKS = [
+  {
+    step: 1,
+    title: "Tell us your trip",
+    body: "Dates, party, budget, and what you love. Customize freely — add your own interests or pick a custom region.",
+  },
+  {
+    step: 2,
+    title: "AI builds your plan",
+    body: "We pull live Viator tours that match, then fill the gaps with curated local tips. Everything is bookable or actionable.",
+  },
+  {
+    step: 3,
+    title: "Save, share, or book",
+    body: "Save to your profile, share a link with travel buddies, or book the whole bundle in one tap.",
+  },
+];
+
 export default function PlanPage() {
   const { status } = useSession();
   const prefs = usePrefsStore((s) => s.prefs);
+  const setPrefs = usePrefsStore((s) => s.setPrefs);
   const searchParams = useSearchParams();
 
   const [days, setDays] = useState(5);
   const [daysDraft, setDaysDraft] = useState("5");
   const [budget, setBudget] = useState<"budget" | "moderate" | "luxury">("moderate");
   const [interests, setInterests] = useState<string[]>([]);
+  const [customInterestDraft, setCustomInterestDraft] = useState("");
   const [region, setRegion] = useState<string | null>(null);
+  const [regionMode, setRegionMode] = useState<"preset" | "custom">("preset");
+  const [customRegionDraft, setCustomRegionDraft] = useState("");
   const [mode, setMode] = useState<"days" | "dates">("days");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  // Inline party — synced to prefs store so user edits stick across pages.
+  const [partyAdults, setPartyAdults] = useState(2);
+  const [partyChildren, setPartyChildren] = useState(0);
+  const [partySeniors, setPartySeniors] = useState(0);
+  const [partyInfants, setPartyInfants] = useState(0);
+
   // One-shot ingest of ?region=&interests=&days= from incoming links
-  // (e.g. the AI handoff CTA on /guides/[slug]). Runs before prefs hydrate
-  // so guide-supplied values win over default state but lose to user edits.
   const urlSeededRef = useRef(false);
   useEffect(() => {
     if (urlSeededRef.current) return;
@@ -109,13 +144,21 @@ export default function PlanPage() {
     const r = searchParams.get("region");
     const i = searchParams.get("interests");
     const d = searchParams.get("days");
-    if (r) setRegion(r);
+    if (r) {
+      if (REGIONS.includes(r)) {
+        setRegion(r);
+      } else {
+        setRegionMode("custom");
+        setCustomRegionDraft(r);
+        setRegion(r);
+      }
+    }
     if (i) {
       const list = i
         .split(",")
         .map((s) => s.trim().toLowerCase())
         .filter(Boolean);
-      if (list.length > 0) setInterests(list.slice(0, 6));
+      if (list.length > 0) setInterests(list.slice(0, MAX_INTERESTS));
     }
     if (d) {
       const n = parseInt(d, 10);
@@ -149,6 +192,7 @@ export default function PlanPage() {
   }, [mode, fromDate, toDate, dateRangeError]);
 
   const [loading, setLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState(0);
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -157,22 +201,149 @@ export default function PlanPage() {
   const [bundle, setBundle] = useState<BookBundle | null>(null);
   const [bundleOpen, setBundleOpen] = useState(false);
   const [bundleBusy, setBundleBusy] = useState(false);
+  const [costEstimate, setCostEstimate] = useState<{ cost: number; balance: number } | null>(null);
 
+  // Hydrate from prefs on first load
   useEffect(() => {
     if (prefs.styleTags.length > 0 && interests.length === 0) {
-      setInterests(prefs.styleTags.slice(0, 4));
+      setInterests(prefs.styleTags.slice(0, MAX_INTERESTS));
     }
     if (prefs.regionPref && !region) {
-      setRegion(prefs.regionPref);
+      if (REGIONS.includes(prefs.regionPref)) {
+        setRegion(prefs.regionPref);
+      } else {
+        setRegionMode("custom");
+        setCustomRegionDraft(prefs.regionPref);
+        setRegion(prefs.regionPref);
+      }
     }
     if (prefs.tripLengthDays && days === 5) {
       setDays(Math.min(14, prefs.tripLengthDays));
     }
+    setPartyAdults(prefs.partyAdults || 2);
+    setPartyChildren(prefs.partyChildren || 0);
+    setPartySeniors(prefs.partySeniors || 0);
+    setPartyInfants(prefs.partyInfants || 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefs.styleTags.join(","), prefs.regionPref, prefs.tripLengthDays]);
+  }, [prefs.styleTags.join(","), prefs.regionPref, prefs.tripLengthDays, prefs.partyAdults, prefs.partyChildren, prefs.partySeniors, prefs.partyInfants]);
+
+  // Cost preview — fetch on form change (debounced)
+  const fetchCost = useCallback(async () => {
+    try {
+      const res = await fetch("/api/ai/preview-cost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: "plan", params: { days } }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (typeof data?.cost === "number" && typeof data?.balance === "number") {
+        setCostEstimate({ cost: data.cost, balance: data.balance });
+      }
+    } catch {
+      /* silent */
+    }
+  }, [days]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const t = setTimeout(fetchCost, 300);
+    return () => clearTimeout(t);
+  }, [status, fetchCost]);
+
+  // Loading stage cycler
+  useEffect(() => {
+    if (!loading) {
+      setLoadingStage(0);
+      return;
+    }
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    LOADING_STAGES.forEach((s, idx) => {
+      timers.push(setTimeout(() => setLoadingStage(idx), s.delayMs));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [loading]);
 
   const toggleInterest = (id: string) => {
-    setInterests((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+    setInterests((s) => {
+      if (s.includes(id)) return s.filter((x) => x !== id);
+      if (s.length >= MAX_INTERESTS) {
+        toast.info(`You can pick up to ${MAX_INTERESTS} interests`);
+        return s;
+      }
+      return [...s, id];
+    });
+  };
+
+  const addCustomInterest = () => {
+    const raw = customInterestDraft.trim().toLowerCase();
+    if (!raw) return;
+    const cleaned = raw.replace(/[^a-z0-9 \-]/g, "").replace(/\s+/g, " ").slice(0, 24);
+    if (!cleaned) return;
+    if (interests.includes(cleaned)) {
+      toast.info("Already added");
+      return;
+    }
+    if (interests.length >= MAX_INTERESTS) {
+      toast.info(`You can pick up to ${MAX_INTERESTS} interests`);
+      return;
+    }
+    setInterests((s) => [...s, cleaned]);
+    setCustomInterestDraft("");
+  };
+
+  const removeInterest = (id: string) => {
+    setInterests((s) => s.filter((x) => x !== id));
+  };
+
+  const setPresetRegion = (r: string | null) => {
+    setRegionMode("preset");
+    setRegion(r);
+    setCustomRegionDraft("");
+  };
+
+  const onCustomRegionChange = (v: string) => {
+    setCustomRegionDraft(v);
+    setRegion(v.trim() || null);
+  };
+
+  const resetForm = () => {
+    setDays(5);
+    setBudget("moderate");
+    setInterests([]);
+    setRegion(null);
+    setRegionMode("preset");
+    setCustomRegionDraft("");
+    setCustomInterestDraft("");
+    setMode("days");
+    setFromDate("");
+    setToDate("");
+    setError(null);
+    toast.success("Reset to defaults");
+  };
+
+  const persistPartyToPrefs = async () => {
+    setPrefs({
+      ...prefs,
+      partyAdults,
+      partyChildren,
+      partySeniors,
+      partyInfants,
+    });
+    try {
+      await fetch("/api/user/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          partyAdults,
+          partyChildren,
+          partySeniors,
+          partyInfants,
+        }),
+      });
+    } catch {
+      /* silent — store has the value already */
+    }
   };
 
   const generate = async () => {
@@ -182,6 +353,9 @@ export default function PlanPage() {
     setSaved(false);
     setSavedItineraryId(null);
     setBundle(null);
+
+    void persistPartyToPrefs();
+
     try {
       const res = await fetch("/api/ai/plan", {
         method: "POST",
@@ -202,6 +376,10 @@ export default function PlanPage() {
       }
       const data = await res.json();
       setPlan(data);
+      setTimeout(() => {
+        document.getElementById("plan-output")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+      void fetchCost();
     } catch {
       setError("Network error");
     } finally {
@@ -214,10 +392,10 @@ export default function PlanPage() {
     fromDate: mode === "dates" ? fromDate || null : null,
     toDate: mode === "dates" ? toDate || null : null,
     party: {
-      adults: prefs.partyAdults,
-      children: prefs.partyChildren,
-      seniors: prefs.partySeniors,
-      infants: prefs.partyInfants,
+      adults: partyAdults,
+      children: partyChildren,
+      seniors: partySeniors,
+      infants: partyInfants,
     },
     itemsJson: plan?.items,
     visibility,
@@ -304,7 +482,7 @@ export default function PlanPage() {
         await navigator.clipboard.writeText(text);
         return true;
       } catch {
-        // fall through to legacy fallback
+        /* fall through */
       }
     }
     try {
@@ -385,6 +563,9 @@ export default function PlanPage() {
     }
   };
 
+  const totalPax = partyAdults + partyChildren + partySeniors + partyInfants;
+  const insufficientCredits = costEstimate ? costEstimate.balance < costEstimate.cost : false;
+
   if (status === "unauthenticated") {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20 px-4">
@@ -408,8 +589,9 @@ export default function PlanPage() {
         <div className="mb-4">
           <BackLink href="/ai" label="Back to AI hub" />
         </div>
+
         {/* Hero */}
-        <div className="relative overflow-hidden rounded-2xl p-6 sm:p-10 text-white mb-8 shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl p-6 sm:p-10 text-white mb-6 shadow-lg">
           <div
             aria-hidden
             className="absolute inset-0 bg-[url('/images/banner/banner-plan.png')] bg-cover bg-center pointer-events-none"
@@ -432,18 +614,45 @@ export default function PlanPage() {
           </div>
         </div>
 
-        {/* Form */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-8">
-          <h2 className="font-bold text-gray-900 text-lg mb-4">Plan settings</h2>
+        {/* How it works (3-step explainer) */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-6">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">How it works</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {HOW_IT_WORKS.map((s) => (
+              <div key={s.step} className="flex gap-3 sm:flex-col sm:gap-2">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#0071CE] to-[#005ba6] text-white text-sm font-bold flex items-center justify-center shadow">
+                  {s.step}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-sm text-gray-900">{s.title}</p>
+                  <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{s.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-          <div className="mb-5">
+        {/* Form */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-8 space-y-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-bold text-gray-900 text-lg">Plan settings</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Customize anything — add your own interests or region.</p>
+            </div>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-700 underline-offset-2 hover:underline"
+            >
+              Reset
+            </button>
+          </div>
+
+          {/* Section 1: Dates */}
+          <Section step={1} title="Dates" hint="Pick a duration or specific dates (max 14 days).">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-              <label className="block text-xs font-bold text-gray-700">Trip duration</label>
-              <div
-                role="tablist"
-                aria-label="Trip duration mode"
-                className="inline-flex bg-gray-100 rounded-lg p-0.5 self-start"
-              >
+              <span className="block text-xs font-bold text-gray-700">Trip duration</span>
+              <div role="tablist" aria-label="Trip duration mode" className="inline-flex bg-gray-100 rounded-lg p-0.5 self-start">
                 <button
                   role="tab"
                   aria-selected={mode === "days"}
@@ -454,9 +663,7 @@ export default function PlanPage() {
                     setToDate("");
                   }}
                   className={`px-3 py-1 text-xs font-bold rounded-md transition ${
-                    mode === "days"
-                      ? "bg-white text-[#0071CE] shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
+                    mode === "days" ? "bg-white text-[#0071CE] shadow-sm" : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   Days only
@@ -467,9 +674,7 @@ export default function PlanPage() {
                   type="button"
                   onClick={() => setMode("dates")}
                   className={`px-3 py-1 text-xs font-bold rounded-md transition ${
-                    mode === "dates"
-                      ? "bg-white text-[#0071CE] shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
+                    mode === "dates" ? "bg-white text-[#0071CE] shadow-sm" : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   Specific dates
@@ -501,6 +706,22 @@ export default function PlanPage() {
                   className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
                   aria-label="Number of days"
                 />
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {[3, 5, 7, 10, 14].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setDays(n)}
+                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-full border transition ${
+                        days === n
+                          ? "bg-[#0071CE] text-white border-[#0071CE]"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-[#0071CE]/40"
+                      }`}
+                    >
+                      {n}d
+                    </button>
+                  ))}
+                </div>
                 <p className="mt-1.5 text-[11px] text-gray-500">
                   {days} day{days === 1 ? "" : "s"} · 1–14
                 </p>
@@ -543,31 +764,51 @@ export default function PlanPage() {
                 </p>
               </div>
             )}
-          </div>
+          </Section>
 
-          <div className="mb-5">
-            <label className="block text-xs font-bold text-gray-700 mb-2">Budget</label>
+          {/* Section 2: Travelers */}
+          <Section step={2} title="Travelers" hint="Group sizing — kids and seniors get age-appropriate picks.">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <PartyInput label="Adults"   sub="13+"   value={partyAdults}   min={1} onChange={setPartyAdults} />
+              <PartyInput label="Children" sub="3–12"  value={partyChildren} min={0} onChange={setPartyChildren} />
+              <PartyInput label="Seniors"  sub="65+"   value={partySeniors}  min={0} onChange={setPartySeniors} />
+              <PartyInput label="Infants"  sub="<3"    value={partyInfants}  min={0} onChange={setPartyInfants} />
+            </div>
+            <p className="mt-2 text-[11px] text-gray-500">
+              Total {totalPax} traveler{totalPax === 1 ? "" : "s"} — auto-saves to your profile preferences.
+            </p>
+          </Section>
+
+          {/* Section 3: Budget */}
+          <Section step={3} title="Budget" hint="Sets price tier across tours and tips.">
             <div className="flex gap-2">
               {(["budget", "moderate", "luxury"] as const).map((b) => (
                 <button
                   key={b}
                   type="button"
                   onClick={() => setBudget(b)}
-                  className={`flex-1 px-3 py-2 text-xs font-bold rounded-lg border transition capitalize ${
+                  className={`flex-1 px-3 py-2.5 text-xs font-bold rounded-lg border transition capitalize ${
                     budget === b
                       ? "bg-[#0071CE] text-white border-[#0071CE]"
                       : "bg-white text-gray-700 border-gray-200 hover:border-[#0071CE]/40"
                   }`}
                 >
-                  {b}
+                  <span className="block">{b}</span>
+                  <span className={`block text-[10px] mt-0.5 font-semibold ${budget === b ? "text-blue-100" : "text-gray-400"}`}>
+                    {b === "budget" ? "Under $$" : b === "moderate" ? "Balanced" : "Premium"}
+                  </span>
                 </button>
               ))}
             </div>
-          </div>
+          </Section>
 
-          <div className="mb-5">
-            <label className="block text-xs font-bold text-gray-700 mb-2">Interests</label>
-            <div className="flex flex-wrap gap-2">
+          {/* Section 4: Interests (custom-friendly) */}
+          <Section
+            step={4}
+            title="Interests"
+            hint={`Pick from common tags or add your own (max ${MAX_INTERESTS}).`}
+          >
+            <div className="flex flex-wrap gap-2 mb-3">
               {STYLE_TAGS.map((t) => (
                 <button
                   key={t}
@@ -583,16 +824,69 @@ export default function PlanPage() {
                 </button>
               ))}
             </div>
-          </div>
 
-          <div className="mb-6">
-            <label className="block text-xs font-bold text-gray-700 mb-2">Base region</label>
-            <div className="flex flex-wrap gap-2">
+            {/* Custom input */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customInterestDraft}
+                onChange={(e) => setCustomInterestDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCustomInterest();
+                  }
+                }}
+                placeholder="Add your own (e.g. waterfalls, photography, vegan)"
+                maxLength={24}
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
+              />
               <button
                 type="button"
-                onClick={() => setRegion(null)}
+                onClick={addCustomInterest}
+                disabled={!customInterestDraft.trim() || interests.length >= MAX_INTERESTS}
+                className="px-4 py-2 text-xs font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition"
+              >
+                + Add
+              </button>
+            </div>
+
+            {/* Selected chips with remove */}
+            {interests.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Selected ({interests.length}/{MAX_INTERESTS})
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {interests.map((i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-blue-50 text-[#0071CE] border border-blue-100 capitalize"
+                    >
+                      {i}
+                      <button
+                        type="button"
+                        onClick={() => removeInterest(i)}
+                        className="ml-0.5 text-blue-400 hover:text-[#0071CE]"
+                        aria-label={`Remove ${i}`}
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Section>
+
+          {/* Section 5: Region */}
+          <Section step={5} title="Base region" hint="Pick a region to lock all picks nearby, or anywhere for variety.">
+            <div className="flex flex-wrap gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setPresetRegion(null)}
                 className={`px-3 py-1.5 text-xs font-bold rounded-full border transition ${
-                  !region
+                  !region && regionMode === "preset"
                     ? "bg-[#0071CE] text-white border-[#0071CE]"
                     : "bg-white text-gray-700 border-gray-200 hover:border-[#0071CE]/40"
                 }`}
@@ -603,9 +897,9 @@ export default function PlanPage() {
                 <button
                   key={r}
                   type="button"
-                  onClick={() => setRegion(r)}
+                  onClick={() => setPresetRegion(r)}
                   className={`px-3 py-1.5 text-xs font-bold rounded-full border transition ${
-                    region === r
+                    region === r && regionMode === "preset"
                       ? "bg-[#0071CE] text-white border-[#0071CE]"
                       : "bg-white text-gray-700 border-gray-200 hover:border-[#0071CE]/40"
                   }`}
@@ -613,58 +907,109 @@ export default function PlanPage() {
                   {r}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setRegionMode("custom");
+                  setRegion(customRegionDraft.trim() || null);
+                }}
+                className={`px-3 py-1.5 text-xs font-bold rounded-full border transition ${
+                  regionMode === "custom"
+                    ? "bg-[#0071CE] text-white border-[#0071CE]"
+                    : "bg-white text-gray-700 border-gray-200 hover:border-[#0071CE]/40"
+                }`}
+              >
+                + Other
+              </button>
             </div>
-          </div>
+
+            {regionMode === "custom" && (
+              <input
+                type="text"
+                value={customRegionDraft}
+                onChange={(e) => onCustomRegionChange(e.target.value)}
+                placeholder="e.g. Sidemen, Munduk, Tegallalang"
+                maxLength={40}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071CE]"
+              />
+            )}
+          </Section>
 
           {error && (
-            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
               {error}
             </div>
           )}
 
-          <div className="border-t border-gray-100 pt-5 mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="text-xs text-gray-500 leading-relaxed min-w-0">
-              <span className="font-bold text-gray-700">{days}-day</span>
-              {" · "}
-              <span className="capitalize">{budget}</span>
-              {region && (
-                <>
-                  {" · "}
-                  <span>{region}</span>
-                </>
-              )}
-              {interests.length > 0 && (
-                <>
-                  {" · "}
-                  <span>{interests.join(", ")}</span>
-                </>
+          {/* Live preview + cost + generate */}
+          <div className="border-t border-gray-100 pt-5 space-y-3">
+            {/* Live preview summary */}
+            <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-3 sm:p-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700 mb-1.5">
+                Generating
+              </p>
+              <p className="text-sm font-semibold text-gray-900 leading-snug">
+                {days}-day <span className="capitalize">{budget}</span> trip
+                {region ? <> in <span className="font-bold text-[#0071CE]">{region}</span></> : <> across <span className="font-bold text-[#0071CE]">all of Bali</span></>}
+                {" · "}
+                {totalPax} traveler{totalPax === 1 ? "" : "s"}
+              </p>
+              {interests.length > 0 ? (
+                <p className="text-xs text-gray-600 mt-1">
+                  Focused on{" "}
+                  {interests.map((i, idx) => (
+                    <span key={i}>
+                      <span className="font-semibold capitalize">{i}</span>
+                      {idx < interests.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 italic mt-1">No interests picked — AI mixes top-rated picks.</p>
               )}
             </div>
-            <button
-              onClick={generate}
-              disabled={loading || !!dateRangeError}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#0071CE] hover:bg-[#005ba6] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition shadow-sm shrink-0"
-            >
-              {loading ? (
-                <>
-                  <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  Building your plan…
-                </>
-              ) : (
-                <>
-                  <span aria-hidden>✨</span>
-                  Generate itinerary
-                </>
+
+            {/* Cost + generate */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              {costEstimate && (
+                <div className={`text-xs font-semibold flex items-center gap-1.5 ${insufficientCredits ? "text-amber-700" : "text-gray-600"}`}>
+                  <span className={`inline-block w-2 h-2 rounded-full ${insufficientCredits ? "bg-amber-500" : "bg-emerald-500"}`} />
+                  Cost: <span className="font-bold">{costEstimate.cost} credits</span>
+                  <span className="text-gray-400">·</span>
+                  You have <span className="font-bold">{costEstimate.balance}</span>
+                  {insufficientCredits && (
+                    <Link href="/ai/wallet" className="ml-1 text-[#0071CE] underline-offset-2 hover:underline">
+                      Top up
+                    </Link>
+                  )}
+                </div>
               )}
-            </button>
+              <button
+                onClick={generate}
+                disabled={loading || !!dateRangeError || insufficientCredits}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#0071CE] hover:bg-[#005ba6] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition shadow-sm shrink-0"
+              >
+                {loading ? (
+                  <>
+                    <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Building your plan…
+                  </>
+                ) : (
+                  <>
+                    <span aria-hidden>✨</span>
+                    Generate itinerary
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Sticky CTA on mobile when form is scrolled past */}
+        {/* Sticky CTA on mobile */}
         {!plan && (
           <button
             onClick={generate}
-            disabled={loading || !!dateRangeError}
+            disabled={loading || !!dateRangeError || insufficientCredits}
             className="sm:hidden fixed bottom-20 right-4 z-40 inline-flex items-center gap-2 px-5 py-3 bg-[#0071CE] hover:bg-[#005ba6] disabled:opacity-60 text-white text-sm font-bold rounded-full shadow-lg shadow-blue-500/30 transition"
             aria-label="Generate itinerary"
           >
@@ -677,59 +1022,133 @@ export default function PlanPage() {
           </button>
         )}
 
-        {/* Plan output */}
-        {plan && (
+        {/* Loading skeleton with stages */}
+        {loading && (
           <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm">
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-end justify-between mb-4">
-              <div className="min-w-0">
-                <h2 className="text-xl font-bold text-gray-900">{plan.title}</h2>
-                {plan.summary && <p className="text-sm text-gray-600 mt-1">{plan.summary}</p>}
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-50 text-[#0071CE] border border-blue-100">
-                    {plan.days} day{plan.days === 1 ? "" : "s"}
-                  </span>
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-50 text-[#0071CE] border border-blue-100 capitalize">
-                    {budget}
-                  </span>
-                  {region && (
-                    <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      📍 {region} only
-                    </span>
-                  )}
-                  {interests.map((i) => (
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
+              AI is working
+            </p>
+            <ul className="space-y-2">
+              {LOADING_STAGES.map((s, idx) => {
+                const done = idx < loadingStage;
+                const active = idx === loadingStage;
+                return (
+                  <li key={s.key} className="flex items-center gap-3 text-sm">
                     <span
-                      key={i}
-                      className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 capitalize"
+                      className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                        done
+                          ? "bg-emerald-500 text-white"
+                          : active
+                          ? "bg-[#0071CE] text-white animate-pulse"
+                          : "bg-gray-100 text-gray-400"
+                      }`}
                     >
-                      {i}
+                      {done ? "✓" : idx + 1}
                     </span>
-                  ))}
-                </div>
+                    <span className={`${done ? "text-gray-400 line-through" : active ? "text-gray-900 font-semibold" : "text-gray-400"}`}>
+                      {s.label}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mt-4 grid gap-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-16 rounded-xl bg-gray-100 animate-pulse" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Plan output */}
+        {plan && !loading && (
+          <div id="plan-output" className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm">
+            {/* Header — full width, breathable */}
+            <header className="mb-5">
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight">
+                {plan.title}
+              </h2>
+              {plan.summary && (
+                <p className="text-sm text-gray-600 mt-2 leading-relaxed">{plan.summary}</p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-50 text-[#0071CE] border border-blue-100">
+                  {plan.days} day{plan.days === 1 ? "" : "s"}
+                </span>
+                <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-50 text-[#0071CE] border border-blue-100 capitalize">
+                  {budget}
+                </span>
+                {region && (
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    📍 {region}
+                  </span>
+                )}
+                {plan.meta?.viatorCount !== undefined && (
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-violet-50 text-violet-700 border border-violet-200">
+                    {plan.meta.viatorCount} bookable
+                  </span>
+                )}
+                {interests.slice(0, 4).map((i) => (
+                  <span
+                    key={i}
+                    className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 capitalize"
+                  >
+                    {i}
+                  </span>
+                ))}
               </div>
-              <div className="flex flex-wrap gap-2 shrink-0">
+            </header>
+
+            {/* Action bar — primary emphasized, secondaries grouped */}
+            <div className="mb-5 pb-5 border-b border-gray-100 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+              {plan.items.some((it) => it.source === "viator") ? (
+                <button
+                  onClick={bookEverything}
+                  disabled={bundleBusy}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#0071CE] to-[#005ba6] hover:opacity-90 rounded-xl transition shadow-md shadow-blue-500/20 disabled:opacity-60"
+                >
+                  <span aria-hidden>✨</span>
+                  {bundleBusy ? "Preparing…" : "Book all tours"}
+                </button>
+              ) : (
                 <button
                   onClick={() => void savePrivate()}
                   disabled={saved}
-                  className="px-4 py-2 text-sm font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition disabled:opacity-60"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-[#0071CE] hover:bg-[#005ba6] rounded-xl transition shadow-md shadow-blue-500/20 disabled:opacity-60"
                 >
-                  {saved ? "✓ Saved" : "💾 Save"}
+                  {saved ? "✓ Saved" : "💾 Save itinerary"}
                 </button>
+              )}
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {plan.items.some((it) => it.source === "viator") && (
+                  <button
+                    onClick={() => void savePrivate()}
+                    disabled={saved}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-[#0071CE] bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition disabled:opacity-60"
+                  >
+                    <span aria-hidden>💾</span>
+                    {saved ? "Saved" : "Save"}
+                  </button>
+                )}
                 <button
                   onClick={saveAndShare}
                   disabled={savingShare || saved}
-                  className="px-4 py-2 text-sm font-bold text-[#0071CE] bg-white hover:bg-blue-50 rounded-lg border border-blue-200 transition disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition disabled:opacity-60"
+                  title="Save publicly and copy share link"
                 >
-                  {savingShare ? "Saving…" : "🔗 Save & Share"}
+                  <span aria-hidden>🔗</span>
+                  {savingShare ? "Saving…" : "Share"}
                 </button>
-                {plan.items.some((it) => it.source === "viator") && (
-                  <button
-                    onClick={bookEverything}
-                    disabled={bundleBusy}
-                    className="px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-[#0071CE] to-[#005ba6] hover:opacity-90 rounded-lg transition shadow-sm disabled:opacity-60"
-                  >
-                    {bundleBusy ? "Preparing…" : "✨ Book all tours"}
-                  </button>
-                )}
+                <button
+                  onClick={generate}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition"
+                  title="Regenerate with same settings"
+                >
+                  <span aria-hidden>↻</span>
+                  Try again
+                </button>
               </div>
             </div>
 
@@ -743,14 +1162,23 @@ export default function PlanPage() {
               </div>
             )}
 
-            {/* Group by day */}
+            {/* Day-by-day timeline */}
             {Array.from({ length: plan.days }).map((_, idx) => {
               const dayNum = idx + 1;
               const dayItems = plan.items.filter((it) => it.day === dayNum);
               if (dayItems.length === 0) return null;
               return (
-                <div key={dayNum} className="border border-gray-100 rounded-xl p-4 mb-3 bg-gray-50/40">
-                  <h3 className="font-bold text-sm text-gray-900 mb-3">Day {dayNum}</h3>
+                <div key={dayNum} className="relative pl-6 pb-2">
+                  {/* Timeline rail */}
+                  <div aria-hidden className="absolute left-[9px] top-2 bottom-0 w-px bg-gradient-to-b from-[#0071CE]/40 to-transparent" />
+                  <div aria-hidden className="absolute left-0 top-1.5 w-[19px] h-[19px] rounded-full bg-white border-[3px] border-[#0071CE] shadow" />
+
+                  <h3 className="font-black text-base text-gray-900 mb-3">
+                    Day {dayNum}
+                    <span className="ml-2 text-xs font-semibold text-gray-400">
+                      {dayItems.length} {dayItems.length === 1 ? "activity" : "activities"}
+                    </span>
+                  </h3>
                   <div className="space-y-3">
                     {dayItems
                       .sort((a, b) => {
@@ -758,8 +1186,6 @@ export default function PlanPage() {
                         return order[a.slot] - order[b.slot];
                       })
                       .map((it, i) => {
-                        // Always rebuild the link from productCode + canonical title.
-                        // Never trust an AI-supplied `href` — that's how wrong-destination links leak in.
                         const href = it.productCode
                           ? buildViatorProductUrl(it.productCode, it.title)
                           : null;
@@ -772,7 +1198,7 @@ export default function PlanPage() {
                         return (
                           <div
                             key={`${dayNum}-${i}`}
-                            className="bg-white border border-gray-100 rounded-xl p-3 sm:p-4 flex gap-3"
+                            className="bg-white border border-gray-100 rounded-xl p-3 sm:p-4 flex gap-3 hover:border-[#0071CE]/30 hover:shadow-md transition"
                           >
                             <div className="text-xl shrink-0" aria-hidden>
                               {SLOT_EMOJI[it.slot]}
@@ -786,19 +1212,26 @@ export default function PlanPage() {
                               />
                             )}
                             <div className="min-w-0 flex-1">
-                              <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
-                                {SLOT_LABEL[it.slot]}{" "}
+                              <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold flex items-center gap-1.5">
+                                {SLOT_LABEL[it.slot]}
                                 {it.source === "viator" && (
-                                  <span className="ml-1 text-[#0071CE]">· Bookable</span>
+                                  <span className="px-1.5 py-px text-[9px] font-bold text-[#0071CE] bg-blue-50 border border-blue-100 rounded">
+                                    BOOKABLE
+                                  </span>
+                                )}
+                                {it.source === "tip" && (
+                                  <span className="px-1.5 py-px text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-100 rounded">
+                                    LOCAL TIP
+                                  </span>
                                 )}
                               </p>
-                              <p className="font-bold text-sm text-gray-900 leading-snug">
+                              <p className="font-bold text-sm text-gray-900 leading-snug mt-0.5">
                                 {it.title}
                               </p>
                               {it.notes && (
                                 <p className="text-xs text-gray-600 mt-1 leading-relaxed">{it.notes}</p>
                               )}
-                              <div className="flex flex-wrap gap-2 mt-1 text-xs text-gray-500">
+                              <div className="flex flex-wrap gap-2 mt-1.5 text-xs text-gray-500">
                                 {it.price !== null && it.price !== undefined && (
                                   <span>From ${it.price}</span>
                                 )}
@@ -836,7 +1269,7 @@ export default function PlanPage() {
               );
             })}
 
-            <p className="text-[11px] text-gray-400 mt-4">
+            <p className="text-[11px] text-gray-400 mt-4 leading-relaxed">
               AI-generated based on your preferences and live tour catalog. Travel times and weather may
               vary; check each tour&apos;s page before booking.
             </p>
@@ -844,6 +1277,7 @@ export default function PlanPage() {
         )}
       </div>
 
+      {/* Bundle modal (unchanged) */}
       {bundleOpen && bundle && (
         <div
           className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
@@ -941,7 +1375,7 @@ export default function PlanPage() {
             </div>
 
             <p className="mt-4 text-xs text-slate-500 leading-relaxed">
-              Tap <strong>Book</strong> on each tour to complete payment on Viator. We've also
+              Tap <strong>Book</strong> on each tour to complete payment on Viator. We&apos;ve also
               saved everything to your{" "}
               <Link href="/trips" className="font-semibold text-[#0071CE] hover:underline">
                 My Trips
@@ -951,6 +1385,78 @@ export default function PlanPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Subcomponents
+// ─────────────────────────────────────────────────────────────────────────────
+
+function Section({
+  step,
+  title,
+  hint,
+  children,
+}: {
+  step: number;
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="flex items-baseline gap-2 mb-2">
+        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#0071CE]/10 text-[#0071CE] text-[10px] font-bold">
+          {step}
+        </span>
+        <h3 className="font-bold text-sm text-gray-900">{title}</h3>
+      </div>
+      {hint && <p className="text-xs text-gray-500 mb-3 leading-relaxed">{hint}</p>}
+      {children}
+    </section>
+  );
+}
+
+function PartyInput({
+  label,
+  sub,
+  value,
+  min,
+  onChange,
+}: {
+  label: string;
+  sub: string;
+  value: number;
+  min: number;
+  onChange: (v: number) => void;
+}) {
+  const dec = () => onChange(Math.max(min, value - 1));
+  const inc = () => onChange(Math.min(20, value + 1));
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-2.5">
+      <p className="text-[11px] font-bold text-gray-700">{label}</p>
+      <p className="text-[10px] text-gray-400 mb-1.5">{sub}</p>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={dec}
+          disabled={value <= min}
+          className="w-7 h-7 rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+          aria-label={`Decrease ${label}`}
+        >
+          −
+        </button>
+        <span className="flex-1 text-center text-sm font-bold text-gray-900 tabular-nums">{value}</span>
+        <button
+          type="button"
+          onClick={inc}
+          className="w-7 h-7 rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50 flex items-center justify-center"
+          aria-label={`Increase ${label}`}
+        >
+          +
+        </button>
+      </div>
     </div>
   );
 }

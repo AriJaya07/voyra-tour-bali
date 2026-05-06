@@ -99,6 +99,26 @@ export default function CalendarMonthGrid({
           const overflow = entries.length - visible.length;
 
           const isDragOver = dragOverKey === key;
+          const hasEntries = entries.length > 0;
+
+          // Visual layers (intentionally separate so today + selected are both legible):
+          //   - Today      → amber accent (warm "now" cue)
+          //   - Selected   → blue background + ring (cool "focus" cue)
+          //   - Today+Sel  → blue background, amber number badge
+          //   - Drag-over  → emerald (overrides others while dragging)
+          let cellClass = "";
+          if (!inMonth) {
+            cellClass = "bg-gray-50 border-transparent text-gray-300";
+          } else if (isDragOver) {
+            cellClass = "ring-2 ring-emerald-500 bg-emerald-50 border-emerald-200";
+          } else if (isSelected) {
+            cellClass = "bg-blue-50 border-[#0071CE] ring-2 ring-[#0071CE]/40 shadow-sm";
+          } else if (isToday) {
+            cellClass = "bg-amber-50/40 border-amber-300 hover:border-amber-400";
+          } else {
+            cellClass = "bg-white border-gray-100 hover:border-[#0071CE]/40 hover:bg-blue-50/30";
+          }
+
           return (
             <button
               key={i}
@@ -108,25 +128,39 @@ export default function CalendarMonthGrid({
               onDragLeave={() => setDragOverKey((cur) => (cur === key ? null : cur))}
               onDrop={(e) => handleDrop(e, key)}
               aria-pressed={isSelected}
+              aria-current={isToday ? "date" : undefined}
               aria-label={`${d.toLocaleDateString("en-US", {
                 weekday: "long",
                 month: "long",
                 day: "numeric",
-              })}${entries.length ? `, ${entries.length} events` : ""}`}
-              className={`group relative min-h-[64px] sm:min-h-[88px] rounded-lg border p-1.5 text-left transition focus:outline-none focus:ring-2 focus:ring-[#0071CE] ${
-                inMonth
-                  ? "bg-white border-gray-100 hover:border-[#0071CE]/40 hover:bg-blue-50/30"
-                  : "bg-gray-50 border-transparent text-gray-300"
-              } ${isToday ? "ring-2 ring-[#0071CE]" : ""} ${
-                isSelected ? "bg-blue-50 border-[#0071CE]" : ""
-              } ${isDragOver ? "ring-2 ring-emerald-500 bg-emerald-50" : ""}`}
+              })}${isToday ? ", today" : ""}${entries.length ? `, ${entries.length} events` : ""}`}
+              className={`group relative min-h-[64px] sm:min-h-[88px] rounded-lg border p-1.5 text-left transition focus:outline-none focus:ring-2 focus:ring-[#0071CE] ${cellClass}`}
             >
-              <div
-                className={`text-[11px] sm:text-xs font-bold mb-1 ${
-                  inMonth ? (isToday ? "text-[#0071CE]" : "text-gray-900") : "text-gray-300"
-                }`}
-              >
-                {d.getDate()}
+              <div className="flex items-center justify-between mb-1">
+                <span
+                  className={`inline-flex items-center justify-center text-[11px] sm:text-xs font-bold ${
+                    isToday
+                      ? "w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-amber-500 text-white shadow-sm"
+                      : inMonth
+                      ? isSelected
+                        ? "text-[#0071CE]"
+                        : "text-gray-900"
+                      : "text-gray-300"
+                  }`}
+                >
+                  {d.getDate()}
+                </span>
+                {isToday && (
+                  <span
+                    aria-hidden
+                    className="hidden sm:inline-block px-1 py-px text-[8px] font-black uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-200 rounded"
+                  >
+                    Today
+                  </span>
+                )}
+                {!isToday && hasEntries && inMonth && (
+                  <span aria-hidden className="sm:hidden w-1 h-1 rounded-full bg-[#0071CE]/60" />
+                )}
               </div>
 
               {/* Mobile: dots only */}

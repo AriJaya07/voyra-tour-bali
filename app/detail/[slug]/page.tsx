@@ -6,7 +6,6 @@ import AboutDetail from "@/components/DetailProduct/AboutDetail";
 import BannerDetail from "@/components/DetailProduct/BannerDetail";
 import BookingLocalWidget from "@/components/booking/BookingLocalWidget";
 import StickyDetailCTA from "@/components/DetailProduct/StickyDetailCTA";
-import ReviewsSection from "@/components/DetailProduct/ReviewsSection";
 import RecentlyViewedTracker from "@/components/DetailProduct/RecentlyViewedTracker";
 import RecentlyViewedStrip from "@/components/common/RecentlyViewedStrip";
 import PublicNotesBlock from "@/components/common/PublicNotesBlock";
@@ -157,11 +156,6 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
                             destinationTitle={destination.title}
                         />
                         <ExcpectDetail images={destination.images} />
-                        <ReviewsSection
-                            productCode={`LOCAL-${slug}`}
-                            source="local"
-                            productTitle={destination.title}
-                        />
                         <PublicNotesBlock
                             targetType="destination"
                             targetKey={slug}

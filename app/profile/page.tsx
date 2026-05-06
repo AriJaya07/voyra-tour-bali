@@ -526,16 +526,6 @@ export default function ProfilePage() {
               <p className="text-xs text-gray-500 mt-0.5">Travel journal</p>
             </Link>
             <Link
-              href="/profile/reviews"
-              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
-            >
-              <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center mb-2">
-                <span className="text-lg">⭐</span>
-              </div>
-              <p className="font-bold text-gray-900 text-sm leading-tight">My Reviews</p>
-              <p className="text-xs text-gray-500 mt-0.5">Tour ratings</p>
-            </Link>
-            <Link
               href="/profile/rewards"
               className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
             >
