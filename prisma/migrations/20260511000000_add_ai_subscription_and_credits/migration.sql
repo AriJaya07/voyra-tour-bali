@@ -154,3 +154,6 @@ ALTER TABLE "AiUsage" ADD CONSTRAINT "AiUsage_userId_fkey" FOREIGN KEY ("userId"
 
 -- AddForeignKey
 ALTER TABLE "AiPayment" ADD CONSTRAINT "AiPayment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- CreateIndex (originally from 20260506022349, deferred until table exists)
+CREATE INDEX IF NOT EXISTS "AiCreditLedger_reservationStatus_settledAt_idx" ON "AiCreditLedger"("reservationStatus", "settledAt");
