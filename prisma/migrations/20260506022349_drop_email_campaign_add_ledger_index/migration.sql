@@ -5,7 +5,12 @@
 
 */
 -- DropTable
-DROP TABLE "EmailCampaign";
+DROP TABLE IF EXISTS "EmailCampaign";
 
--- CreateIndex
-CREATE INDEX "AiCreditLedger_reservationStatus_settledAt_idx" ON "AiCreditLedger"("reservationStatus", "settledAt");
+-- CreateIndex (conditional: AiCreditLedger created in later migration on fresh DBs)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'AiCreditLedger') THEN
+    CREATE INDEX IF NOT EXISTS "AiCreditLedger_reservationStatus_settledAt_idx" ON "AiCreditLedger"("reservationStatus", "settledAt");
+  END IF;
+END $$;
