@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import OtpInput from "@/components/security/OtpInput";
 import Button from "@/components/ui/Button";
 import { LockIcon } from "@/components/assets/Icon/shared";
+import SpinnerIcon from "@/components/assets/dashboard/SpinnerIcon";
 
 type Method = "TOTP" | "BACKUP" | "EMAIL_OTP";
 
@@ -23,6 +24,7 @@ export default function MfaChallengeForm({ challengeId, methods, onSuccess, onCa
   const [error, setError] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const inFlightRef = useRef(false);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -57,8 +59,10 @@ export default function MfaChallengeForm({ challengeId, methods, onSuccess, onCa
   };
 
   const verify = async (overrideCode?: string) => {
+    if (inFlightRef.current) return;
     const submitCode = method === "BACKUP" ? backupCode : (overrideCode ?? code);
     if (!submitCode) return;
+    inFlightRef.current = true;
     setBusy(true);
     setError("");
     try {
@@ -82,10 +86,16 @@ export default function MfaChallengeForm({ challengeId, methods, onSuccess, onCa
           setError("Invalid code. Try again.");
         }
         setCode("");
+        inFlightRef.current = false;
+        setBusy(false);
         return;
       }
+      // success: keep busy/spinner until parent completes sign-in and unmounts
       onSuccess(data.mfaToken);
-    } finally {
+    } catch {
+      setError("Network error. Try again.");
+      setCode("");
+      inFlightRef.current = false;
       setBusy(false);
     }
   };
@@ -109,7 +119,12 @@ export default function MfaChallengeForm({ challengeId, methods, onSuccess, onCa
         {method === "BACKUP" && "Enter one of your saved backup codes."}
       </p>
 
-      {error ? (
+      {busy ? (
+        <div className="flex items-center justify-center gap-2 bg-indigo-950/40 border border-indigo-800/60 text-indigo-200 rounded-xl px-4 py-3 mb-5 text-sm">
+          <SpinnerIcon className="w-4 h-4" />
+          <span>Verifying code…</span>
+        </div>
+      ) : error ? (
         <div className="bg-red-950/50 border border-red-800/60 text-red-300 rounded-xl px-4 py-3 mb-5 text-sm text-center">
           {error}
         </div>
@@ -139,7 +154,7 @@ export default function MfaChallengeForm({ challengeId, methods, onSuccess, onCa
           onChange={setCode}
           autoSubmit={() => verify(undefined)}
           disabled={busy}
-          invalid={Boolean(error)}
+          invalid={Boolean(error) && !busy}
         />
       )}
 

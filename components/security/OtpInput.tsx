@@ -20,9 +20,16 @@ export default function OtpInput({
   invalid,
 }: OtpInputProps) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
+  const lastSubmittedRef = useRef<string>("");
 
   useEffect(() => {
-    if (value.length === length && autoSubmit) autoSubmit();
+    if (value.length !== length) {
+      if (value.length < length) lastSubmittedRef.current = "";
+      return;
+    }
+    if (lastSubmittedRef.current === value) return;
+    lastSubmittedRef.current = value;
+    autoSubmit?.();
   }, [value, length, autoSubmit]);
 
   const handleChange = (idx: number, raw: string) => {
