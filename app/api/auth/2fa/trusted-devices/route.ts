@@ -41,7 +41,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     await prisma.trustedDevice.delete({ where: { id } });
-    await recordAudit({
+    void recordAudit({
       event: "TRUSTED_DEVICE_REVOKED",
       actorId: userId,
       targetId: userId,
@@ -55,7 +55,7 @@ export async function DELETE(req: NextRequest) {
         data: { twoFactorEpoch: { increment: 1 } },
       }),
     ]);
-    await recordAudit({
+    void recordAudit({
       event: "TRUSTED_DEVICES_REVOKED_ALL",
       actorId: userId,
       targetId: userId,

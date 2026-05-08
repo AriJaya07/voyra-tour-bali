@@ -14,6 +14,13 @@ const TARGETS: Record<string, string> = {
   ledger: "/api/cron/cleanup-ai-ledger",
   appNotifications: "/api/cron/cleanup-app-notifications",
   emailDelivery: "/api/cron/cleanup-email-delivery",
+  auditLog: "/api/cron/cleanup-audit-log",
+  twoFactorChallenge: "/api/cron/cleanup-2fa-challenges",
+  trustedDevice: "/api/cron/cleanup-trusted-devices",
+  newsletterSubscription: "/api/cron/cleanup-newsletter-subscriptions",
+  referral: "/api/cron/cleanup-referrals",
+  operator: "/api/cron/cleanup-rejected-operators",
+  image: "/api/cron/cleanup-orphan-images",
 };
 
 async function requireAdmin() {

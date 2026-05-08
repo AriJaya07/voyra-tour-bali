@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { verifyTurnstile } from "@/utils/verifyTurnstile";
 import { createChallenge, TRUSTED_DEVICE_COOKIE, hashTrustedDeviceToken } from "@/lib/services/twoFactorService";
-import { hashIp, hashUa } from "@/lib/services/auditLogService";
+import { hashIp, hashUa, recordAudit } from "@/lib/services/auditLogService";
 
 const MAX_ATTEMPTS = 3;
 const LOCK_MS = 60 * 1000;
@@ -26,12 +26,14 @@ export async function POST(req: NextRequest) {
 
   const captchaOk = await verifyTurnstile(captchaToken);
   if (!captchaOk) {
+    void recordAudit({ event: "LOGIN_CAPTCHA_FAIL", req, meta: { email } });
     return NextResponse.json({ error: "Captcha verification failed" }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !user.password) {
     // Avoid user-enumeration. Same response for "no user" and "no password".
+    void recordAudit({ event: "LOGIN_FAIL", req, meta: { email, reason: "UNKNOWN_USER" } });
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
@@ -39,6 +41,12 @@ export async function POST(req: NextRequest) {
     const remainingSeconds = Math.ceil(
       (user.loginLockedUntil.getTime() - Date.now()) / 1000
     );
+    void recordAudit({
+      event: "LOGIN_LOCKED",
+      targetId: user.id,
+      req,
+      meta: { remainingSeconds },
+    });
     return NextResponse.json(
       { error: `LOCKED:${remainingSeconds}`, remainingSeconds },
       { status: 423 }
@@ -53,21 +61,35 @@ export async function POST(req: NextRequest) {
         where: { id: user.id },
         data: { loginAttempts: newAttempts, loginLockedUntil: new Date(Date.now() + LOCK_MS) },
       });
+      void recordAudit({
+        event: "LOGIN_LOCKED",
+        targetId: user.id,
+        req,
+        meta: { reason: "MAX_ATTEMPTS", attempts: newAttempts },
+      });
       return NextResponse.json({ error: "LOCKED:60", remainingSeconds: 60 }, { status: 423 });
     }
     await prisma.user.update({
       where: { id: user.id },
       data: { loginAttempts: newAttempts },
     });
+    void recordAudit({
+      event: "LOGIN_FAIL",
+      targetId: user.id,
+      req,
+      meta: { reason: "BAD_PASSWORD", attempts: newAttempts },
+    });
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
   if (!user.emailVerified && user.role === "USER") {
+    void recordAudit({ event: "LOGIN_EMAIL_UNVERIFIED", targetId: user.id, req });
     return NextResponse.json({ error: "Please verify your email before signing in." }, { status: 403 });
   }
 
   // No 2FA — client may proceed straight to NextAuth signIn.
   if (!user.twoFactorEnabled) {
+    void recordAudit({ event: "LOGIN_OK", targetId: user.id, req, meta: { mfa: false } });
     return NextResponse.json({ needsMfa: false });
   }
 
@@ -83,6 +105,12 @@ export async function POST(req: NextRequest) {
       dev.twoFactorEpoch === user.twoFactorEpoch &&
       dev.expiresAt.getTime() > Date.now()
     ) {
+      void recordAudit({
+        event: "LOGIN_OK",
+        targetId: user.id,
+        req,
+        meta: { mfa: false, trustedDevice: true },
+      });
       return NextResponse.json({
         needsMfa: false,
         trustedDevice: true,

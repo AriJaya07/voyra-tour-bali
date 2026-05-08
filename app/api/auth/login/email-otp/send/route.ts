@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  await recordAudit({ event: "2FA_EMAIL_OTP_SENT", targetId: ch.userId, req });
+  void recordAudit({ event: "2FA_EMAIL_OTP_SENT", targetId: ch.userId, req });
 
   return NextResponse.json({ ok: true, sends: ch.emailSends + 1, max: EMAIL_OTP_MAX_SENDS });
 }

@@ -22,10 +22,22 @@ interface SendOpts {
   type: EmailType;
   subject: string;
   html: string;
-  campaignId?: string;
   meta?: Record<string, unknown>;
   trackOpens?: boolean;
   trackLinks?: boolean;
+}
+
+const META_BYTE_BUDGET = 512;
+
+function trimMeta(meta?: Record<string, unknown>): Prisma.InputJsonValue | typeof Prisma.JsonNull {
+  if (!meta) return Prisma.JsonNull;
+  try {
+    const json = JSON.stringify(meta);
+    if (json.length <= META_BYTE_BUDGET) return meta as Prisma.InputJsonValue;
+    return { _truncated: true, preview: json.slice(0, META_BYTE_BUDGET) } as Prisma.InputJsonValue;
+  } catch {
+    return Prisma.JsonNull;
+  }
 }
 
 const isUnsubscribed = async (userId: number, type: EmailType) => {
@@ -58,7 +70,7 @@ const injectTracking = (html: string, deliveryId: number, trackLinks: boolean) =
 };
 
 export async function sendTrackedEmail(opts: SendOpts) {
-  const { userId, email, type, subject, html, campaignId, meta, trackOpens = true, trackLinks = true } = opts;
+  const { userId, email, type, subject, html, meta, trackOpens = true, trackLinks = true } = opts;
 
   if (await isUnsubscribed(userId, type)) {
     return { skipped: true as const, reason: "UNSUBSCRIBED" };
@@ -68,8 +80,7 @@ export async function sendTrackedEmail(opts: SendOpts) {
     data: {
       userId,
       type,
-      campaignId,
-      meta: (meta as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+      meta: trimMeta(meta),
     },
   });
 
@@ -85,7 +96,7 @@ export async function sendTrackedEmail(opts: SendOpts) {
   } catch (err) {
     await prisma.emailDelivery.update({
       where: { id: delivery.id },
-      data: { meta: { error: String((err as Error).message || err) } as Prisma.InputJsonValue },
+      data: { meta: trimMeta({ error: String((err as Error).message || err).slice(0, 256) }) },
     });
     throw err;
   }

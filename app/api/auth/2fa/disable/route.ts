@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     prisma.twoFactorChallenge.deleteMany({ where: { userId } }),
   ]);
 
-  await recordAudit({ event: "2FA_DISABLED", actorId: userId, targetId: userId, req });
+  void recordAudit({ event: "2FA_DISABLED", actorId: userId, targetId: userId, req });
 
   void sendTwoFactorDisabledEmail({ to: user.email, name: user.name || "" }).catch((e) =>
     console.error("[2FA] disabled email failed:", e instanceof Error ? e.message : e)

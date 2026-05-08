@@ -52,7 +52,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     prisma.twoFactorChallenge.deleteMany({ where: { userId: id } }),
   ]);
 
-  await recordAudit({
+  void recordAudit({
     event: "2FA_ADMIN_RESET",
     actorId: adminId,
     targetId: id,

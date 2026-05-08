@@ -38,6 +38,8 @@ export async function POST(req: NextRequest) {
   let slug = existing?.calendarShareSlug ?? null;
   if (enable && !slug) {
     slug = crypto.randomBytes(8).toString("hex");
+  } else if (!enable) {
+    slug = null;
   }
 
   const updated = await prisma.user.update({

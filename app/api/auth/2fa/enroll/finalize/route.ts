@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  await recordAudit({ event: "2FA_ENABLED", actorId: userId, targetId: userId, req });
+  void recordAudit({ event: "2FA_ENABLED", actorId: userId, targetId: userId, req });
 
   void sendTwoFactorEnabledEmail({ to: user.email, name: user.name || "" }).catch((e) =>
     console.error("[2FA] enabled email failed:", e instanceof Error ? e.message : e)

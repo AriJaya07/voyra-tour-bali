@@ -17,19 +17,33 @@ type StatsResponse = {
 };
 
 const ACCENT: Record<string, { bg: string; ring: string; text: string; bar: string }> = {
-  aiUsage:         { bg: "bg-violet-500/10",  ring: "border-violet-500/30",  text: "text-violet-300",  bar: "bg-violet-500" },
-  aiCreditLedger:  { bg: "bg-blue-500/10",    ring: "border-blue-500/30",    text: "text-blue-300",    bar: "bg-blue-500" },
-  appNotification: { bg: "bg-amber-500/10",   ring: "border-amber-500/30",   text: "text-amber-300",   bar: "bg-amber-500" },
-  emailDelivery:   { bg: "bg-rose-500/10",    ring: "border-rose-500/30",    text: "text-rose-300",    bar: "bg-rose-500" },
-  recentlyViewed:  { bg: "bg-sky-500/10",     ring: "border-sky-500/30",     text: "text-sky-300",     bar: "bg-sky-500" },
-  aiChatMemory:    { bg: "bg-emerald-500/10", ring: "border-emerald-500/30", text: "text-emerald-300", bar: "bg-emerald-500" },
-  booking:         { bg: "bg-slate-500/10",   ring: "border-slate-500/30",   text: "text-slate-300",   bar: "bg-slate-500" },
+  auditLog:               { bg: "bg-fuchsia-500/10", ring: "border-fuchsia-500/30", text: "text-fuchsia-300", bar: "bg-fuchsia-500" },
+  twoFactorChallenge:     { bg: "bg-orange-500/10",  ring: "border-orange-500/30",  text: "text-orange-300",  bar: "bg-orange-500" },
+  trustedDevice:          { bg: "bg-teal-500/10",    ring: "border-teal-500/30",    text: "text-teal-300",    bar: "bg-teal-500" },
+  aiUsage:                { bg: "bg-violet-500/10",  ring: "border-violet-500/30",  text: "text-violet-300",  bar: "bg-violet-500" },
+  aiCreditLedger:         { bg: "bg-blue-500/10",    ring: "border-blue-500/30",    text: "text-blue-300",    bar: "bg-blue-500" },
+  appNotification:        { bg: "bg-amber-500/10",   ring: "border-amber-500/30",   text: "text-amber-300",   bar: "bg-amber-500" },
+  emailDelivery:          { bg: "bg-rose-500/10",    ring: "border-rose-500/30",    text: "text-rose-300",    bar: "bg-rose-500" },
+  recentlyViewed:         { bg: "bg-sky-500/10",     ring: "border-sky-500/30",     text: "text-sky-300",     bar: "bg-sky-500" },
+  newsletterSubscription: { bg: "bg-lime-500/10",    ring: "border-lime-500/30",    text: "text-lime-300",    bar: "bg-lime-500" },
+  referral:               { bg: "bg-pink-500/10",    ring: "border-pink-500/30",    text: "text-pink-300",    bar: "bg-pink-500" },
+  operator:               { bg: "bg-yellow-500/10",  ring: "border-yellow-500/30",  text: "text-yellow-300",  bar: "bg-yellow-500" },
+  image:                  { bg: "bg-cyan-500/10",    ring: "border-cyan-500/30",    text: "text-cyan-300",    bar: "bg-cyan-500" },
+  aiChatMemory:           { bg: "bg-emerald-500/10", ring: "border-emerald-500/30", text: "text-emerald-300", bar: "bg-emerald-500" },
+  booking:                { bg: "bg-slate-500/10",   ring: "border-slate-500/30",   text: "text-slate-300",   bar: "bg-slate-500" },
 };
 
 const CLEANABLE: Record<string, { target: string; label: string }> = {
-  aiCreditLedger:  { target: "ledger",            label: "AI Credit Ledger" },
-  appNotification: { target: "appNotifications",  label: "App Notifications" },
-  emailDelivery:   { target: "emailDelivery",     label: "Email Delivery" },
+  aiCreditLedger:         { target: "ledger",                 label: "AI Credit Ledger" },
+  appNotification:        { target: "appNotifications",       label: "App Notifications" },
+  emailDelivery:          { target: "emailDelivery",          label: "Email Delivery" },
+  auditLog:               { target: "auditLog",               label: "Audit Log" },
+  twoFactorChallenge:     { target: "twoFactorChallenge",     label: "2FA Challenges" },
+  trustedDevice:          { target: "trustedDevice",          label: "Trusted Devices" },
+  newsletterSubscription: { target: "newsletterSubscription", label: "Newsletter" },
+  referral:               { target: "referral",               label: "Referrals" },
+  operator:               { target: "operator",               label: "Rejected Operators" },
+  image:                  { target: "image",                  label: "Orphan Images" },
 };
 
 const fmtDate = (iso: string | null) => {
@@ -220,39 +234,32 @@ export default function DbHealthPage() {
   );
 }
 
-type CleanupResponse = {
-  wouldDelete?: number;
-  wouldDeleteSettled?: number;
-  wouldDeletePlain?: number;
-  wouldDeleteDismissed?: number;
-  wouldDeleteRead?: number;
-  wouldDeleteUnread?: number;
-  deleted?: number;
-  deletedSettled?: number;
-  deletedPlain?: number;
-  deletedDismissed?: number;
-  deletedRead?: number;
-  deletedUnread?: number;
-};
+type CleanupResponse = Record<string, unknown>;
+
+const camelToWords = (s: string) =>
+  s.replace(/([A-Z])/g, " $1").trim().toLowerCase();
+
+function extractCounters(body: CleanupResponse, prefix: "wouldDelete" | "deleted"): string[] {
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(body)) {
+    if (typeof v !== "number") continue;
+    if (!k.startsWith(prefix)) continue;
+    const tail = k.slice(prefix.length);
+    if (!tail) {
+      parts.push(`${v}`);
+      continue;
+    }
+    parts.push(`${camelToWords(tail)}=${v}`);
+  }
+  return parts;
+}
 
 function formatDry(body: CleanupResponse): string {
-  if (typeof body.wouldDelete === "number") return `Dry run: would delete ${body.wouldDelete}`;
-  const parts: string[] = [];
-  if (typeof body.wouldDeleteSettled === "number") parts.push(`settled=${body.wouldDeleteSettled}`);
-  if (typeof body.wouldDeletePlain === "number") parts.push(`plain=${body.wouldDeletePlain}`);
-  if (typeof body.wouldDeleteDismissed === "number") parts.push(`dismissed=${body.wouldDeleteDismissed}`);
-  if (typeof body.wouldDeleteRead === "number") parts.push(`read=${body.wouldDeleteRead}`);
-  if (typeof body.wouldDeleteUnread === "number") parts.push(`unread=${body.wouldDeleteUnread}`);
-  return `Dry run: ${parts.join(" · ") || JSON.stringify(body)}`;
+  const parts = extractCounters(body, "wouldDelete");
+  return `Dry run: ${parts.join(" · ") || "no rows match retention window"}`;
 }
 
 function formatRun(body: CleanupResponse): string {
-  if (typeof body.deleted === "number") return `Deleted ${body.deleted} rows`;
-  const parts: string[] = [];
-  if (typeof body.deletedSettled === "number") parts.push(`settled=${body.deletedSettled}`);
-  if (typeof body.deletedPlain === "number") parts.push(`plain=${body.deletedPlain}`);
-  if (typeof body.deletedDismissed === "number") parts.push(`dismissed=${body.deletedDismissed}`);
-  if (typeof body.deletedRead === "number") parts.push(`read=${body.deletedRead}`);
-  if (typeof body.deletedUnread === "number") parts.push(`unread=${body.deletedUnread}`);
-  return `Deleted: ${parts.join(" · ") || JSON.stringify(body)}`;
+  const parts = extractCounters(body, "deleted");
+  return `Deleted: ${parts.join(" · ") || "0 rows"}`;
 }

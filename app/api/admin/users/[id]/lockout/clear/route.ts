@@ -18,6 +18,6 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     where: { id },
     data: { loginAttempts: 0, loginLockedUntil: null },
   });
-  await recordAudit({ event: "LOCKOUT_CLEARED", actorId: adminId, targetId: id, req });
+  void recordAudit({ event: "LOCKOUT_CLEARED", actorId: adminId, targetId: id, req });
   return NextResponse.json({ ok: true });
 }

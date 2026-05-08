@@ -270,7 +270,7 @@ export async function handleAiPaymentSuccess(orderId: string): Promise<{ success
     await grantTopupPack(payment.userId, payment.pack as AiPackKey, orderId);
     await prisma.aiPayment.update({
       where: { id: payment.id },
-      data: { status: "PAID", paidAt: new Date() },
+      data: { status: "PAID", paidAt: new Date(), snapToken: null },
     });
     console.log(`[AI Payment] TOPUP ${orderId} → granted ${payment.creditsToGrant} credits to user ${payment.userId}`);
     return { success: true };
@@ -322,7 +322,7 @@ export async function handleAiPaymentSuccess(orderId: string): Promise<{ success
     await grantSubscriptionPeriod(payment.userId, planKey, orderId);
     await prisma.aiPayment.update({
       where: { id: payment.id },
-      data: { status: "PAID", paidAt: new Date() },
+      data: { status: "PAID", paidAt: new Date(), snapToken: null },
     });
     console.log(`[AI Payment] ${payment.kind} ${orderId} → granted ${planDef.monthlyCredits} credits, period ${baseStart.toISOString()} → ${newEnd.toISOString()}`);
     return { success: true };

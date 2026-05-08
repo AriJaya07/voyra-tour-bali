@@ -428,7 +428,6 @@ model Guide {
 
 model EmailDelivery {
   id           Int      @id @default(autoincrement())
-  campaignId   String?
   userId       Int
   type         String
   sentAt       DateTime?
@@ -913,7 +912,6 @@ model AiPayment {
   snapToken       String?
   status          String  // PENDING | PAID | FAILED | EXPIRED | REFUNDED
   paidAt          DateTime?
-  midtransPayload Json?
 
   idempotencyKey String @unique
 

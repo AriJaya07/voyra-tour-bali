@@ -42,6 +42,14 @@ const EVENT_LABEL: Record<string, string> = {
   TRUSTED_DEVICES_REVOKED_ALL: "Revoked all trusted devices",
   LOCKOUT_CLEARED: "Lockout cleared",
   ADMIN_USER_VIEW: "Admin viewed account",
+  LOGIN_OK: "Signed in",
+  LOGIN_FAIL: "Failed login",
+  LOGIN_LOCKED: "Account locked out",
+  LOGIN_CAPTCHA_FAIL: "Captcha failed",
+  LOGIN_EMAIL_UNVERIFIED: "Login blocked (unverified email)",
+  OAUTH_LOGIN_OK: "Signed in (Google)",
+  LOGOUT: "Signed out",
+  RETENTION_RUN: "Retention sweep",
 };
 
 const EVENT_TONE: Record<string, string> = {
@@ -51,6 +59,13 @@ const EVENT_TONE: Record<string, string> = {
   "2FA_BACKUP_USED": "text-amber-500",
   "2FA_ENABLED": "text-emerald-500",
   "2FA_LOGIN_OK": "text-emerald-500",
+  LOGIN_OK: "text-emerald-500",
+  OAUTH_LOGIN_OK: "text-emerald-500",
+  LOGIN_FAIL: "text-red-500",
+  LOGIN_LOCKED: "text-amber-500",
+  LOGIN_CAPTCHA_FAIL: "text-amber-500",
+  LOGIN_EMAIL_UNVERIFIED: "text-amber-500",
+  LOGOUT: "text-slate-400",
 };
 
 interface Props {
@@ -92,6 +107,11 @@ export default function AdminAuditTimeline({ userId }: Props) {
           className="px-2 py-1 text-xs border border-gray-300 rounded-lg bg-white text-gray-900"
         >
           <option value="">All events</option>
+          <option value="LOGIN_OK">Sign-ins (success)</option>
+          <option value="LOGIN_FAIL">Sign-ins (failed)</option>
+          <option value="LOGIN_LOCKED">Lockouts</option>
+          <option value="OAUTH_LOGIN_OK">Google sign-ins</option>
+          <option value="LOGOUT">Sign-outs</option>
           <option value="2FA_LOGIN_FAIL">Failed 2FA only</option>
           <option value="2FA_LOGIN_OK">Successful 2FA only</option>
           <option value="2FA_ADMIN_RESET">Admin resets</option>

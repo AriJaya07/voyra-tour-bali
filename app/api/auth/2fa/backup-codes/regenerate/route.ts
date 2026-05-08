@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   if (!ok) return NextResponse.json({ error: "Invalid code" }, { status: 401 });
 
   const backupCodes = await generateBackupCodes(userId, 10);
-  await recordAudit({
+  void recordAudit({
     event: "2FA_BACKUP_CODES_REGEN",
     actorId: userId,
     targetId: userId,

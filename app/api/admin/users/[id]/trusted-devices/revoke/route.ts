@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       data: { twoFactorEpoch: { increment: 1 } },
     }),
   ]);
-  await recordAudit({
+  void recordAudit({
     event: "TRUSTED_DEVICES_REVOKED_ALL",
     actorId: adminId,
     targetId: id,

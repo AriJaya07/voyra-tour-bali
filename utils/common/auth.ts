@@ -197,6 +197,17 @@ export const authOptions: NextAuthOptions = {
           } catch (fpErr) {
             console.error("[Fingerprint] Google signIn fingerprint failed:", fpErr);
           }
+
+          try {
+            const { recordAudit } = await import("@/lib/services/auditLogService");
+            void recordAudit({
+              event: "OAUTH_LOGIN_OK",
+              targetId: dbUser.id,
+              meta: { provider: "google" },
+            });
+          } catch {
+            // best-effort; audit failures never block sign-in
+          }
         } catch (error) {
           console.error("Google signIn callback error:", error);
           return false;
@@ -257,6 +268,20 @@ export const authOptions: NextAuthOptions = {
 
   pages: {
     signIn: "/login",
+  },
+
+  events: {
+    async signOut({ token }) {
+      const id = token?.id;
+      const userId = typeof id === "string" ? parseInt(id, 10) : null;
+      if (!userId || Number.isNaN(userId)) return;
+      try {
+        const { recordAudit } = await import("@/lib/services/auditLogService");
+        void recordAudit({ event: "LOGOUT", actorId: userId, targetId: userId });
+      } catch {
+        // best-effort; audit failures never block sign-out
+      }
+    },
   },
 
   secret: process.env.NEXTAUTH_SECRET,

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
   if (!result.ok) {
     if (result.reason === "INVALID") {
-      await recordAudit({ event: "2FA_LOGIN_FAIL", targetId: userId, req, meta: { purpose: "STEP_UP" } });
+      void recordAudit({ event: "2FA_LOGIN_FAIL", targetId: userId, req, meta: { purpose: "STEP_UP" } });
     }
     const status = result.reason === "EXPIRED" ? 410 : result.reason === "EXHAUSTED" ? 429 : 401;
     return NextResponse.json({ error: result.reason }, { status });

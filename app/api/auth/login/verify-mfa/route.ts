@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     if (result.reason === "INVALID") {
       const ch = await prisma.twoFactorChallenge.findUnique({ where: { id: challengeId } });
       if (ch?.userId) {
-        await recordAudit({
+        void recordAudit({
           event: "2FA_LOGIN_FAIL",
           targetId: ch.userId,
           req,
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         uaHash: hashUa(req),
       },
     });
-    await recordAudit({
+    void recordAudit({
       event: "TRUSTED_DEVICE_ADDED",
       actorId: result.userId,
       targetId: result.userId,
@@ -92,10 +92,10 @@ export async function POST(req: NextRequest) {
         remaining,
       }).catch((e) => console.error("[2FA] backup email failed:", e));
     }
-    await recordAudit({ event: "2FA_BACKUP_USED", targetId: result.userId, req });
+    void recordAudit({ event: "2FA_BACKUP_USED", targetId: result.userId, req });
   }
 
-  await recordAudit({ event: "2FA_LOGIN_OK", targetId: result.userId, req, meta: { method: result.method } });
+  void recordAudit({ event: "2FA_LOGIN_OK", targetId: result.userId, req, meta: { method: result.method } });
 
   const res = NextResponse.json({
     ok: true,

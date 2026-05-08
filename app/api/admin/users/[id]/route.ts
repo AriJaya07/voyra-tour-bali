@@ -44,7 +44,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     }),
   ]);
 
-  await recordAudit({ event: "ADMIN_USER_VIEW", actorId: adminId, targetId: id, req });
+  void recordAudit({ event: "ADMIN_USER_VIEW", actorId: adminId, targetId: id, req });
 
   return NextResponse.json({
     user,
