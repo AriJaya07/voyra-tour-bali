@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { MIDTRANS_SNAP_URL, MIDTRANS_CLIENT_KEY } from "@/lib/config/midtrans";
 import { SpinnerIcon, AlertIcon } from "@/components/assets/Icon/shared";
+import PriceLabel from "@/components/common/PriceLabel";
 
 declare global {
   interface Window {
@@ -210,11 +211,17 @@ export default function ManualPaymentPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-[#F0F0F0] p-6 mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-base font-bold text-gray-700">Total Amount</span>
-            <span className="text-2xl font-black text-[#0071CE]">
-              Rp {Math.round(booking.manualPrice).toLocaleString("id-ID")}
-            </span>
+            <PriceLabel
+              amount={Math.round(booking.manualPrice)}
+              sourceCurrency="IDR"
+              withSecondary
+              className="text-2xl font-black text-[#0071CE]"
+              secondaryClassName="ml-2 text-sm font-medium text-slate-500 tabular-nums whitespace-nowrap"
+            />
           </div>
-          <p className="text-xs text-gray-400">Final price set by our team. Secure payment via Midtrans.</p>
+          <p className="text-xs text-gray-400">
+            Charged in IDR via Midtrans. Final price set by our team.
+          </p>
         </div>
 
         {/* Pay Button */}

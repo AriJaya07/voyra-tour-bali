@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { HiSparkles } from "react-icons/hi2";
 import { useItineraryBookMutation } from "@/utils/hooks/useAiWallet";
 import type { AiItineraryBundle } from "@/utils/service/ai.service";
+import PriceLabel from "@/components/common/PriceLabel";
 
 interface Props {
   itineraryId: number;
@@ -129,9 +130,12 @@ export default function BookFromItineraryButton({
                         </div>
                         {b.originalPrice != null ? (
                           <div className="mt-2">
-                            <span className="font-mono text-sm font-semibold text-slate-900">
-                              From ${b.originalPrice}
-                            </span>
+                            <PriceLabel
+                              amount={b.originalPrice}
+                              sourceCurrency="USD"
+                              prefix="From "
+                              className="font-mono text-sm font-semibold text-slate-900"
+                            />
                           </div>
                         ) : null}
                       </div>
@@ -155,9 +159,12 @@ export default function BookFromItineraryButton({
               <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-sm font-semibold text-slate-900">Estimated total</span>
-                  <span className="font-mono text-base font-bold text-slate-900">
-                    From {bundle.totals.currency} ${bundle.totals.original}
-                  </span>
+                  <PriceLabel
+                    amount={Number(bundle.totals.original)}
+                    sourceCurrency={bundle.totals.currency}
+                    prefix="From "
+                    className="font-mono text-base font-bold text-slate-900"
+                  />
                 </div>
                 <p className="mt-1 text-[11px] text-slate-500">
                   Final price set by Viator at checkout. Each tour is booked separately.

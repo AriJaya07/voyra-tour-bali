@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache"
 import type { Category, DestinationWithImages } from "@/types/tourism"
 import { getCategoriesFromViator, getDestinationsFromViator, getProductDetailFromViator } from "./viator"
 import { getCategoriesFromDB, getDestinationsFromDB } from "./db"
@@ -15,21 +16,21 @@ type DataSource = "viator" | "db" | "hybrid"
 
 const DATA_SOURCE: DataSource = "hybrid"
 
+// 10-minute cache for Viator/DB hybrid results. Bust via revalidateTag.
+const CACHE_REVALIDATE_SEC = 600
+
 // ── Categories ──────────────────────────────────────────────────────────
 
-export async function getCategories(): Promise<Category[]> {
+async function fetchCategories(): Promise<Category[]> {
   switch (DATA_SOURCE) {
     case "db":
       return getCategoriesFromDB()
 
     case "hybrid": {
-      // Fetch both sources in parallel — each tagged with source: "db" | "viator"
       const [dbCategories, viatorCategories] = await Promise.all([
         getCategoriesFromDB(),
         getCategoriesFromViator(),
       ])
-
-      // Viator first (primary content), then DB categories
       return [...viatorCategories, ...dbCategories]
     }
 
@@ -39,9 +40,14 @@ export async function getCategories(): Promise<Category[]> {
   }
 }
 
+export const getCategories = unstable_cache(fetchCategories, ["categories-v1"], {
+  revalidate: CACHE_REVALIDATE_SEC,
+  tags: ["categories"],
+})
+
 // ── Destinations ────────────────────────────────────────────────────────
 
-export async function getDestinations(): Promise<DestinationWithImages[]> {
+async function fetchDestinations(): Promise<DestinationWithImages[]> {
   switch (DATA_SOURCE) {
     case "db":
       return getDestinationsFromDB()
@@ -59,3 +65,8 @@ export async function getDestinations(): Promise<DestinationWithImages[]> {
       return getDestinationsFromViator()
   }
 }
+
+export const getDestinations = unstable_cache(fetchDestinations, ["destinations-v1"], {
+  revalidate: CACHE_REVALIDATE_SEC,
+  tags: ["destinations"],
+})

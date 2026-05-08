@@ -5,7 +5,8 @@ import OptimizedImage from "@/components/common/OptimizedImage"
 import { useSearchDestinations } from "@/utils/hooks/useSearchDestinations"
 import { useViatorSearch, getViatorImageUrl } from "@/utils/hooks/useViator"
 import { buildViatorProductUrl, VIATOR_PARTNER_ID } from "@/lib/config/viator"
-import { formatPrice } from "@/utils/formatPrice"
+import { formatBookingPrice } from "@/utils/formatPrice"
+import { useCurrency } from "@/utils/hooks/useCurrency"
 import { CloseIcon, SearchIcon, ChevronRightIcon } from "@/components/assets/Icon/shared"
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -29,6 +30,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState("")
   const debouncedQuery = useDebounce(query, 400)
   const inputRef = useRef<HTMLInputElement>(null)
+  const { currency, exchangeRates } = useCurrency()
 
   // React Query - fetch all destinations when modal opens
   const { data: allResults = [], isLoading: isDbLoading } = useSearchDestinations(isOpen)
@@ -140,6 +142,10 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Search"
+        style={{
+          paddingTop: "max(1.5rem, calc(env(safe-area-inset-top, 0px) + 0.75rem))",
+          paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+        }}
       >
         <div
           className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
@@ -241,7 +247,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                             )}
                             {item.price != null && (
                               <span className="text-xs text-gray-500">
-                                {formatPrice(Number(item.price), item.currency as "IDR" | "USD")}
+                                {formatBookingPrice(
+                                  { price: Number(item.price), currency: item.currency },
+                                  currency,
+                                  exchangeRates
+                                )}
                               </span>
                             )}
                           </div>

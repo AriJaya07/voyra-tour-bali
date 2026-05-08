@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import { getAllDestinations, getCategories, getHomeHighlights } from '@/lib/newsApi';
+import Image from 'next/image';
+import { getAllDestinations, getCategories, getHomeHighlights, getImageUrl } from '@/lib/newsApi';
 import BlogCard from '@/components/Blog/BlogCard';
 import CategoryFilter from '@/components/Blog/CategoryFilter';
 import SectionHeader from '@/components/Blog/SectionHeader';
@@ -75,11 +76,13 @@ export default async function BlogPage(props: {
             <h2 className="text-2xl font-bold mb-6 text-gray-900 lg:mb-8">Featured Article</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100 ">
               <div className="relative h-72 md:h-96 w-full rounded-2xl overflow-hidden shadow-md">
-                {/*  using raw img or Next Image. Let's use getImageUrl from api */}
-                <img 
-                  src={require("@/lib/newsApi").getImageUrl(featuredBlog.image)} 
+                <Image
+                  src={getImageUrl(featuredBlog.image)}
                   alt={featuredBlog.title}
-                  className="w-full h-full object-cover rounded-2xl hover:scale-105 transition-transform duration-700" 
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
+                  className="object-cover rounded-2xl hover:scale-105 transition-transform duration-700"
                 />
               </div>
               <div className="flex flex-col">

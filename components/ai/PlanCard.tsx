@@ -2,6 +2,8 @@
 
 import { HiSparkles } from "react-icons/hi2";
 import type { AiPlan } from "@/utils/service/ai.service";
+import { formatPrice } from "@/utils/formatPrice";
+import { useCurrency } from "@/utils/hooks/useCurrency";
 
 interface Props {
   plan: AiPlan;
@@ -32,35 +34,59 @@ function renderValue(v: AiPlan["features"][keyof AiPlan["features"]]) {
 export default function PlanCard({ plan, current, onSelect, busy }: Props) {
   const isFree = plan.priceIdr === 0;
   const featured = plan.key === "VOYAGER";
+  const { currency, exchangeRates } = useCurrency();
+  const showSecondary = !isFree && currency !== "IDR";
+  const secondaryLabel = showSecondary
+    ? formatPrice(plan.priceIdr, currency, "IDR", exchangeRates)
+    : null;
 
   return (
     <div
-      className={`flex flex-col rounded-2xl border p-6 shadow-sm transition
-        ${featured ? "border-blue-500 bg-blue-50/40 ring-1 ring-blue-300" : "border-slate-200 bg-white"}
+      className={`flex flex-col rounded-2xl border p-5 shadow-sm transition
+        ${featured ? "border-blue-400 bg-blue-50/40 ring-1 ring-blue-200" : "border-slate-200 bg-white"}
         ${current ? "ring-2 ring-emerald-400" : ""}`}
     >
-      <div className="flex items-center gap-2">
-        <HiSparkles className="h-4 w-4 text-blue-500" />
-        <h3 className="text-lg font-semibold text-slate-900">{plan.label}</h3>
+      <div className="flex items-center gap-2 min-w-0">
+        <HiSparkles className="h-4 w-4 shrink-0 text-blue-500" />
+        <h3 className="text-base font-semibold text-slate-900 truncate min-w-0 flex-1">
+          {plan.label}
+        </h3>
         {current ? (
-          <span className="ml-auto rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+          <span className="shrink-0 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
             Current
           </span>
         ) : featured ? (
-          <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-            Most popular
+          <span className="shrink-0 rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+            Popular
           </span>
         ) : null}
       </div>
 
-      <div className="mt-4 flex items-baseline gap-1">
-        <span className="text-3xl font-bold text-slate-900">
-          {isFree ? "Free" : `Rp ${plan.priceIdr.toLocaleString("id-ID")}`}
-        </span>
-        {!isFree ? <span className="text-sm text-slate-500">/month</span> : null}
+      <div className="mt-4 flex flex-wrap items-baseline gap-x-1 gap-y-0">
+        {isFree ? (
+          <span className="text-2xl font-bold tabular-nums text-slate-900">
+            Free
+          </span>
+        ) : (
+          <span className="text-2xl font-bold tabular-nums text-slate-900 break-words">
+            Rp {plan.priceIdr.toLocaleString("id-ID")}
+          </span>
+        )}
+        {!isFree ? (
+          <span className="text-sm text-slate-500 whitespace-nowrap">/month</span>
+        ) : null}
       </div>
 
-      <div className="mt-1 text-sm text-slate-600">
+      {secondaryLabel ? (
+        <div
+          className="mt-0.5 text-xs tabular-nums text-slate-500"
+          title="Charged in IDR via Midtrans; equivalent in your selected currency."
+        >
+          ≈ {secondaryLabel}
+        </div>
+      ) : null}
+
+      <div className="mt-1 text-sm tabular-nums text-slate-600">
         {plan.monthlyCredits.toLocaleString()} credits / month
       </div>
 
@@ -74,7 +100,7 @@ export default function PlanCard({ plan, current, onSelect, busy }: Props) {
                 {f.label}
               </span>
               <span
-                className={`text-right font-medium ${enabled ? "text-slate-900" : "text-slate-400"}`}
+                className={`shrink-0 text-right font-medium tabular-nums ${enabled ? "text-slate-900" : "text-slate-400"}`}
               >
                 {renderValue(value)}
               </span>
@@ -95,7 +121,7 @@ export default function PlanCard({ plan, current, onSelect, busy }: Props) {
         {isFree
           ? "Default plan"
           : current
-          ? "You’re on this plan"
+          ? "You're on this plan"
           : busy
           ? "Opening payment…"
           : "Choose plan"}

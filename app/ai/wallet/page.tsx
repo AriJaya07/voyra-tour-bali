@@ -13,6 +13,7 @@ import FamilySeatsPanel from "@/components/ai/FamilySeatsPanel";
 import BucketBreakdown from "@/components/ai/BucketBreakdown";
 import CreditTranslation from "@/components/ai/CreditTranslation";
 import NextRenewalCountdown from "@/components/ai/NextRenewalCountdown";
+import PriceLabel from "@/components/common/PriceLabel";
 import { useMemo } from "react";
 import {
   useAcceptFamilySeatMutation,
@@ -175,8 +176,15 @@ export default function AiWalletPage() {
                 </>
               ) : (
                 <>
-                  <NextRenewalCountdown at={w.subscription.currentPeriodEnd} />{" "}
-                  · Rp {w.subscription.priceIdr.toLocaleString("id-ID")} ·{" "}
+                  <NextRenewalCountdown at={w.subscription.currentPeriodEnd} />
+                  {" · "}
+                  <PriceLabel
+                    amount={w.subscription.priceIdr}
+                    sourceCurrency="IDR"
+                    withSecondary
+                    secondaryClassName="ml-1 text-xs text-slate-500 tabular-nums whitespace-nowrap"
+                  />
+                  {" · "}
                   {w.subscription.monthlyCredits} credits
                 </>
               )}

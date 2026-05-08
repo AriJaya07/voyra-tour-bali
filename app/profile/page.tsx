@@ -1,11 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import TicketModal from "@/components/profile/TicketModal";
-import CancelModal from "@/components/profile/CancelModal";
+
+const TicketModal = dynamic(() => import("@/components/profile/TicketModal"), {
+  ssr: false,
+});
+const CancelModal = dynamic(() => import("@/components/profile/CancelModal"), {
+  ssr: false,
+});
 import UpcomingTripCard from "@/components/profile/UpcomingTripCard";
 import ImportedTripsSection from "@/components/profile/ImportedTripsSection";
 import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
@@ -13,6 +20,8 @@ import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import PayNowButton from "@/components/Global/booking/PayNowButton";
 import { fetchProfile, updateProfile, uploadAvatar, fetchUserBookings } from "@/lib/api/profile";
 import VoryaIcon from "@/components/assets/Icon/VoyraIcon";
+import { formatBookingPrice } from "@/utils/formatPrice";
+import { useCurrency } from "@/utils/hooks/useCurrency";
 import type { Booking, BookingStatus } from "@/types/booking";
 import type { UserProfile, ProfileFormMessage } from "@/types/profile";
 
@@ -68,6 +77,7 @@ const fmtDate = (d: string) =>
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
+  const { currency: displayCurrency, exchangeRates } = useCurrency();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -316,9 +326,13 @@ export default function ProfilePage() {
                 {filteredBookings.map((b) => {
                   const isPast = new Date(b.travelDate) < new Date(new Date().setHours(0, 0, 0, 0));
                   const imageUrl = b.productImage;
-                  const displayPrice = b.manualPrice || b.totalPrice;
-                  const totalPriceUsd = !b.manualPrice ? (b.totalPriceUsd || b.totalPrice / 15000) : null;
-                  const currency = b.currency || "IDR";
+                  const rawAmount = b.manualPrice || b.totalPrice;
+                  const sourceCurrency = b.currency || "IDR";
+                  const priceLabel = formatBookingPrice(
+                    { totalPrice: rawAmount, currency: sourceCurrency },
+                    displayCurrency,
+                    exchangeRates
+                  );
                   const time = b.travelTime || "Pending Confirmation";
 
                   return (
@@ -334,7 +348,13 @@ export default function ProfilePage() {
                       <div className="flex flex-col md:flex-row">
                         <div className="w-full md:w-48 h-48 md:h-auto bg-gray-200 relative shrink-0">
                           {imageUrl ? (
-                            <img src={imageUrl} alt={b.productTitle} className="w-full h-full object-cover" />
+                            <Image
+                              src={imageUrl}
+                              alt={b.productTitle}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 192px"
+                              className="object-cover"
+                            />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-100">
                               <VoryaIcon className="w-24 h-auto opacity-40" />
@@ -378,8 +398,8 @@ export default function ProfilePage() {
                             )}
                             <div className="flex items-start gap-2">
                               <span className="shrink-0 mt-0.5">💰</span>
-                              <span className="font-semibold text-gray-900">
-                                {currency} {displayPrice.toLocaleString()} {totalPriceUsd ? `/ $${totalPriceUsd.toFixed(2)} USD` : ""}
+                              <span className="font-semibold text-gray-900 tabular-nums">
+                                {priceLabel}
                               </span>
                             </div>
                           </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import Calendar from "react-calendar"
 import "react-calendar/dist/Calendar.css"
 import { useSession } from "next-auth/react"
@@ -210,7 +211,13 @@ export default function BookingLocalWidget({
           {/* Header image */}
           {image && (
             <div className="relative h-32 overflow-hidden">
-              <img src={image} alt={title} className="w-full h-full object-cover" />
+              <Image
+                src={image}
+                alt={title}
+                fill
+                sizes="(max-width: 1024px) 100vw, 400px"
+                className="object-cover"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               <div className="absolute bottom-3 left-4 right-4">
                 <p className="text-white font-bold text-sm leading-tight line-clamp-2 drop-shadow-sm">{title}</p>

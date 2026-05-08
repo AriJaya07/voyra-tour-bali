@@ -144,7 +144,7 @@ export default function PlansPage() {
       </div>
 
       {tab === "plans" ? (
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {plans.map((p) => (
             <PlanCard
               key={p.key}
@@ -156,7 +156,7 @@ export default function PlansPage() {
           ))}
         </section>
       ) : (
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {packs.map((p) => (
             <TopupCard key={p.key} pack={p} highlight={p.key === "STANDARD"} />
           ))}

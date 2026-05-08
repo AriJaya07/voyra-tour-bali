@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { formatBookingPrice } from "@/utils/formatPrice";
+import { useCurrency } from "@/utils/hooks/useCurrency";
 import { toast } from "sonner";
 import Container from "@/components/Container";
 import { useBookingStore } from "@/utils/hooks/useBookingStore";
@@ -618,9 +621,16 @@ function StepReview({
   const store = useBookingStore();
   const router = useRouter();
   const { data: session } = useSession();
+  const { currency: displayCurrency, exchangeRates } = useCurrency();
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const isViator = store.source === "VIATOR";
+
+  const totalLabel = formatBookingPrice(
+    { totalPrice: store.totalPrice, currency: store.currency },
+    displayCurrency,
+    exchangeRates
+  );
 
   // ── Viator step-by-step state ──────────────────────────────────────
   const [viatorStep, setViatorStep] = useState<ViatorFlowStep>("idle");
@@ -880,7 +890,7 @@ function StepReview({
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-gray-700">Total Price</span>
             <span className="text-xl font-black text-[#0071CE]">
-              {store.totalPrice.toLocaleString()} {store.currency}
+              {totalLabel}
             </span>
           </div>
           <p className="text-xs text-green-600 font-medium mt-1.5 flex items-center gap-1">
@@ -968,7 +978,7 @@ function StepReview({
               className="flex-[2] bg-[#0071CE] hover:bg-[#005ba6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
             >
               <CheckmarkIcon className="w-5 h-5" />
-              Confirm Booking — {store.totalPrice.toLocaleString()} {store.currency}
+              Confirm Booking — {totalLabel}
             </button>
           ) : viatorStep === "payment_iframe" ? (
              <div className="flex-[2] flex items-center justify-center py-4 bg-blue-50 text-[#0071CE] font-bold rounded-xl">
@@ -1016,7 +1026,7 @@ function StepReview({
             ) : (
               <>
                 <LockIcon className="w-5 h-5" />
-                Pay Now — {store.totalPrice.toLocaleString()} {store.currency}
+                Pay Now — {totalLabel}
               </>
             )}
           </button>
@@ -1029,7 +1039,13 @@ function StepReview({
 // ── Sidebar Summary ─────────────────────────────────────────────────
 function BookingSidebar() {
   const store = useBookingStore();
+  const { currency: displayCurrency, exchangeRates } = useCurrency();
   const totalTravelers = store.paxMix.reduce((acc, p) => acc + p.numberOfTravelers, 0);
+  const totalLabel = formatBookingPrice(
+    { totalPrice: store.totalPrice, currency: store.currency },
+    displayCurrency,
+    exchangeRates
+  );
 
   return (
     <div className="lg:sticky lg:top-28 space-y-4">
@@ -1042,8 +1058,14 @@ function BookingSidebar() {
         </div>
         <div className="p-5 sm:p-6">
           {store.productImage && (
-            <div className="mb-4 rounded-xl overflow-hidden">
-              <img src={store.productImage} alt={store.productTitle} className="w-full h-32 object-cover" />
+            <div className="relative mb-4 rounded-xl overflow-hidden h-32">
+              <Image
+                src={store.productImage}
+                alt={store.productTitle}
+                fill
+                sizes="(max-width: 1024px) 100vw, 400px"
+                className="object-cover"
+              />
             </div>
           )}
           <div className="mb-4 pb-4 border-b border-gray-100">
@@ -1079,7 +1101,7 @@ function BookingSidebar() {
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-gray-700">Total</span>
               <span className="text-xl sm:text-2xl font-black text-[#0071CE]">
-                {store.totalPrice.toLocaleString()} {store.currency}
+                {totalLabel}
               </span>
             </div>
           </div>

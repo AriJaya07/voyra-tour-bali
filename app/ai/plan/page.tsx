@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { usePrefsStore } from "@/utils/hooks/useUserPreferences";
 import { buildViatorProductUrl } from "@/lib/config/viator";
 import BackLink from "@/components/common/BackLink";
+import PriceLabel from "@/components/common/PriceLabel";
 
 const STYLE_TAGS = [
   "adventure",
@@ -1233,7 +1234,11 @@ export default function PlanPage() {
                               )}
                               <div className="flex flex-wrap gap-2 mt-1.5 text-xs text-gray-500">
                                 {it.price !== null && it.price !== undefined && (
-                                  <span>From ${it.price}</span>
+                                  <PriceLabel
+                                    amount={it.price}
+                                    sourceCurrency="USD"
+                                    prefix="From "
+                                  />
                                 )}
                                 {it.rating !== null && it.rating !== undefined && (
                                   <span>★ {it.rating.toFixed(1)}</span>

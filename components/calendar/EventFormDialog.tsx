@@ -204,8 +204,12 @@ export default function EventFormDialog({
       onClick={() => !submitting && !deleting && onClose()}
     >
       <div
-        className="relative bg-white w-full sm:max-w-md max-h-[92vh] overflow-y-auto scrollbar-hide shadow-2xl rounded-t-2xl sm:rounded-2xl"
+        className="relative bg-white w-full sm:max-w-md overflow-y-auto scrollbar-hide shadow-2xl rounded-t-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          maxHeight: "calc(92dvh - env(safe-area-inset-bottom, 0px))",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        }}
       >
         <button
           type="button"

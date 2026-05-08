@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import { Toaster } from "sonner";
 import type { Session } from "next-auth";
 
@@ -12,9 +13,15 @@ import CurrencySync from "@/components/providers/CurrencySync";
 import RecentlyViewedSync from "@/components/providers/RecentlyViewedSync";
 import PreferencesSync from "@/components/providers/PreferencesSync";
 import PWARegister from "@/components/providers/PWARegister";
-import ExitIntentModal from "@/components/common/ExitIntentModal";
 import { ConfirmDialogProvider } from "@/components/common/ConfirmDialog";
-import AIChatWidget from "@/components/AIChatWidget";
+
+const AIChatWidget = dynamic(() => import("@/components/AIChatWidget"), {
+  ssr: false,
+});
+const ExitIntentModal = dynamic(
+  () => import("@/components/common/ExitIntentModal"),
+  { ssr: false }
+);
 
 interface AppProvidersProps {
   children: React.ReactNode;

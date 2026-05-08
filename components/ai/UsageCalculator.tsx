@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { AI_PLANS, translateCredits } from "@/lib/config/aiPlans";
 import { AI_ENDPOINT_COST } from "@/lib/config/aiCosts";
+import { formatPrice } from "@/utils/formatPrice";
+import { useCurrency } from "@/utils/hooks/useCurrency";
 
 const CHAT_COST = AI_ENDPOINT_COST.chat;
 const PLAN_COST = AI_ENDPOINT_COST.plan;
@@ -46,6 +48,11 @@ export default function UsageCalculator({ className = "" }: { className?: string
   const monthly = picks.chats * CHAT_COST + picks.plans * PLAN_COST + picks.concierge * CONCIERGE_COST;
   const rec = useMemo(() => recommend(monthly), [monthly]);
   const t = translateCredits(rec.monthlyCredits);
+  const { currency, exchangeRates } = useCurrency();
+  const recSecondary =
+    rec.priceIdr > 0 && currency !== "IDR"
+      ? formatPrice(rec.priceIdr, currency, "IDR", exchangeRates)
+      : null;
 
   return (
     <section className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
@@ -95,8 +102,11 @@ export default function UsageCalculator({ className = "" }: { className?: string
         <div>
           <div className="text-[10px] font-bold uppercase text-blue-700">Recommended plan</div>
           <div className="text-2xl font-bold text-blue-900">{rec.label}</div>
-          <div className="text-xs text-blue-700">
+          <div className="text-xs tabular-nums text-blue-700">
             {rec.priceIdr === 0 ? "Free" : `Rp ${rec.priceIdr.toLocaleString("id-ID")}/mo`}
+            {recSecondary ? (
+              <span className="text-blue-600/80"> (≈ {recSecondary})</span>
+            ) : null}
             {" · "}
             {rec.monthlyCredits.toLocaleString()} credits/mo
           </div>

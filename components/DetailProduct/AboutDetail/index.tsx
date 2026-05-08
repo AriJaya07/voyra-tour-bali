@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface AboutDetailProps {
     description: string;
     mainImage: string;
@@ -18,8 +20,14 @@ export default function AboutDetail({ description, mainImage }: AboutDetailProps
                             {description}
                         </p>
                     </div>
-                    <div className="w-full sm:w-[50%]">
-                        <img src={mainImage || "/images/detail/main-detail.png"} alt="Destination" className="w-full h-[250px] sm:h-[350px] md:h-[400px] object-cover rounded-lg" />
+                    <div className="w-full sm:w-[50%] relative h-[250px] sm:h-[350px] md:h-[400px]">
+                        <Image
+                            src={mainImage || "/images/detail/main-detail.png"}
+                            alt="Destination"
+                            fill
+                            sizes="(max-width: 640px) 100vw, 50vw"
+                            className="object-cover rounded-lg"
+                        />
                     </div>
                 </div>
             </div>

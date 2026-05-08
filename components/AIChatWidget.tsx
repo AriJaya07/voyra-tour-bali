@@ -10,6 +10,7 @@ import { buildViatorProductUrl } from "@/lib/config/viator";
 import AiUpgradeModal from "@/components/ai/AiUpgradeModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { AI_QUERY_KEYS, useAiWallet } from "@/utils/hooks/useAiWallet";
+import PriceLabel from "@/components/common/PriceLabel";
 
 interface ProductCard {
   productCode: string;
@@ -285,8 +286,11 @@ export default function AIChatWidget() {
             // capped at 390px on larger screens
             className="bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden"
             style={{
-              width: "min(390px, calc(100vw - 24px))",
-              maxHeight: "min(580px, calc(100dvh - 100px))",
+              width: "min(390px, calc(100dvw - 24px))",
+              // 156px = bottom-[72px] anchor + 56px button (h-14) + 12px gap-3 + 16px top breathing room.
+              // env(safe-area-inset-bottom) covers iPhone home indicator. 100dvh tracks Safari URL bar.
+              maxHeight:
+                "min(580px, calc(100dvh - 156px - env(safe-area-inset-bottom, 0px)))",
             }}
           >
             {/* Header */}
@@ -417,7 +421,11 @@ export default function AIChatWidget() {
                             </p>
                             {card.price !== null && (
                               <p className="text-xs text-blue-600 font-semibold mt-0.5">
-                                From ${card.price}
+                                <PriceLabel
+                                  amount={card.price}
+                                  sourceCurrency="USD"
+                                  prefix="From "
+                                />
                               </p>
                             )}
                           </div>

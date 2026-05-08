@@ -4,6 +4,7 @@ import { generateTicketQR } from '@/lib/ticket'
 import Container from '@/components/Container'
 import Link from 'next/link'
 import CancelButtonClient from '@/components/ticket/CancelButtonClient'
+import PriceLabel from '@/components/common/PriceLabel'
 
 export async function generateMetadata({
   params,
@@ -134,9 +135,13 @@ export default async function TicketPage({
                 <hr className="border-gray-100" />
                 <div className="flex justify-between">
                   <span className="text-gray-500">Total Paid</span>
-                  <span className="font-bold text-lg text-gray-900">
-                    Rp {Math.round(booking.totalPrice).toLocaleString('id-ID')}
-                  </span>
+                  <PriceLabel
+                    amount={Math.round(booking.totalPrice)}
+                    sourceCurrency={booking.currency ?? 'IDR'}
+                    withSecondary
+                    className="font-bold text-lg text-gray-900"
+                    secondaryClassName="ml-1.5 text-xs font-medium text-slate-500 tabular-nums whitespace-nowrap"
+                  />
                 </div>
               </div>
 

@@ -5,6 +5,8 @@ import { HiSparkles } from "react-icons/hi2";
 import { MIDTRANS_CLIENT_KEY, MIDTRANS_SNAP_URL } from "@/lib/config/midtrans";
 import { useAiTopupMutation } from "@/utils/hooks/useAiWallet";
 import type { AiPack } from "@/utils/service/ai.service";
+import { formatPrice } from "@/utils/formatPrice";
+import { useCurrency } from "@/utils/hooks/useCurrency";
 
 interface Props {
   pack: AiPack;
@@ -34,10 +36,15 @@ export default function TopupCard({ pack, highlight = false, onPaid }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const topup = useAiTopupMutation();
+  const { currency, exchangeRates } = useCurrency();
 
   useEffect(ensureSnapScript, []);
 
   const pricePerCredit = (pack.priceIdr / pack.credits).toFixed(2);
+  const showSecondary = currency !== "IDR";
+  const secondaryLabel = showSecondary
+    ? formatPrice(pack.priceIdr, currency, "IDR", exchangeRates)
+    : null;
 
   async function handleBuy() {
     setError(null);
@@ -82,32 +89,44 @@ export default function TopupCard({ pack, highlight = false, onPaid }: Props) {
       className={`flex flex-col rounded-2xl border p-5 shadow-sm transition
         ${highlight ? "border-blue-400 bg-blue-50/40 ring-1 ring-blue-200" : "border-slate-200 bg-white"}`}
     >
-      <div className="flex items-center gap-2">
-        <HiSparkles className="h-4 w-4 text-blue-500" />
-        <h3 className="text-base font-semibold text-slate-900">{pack.label}</h3>
+      <div className="flex items-center gap-2 min-w-0">
+        <HiSparkles className="h-4 w-4 shrink-0 text-blue-500" />
+        <h3 className="text-base font-semibold text-slate-900 truncate min-w-0 flex-1">
+          {pack.label}
+        </h3>
         {highlight ? (
-          <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+          <span className="shrink-0 rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
             Best value
           </span>
         ) : null}
       </div>
 
-      <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-2xl font-bold text-slate-900">
+      <div className="mt-4 flex flex-wrap items-baseline gap-x-1 gap-y-0">
+        <span className="text-2xl font-bold tabular-nums text-slate-900 break-words">
           Rp {pack.priceIdr.toLocaleString("id-ID")}
         </span>
       </div>
-      <div className="mt-1 text-sm text-slate-600">
+      {secondaryLabel ? (
+        <div
+          className="mt-0.5 text-xs tabular-nums text-slate-500"
+          title="Charged in IDR via Midtrans; equivalent in your selected currency."
+        >
+          ≈ {secondaryLabel}
+        </div>
+      ) : null}
+      <div className="mt-1 text-sm tabular-nums text-slate-600">
         {pack.credits.toLocaleString()} credits · Rp {pricePerCredit}/credit
       </div>
       <div className="mt-1 text-xs text-slate-500">
         Valid {pack.expiryDays} days from purchase
       </div>
 
+      <div className="flex-1" />
+
       <button
         onClick={handleBuy}
         disabled={busy}
-        className="mt-4 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="mt-6 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
       >
         {busy ? "Opening payment…" : "Buy now"}
       </button>

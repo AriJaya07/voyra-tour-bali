@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
@@ -74,9 +75,14 @@ export default function NextTripWidget() {
         </div>
         <div className="relative flex flex-col sm:flex-row gap-4 p-5 sm:p-6">
           {trip.productImage && (
-            <div className="w-full sm:w-32 h-28 sm:h-24 rounded-xl overflow-hidden bg-white/10 flex-shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={trip.productImage} alt={trip.productTitle} className="w-full h-full object-cover" />
+            <div className="relative w-full sm:w-32 h-28 sm:h-24 rounded-xl overflow-hidden bg-white/10 flex-shrink-0">
+              <Image
+                src={trip.productImage}
+                alt={trip.productTitle}
+                fill
+                sizes="(max-width: 640px) 100vw, 128px"
+                className="object-cover"
+              />
             </div>
           )}
           <div className="flex-1 min-w-0">

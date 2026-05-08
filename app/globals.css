@@ -299,3 +299,12 @@ button {
 .dashboard-theme[data-theme="light"] .sidebar-mobile-bar .hover\:text-white:hover { color: #ffffff !important; }
 .dashboard-theme[data-theme="light"] aside .hover\:bg-slate-700\/50:hover { background-color: rgba(51, 65, 85, 0.5) !important; }
 .dashboard-theme[data-theme="light"] aside .hover\:bg-slate-700\/60:hover { background-color: rgba(51, 65, 85, 0.6) !important; }
+
+/* iOS Safari zoom-on-focus fix — auto-zoom triggers when input font-size < 16px */
+@media (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}

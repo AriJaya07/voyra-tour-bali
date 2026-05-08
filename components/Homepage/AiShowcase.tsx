@@ -35,7 +35,7 @@ const TABS: ShowcaseTab[] = [
     reply: [
       "Remembering: 2 adults, 1 senior (knee mobility), staying in Ubud.",
       "Half-day option: Tegenungan Falls upper-deck café (no stairs) + lunch at Locavore",
-      "+ a 1h Balinese massage at COMO Shambhala. Total Rp ~1.8M for the family.",
+      "+ a 1h Balinese massage at COMO Shambhala. Total budget covered for the family.",
     ],
     cta: { href: "/ai/wallet", label: "Unlock with Voyager →" },
   },

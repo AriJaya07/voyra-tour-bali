@@ -34,16 +34,17 @@ const CURRENCY_LOCALES: Record<CurrencyCode, string> = {
   CNY: "zh-CN",
 };
 
-// Fallback rates relative to USD (used when Viator rates aren't loaded)
+// Fallback rates relative to USD (used when Viator rates aren't loaded).
+// Refresh every 6 months — drift erodes accuracy. Last update: 2026-05.
 const FALLBACK_USD_RATES: Record<CurrencyCode, number> = {
   USD: 1,
-  IDR: 15850,
-  AUD: 1.52,
-  EUR: 0.92,
+  IDR: 16450,
+  AUD: 1.55,
+  EUR: 0.93,
   SGD: 1.34,
-  GBP: 0.79,
-  JPY: 152,
-  CNY: 7.2,
+  GBP: 0.78,
+  JPY: 156,
+  CNY: 7.25,
 };
 
 const isZeroDecimal = (c: CurrencyCode) => c === "IDR" || c === "JPY";
@@ -97,4 +98,18 @@ export function formatPrice(
 
 export function isCurrencyCode(v: unknown): v is CurrencyCode {
   return typeof v === "string" && (SUPPORTED_CURRENCIES as readonly string[]).includes(v);
+}
+
+/**
+ * Format a price record (e.g. booking row, product) using its stored source
+ * currency. Falls back to USD when source currency is missing or unknown.
+ */
+export function formatBookingPrice(
+  raw: { totalPrice?: number | null; price?: number | null; currency?: string | null },
+  targetCurrency: CurrencyCode,
+  liveRates?: Record<string, number> | null
+): string {
+  const amount = raw.totalPrice ?? raw.price ?? 0;
+  const source = isCurrencyCode(raw.currency) ? raw.currency : "USD";
+  return formatPrice(Number(amount), targetCurrency, source, liveRates);
 }

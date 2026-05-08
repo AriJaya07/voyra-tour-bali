@@ -45,11 +45,15 @@ export default function PublicLightbox({ images, startIndex, onClose }: Props) {
           onClose();
         }}
         aria-label="Close"
-        className="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl"
+        className="absolute right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
       >
         ✕
       </button>
-      <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-semibold">
+      <div
+        className="absolute left-4 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-semibold"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
+      >
         {idx + 1} / {images.length}
       </div>
 

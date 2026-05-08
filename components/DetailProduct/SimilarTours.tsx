@@ -2,6 +2,7 @@ import Link from "next/link";
 import OptimizedImage from "@/components/common/OptimizedImage";
 import { prisma } from "@/lib/prisma";
 import WishlistButton from "@/components/common/WishlistButton";
+import PriceLabel from "@/components/common/PriceLabel";
 
 interface Props {
   destinationId: number;
@@ -79,7 +80,12 @@ export default async function SimilarTours({ destinationId, categoryId, limit = 
                 </p>
                 {d.price && d.price > 0 && (
                   <p className="text-xs text-gray-500 mt-1">
-                    From <span className="font-bold text-gray-900">Rp {d.price.toLocaleString()}</span>
+                    From{" "}
+                    <PriceLabel
+                      amount={d.price}
+                      sourceCurrency="IDR"
+                      className="font-bold text-gray-900"
+                    />
                   </p>
                 )}
               </div>

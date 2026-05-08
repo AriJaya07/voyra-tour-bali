@@ -5,7 +5,7 @@ import { Field, inputClass } from "@/components/common/InputForm";
 import { useCategories } from "@/utils/hooks/useCategories";
 import { useImages } from "@/utils/hooks/useImages";
 import { useState, useEffect, useRef } from "react";
-import moment from "moment";
+import { format } from "date-fns";
 import { Destination, DestinationFormData } from "@/utils/service/destination.service";
 
 interface DestinationFormProps {
@@ -63,7 +63,7 @@ export default function DestinationForm({
           subTitle: content.subTitle || "",
           description: content.description,
           dateAvailable: content.dateAvailable
-            ? moment(content.dateAvailable).format("YYYY-MM-DD")
+            ? format(new Date(content.dateAvailable), "yyyy-MM-dd")
             : new Date().toISOString().split("T")[0],
           isAvailable: content.isAvailable,
           images: content?.images?.map((img, imgIndex) => ({

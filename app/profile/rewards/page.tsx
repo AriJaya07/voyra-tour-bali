@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import BackLink from "@/components/common/BackLink";
 import { useSession } from "next-auth/react";
 import LoyaltyRedeemCard from "@/components/ai/LoyaltyRedeemCard";
+import { formatPrice } from "@/utils/formatPrice";
+import { useCurrency } from "@/utils/hooks/useCurrency";
 
 interface Loyalty {
   pointsBalance: number;
@@ -44,6 +46,11 @@ const TIER_PERKS: Record<string, string[]> = {
 
 export default function RewardsPage() {
   const { status } = useSession();
+  const { currency, exchangeRates } = useCurrency();
+  const rateNote =
+    currency !== "IDR"
+      ? `Rp 1,000 ≈ ${formatPrice(1000, currency, "IDR", exchangeRates)} · Rp 100,000 ≈ ${formatPrice(100000, currency, "IDR", exchangeRates)}`
+      : null;
   const [loyalty, setLoyalty] = useState<Loyalty | null>(null);
   const [personalCode, setPersonalCode] = useState<string>("");
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -189,6 +196,11 @@ export default function RewardsPage() {
             <li>• 5 AI credits per Rp 100,000 spent (×{tier === "GOLD" ? "2" : tier === "SILVER" ? "1.5" : "1"} on your current {tier.toLowerCase()} tier)</li>
             <li>• Capped at 500 credits per booking; valid 365 days</li>
           </ul>
+          {rateNote ? (
+            <p className="text-[11px] text-gray-500 italic mb-3">
+              Rates anchored in IDR. {rateNote}.
+            </p>
+          ) : null}
           <Link
             href="/ai/wallet"
             className="text-xs font-bold text-[#0071CE] hover:underline"

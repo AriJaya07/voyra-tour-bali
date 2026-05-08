@@ -1,13 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useBookings } from "@/utils/hooks/useBookings";
 import { Booking } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
 import BookingTable from "./BookingTable";
-import BookingViewModal from "./BookingViewModal";
-import BookingStatusChangeModal from "@/components/Global/booking/BookingStatusChangeModal";
 import { SearchIcon } from "@/components/assets/Icon/shared";
+
+const BookingViewModal = dynamic(() => import("./BookingViewModal"), {
+  ssr: false,
+});
+const BookingStatusChangeModal = dynamic(
+  () => import("@/components/Global/booking/BookingStatusChangeModal"),
+  { ssr: false }
+);
 
 const STATUS_TABS = [
   { key: "ALL", label: "All" },
