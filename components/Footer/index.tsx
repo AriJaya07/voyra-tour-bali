@@ -295,17 +295,20 @@ export default function Footer() {
               <ColHeading>Contact</ColHeading>
               <a
                 href="mailto:info@balitravelnow.com"
-                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+                className="flex items-start gap-2 text-xs sm:text-[13px] text-gray-400 hover:text-white transition-colors leading-snug break-all"
               >
-                <span>📧</span>
+                <span className="flex-shrink-0 mt-0.5">📧</span>
                 <span>info@balitravelnow.com</span>
               </a>
-              <p className="flex items-center gap-2 text-sm text-gray-500">
-                <span>🕐</span>
-                <span>Mon – Fri, 08:00 – 17:00 WITA</span>
-              </p>
-              <p className="flex items-center gap-2 text-sm text-gray-500">
-                <span>📍</span>
+              <div className="flex items-start gap-2 text-xs sm:text-[13px] text-gray-500 leading-snug">
+                <span className="flex-shrink-0 mt-0.5">🕐</span>
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-400">Mon – Fri</span>
+                  <span className="tabular-nums">08:00 – 17:00 WITA</span>
+                </div>
+              </div>
+              <p className="flex items-start gap-2 text-xs sm:text-[13px] text-gray-500 leading-snug">
+                <span className="flex-shrink-0 mt-0.5">📍</span>
                 <span>Bali, Indonesia</span>
               </p>
             </div>
