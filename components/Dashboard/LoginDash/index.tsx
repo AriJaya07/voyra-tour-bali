@@ -12,6 +12,7 @@ export default function LoginDash() {
   const { data: session, status } = useSession();
   const callbackUrl = searchParams.get("callbackUrl") || null;
   const verified = searchParams.get("verified");
+  const verifyError = searchParams.get("error");
   const toastShown = useRef(false);
 
   const getRedirectUrl = (role: string | undefined) => {
@@ -19,13 +20,27 @@ export default function LoginDash() {
     return "/";
   };
 
-  // Show success toast when arriving after email verification
+  // Surface email-verification outcome on arrival from /api/auth/verify
   useEffect(() => {
-    if (verified === "true" && !toastShown.current) {
+    if (toastShown.current) return;
+    if (verified === "true") {
       toastShown.current = true;
       toast.success("Email verified successfully! Please sign in to continue.");
+      return;
     }
-  }, [verified]);
+    if (verifyError) {
+      const messages: Record<string, string> = {
+        InvalidToken: "Invalid or already-used verification link. Please request a new one.",
+        ExpiredToken: "Verification link expired. Please request a new one.",
+        MissingToken: "Verification link is missing its token.",
+      };
+      const msg = messages[verifyError];
+      if (msg) {
+        toastShown.current = true;
+        toast.error(msg);
+      }
+    }
+  }, [verified, verifyError]);
 
   useEffect(() => {
     if (status === "authenticated" && session?.user) {

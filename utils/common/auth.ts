@@ -3,7 +3,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { verifyTurnstile } from "@/utils/verifyTurnstile";
 import { consumeMfaToken } from "@/lib/services/twoFactorService";
 
 export const authOptions: NextAuthOptions = {
@@ -18,7 +17,6 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        captchaToken: { label: "Captcha", type: "text" },
         mfaToken: { label: "MFA Token", type: "text" },
         trustedDeviceToken: { label: "Trusted Device", type: "text" },
       },
@@ -28,10 +26,8 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const captchaOk = await verifyTurnstile(credentials.captchaToken ?? "");
-        if (!captchaOk) {
-          throw new Error("CAPTCHA verification failed. Please try again.");
-        }
+        // Captcha validated upstream by /api/auth/login/preflight. Turnstile
+        // tokens are single-use, so re-validating here would always fail.
 
         let user;
         try {

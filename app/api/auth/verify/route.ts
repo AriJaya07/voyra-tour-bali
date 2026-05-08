@@ -30,17 +30,21 @@ export async function GET(request: Request) {
     return buildRedirect({ error: 'InvalidToken' })
   }
 
+  // Idempotent: already verified (e.g. mail scanner pre-fetched link first).
+  if (user.emailVerified) {
+    return buildRedirect({ verified: 'true' })
+  }
+
   if (user.tokenExpiry && user.tokenExpiry < new Date()) {
     return buildRedirect({ error: 'ExpiredToken' })
   }
 
-  // Mark email as verified
+  // Mark verified. Keep token+expiry so subsequent clicks (scanner + user)
+  // hit the idempotent branch above instead of "InvalidToken".
   await prisma.user.update({
     where: { id: user.id },
     data: {
       emailVerified: true,
-      verificationToken: null,
-      tokenExpiry: null,
     },
   })
 

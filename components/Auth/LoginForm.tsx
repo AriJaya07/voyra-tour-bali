@@ -59,7 +59,6 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
     const result = await signIn("credentials", {
       email: email.toLowerCase().trim(),
       password,
-      captchaToken: captchaToken ?? "",
       mfaToken: mfaToken ?? "",
       redirect: false,
     });
