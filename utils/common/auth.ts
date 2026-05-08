@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { verifyTurnstile } from "@/utils/verifyTurnstile";
+import { consumeMfaToken } from "@/lib/services/twoFactorService";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,6 +19,8 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
         captchaToken: { label: "Captcha", type: "text" },
+        mfaToken: { label: "MFA Token", type: "text" },
+        trustedDeviceToken: { label: "Trusted Device", type: "text" },
       },
 
       async authorize(credentials) {
@@ -82,6 +85,50 @@ export const authOptions: NextAuthOptions = {
 
         if (!user.emailVerified && user.role === "USER") {
           throw new Error("Please verify your email before signing in.");
+        }
+
+        // --- 2FA gate ---
+        if (user.twoFactorEnabled) {
+          // Trusted-device cookie can satisfy the MFA requirement.
+          let trustedOk = false;
+          const td = (credentials.trustedDeviceToken ?? "").toString();
+          if (td && td.length >= 32) {
+            try {
+              const crypto = await import("crypto");
+              const tokenHash = crypto
+                .createHash("sha256")
+                .update(td)
+                .digest("hex");
+              const dev = await prisma.trustedDevice.findUnique({
+                where: { tokenHash },
+              });
+              if (
+                dev &&
+                dev.userId === user.id &&
+                dev.twoFactorEpoch === user.twoFactorEpoch &&
+                dev.expiresAt.getTime() > Date.now()
+              ) {
+                trustedOk = true;
+                await prisma.trustedDevice.update({
+                  where: { id: dev.id },
+                  data: { lastUsedAt: new Date() },
+                });
+              }
+            } catch (e) {
+              console.error("[Auth] trusted device check failed:", e);
+            }
+          }
+
+          if (!trustedOk) {
+            const mfaToken = (credentials.mfaToken ?? "").toString();
+            if (!mfaToken) {
+              throw new Error("MFA_REQUIRED");
+            }
+            const ok = await consumeMfaToken(mfaToken, user.id);
+            if (!ok) {
+              throw new Error("MFA_REQUIRED");
+            }
+          }
         }
 
         // Reset attempt counter on successful login

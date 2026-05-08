@@ -81,6 +81,12 @@ const BOTTOM_ITEMS = [
     color: "violet",
   },
   {
+    label: "Users",
+    href: "/dashboard/users",
+    icon: <SubscribersIcon />,
+    color: "blue",
+  },
+  {
     label: "Subscribers",
     href: "/dashboard/subscribers",
     icon: <SubscribersIcon />,

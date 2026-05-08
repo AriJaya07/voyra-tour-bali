@@ -10,10 +10,17 @@ import EmailIcon from "../assets/login/EmailIcon";
 import PasswrodIcon from "../assets/login/PasswordIcon";
 import { EyeOffIcon, EyeIcon, ChevronRightIcon, LockIcon } from "../assets/Icon/shared";
 import TurnstileWidget from "./TurnstileWidget";
+import MfaChallengeForm from "./MfaChallengeForm";
 
 interface LoginFormProps {
   callbackUrl: string | null;
   onRedirect: (url: string) => void;
+}
+
+interface MfaState {
+  challengeId: number;
+  methods: ("TOTP" | "BACKUP" | "EMAIL_OTP")[];
+  expiresAt: string;
 }
 
 export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
@@ -25,6 +32,7 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
+  const [mfa, setMfa] = useState<MfaState | null>(null);
 
   useEffect(() => {
     if (lockoutSeconds <= 0) return;
@@ -47,6 +55,27 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
     return "/";
   };
 
+  const completeSignIn = async (mfaToken: string | null) => {
+    const result = await signIn("credentials", {
+      email: email.toLowerCase().trim(),
+      password,
+      captchaToken: captchaToken ?? "",
+      mfaToken: mfaToken ?? "",
+      redirect: false,
+    });
+    if (result?.error) {
+      setError("Sign-in failed. Please try again.");
+      resetCaptcha();
+      return;
+    }
+    const { getSession } = await import("next-auth/react");
+    const freshSession = await getSession();
+    const role = (freshSession?.user as { role?: string })?.role;
+    const { trackLogin } = await import("@/utils/analytics");
+    trackLogin("email");
+    onRedirect(getRedirectUrl(role));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -62,66 +91,74 @@ export default function LoginForm({ callbackUrl, onRedirect }: LoginFormProps) {
 
     setIsLoading(true);
 
-    // Pre-check: catch existing lockout before wasting a sign-in round trip
     try {
-      const lockResp = await fetch(
-        `/api/auth/check-lockout?email=${encodeURIComponent(email.toLowerCase().trim())}`
-      );
-      const lockData = await lockResp.json();
-      if (lockData.locked) {
-        setLockoutSeconds(lockData.remainingSeconds);
-        setError("");
-        setIsLoading(false);
+      // Preflight: validates creds + captcha + lockout, returns MFA decision.
+      const pre = await fetch("/api/auth/login/preflight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password,
+          captchaToken: captchaToken ?? "",
+        }),
+      });
+      const data = await pre.json().catch(() => ({}));
+
+      if (!pre.ok) {
+        if (pre.status === 423 && data.remainingSeconds) {
+          setLockoutSeconds(data.remainingSeconds);
+        } else {
+          setError(data.error || "Incorrect email or password");
+        }
         resetCaptcha();
         return;
       }
-    } catch {
-      // Network issue — continue and let signIn handle it
-    }
 
-    const result = await signIn("credentials", {
-      email: email.toLowerCase().trim(),
-      password,
-      captchaToken: captchaToken ?? "",
-      redirect: false,
-    });
-
-    setIsLoading(false);
-
-    if (result?.error) {
-      try {
-        const resp = await fetch(
-          `/api/auth/check-lockout?email=${encodeURIComponent(email.toLowerCase().trim())}`
-        );
-        const { locked, remainingSeconds, loginAttempts } = await resp.json();
-
-        if (locked) {
-          setLockoutSeconds(remainingSeconds);
-          setError("");
-        } else {
-          const remaining = Math.max(0, 3 - loginAttempts);
-          if (loginAttempts > 0) {
-            setError(
-              `Incorrect email or password, \n ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining`
-            );
-          } else {
-            setError("Incorrect email or password");
-          }
-        }
-      } catch {
-        setError("Incorrect email or password");
+      if (data.needsMfa) {
+        setMfa({
+          challengeId: data.challengeId,
+          methods: data.methods,
+          expiresAt: data.expiresAt,
+        });
+        setIsLoading(false);
+        return;
       }
-      resetCaptcha();
-      return;
-    }
 
-    const { getSession } = await import("next-auth/react");
-    const freshSession = await getSession();
-    const role = (freshSession?.user as { role?: string })?.role;
-    const { trackLogin } = await import("@/utils/analytics");
-    trackLogin("email");
-    onRedirect(getRedirectUrl(role));
+      // No MFA required (or trusted-device shortcut)
+      await completeSignIn(null);
+    } catch {
+      setError("Sign-in failed. Please try again.");
+      resetCaptcha();
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const onMfaSuccess = async (mfaToken: string) => {
+    setIsLoading(true);
+    try {
+      await completeSignIn(mfaToken);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onMfaCancel = () => {
+    setMfa(null);
+    setPassword("");
+    resetCaptcha();
+  };
+
+  if (mfa) {
+    return (
+      <MfaChallengeForm
+        challengeId={mfa.challengeId}
+        methods={mfa.methods}
+        onSuccess={onMfaSuccess}
+        onCancel={onMfaCancel}
+      />
+    );
+  }
 
   return (
     <>

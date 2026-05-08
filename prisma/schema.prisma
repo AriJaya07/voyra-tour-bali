@@ -141,6 +141,14 @@ model User {
   loginAttempts    Int       @default(0)
   loginLockedUntil DateTime?
 
+  // Two-factor authentication
+  twoFactorEnabled    Boolean   @default(false)
+  twoFactorSecret     String?   // AES-256-GCM encrypted base32 TOTP secret
+  twoFactorEnrolledAt DateTime?
+  twoFactorMethod     String?   // "TOTP" | future "EMAIL" | "SMS"
+  twoFactorEpoch      Int       @default(0)
+  totpLastWindow      BigInt?   // last consumed TOTP step counter (replay guard)
+
   currency String @default("USD")
 
   // AI welcome grant idempotency. Set once at signup grant time.
@@ -181,6 +189,12 @@ model User {
   aiFamilyOwned    AiFamilySeat[]   @relation("AiSeatOwner")
   aiFamilySeat     AiFamilySeat?    @relation("AiSeatMember")
   signupFingerprint SignupFingerprint?
+
+  twoFactorBackupCodes TwoFactorBackupCode[]
+  twoFactorChallenges  TwoFactorChallenge[]
+  trustedDevices       TrustedDevice[]
+  auditLogsAsActor     AuditLog[] @relation("AuditActor")
+  auditLogsAsTarget    AuditLog[] @relation("AuditTarget")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -907,4 +921,76 @@ model AiPayment {
   updatedAt DateTime @updatedAt
 
   @@index([userId, status])
+}
+
+// ── Two-factor authentication ────────────────────────────────────────────
+
+model TwoFactorBackupCode {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String    // bcrypt hash; single-use
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model TwoFactorChallenge {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  purpose      String   // "LOGIN" | "STEP_UP" | "ENROLL_VERIFY"
+  method       String   // "TOTP" | "EMAIL_OTP" | "BACKUP"
+  emailOtpHash String?  // bcrypt-hashed if EMAIL_OTP issued
+  emailSends   Int      @default(0)
+  attempts     Int      @default(0)
+  verified     Boolean  @default(false)
+  consumedAt   DateTime?
+
+  // Opaque short-lived token returned to client after verify, exchanged in NextAuth credentials
+  mfaTokenHash String?  @unique
+
+  expiresAt    DateTime
+  ipHash       String?
+  uaHash       String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model TrustedDevice {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash      String   @unique         // sha256 of cookie token
+  label          String?
+  uaHash         String?
+  ipHash         String?
+  twoFactorEpoch Int                       // pinned at issue time
+  lastUsedAt     DateTime @default(now())
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  actorId   Int?
+  actor     User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  targetId  Int?
+  target    User?    @relation("AuditTarget", fields: [targetId], references: [id], onDelete: SetNull)
+
+  event     String   // 2FA_ENABLED | 2FA_DISABLED | 2FA_ADMIN_RESET | 2FA_LOGIN_OK | 2FA_LOGIN_FAIL | 2FA_BACKUP_USED | LOCKOUT_CLEARED | TRUSTED_DEVICES_REVOKED ...
+  ipHash    String?
+  uaHash    String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([targetId, createdAt])
+  @@index([event, createdAt])
+  @@index([actorId, createdAt])
 }

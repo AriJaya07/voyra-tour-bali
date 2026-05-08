@@ -556,6 +556,16 @@ export default function ProfilePage() {
               <p className="text-xs text-gray-500 mt-0.5">Points + referrals</p>
             </Link>
             <Link
+              href="/profile/security"
+              className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
+            >
+              <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center mb-2">
+                <span className="text-lg">🔒</span>
+              </div>
+              <p className="font-bold text-gray-900 text-sm leading-tight">Security</p>
+              <p className="text-xs text-gray-500 mt-0.5">Password + 2FA</p>
+            </Link>
+            <Link
               href="/profile/settings"
               className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
             >

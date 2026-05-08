@@ -369,6 +369,143 @@ export async function sendReferralBookingInviterEmail(params: {
   });
 }
 
+// ── Two-Factor: email OTP code ─────────────────────────────────────────
+
+export async function sendTwoFactorEmailOtp(params: {
+  to: string;
+  code: string;
+  ipDescription?: string;
+}) {
+  await transporter.sendMail({
+    from: FROM,
+    to: params.to,
+    subject: `Your ${SITE_NAME} sign-in code: ${params.code}`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #1a1a1a;">
+        <div style="text-align:center; padding:24px 16px; background:linear-gradient(135deg,#0071CE,#005ba6); border-radius:16px; margin-bottom:24px;">
+          <h2 style="color:white; margin:0; font-size:22px;">Your sign-in code</h2>
+        </div>
+        <p style="color:#333; line-height:1.6;">Enter this 6-digit code to finish signing in. Valid for 10 minutes.</p>
+        <div style="background:#f7f9fc; border:1px solid #e5e7eb; border-radius:12px; padding:24px; margin:20px 0; text-align:center;">
+          <p style="margin:0; font-family:monospace; font-size:32px; font-weight:900; letter-spacing:8px; color:#0071CE;">${params.code}</p>
+        </div>
+        ${params.ipDescription ? `<p style="color:#888; font-size:12px;">Sign-in attempt: ${params.ipDescription}</p>` : ""}
+        <div style="background:#fff8eb; border:1px solid #fde6c2; border-radius:12px; padding:14px; margin-top:16px;">
+          <p style="margin:0; color:#92400e; font-size:13px;">
+            <strong>Didn&apos;t request this?</strong> Someone may know your password. <a href="${SITE_URL}/forgot-password" style="color:#92400e; font-weight:bold;">Change it now</a>.
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+// ── Two-Factor: enabled confirmation ───────────────────────────────────
+
+export async function sendTwoFactorEnabledEmail(params: { to: string; name: string }) {
+  await transporter.sendMail({
+    from: FROM,
+    to: params.to,
+    subject: `Two-factor authentication is now active`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color:#1a1a1a;">
+        <div style="text-align:center; padding:24px 16px; background:linear-gradient(135deg,#10b981,#059669); border-radius:16px; margin-bottom:24px;">
+          <div style="font-size:40px;">🔒</div>
+          <h2 style="color:white; margin:8px 0 0; font-size:22px;">2FA is on</h2>
+        </div>
+        <p style="color:#333; line-height:1.6;">
+          Hi ${params.name || "there"}, two-factor authentication is now active. From now on, signing in needs a 6-digit code from your authenticator app.
+        </p>
+        <p style="color:#333; line-height:1.6;">Keep your backup codes somewhere safe. Lost both your phone and codes? Contact support.</p>
+        <a href="${SITE_URL}/profile/security" style="display:block; text-align:center; padding:12px; background:#0071CE; color:white; text-decoration:none; border-radius:10px; font-weight:bold; font-size:14px; margin-top:16px;">Manage 2FA</a>
+      </div>
+    `,
+  });
+}
+
+// ── Two-Factor: disabled confirmation ──────────────────────────────────
+
+export async function sendTwoFactorDisabledEmail(params: { to: string; name: string; byAdmin?: boolean }) {
+  await transporter.sendMail({
+    from: FROM,
+    to: params.to,
+    subject: params.byAdmin ? `An admin disabled 2FA on your account` : `Two-factor authentication disabled`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color:#1a1a1a;">
+        <div style="text-align:center; padding:24px 16px; background:linear-gradient(135deg,#f59e0b,#d97706); border-radius:16px; margin-bottom:24px;">
+          <div style="font-size:40px;">🔓</div>
+          <h2 style="color:white; margin:8px 0 0; font-size:22px;">2FA is off</h2>
+        </div>
+        <p style="color:#333; line-height:1.6;">
+          Hi ${params.name || "there"}, ${params.byAdmin ? "an admin disabled 2FA on your account." : "you disabled two-factor authentication."} Sign-in now needs only your password.
+        </p>
+        <p style="color:#333; line-height:1.6;">Didn&apos;t do this? Sign in immediately and re-enable 2FA, or <a href="${SITE_URL}/contact" style="color:#0071CE;">contact support</a>.</p>
+      </div>
+    `,
+  });
+}
+
+// ── Two-Factor: admin reset (force re-enroll) ──────────────────────────
+
+export async function sendTwoFactorAdminResetEmail(params: { to: string; name: string; reason?: string }) {
+  await transporter.sendMail({
+    from: FROM,
+    to: params.to,
+    subject: `Two-factor authentication was reset`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color:#1a1a1a;">
+        <div style="text-align:center; padding:24px 16px; background:linear-gradient(135deg,#0071CE,#005ba6); border-radius:16px; margin-bottom:24px;">
+          <div style="font-size:40px;">🔁</div>
+          <h2 style="color:white; margin:8px 0 0; font-size:22px;">2FA reset</h2>
+        </div>
+        <p style="color:#333; line-height:1.6;">
+          Hi ${params.name || "there"}, an admin reset two-factor authentication on your account.${params.reason ? ` Reason: ${params.reason}.` : ""} Sign in with your password and enroll a new authenticator.
+        </p>
+        <a href="${SITE_URL}/profile/security" style="display:block; text-align:center; padding:12px; background:#0071CE; color:white; text-decoration:none; border-radius:10px; font-weight:bold; font-size:14px; margin-top:16px;">Re-enroll 2FA</a>
+      </div>
+    `,
+  });
+}
+
+// ── Two-Factor: backup code used ───────────────────────────────────────
+
+export async function sendTwoFactorBackupUsedEmail(params: { to: string; name: string; remaining: number }) {
+  await transporter.sendMail({
+    from: FROM,
+    to: params.to,
+    subject: `A backup code was used to sign in`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color:#1a1a1a;">
+        <p style="color:#333; line-height:1.6;">
+          Hi ${params.name || "there"}, a backup code was just used to sign in to your ${SITE_NAME} account. You have <strong>${params.remaining}</strong> backup codes remaining.
+        </p>
+        ${params.remaining <= 3 ? `<p style="color:#92400e;"><strong>Heads up:</strong> consider regenerating your backup codes from your security page.</p>` : ""}
+        <a href="${SITE_URL}/profile/security" style="display:block; text-align:center; padding:12px; background:#0071CE; color:white; text-decoration:none; border-radius:10px; font-weight:bold; font-size:14px; margin-top:16px;">View security settings</a>
+      </div>
+    `,
+  });
+}
+
+// ── Two-Factor: generic security alert ─────────────────────────────────
+
+export async function sendSecurityAlertEmail(params: { to: string; subject: string; body: string }) {
+  await transporter.sendMail({
+    from: FROM,
+    to: params.to,
+    subject: params.subject,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color:#1a1a1a;">
+        <div style="text-align:center; padding:20px; background:linear-gradient(135deg,#dc2626,#991b1b); border-radius:16px; margin-bottom:20px;">
+          <div style="font-size:36px;">⚠️</div>
+          <h2 style="color:white; margin:8px 0 0; font-size:20px;">Security alert</h2>
+        </div>
+        <p style="color:#333; line-height:1.6;">${params.body}</p>
+        <a href="${SITE_URL}/profile/security" style="display:block; text-align:center; padding:12px; background:#0071CE; color:white; text-decoration:none; border-radius:10px; font-weight:bold; font-size:14px; margin-top:16px;">Review security</a>
+      </div>
+    `,
+  });
+}
+
 // ── Generic notification (used by NotificationBroadcast) ───────────────
 
 export async function sendNotificationEmail(params: {

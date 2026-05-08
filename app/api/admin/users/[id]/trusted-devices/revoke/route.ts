@@ -1,0 +1,28 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAdminUserId } from "@/lib/services/adminAuth";
+import { recordAudit } from "@/lib/services/auditLogService";
+
+export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const adminId = await requireAdminUserId();
+  if (!adminId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id: idStr } = await ctx.params;
+  const id = parseInt(idStr);
+  if (Number.isNaN(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+
+  await prisma.$transaction([
+    prisma.trustedDevice.deleteMany({ where: { userId: id } }),
+    prisma.user.update({
+      where: { id },
+      data: { twoFactorEpoch: { increment: 1 } },
+    }),
+  ]);
+  await recordAudit({
+    event: "TRUSTED_DEVICES_REVOKED_ALL",
+    actorId: adminId,
+    targetId: id,
+    req,
+  });
+  return NextResponse.json({ ok: true });
+}
