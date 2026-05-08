@@ -264,6 +264,111 @@ export async function sendBookingConfirmation(params: {
   })
 }
 
+// ── Referral Invite ────────────────────────────────────────────────────
+
+export async function sendReferralInviteEmail(params: {
+  to: string;
+  inviterName: string;
+  code: string;
+}) {
+  const link = `${SITE_URL}/r/${params.code}`;
+  const inviter = params.inviterName?.trim() || "A friend";
+  await transporter.sendMail({
+    from: FROM,
+    to: params.to,
+    subject: `${inviter} invited you to ${SITE_NAME} — 50 free credits inside`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1a1a1a;">
+        <div style="text-align:center; padding:28px 16px; background:linear-gradient(135deg,#0071CE,#005ba6); border-radius:16px; margin-bottom:24px;">
+          <div style="font-size:40px; line-height:1;">🌴</div>
+          <h2 style="color:white; margin:12px 0 4px; font-size:24px;">${inviter} invited you</h2>
+          <p style="color:#cce4f7; margin:0; font-size:14px;">Get 50 free AI trip-credits when you join</p>
+        </div>
+        <p style="color:#333; line-height:1.6;">
+          ${inviter} thinks you'd like ${SITE_NAME} — Bali tours, planned smarter. Sign up with their invite and you'll start with <strong>50 AI trip-credits</strong> in your wallet.
+        </p>
+        <div style="background:#f7f9fc; border-radius:12px; padding:20px; margin:20px 0; text-align:center;">
+          <p style="margin:0 0 8px; font-size:12px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.5px;">Your invite code</p>
+          <p style="margin:0; font-family:monospace; font-size:24px; font-weight:900; color:#0071CE;">${params.code}</p>
+        </div>
+        <a href="${link}" style="display:block; text-align:center; padding:16px; background:#0071CE; color:white; text-decoration:none; border-radius:12px; font-weight:bold; font-size:16px; margin-bottom:12px;">
+          Claim your 50 credits
+        </a>
+        <p style="color:#888; font-size:13px; text-align:center;">Or copy this link: <a href="${link}" style="color:#0071CE;">${link}</a></p>
+        <hr style="border:none; border-top:1px solid #eee; margin:24px 0;" />
+        <p style="color:#aaa; font-size:12px; text-align:center; line-height:1.6;">
+          ${SITE_NAME} — Real travel only. Credits valid 365 days.<br>
+          You received this because ${inviter} entered your email. <a href="${SITE_URL}/unsubscribe" style="color:#aaa;">Unsubscribe</a>.
+        </p>
+      </div>
+    `,
+  });
+}
+
+// ── Referral: friend signed up (notify inviter) ────────────────────────
+
+export async function sendReferralSignupInviterEmail(params: {
+  to: string;
+  inviterName: string;
+  inviteeName: string;
+}) {
+  await transporter.sendMail({
+    from: FROM,
+    to: params.to,
+    subject: `${params.inviteeName} just joined ${SITE_NAME}`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1a1a1a;">
+        <div style="text-align:center; padding:24px 16px; background:linear-gradient(135deg,#10b981,#059669); border-radius:16px; margin-bottom:24px;">
+          <div style="font-size:40px; line-height:1;">🎉</div>
+          <h2 style="color:white; margin:12px 0 4px; font-size:24px;">Your invite worked</h2>
+          <p style="color:#d1fae5; margin:0; font-size:14px;">${params.inviteeName} just signed up</p>
+        </div>
+        <p style="color:#333; line-height:1.6;">
+          Hi ${params.inviterName || "there"}, <strong>${params.inviteeName}</strong> just joined using your invite. When they confirm their first booking, you'll earn <strong>10 credits per Rp 100k</strong> they spend (cap 200), plus they get a 50-credit thank-you.
+        </p>
+        <a href="${SITE_URL}/profile/rewards" style="display:block; text-align:center; padding:14px; background:#0071CE; color:white; text-decoration:none; border-radius:12px; font-weight:bold; font-size:15px;">
+          View your referrals
+        </a>
+        <hr style="border:none; border-top:1px solid #eee; margin:24px 0;" />
+        <p style="color:#aaa; font-size:12px; text-align:center;">${SITE_NAME}</p>
+      </div>
+    `,
+  });
+}
+
+// ── Referral: friend booked (notify inviter) ───────────────────────────
+
+export async function sendReferralBookingInviterEmail(params: {
+  to: string;
+  inviterName: string;
+  inviteeName: string;
+  credits: number;
+  productTitle: string;
+}) {
+  await transporter.sendMail({
+    from: FROM,
+    to: params.to,
+    subject: `+${params.credits} credits — ${params.inviteeName} booked a tour`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1a1a1a;">
+        <div style="text-align:center; padding:24px 16px; background:linear-gradient(135deg,#f59e0b,#d97706); border-radius:16px; margin-bottom:24px;">
+          <div style="font-size:40px; line-height:1;">💰</div>
+          <h2 style="color:white; margin:12px 0 4px; font-size:24px;">+${params.credits} credits</h2>
+          <p style="color:#fde68a; margin:0; font-size:14px;">${params.inviteeName} booked ${params.productTitle}</p>
+        </div>
+        <p style="color:#333; line-height:1.6;">
+          Hi ${params.inviterName || "there"}, your friend <strong>${params.inviteeName}</strong> just confirmed a booking and we credited <strong>${params.credits} AI credits</strong> to your wallet. Every booking they make pays out.
+        </p>
+        <a href="${SITE_URL}/ai/wallet" style="display:block; text-align:center; padding:14px; background:#0071CE; color:white; text-decoration:none; border-radius:12px; font-weight:bold; font-size:15px;">
+          See balance in AI Wallet
+        </a>
+        <hr style="border:none; border-top:1px solid #eee; margin:24px 0;" />
+        <p style="color:#aaa; font-size:12px; text-align:center;">${SITE_NAME}</p>
+      </div>
+    `,
+  });
+}
+
 // ── Generic notification (used by NotificationBroadcast) ───────────────
 
 export async function sendNotificationEmail(params: {

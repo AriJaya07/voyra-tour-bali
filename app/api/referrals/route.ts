@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import { sendReferralInviteEmail } from "@/lib/email";
 
 async function requireUserId() {
   const session = await getServerSession(authOptions);
@@ -49,9 +50,21 @@ export async function POST(req: NextRequest) {
   }
 
   // Don't allow inviting self
-  const me = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+  const me = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
   if (me?.email && me.email.toLowerCase() === inviteeEmail) {
     return NextResponse.json({ error: "cannot invite yourself" }, { status: 400 });
+  }
+
+  // Hourly invite spam guard: max 20 emailed invites per inviter per hour
+  const recent = await prisma.referral.count({
+    where: {
+      inviterId: userId,
+      inviteeEmail: { not: "" },
+      createdAt: { gte: new Date(Date.now() - 3_600_000) },
+    },
+  });
+  if (recent >= 20) {
+    return NextResponse.json({ error: "Slow down — try again later" }, { status: 429 });
   }
 
   const code = crypto.randomBytes(4).toString("hex").toUpperCase();
@@ -63,11 +76,22 @@ export async function POST(req: NextRequest) {
         inviteeEmail,
         code,
         status: "PENDING",
+        attributionSource: "email",
       },
     });
+
+    // Send invite email — non-blocking
+    void sendReferralInviteEmail({
+      to: inviteeEmail,
+      inviterName: me?.name || "",
+      code,
+    }).catch((err) => {
+      console.error("[Referral] invite email failed:", err instanceof Error ? err.message : err);
+    });
+
     return NextResponse.json(created);
-  } catch (e: any) {
-    if (e?.code === "P2002") {
+  } catch (e: unknown) {
+    if (e && typeof e === "object" && "code" in e && (e as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Already invited that email" }, { status: 409 });
     }
     return NextResponse.json({ error: "Failed to create referral" }, { status: 500 });
