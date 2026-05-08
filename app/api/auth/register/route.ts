@@ -2,14 +2,29 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { sendVerificationEmail } from '@/lib/email';
+import { sendVerificationEmail, sendReferralSignupInviterEmail } from '@/lib/email';
 import { verifyTurnstile } from '@/utils/verifyTurnstile';
-import { ensureWelcomeGrant } from '@/lib/services/aiCreditService';
-import { recordSignupFingerprint } from '@/lib/services/signupFingerprintService';
+import { ensureWelcomeGrant, grantCredits } from '@/lib/services/aiCreditService';
+import {
+  recordSignupFingerprint,
+  hashRequestIp,
+  getUserIpHash,
+} from '@/lib/services/signupFingerprintService';
+
+const REFERRAL_SIGNUP_BONUS_CREDITS = 50;
+const REFERRAL_COOKIE_NAME = 'voyra_ref';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, name, callbackUrl, captchaToken, referralCode } = await request.json();
+    const { email, password, name, callbackUrl, captchaToken, referralCode: bodyCode } = await request.json();
+
+    // Fall back to HttpOnly cookie if body didn't carry the code (deep-link signup).
+    let referralCode: string | undefined = typeof bodyCode === 'string' ? bodyCode : undefined;
+    if (!referralCode) {
+      const cookieHeader = request.headers.get('cookie') || '';
+      const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${REFERRAL_COOKIE_NAME}=([^;]+)`));
+      if (match) referralCode = decodeURIComponent(match[1]);
+    }
 
     const captchaOk = await verifyTurnstile(captchaToken);
     if (!captchaOk) {
@@ -75,37 +90,73 @@ export async function POST(request: Request) {
       });
     }
 
-    // Referral wire-up: if registered with a code, mark referral SIGNED_UP
-    if (typeof referralCode === "string" && referralCode.trim()) {
+    // Capture signup fingerprint first so referral same-IP check can read it.
+    await recordSignupFingerprint({ userId: user.id, req: request, phone: null });
+
+    // Referral wire-up: code → 50 AI credit signup bonus, referredById link, inviter notify.
+    if (typeof referralCode === 'string' && referralCode.trim()) {
       try {
         const code = referralCode.trim().toUpperCase();
-        const ref = await prisma.referral.findUnique({ where: { code } });
+        const ref = await prisma.referral.findUnique({
+          where: { code },
+          include: { inviter: { select: { id: true, email: true, name: true } } },
+        });
         if (ref && ref.inviterId !== user.id) {
+          // Same-IP fraud guard: if invitee signs up from same IP as inviter,
+          // record but do not pay signup bonus + flag suspicious for admin review.
+          const inviteeIp = hashRequestIp(request);
+          const inviterIp = await getUserIpHash(ref.inviterId);
+          const sameIp = inviteeIp && inviterIp && inviteeIp === inviterIp;
+
           await prisma.referral.update({
             where: { id: ref.id },
             data: {
               inviteeId: user.id,
               inviteeEmail: user.email,
-              status: "SIGNED_UP",
+              status: 'SIGNED_UP',
+              suspiciousReason: sameIp ? 'SAME_IP_SIGNUP' : ref.suspiciousReason,
             },
           });
-          // Award signup bonus to invitee (200 pts)
-          await prisma.loyaltyAccount.upsert({
-            where: { userId: user.id },
-            update: { pointsBalance: { increment: 200 } },
-            create: { userId: user.id, pointsBalance: 200 },
+
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { referredById: ref.inviterId },
           });
-          await prisma.loyaltyLedger.create({
-            data: { userId: user.id, delta: 200, reason: "SIGNUP", refId: code },
-          });
+
+          if (!sameIp && !ref.firstSignupBonusGivenAt) {
+            try {
+              await grantCredits({
+                userId: user.id,
+                source: 'REFERRAL',
+                amount: REFERRAL_SIGNUP_BONUS_CREDITS,
+                expiresInDays: 365,
+                refId: `REF_SIGNUP_${ref.id}`,
+                reasonOverride: 'GRANT_REFERRAL_SIGNUP',
+              });
+              await prisma.referral.update({
+                where: { id: ref.id },
+                data: { firstSignupBonusGivenAt: new Date() },
+              });
+            } catch (grantErr) {
+              console.error('[Referral] signup bonus grant failed:', grantErr);
+            }
+          }
+
+          // Notify inviter (best-effort)
+          if (!sameIp && ref.inviter?.email) {
+            void sendReferralSignupInviterEmail({
+              to: ref.inviter.email,
+              inviterName: ref.inviter.name || '',
+              inviteeName: name || user.email,
+            }).catch((e) =>
+              console.error('[Referral] inviter notify failed:', e instanceof Error ? e.message : e)
+            );
+          }
         }
       } catch (refErr) {
         console.error('[Referral] failed to apply code:', refErr);
       }
     }
-
-    // Capture signup fingerprint (anti-fraud) — non-blocking, best-effort
-    void recordSignupFingerprint({ userId: user.id, req: request, phone: null });
 
     // AI welcome grant — idempotent, non-blocking
     try {

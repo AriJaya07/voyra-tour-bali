@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import api from "@/lib/axios";
 import AuthInput from "./AuthInput";
@@ -36,6 +36,7 @@ interface RegisterFormProps {
 
 export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +52,49 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
   const [cooldownTime, setCooldownTime] = useState(0);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
+
+  // Referral attribution
+  const [referralCode, setReferralCode] = useState("");
+  const [inviterFirstName, setInviterFirstName] = useState<string | null>(null);
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [codeChecking, setCodeChecking] = useState(false);
+
+  // On mount: read ?ref from URL OR fall back to HttpOnly cookie via /api/referrals/attribute (GET).
+  useEffect(() => {
+    const fromQuery = (searchParams?.get("ref") || "").trim().toUpperCase();
+    if (fromQuery) {
+      setReferralCode(fromQuery);
+      return;
+    }
+    fetch("/api/referrals/attribute", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.code) setReferralCode(String(d.code).toUpperCase());
+      })
+      .catch(() => {});
+  }, [searchParams]);
+
+  // Validate code → get inviter first name + flip valid chip on
+  useEffect(() => {
+    if (!referralCode || referralCode.length < 4) {
+      setInviterFirstName(null);
+      return;
+    }
+    setCodeChecking(true);
+    const ctl = new AbortController();
+    fetch(`/api/referrals/lookup?code=${encodeURIComponent(referralCode)}`, {
+      cache: "no-store",
+      signal: ctl.signal,
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.valid) setInviterFirstName(d.inviterFirstName || "A friend");
+        else setInviterFirstName(null);
+      })
+      .catch(() => {})
+      .finally(() => setCodeChecking(false));
+    return () => ctl.abort();
+  }, [referralCode]);
 
   const resetCaptcha = () => {
     setCaptchaToken(null);
@@ -151,6 +195,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
         password,
         callbackUrl: "/",
         captchaToken,
+        referralCode: referralCode || undefined,
       });
 
       const emailLower = email.toLowerCase().trim();
@@ -249,6 +294,50 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
       {error && (
         <div className="flex items-start gap-3 bg-red-950/50 border border-red-800/60 text-red-300 rounded-xl px-4 py-3 mb-6 text-sm">
           <span>{error}</span>
+        </div>
+      )}
+
+      {inviterFirstName ? (
+        <div className="mb-4 flex items-start gap-2 bg-emerald-950/40 border border-emerald-800/60 text-emerald-200 rounded-xl px-3 py-2.5 text-xs">
+          <span className="text-emerald-400 font-bold">✓</span>
+          <span>
+            Invite from <strong>{inviterFirstName}</strong> applied — you&apos;ll get{" "}
+            <strong>50 AI credits</strong> after verifying your email.
+          </span>
+        </div>
+      ) : !showCodeInput ? (
+        <button
+          type="button"
+          onClick={() => setShowCodeInput(true)}
+          className="mb-4 text-xs text-slate-400 hover:text-slate-200 underline underline-offset-2"
+        >
+          Have an invite code?
+        </button>
+      ) : (
+        <div className="mb-4">
+          <label className="block text-xs text-slate-400 mb-1">Invite code</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value.trim().toUpperCase())}
+              placeholder="A1B2C3D4"
+              className="flex-1 min-w-0 px-3 py-2.5 text-sm bg-slate-900/60 border border-slate-700 rounded-lg text-white font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setShowCodeInput(false);
+                setReferralCode("");
+              }}
+              className="px-3 py-2 text-xs text-slate-400 hover:text-slate-200"
+            >
+              Skip
+            </button>
+          </div>
+          {referralCode && referralCode.length >= 4 && !codeChecking && !inviterFirstName ? (
+            <p className="mt-1 text-xs text-amber-400">Code not found — double-check or skip.</p>
+          ) : null}
         </div>
       )}
 

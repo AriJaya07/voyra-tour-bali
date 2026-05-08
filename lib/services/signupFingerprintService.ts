@@ -82,4 +82,22 @@ export async function countUsersByPhoneHash(phoneHash: string): Promise<number> 
   return prisma.signupFingerprint.count({ where: { phoneHash } });
 }
 
+/**
+ * Same-IP check: returns the request IP hashed (or null if no IP detectable).
+ * Used by register flow to gate referral attribution if invitee shares IP
+ * with the inviter at signup time.
+ */
+export function hashRequestIp(req: NextRequest | Request): string | null {
+  const ip = extractIp(req);
+  return ip ? hash(ip) : null;
+}
+
+export async function getUserIpHash(userId: number): Promise<string | null> {
+  const fp = await prisma.signupFingerprint.findUnique({
+    where: { userId },
+    select: { ipHash: true },
+  });
+  return fp?.ipHash ?? null;
+}
+
 export const __internal = { hash, normalisePhone };

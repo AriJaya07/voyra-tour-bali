@@ -22,6 +22,7 @@
 import type { Booking } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { grantCredits } from "@/lib/services/aiCreditService";
+import { sendReferralBookingInviterEmail } from "@/lib/email";
 
 // ── Tunables (single source of truth) ────────────────────────────────────────
 export const BOOKING_REWARD_PER_RP100K = 5;
@@ -222,6 +223,35 @@ export async function applyReferralPayout(booking: Booking): Promise<{
       rewardGiven: true,
     },
   });
+
+  // Notify inviter via email (best-effort, non-blocking)
+  if (inviterReward > 0) {
+    try {
+      const [inviter, invitee] = await Promise.all([
+        prisma.user.findUnique({
+          where: { id: ref.inviterId },
+          select: { email: true, name: true },
+        }),
+        prisma.user.findUnique({
+          where: { id: booking.userId },
+          select: { name: true, email: true },
+        }),
+      ]);
+      if (inviter?.email) {
+        void sendReferralBookingInviterEmail({
+          to: inviter.email,
+          inviterName: inviter.name || "",
+          inviteeName: invitee?.name || invitee?.email || "Your friend",
+          credits: inviterReward,
+          productTitle: booking.productTitle || "a Bali tour",
+        }).catch((e) =>
+          console.error("[Reward] inviter booking email failed:", e instanceof Error ? e.message : e)
+        );
+      }
+    } catch (e) {
+      console.error("[Reward] inviter lookup failed:", e instanceof Error ? e.message : e);
+    }
+  }
 
   console.log(
     `[Reward] Referral payout — inviter=${ref.inviterId} invitee=${booking.userId} booking=${booking.bookingRef} +${inviterReward}cr ${isFirstBooking ? `+${thankyouCredits}thx` : ""}`
