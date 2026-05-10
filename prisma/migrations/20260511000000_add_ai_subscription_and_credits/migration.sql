@@ -157,3 +157,6 @@ ALTER TABLE "AiPayment" ADD CONSTRAINT "AiPayment_userId_fkey" FOREIGN KEY ("use
 
 -- CreateIndex (originally from 20260506022349, deferred until table exists)
 CREATE INDEX IF NOT EXISTS "AiCreditLedger_reservationStatus_settledAt_idx" ON "AiCreditLedger"("reservationStatus", "settledAt");
+
+-- DropColumn (originally from 20260508101424_lean_db_phase_c, deferred until table exists)
+ALTER TABLE "AiPayment" DROP COLUMN IF EXISTS "midtransPayload";

@@ -29,11 +29,29 @@
 
 BEGIN;
 
--- 1. Drop EmailDelivery.campaignId (0 readers, 0 writers).
-ALTER TABLE "EmailDelivery" DROP COLUMN IF EXISTS "campaignId";
+-- 1. Drop EmailDelivery.campaignId (0 readers, 0 writers). Guarded for fresh-DB chronology.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'EmailDelivery'
+  ) THEN
+    ALTER TABLE "EmailDelivery" DROP COLUMN IF EXISTS "campaignId";
+  END IF;
+END$$;
 
 -- 2. Drop AiPayment.midtransPayload (0 readers, 0 writers).
-ALTER TABLE "AiPayment" DROP COLUMN IF EXISTS "midtransPayload";
+--    On fresh DBs, AiPayment is created later by 20260511000000_add_ai_subscription_and_credits.
+--    A deferred drop is appended to that migration so the column never persists.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'AiPayment'
+  ) THEN
+    ALTER TABLE "AiPayment" DROP COLUMN IF EXISTS "midtransPayload";
+  END IF;
+END$$;
 
 -- 3. Image polymorphism constraint: at most one owner FK per row.
 --    Existing data check first — refuse if any row violates the rule.
@@ -41,6 +59,13 @@ DO $$
 DECLARE
   bad_count BIGINT;
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'Image'
+  ) THEN
+    RETURN;
+  END IF;
+
   SELECT COUNT(*) INTO bad_count
   FROM "Image"
   WHERE (
@@ -55,17 +80,19 @@ BEGIN
       'Refusing to add image_one_owner check: % rows violate the rule. Reconcile data first.',
       bad_count;
   END IF;
-END$$;
 
-ALTER TABLE "Image"
-  ADD CONSTRAINT image_one_owner CHECK (
-    (
-      ("destinationId" IS NOT NULL)::int +
-      ("packageId"     IS NOT NULL)::int +
-      ("contentId"     IS NOT NULL)::int +
-      ("locationId"    IS NOT NULL)::int
-    ) <= 1
-  );
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'image_one_owner') THEN
+    ALTER TABLE "Image"
+      ADD CONSTRAINT image_one_owner CHECK (
+        (
+          ("destinationId" IS NOT NULL)::int +
+          ("packageId"     IS NOT NULL)::int +
+          ("contentId"     IS NOT NULL)::int +
+          ("locationId"    IS NOT NULL)::int
+        ) <= 1
+      );
+  END IF;
+END$$;
 
 COMMIT;
 
