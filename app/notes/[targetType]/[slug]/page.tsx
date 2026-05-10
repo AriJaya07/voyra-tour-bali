@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { tryDb } from "@/lib/data/safeDb";
 import Container from "@/components/Container";
 import { SITE_NAME, SITE_URL } from "@/lib/config";
 
@@ -43,27 +44,48 @@ export default async function NotesAggregatorPage({ params }: { params: Promise<
     status: "APPROVED",
   } as const;
 
-  const [notes, total] = await Promise.all([
-    prisma.baliNote.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      select: {
-        id: true,
-        targetTitle: true,
-        rating: true,
-        body: true,
-        createdAt: true,
-        user: { select: { name: true, image: true } },
-      },
-    }),
-    prisma.baliNote.count({ where }),
-  ]);
+  type NoteRow = {
+    id: number;
+    createdAt: Date;
+    user: { name: string | null; image: string | null };
+    targetTitle: string | null;
+    rating: number | null;
+    body: string;
+  };
 
-  const ratingItems = await prisma.baliNote.findMany({
-    where: { ...where, rating: { not: null } },
-    select: { rating: true },
-  });
+  const [notesRes, totalRes] = await Promise.allSettled([
+    tryDb<NoteRow[]>(
+      () =>
+        prisma.baliNote.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          take: 50,
+          select: {
+            id: true,
+            targetTitle: true,
+            rating: true,
+            body: true,
+            createdAt: true,
+            user: { select: { name: true, image: true } },
+          },
+        }),
+      [],
+      { label: `notes:${targetType}:${decoded}` },
+    ),
+    tryDb(() => prisma.baliNote.count({ where }), 0, { label: `notes.count:${targetType}:${decoded}` }),
+  ]);
+  const notes = notesRes.status === "fulfilled" ? notesRes.value : [];
+  const total = totalRes.status === "fulfilled" ? totalRes.value : 0;
+
+  const ratingItems = await tryDb(
+    () =>
+      prisma.baliNote.findMany({
+        where: { ...where, rating: { not: null } },
+        select: { rating: true },
+      }),
+    [] as { rating: number | null }[],
+    { label: `notes.ratings:${targetType}:${decoded}` },
+  );
   const ratingCount = ratingItems.length;
   const ratingAvg =
     ratingCount > 0 ? ratingItems.reduce((s, r) => s + (r.rating || 0), 0) / ratingCount : null;

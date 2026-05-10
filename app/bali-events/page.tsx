@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { safeDb } from "@/lib/data/safeDb";
 import Container from "@/components/Container";
 import { SITE_NAME, SITE_URL } from "@/lib/config";
 
@@ -30,11 +31,16 @@ const daysUntil = (d: Date) => {
 };
 
 export default async function BaliEventsPage() {
-  const events = await prisma.baliEvent.findMany({
-    where: { date: { gte: new Date(new Date().getFullYear() - 1, 0, 1) } },
-    orderBy: { date: "asc" },
-    take: 100,
-  });
+  const events = await safeDb(
+    "page:baliEvents",
+    () =>
+      prisma.baliEvent.findMany({
+        where: { date: { gte: new Date(new Date().getFullYear() - 1, 0, 1) } },
+        orderBy: { date: "asc" },
+        take: 100,
+      }),
+    [] as Awaited<ReturnType<typeof prisma.baliEvent.findMany>>,
+  );
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

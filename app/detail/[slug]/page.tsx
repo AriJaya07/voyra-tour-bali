@@ -1,6 +1,8 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { Image as PrismaImage } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { tryDb } from "@/lib/data/safeDb";
 import Container from "@/components/Container";
 import AboutDetail from "@/components/DetailProduct/AboutDetail";
 import BannerDetail from "@/components/DetailProduct/BannerDetail";
@@ -26,10 +28,14 @@ import {
 // ── SEO Metadata ────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
-    const destination = await prisma.destination.findFirst({
-        where: { slug },
-        include: { images: { where: { isMain: true }, take: 1 } },
-    });
+    const destination = await tryDb(
+        () => prisma.destination.findFirst({
+            where: { slug },
+            include: { images: { where: { isMain: true }, take: 1 } },
+        }),
+        null,
+        { label: `detail.metadata:${slug}` },
+    );
     if (!destination) {
         return { title: "Destination Not Found" };
     }
@@ -66,28 +72,76 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function Detail({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
 
-    const destination = await prisma.destination.findFirst({
-        where: { slug },
+    type DestinationData = Awaited<ReturnType<typeof prisma.destination.findFirst<{
+        where: { slug: string };
         include: {
-            images: { orderBy: { order: "asc" } },
-            category: true,
+            images: { orderBy: { order: "asc" } };
+            category: true;
             contents: {
-                include: { images: true },
-                orderBy: { createdAt: "desc" },
-            },
+                include: { images: true };
+                orderBy: { createdAt: "desc" };
+            };
             locations: {
-                include: { images: true },
-            },
+                include: { images: true };
+            };
             packages: {
+                include: {
+                    images: { orderBy: { order: "asc" } };
+                    category: true;
+                };
+                orderBy: { price: "asc" };
+            };
+        };
+    }>>>;
+    type DetailFetch = { ok: true; data: DestinationData } | { ok: false; data: null };
+
+    const detailFetch = await tryDb<DetailFetch>(
+        async () => ({
+            ok: true,
+            data: await prisma.destination.findFirst({
+                where: { slug },
                 include: {
                     images: { orderBy: { order: "asc" } },
                     category: true,
+                    contents: {
+                        include: { images: true },
+                        orderBy: { createdAt: "desc" },
+                    },
+                    locations: {
+                        include: { images: true },
+                    },
+                    packages: {
+                        include: {
+                            images: { orderBy: { order: "asc" } },
+                            category: true,
+                        },
+                        orderBy: { price: "asc" },
+                    },
                 },
-                orderBy: { price: "asc" },
-            },
-        },
-    });
+            }),
+        }),
+        { ok: false, data: null },
+        { label: `detail:${slug}` },
+    );
 
+    if (!detailFetch.ok) {
+        return (
+            <div className="flex flex-col justify-center items-center py-40 gap-4 text-center px-4">
+                <h2 className="text-3xl sm:text-4xl font-bold text-gray-800">Live data unavailable</h2>
+                <p className="text-gray-500 text-lg max-w-md">
+                    We&apos;re briefly unable to load this destination. Please try again in a moment.
+                </p>
+                <Link
+                    href="/"
+                    className="mt-4 px-8 py-3 bg-[#00E7FF] text-white rounded-lg font-bold hover:bg-[#0097E8] transition-colors shadow-md"
+                >
+                    Browse other destinations
+                </Link>
+            </div>
+        );
+    }
+
+    const destination = detailFetch.data;
     if (!destination) {
         return (
             <div className="flex flex-col justify-center items-center py-40 gap-4 text-center px-4">

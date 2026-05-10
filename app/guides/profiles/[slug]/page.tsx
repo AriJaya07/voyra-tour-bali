@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { tryDb } from "@/lib/data/safeDb";
 import Container from "@/components/Container";
 import { SITE_NAME, SITE_URL } from "@/lib/config";
 
@@ -9,7 +10,11 @@ export const revalidate = 3600;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const g = await prisma.tourGuide.findUnique({ where: { slug } });
+  const g = await tryDb(
+    () => prisma.tourGuide.findUnique({ where: { slug } }),
+    null,
+    { label: `tourGuide.metadata:${slug}` },
+  );
   if (!g) return { title: "Guide not found" };
   return {
     title: `${g.name} — Bali Tour Guide | ${SITE_NAME}`,
@@ -20,7 +25,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function GuideProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const g = await prisma.tourGuide.findUnique({ where: { slug } });
+  const g = await tryDb(
+    () => prisma.tourGuide.findUnique({ where: { slug } }),
+    null,
+    { label: `tourGuide:${slug}` },
+  );
   if (!g) notFound();
 
   return (

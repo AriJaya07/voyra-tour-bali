@@ -27,10 +27,18 @@ async function fetchCategories(): Promise<Category[]> {
       return getCategoriesFromDB()
 
     case "hybrid": {
-      const [dbCategories, viatorCategories] = await Promise.all([
+      const [dbRes, viatorRes] = await Promise.allSettled([
         getCategoriesFromDB(),
         getCategoriesFromViator(),
       ])
+      const dbCategories = dbRes.status === "fulfilled" ? dbRes.value : []
+      const viatorCategories = viatorRes.status === "fulfilled" ? viatorRes.value : []
+      if (dbRes.status === "rejected") {
+        console.error("[getCategories] db source failed:", dbRes.reason)
+      }
+      if (viatorRes.status === "rejected") {
+        console.error("[getCategories] viator source failed:", viatorRes.reason)
+      }
       return [...viatorCategories, ...dbCategories]
     }
 
@@ -53,10 +61,18 @@ async function fetchDestinations(): Promise<DestinationWithImages[]> {
       return getDestinationsFromDB()
 
     case "hybrid": {
-      const [dbDestinations, viatorDestinations] = await Promise.all([
+      const [dbRes, viatorRes] = await Promise.allSettled([
         getDestinationsFromDB(),
         getDestinationsFromViator(),
       ])
+      const dbDestinations = dbRes.status === "fulfilled" ? dbRes.value : []
+      const viatorDestinations = viatorRes.status === "fulfilled" ? viatorRes.value : []
+      if (dbRes.status === "rejected") {
+        console.error("[getDestinations] db source failed:", dbRes.reason)
+      }
+      if (viatorRes.status === "rejected") {
+        console.error("[getDestinations] viator source failed:", viatorRes.reason)
+      }
       return [...dbDestinations, ...viatorDestinations]
     }
 

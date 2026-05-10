@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { tryDb } from "@/lib/data/safeDb";
 import Container from "@/components/Container";
 import { SITE_NAME, SITE_URL } from "@/lib/config";
 import { estimateReadingMinutes } from "@/lib/guides/readingTime";
@@ -21,7 +22,11 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const guide = await prisma.guide.findUnique({ where: { slug } });
+  const guide = await tryDb(
+    () => prisma.guide.findUnique({ where: { slug } }),
+    null,
+    { label: `guide.metadata:${slug}` },
+  );
   if (!guide || guide.status !== "PUBLISHED") return { title: "Guide not found" };
   return {
     title: `${guide.title} | ${SITE_NAME}`,
@@ -44,37 +49,46 @@ const fmtLong = (d: Date | null) =>
 
 export default async function GuidePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const guide = await prisma.guide.findUnique({ where: { slug } });
+  const guide = await tryDb(
+    () => prisma.guide.findUnique({ where: { slug } }),
+    null,
+    { label: `guide:${slug}` },
+  );
   if (!guide || guide.status !== "PUBLISHED") notFound();
 
   const minutes = estimateReadingMinutes(guide.body);
   const toc = extractToc(guide.body);
 
   // Related: same region OR ≥1 tag overlap, exclude self.
-  const relatedRaw = await prisma.guide.findMany({
-    where: {
-      status: "PUBLISHED",
-      id: { not: guide.id },
-      OR: [
-        ...(guide.region ? [{ region: guide.region }] : []),
-        ...(guide.tags.length > 0 ? [{ tags: { hasSome: guide.tags } }] : []),
-      ],
-    },
-    orderBy: { publishedAt: "desc" },
-    take: 3,
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      excerpt: true,
-      coverImage: true,
-      region: true,
-      tags: true,
-      publishedAt: true,
-      views: true,
-      body: true,
-    },
-  });
+  const relatedRaw = await tryDb(
+    () =>
+      prisma.guide.findMany({
+        where: {
+          status: "PUBLISHED",
+          id: { not: guide.id },
+          OR: [
+            ...(guide.region ? [{ region: guide.region }] : []),
+            ...(guide.tags.length > 0 ? [{ tags: { hasSome: guide.tags } }] : []),
+          ],
+        },
+        orderBy: { publishedAt: "desc" },
+        take: 3,
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          excerpt: true,
+          coverImage: true,
+          region: true,
+          tags: true,
+          publishedAt: true,
+          views: true,
+          body: true,
+        },
+      }),
+    [] as Awaited<ReturnType<typeof prisma.guide.findMany>>,
+    { label: `guide.related:${slug}` },
+  );
 
   const related: GuideListItem[] = relatedRaw.map((g) => ({
     id: g.id,

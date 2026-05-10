@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { safeDb } from "@/lib/data/safeDb";
 import Container from "@/components/Container";
 import { SITE_NAME, SITE_URL } from "@/lib/config";
 import { estimateReadingMinutes } from "@/lib/guides/readingTime";
@@ -26,52 +27,70 @@ const fmtDate = (d: Date | null) =>
   d ? d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : null;
 
 export default async function GuidesIndexPage() {
-  const [guideRows, tourGuideRows, noteRows] = await Promise.all([
-    prisma.guide.findMany({
-      where: { status: "PUBLISHED" },
-      orderBy: { publishedAt: "desc" },
-      take: 50,
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        excerpt: true,
-        coverImage: true,
-        region: true,
-        tags: true,
-        publishedAt: true,
-        views: true,
-        body: true,
-      },
-    }),
-    prisma.tourGuide.findMany({
-      orderBy: [{ rating: "desc" }, { reviewCount: "desc" }],
-      take: 4,
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        photo: true,
-        yearsActive: true,
-        rating: true,
-        reviewCount: true,
-        languages: true,
-      },
-    }),
-    prisma.baliNote.findMany({
-      where: { visibility: "PUBLIC" },
-      orderBy: { createdAt: "desc" },
-      take: 3,
-      select: {
-        id: true,
-        targetTitle: true,
-        targetType: true,
-        body: true,
-        rating: true,
-        date: true,
-      },
-    }),
+  const [guideRowsRes, tourGuideRowsRes, noteRowsRes] = await Promise.allSettled([
+    safeDb(
+      "page:guides:list",
+      () =>
+        prisma.guide.findMany({
+          where: { status: "PUBLISHED" },
+          orderBy: { publishedAt: "desc" },
+          take: 50,
+          select: {
+            id: true,
+            slug: true,
+            title: true,
+            excerpt: true,
+            coverImage: true,
+            region: true,
+            tags: true,
+            publishedAt: true,
+            views: true,
+            body: true,
+          },
+        }),
+      [] as Awaited<ReturnType<typeof prisma.guide.findMany>>,
+    ),
+    safeDb(
+      "page:guides:tourGuides",
+      () =>
+        prisma.tourGuide.findMany({
+          orderBy: [{ rating: "desc" }, { reviewCount: "desc" }],
+          take: 4,
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            photo: true,
+            yearsActive: true,
+            rating: true,
+            reviewCount: true,
+            languages: true,
+          },
+        }),
+      [] as Awaited<ReturnType<typeof prisma.tourGuide.findMany>>,
+    ),
+    safeDb(
+      "page:guides:notes",
+      () =>
+        prisma.baliNote.findMany({
+          where: { visibility: "PUBLIC" },
+          orderBy: { createdAt: "desc" },
+          take: 3,
+          select: {
+            id: true,
+            targetTitle: true,
+            targetType: true,
+            body: true,
+            rating: true,
+            date: true,
+          },
+        }),
+      [] as Awaited<ReturnType<typeof prisma.baliNote.findMany>>,
+    ),
   ]);
+  const guideRows = guideRowsRes.status === "fulfilled" ? guideRowsRes.value : [];
+  const tourGuideRows = tourGuideRowsRes.status === "fulfilled" ? tourGuideRowsRes.value : [];
+  const noteRows = noteRowsRes.status === "fulfilled" ? noteRowsRes.value : [];
 
   const guides: GuideListItem[] = guideRows.map((g) => ({
     id: g.id,

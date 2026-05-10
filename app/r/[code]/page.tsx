@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { tryDb } from "@/lib/data/safeDb";
 import SetReferralCookie from "./SetReferralCookie";
 
 export const metadata: Metadata = {
@@ -20,10 +21,15 @@ export default async function ReferralLandingPage({ params }: PageProps) {
   let valid = false;
 
   if (code && code.length >= 4 && code.length <= 32) {
-    const ref = await prisma.referral.findUnique({
-      where: { code },
-      select: { inviter: { select: { name: true } }, status: true },
-    });
+    const ref = await tryDb(
+      () =>
+        prisma.referral.findUnique({
+          where: { code },
+          select: { inviter: { select: { name: true } }, status: true },
+        }),
+      null,
+      { label: `referral:${code}` },
+    );
     if (ref) {
       valid = true;
       const fullName = ref.inviter?.name || "";
