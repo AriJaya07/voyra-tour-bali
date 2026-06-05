@@ -32,6 +32,8 @@ const EXPLORE_LINKS: NavLink[] = [
   { label: "List Your Tours",   href: "/operator/apply", ready: true },
 ];
 
+const PARTNER_URL = "https://agency.balitravelnow.com/";
+
 const AI_LINKS: NavLink[] = [
   { label: "AI Tools (Hub)",    href: "/ai",          ready: true },
   { label: "Plan a Trip",       href: "/ai/plan",     ready: true },
@@ -211,10 +213,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
 
         {/* ── MAIN GRID ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-14">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-x-6 gap-y-10 mb-14">
 
           {/* Col 1 — Brand */}
-          <div className="space-y-5 sm:col-span-2 lg:col-span-1">
+          <div className="space-y-5 col-span-2 lg:col-span-1">
             <Link href="/" aria-label="Go to homepage" className="inline-block">
               <div className="text-white">
                 <VoryaIcon className="w-32 h-auto" />
@@ -315,112 +317,104 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ── NEWSLETTER ────────────────────────────────────────────── */}
-        <div className="bg-zinc-800/40 border border-zinc-800 rounded-2xl p-6 lg:p-8 mb-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div>
-            <h3 className="text-white font-semibold text-lg mb-1">
-              Stay updated with Bali travel tips
-            </h3>
-            <p className="text-sm text-gray-400">
-              Join our newsletter for exclusive offers and hidden gems.
-            </p>
-            {message && (
-              <p
-                className={`text-sm mt-2 font-semibold ${
-                  message.type === "success" ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {message.text}
-              </p>
-            )}
-          </div>
+        {/* ── NEWSLETTER + PARTNER ──────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-zinc-800 bg-zinc-800/40 border border-zinc-800 rounded-2xl overflow-hidden mb-14">
 
-          <form
-            onSubmit={handleSubscribe}
-            className="flex w-full md:w-auto gap-2"
-            aria-label="Newsletter subscription form"
+          {/* Partner CTA */}
+          <a
+            href={PARTNER_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Become our partner — opens balitravelnow agency in a new tab"
+            className="group relative overflow-hidden flex flex-col justify-between gap-5 p-6 lg:p-8 transition-colors duration-300 hover:bg-zinc-800/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F06400]"
           >
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              disabled={loading}
-              required
-              aria-label="Your email address"
-              className="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0071CE] focus:border-transparent transition-all disabled:opacity-50"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-[#F06400] hover:bg-orange-600 text-white font-semibold text-sm px-5 py-3 rounded-xl transition-colors whitespace-nowrap disabled:opacity-60"
+            <div className="relative flex items-start gap-4">
+              <span className="flex-shrink-0 grid place-items-center h-12 w-12 rounded-2xl bg-[#F06400]/20 text-2xl shadow-[0_0_24px_-6px_rgba(240,100,0,0.6)]">
+                🤝
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-white font-semibold text-lg leading-tight">
+                    Become Our Partner
+                  </h3>
+                  <span className="text-[10px] font-bold uppercase tracking-wide bg-[#F06400]/20 text-[#F06400] px-2 py-0.5 rounded-full leading-none">
+                    Agency
+                  </span>
+                </div>
+                <p className="text-sm text-gray-400 mt-1 leading-relaxed">
+                  Grow your travel business with us. Join the balitravelnow
+                  agency network and start earning commissions today.
+                </p>
+              </div>
+            </div>
+
+            <span className="relative inline-flex items-center justify-center gap-2 bg-[#F06400] group-hover:bg-orange-600 text-white font-semibold text-sm px-5 py-3 rounded-xl transition-colors w-full shadow-lg shadow-[#F06400]/20">
+              Become a Partner
+              <svg
+                className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M5 10h10M11 5l5 5-5 5" />
+              </svg>
+            </span>
+          </a>
+
+          {/* Newsletter */}
+          <div className="p-6 lg:p-8 flex flex-col justify-between gap-5">
+            <div>
+              <h3 className="text-white font-semibold text-lg mb-1">
+                Stay updated with Bali travel tips
+              </h3>
+              <p className="text-sm text-gray-400">
+                Join our newsletter for exclusive offers and hidden gems.
+              </p>
+              {message && (
+                <p
+                  className={`text-sm mt-2 font-semibold ${
+                    message.type === "success" ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {message.text}
+                </p>
+              )}
+            </div>
+
+            <form
+              onSubmit={handleSubscribe}
+              className="flex w-full gap-2"
+              aria-label="Newsletter subscription form"
             >
-              {loading ? "Please wait…" : "Subscribe"}
-            </button>
-          </form>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                disabled={loading}
+                required
+                aria-label="Your email address"
+                className="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#0071CE] focus:border-transparent transition-all disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-[#F06400] hover:bg-orange-600 text-white font-semibold text-sm px-5 py-3 rounded-xl transition-colors whitespace-nowrap disabled:opacity-60"
+              >
+                {loading ? "Please wait…" : "Subscribe"}
+              </button>
+            </form>
+          </div>
         </div>
 
-        {/* ── BOTTOM BAR ────────────────────────────────────────────── */}
-        <div className="border-t border-zinc-800 pt-8 space-y-6">
-
-          {/* Trust strip */}
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-gray-400">
-            <div className="flex items-center gap-1.5">
-              <span aria-hidden>🔒</span>
-              <span>Secure SSL Checkout</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span aria-hidden>✅</span>
-              <span>Vetted Local Operators</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span aria-hidden>📞</span>
-              <span>24/7 Travel Support</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span aria-hidden>💯</span>
-              <span>Instant Confirmation</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span aria-hidden>🌴</span>
-              <span>Based in Bali, Indonesia</span>
-            </div>
-          </div>
-
-          {/* Quick legal links */}
-          <nav
-            aria-label="Footer legal navigation"
-            className="flex flex-wrap justify-center items-center gap-x-5 gap-y-2 text-xs text-gray-500"
-          >
-            <Link href="/about"               className="hover:text-white transition-colors">About</Link>
-            <Dot />
-            <Link href="/contact"             className="hover:text-white transition-colors">Contact</Link>
-            <Dot />
-            <Link href="/trust-and-safety"    className="hover:text-white transition-colors">Trust &amp; Safety</Link>
-            <Dot />
-            <Link href="/terms"               className="hover:text-white transition-colors">Terms</Link>
-            <Dot />
-            <Link href="/privacy"             className="hover:text-white transition-colors">Privacy</Link>
-            <Dot />
-            <Link href="/cancellation-policy" className="hover:text-white transition-colors">Booking &amp; Refunds</Link>
-            <Dot />
-            <a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Contact us on WhatsApp"
-              className="inline-flex items-center gap-1.5 hover:text-green-400 transition-colors"
-            >
-              <WhatsAppIcon className="w-3 h-3" />
-              WhatsApp
-            </a>
-          </nav>
-
-          {/* Copyright */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600 border-t border-zinc-800 pt-6">
-            <p>© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
-            <p>Made with ❤️ in Bali, Indonesia 🇮🇩</p>
-          </div>
+        {/* ── COPYRIGHT ─────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600 border-t border-zinc-800 pt-8">
+          <p>© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
+          <p>Made with ❤️ in Bali, Indonesia 🇮🇩</p>
         </div>
 
       </div>
@@ -428,9 +422,4 @@ export default function Footer() {
   );
 }
 
-// ─── Tiny helpers ─────────────────────────────────────────────────────────────
-
-function Dot() {
-  return <span className="opacity-20 select-none">·</span>;
-}
 

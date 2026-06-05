@@ -52,7 +52,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
 
   // ── Pagination ──────────────────────────────────────────────────────
   const [viatorPage, setViatorPage] = useState(1)
-  const ITEMS_PER_PAGE = 5
+  const ITEMS_PER_PAGE = 6
 
   // -- Priority context for backend deduplication --
   const allCategoryTagIds = useMemo(() =>
@@ -107,11 +107,11 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
   }, [activitiesRaw, regionPref])
 
   const displayedActivities = useMemo(
-    () => (!isViator && !showAll ? activities.slice(0, 5) : activities),
+    () => (!isViator && !showAll ? activities.slice(0, ITEMS_PER_PAGE) : activities),
     [isViator, showAll, activities]
   )
 
-  const dbHasMore = !isViator && activities.length > 5
+  const dbHasMore = !isViator && activities.length > ITEMS_PER_PAGE
 
   return (
     <section id="paket" className="py-10">
@@ -154,7 +154,7 @@ export default function TrendingActivity({ categories }: TrendingActivityProps) 
       {/* Activities */}
       <div>
         {/* Grid — skeleton matches real card height */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 min-h-[300px]">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 min-h-[300px]">
           {isLoading ? (
             Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
               <SkeletonTranding key={i} />
