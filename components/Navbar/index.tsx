@@ -16,6 +16,7 @@ import { useWishlistStore } from "@/utils/hooks/useWishlist"
 const NAV_ITEMS = [
   { label: "Home", id: "home" },
   { label: "Guides", id: "guides", href: "/guides" },
+  { label: "Map", id: "explore", href: "/explore" },
   { label: "AI Tools", id: "ai", href: "/ai" },
   { label: "My Trips", id: "trips", href: "/trips" },
 ]
