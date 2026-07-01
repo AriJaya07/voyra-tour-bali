@@ -55,37 +55,41 @@ export default async function BlogDetailPage({ params }: PageProps) {
   return (
     <main className="min-h-screen bg-white pb-20">
       {/* Banner / Hero */}
-      <div className="relative h-[60vh] min-h-[400px] w-full bg-slate-900">
+      <div className="relative min-h-[420px] h-[55vh] sm:h-[60vh] w-full bg-slate-900 overflow-hidden">
         <Image
           src={getImageUrl(destination.imageBanner || destination.image)}
           alt={destination.title}
           fill
-          className="object-cover opacity-80"
+          sizes="100vw"
+          className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent"></div>
-        
-        <div className="absolute inset-0 flex items-end pb-16">
-          <div className="container mx-auto px-4 max-w-4xl">
-            <Link href="/blog" className="inline-flex items-center text-white/80 hover:text-white mb-6 transition-colors">
-              <ChevronLeftIcon className="w-5 h-5 mr-1" />
+        {/* Overlay mask — stronger at bottom for text legibility on all devices */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-900/20"></div>
+
+        <div className="absolute inset-0 flex items-end pb-10 sm:pb-14 lg:pb-16">
+          <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
+            <Link href="/blog" className="inline-flex items-center text-white/80 hover:text-white mb-4 sm:mb-6 transition-colors text-sm sm:text-base">
+              <ChevronLeftIcon className="w-5 h-5 mr-1 shrink-0" />
               Back to Blog
             </Link>
-            
+
             {categoryName && (
-              <div className="mb-4 inline-block bg-amber-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">
-                {categoryName}
+              <div className="mb-3 sm:mb-4">
+                <span className="inline-block bg-amber-500 text-white px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-sm">
+                  {categoryName}
+                </span>
               </div>
             )}
-            
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-tight drop-shadow-md">
+
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4 sm:mb-6 leading-tight drop-shadow-md">
               {destination.title}
             </h1>
-            
-            <div className="flex flex-wrap items-center text-white/90 gap-6 text-sm font-medium">
+
+            <div className="flex flex-wrap items-center text-white/90 gap-x-6 gap-y-2 text-sm font-medium">
               {destination.createdAt && (
                 <div className="flex items-center">
-                  <CalendarIcon className="w-5 h-5 mr-2" />
+                  <CalendarIcon className="w-5 h-5 mr-2 shrink-0" />
                   {new Date(destination.createdAt).toLocaleDateString("en-US", {
                     month: "long",
                     day: "numeric",
@@ -95,7 +99,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
               )}
               {locationText && (
                 <div className="flex items-center">
-                  <MapPinIcon className="w-5 h-5 mr-2" />
+                  <MapPinIcon className="w-5 h-5 mr-2 shrink-0" />
                   {locationText}
                 </div>
               )}
