@@ -47,7 +47,7 @@ export async function safeDb<T>(
   } catch (err) {
     const stale = snapshots.get(key) as Snapshot<T> | undefined;
     if (isDbDownError(err)) {
-      console.error(
+      console.warn(
         `[safeDb] DB unreachable for "${key}" — serving ${stale ? "stale snapshot" : "fallback"}.`,
         err instanceof Error ? err.message : err
       );
@@ -80,7 +80,7 @@ export async function tryDb<T>(
     return await withTimeout(fn(), timeoutMs);
   } catch (err) {
     if (isDbDownError(err)) {
-      console.error(
+      console.warn(
         `[tryDb] DB unreachable${opts?.label ? ` (${opts.label})` : ""} — using fallback.`,
         err instanceof Error ? err.message : err
       );
