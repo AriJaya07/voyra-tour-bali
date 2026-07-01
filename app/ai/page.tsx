@@ -15,11 +15,11 @@ import {
 export const metadata: Metadata = {
   title: "AI Tools · Voyra",
   description:
-    "Plan a trip, ask the concierge, scan vouchers — every Voyra AI tool in one place. Includes pricing, your wallet, and a how-it-works guide.",
+    "Plan a trip, ask the concierge, and get cultural + day-of-trip help — every Voyra AI tool in one place. Includes pricing, your wallet, and a how-it-works guide.",
   openGraph: {
     title: "AI Tools · Voyra",
     description:
-      "Every Voyra AI tool in one place — plan, concierge, cultural co-pilot, voucher reader.",
+      "Every Voyra AI tool in one place — plan, concierge, cultural co-pilot, day-of-trip helper.",
     images: ["/images/banner/banner-ai.png"],
     type: "article",
   },
@@ -49,6 +49,13 @@ const TOOLS: {
     cost: "1 credit per search",
   },
   {
+    href: "/ai/group",
+    emoji: "👥",
+    title: "Group Trip Planner",
+    blurb: "Add everyone's preferences — AI reconciles them into one balanced plan.",
+    cost: "8 credits per group plan",
+  },
+  {
     href: "/ai/tools",
     emoji: "🛕",
     title: "Cultural co-pilot",
@@ -61,13 +68,6 @@ const TOOLS: {
     title: "Day-of-Trip helper",
     blurb: "Real-time advice for weather, crowds, and last-minute plans.",
     cost: "Free for confirmed travelers · 3 credits otherwise",
-  },
-  {
-    href: "/ai/tools",
-    emoji: "📷",
-    title: "Voucher reader",
-    blurb: "Snap a tour voucher photo — auto-extract booking + add to calendar.",
-    cost: "5 credits per scan",
   },
 ];
 

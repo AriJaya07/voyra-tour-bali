@@ -757,6 +757,10 @@ const ENDPOINT_LABELS: Record<AiEndpoint, string> = {
   product_qa: "Ask about a specific tour",
   trip_briefing: "Pre-trip briefing",
   translate: "Translate travel content",
+  agent: "AI booking agent",
+  budget: "Fit itinerary to budget",
+  voice: "Voice message transcription",
+  consensus: "Group consensus plan",
 };
 
 /**
@@ -790,6 +794,10 @@ export async function estimateCost(
       product_qa: 2,
       trip_briefing: 3,
       translate: 2,
+      agent: 5,
+      budget: 4,
+      voice: 1,
+      consensus: 8,
     };
     credits = STATIC[endpoint];
   }

@@ -1,18 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import BackLink from "@/components/common/BackLink";
-import SpendConfirmDialog from "@/components/ai/SpendConfirmDialog";
 import {
-  useAiWallet,
   useCulturalMutation,
   useDayOfTripMutation,
-  useVoucherReadMutation,
 } from "@/utils/hooks/useAiWallet";
-import type { AiCulturalEvent, AiVoucherExtracted } from "@/utils/service/ai.service";
+import type { AiCulturalEvent } from "@/utils/service/ai.service";
 
 const fmtDate = (d: string | null) =>
   d ? new Date(d).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "—";
@@ -48,7 +45,6 @@ export default function AiToolsPage() {
       <div className="mt-6 grid gap-4">
         <CulturalCard />
         <DayOfTripCard />
-        <VoucherReadCard />
       </div>
     </main>
   );
@@ -204,127 +200,3 @@ function DayOfTripCard() {
   );
 }
 
-function VoucherReadCard() {
-  const wallet = useAiWallet({ enabled: true });
-  const mut = useVoucherReadMutation();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [extracted, setExtracted] = useState<AiVoucherExtracted | null>(null);
-  const [addToTrips, setAddToTrips] = useState(true);
-  const [addToCalendar, setAddToCalendar] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [created, setCreated] = useState<{ trip: number | null; calendar: number | null }>({
-    trip: null,
-    calendar: null,
-  });
-
-  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    if (!file) return;
-    setPendingFile(file);
-    setConfirmOpen(true);
-  }
-
-  function cancel() {
-    setConfirmOpen(false);
-    setPendingFile(null);
-    if (inputRef.current) inputRef.current.value = "";
-  }
-
-  async function onConfirm() {
-    if (!pendingFile) return;
-    try {
-      const res = await mut.mutateAsync({ file: pendingFile, opts: { addToTrips, addToCalendar } });
-      setExtracted(res.extracted);
-      setCreated({ trip: res.createdImportedTripId, calendar: res.createdCalendarEventId });
-      toast.success("Voucher extracted");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Voucher reader failed");
-    } finally {
-      setConfirmOpen(false);
-      setPendingFile(null);
-      if (inputRef.current) inputRef.current.value = "";
-    }
-  }
-
-  return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-semibold text-slate-900">📷 Voucher reader (vision)</h2>
-      <p className="mt-1 text-xs text-slate-500">
-        5 credits per scan · JPG / PNG / WEBP, max 8 MB. Disabled when vision env not configured.
-      </p>
-
-      <SpendConfirmDialog
-        open={confirmOpen}
-        cost={5}
-        balance={wallet.data?.balance ?? 0}
-        title="Read this voucher with AI?"
-        body="The vision model will extract booking metadata. Costs 5 credits per upload."
-        onCancel={cancel}
-        onConfirm={onConfirm}
-        busy={mut.isPending}
-      />
-
-      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-        <label className="inline-flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={addToTrips}
-            onChange={(e) => setAddToTrips(e.target.checked)}
-            className="h-4 w-4 accent-blue-600"
-          />
-          Add to my Imported Trips
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={addToCalendar}
-            onChange={(e) => setAddToCalendar(e.target.checked)}
-            className="h-4 w-4 accent-blue-600"
-          />
-          Add to Trip Calendar
-        </label>
-      </div>
-
-      <div className="mt-3">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={onPickFile}
-          disabled={mut.isPending}
-          className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:hover:bg-blue-700 disabled:opacity-60"
-        />
-      </div>
-
-      {extracted ? (
-        <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm">
-          <h3 className="font-semibold text-slate-900">Extracted</h3>
-          <ul className="mt-2 space-y-1 text-xs text-slate-700">
-            <li><strong>Title:</strong> {extracted.productTitle ?? "—"}</li>
-            <li><strong>Date:</strong> {extracted.travelDate ?? "—"} {extracted.travelTime ?? ""}</li>
-            <li><strong>Vendor:</strong> {extracted.vendor ?? "—"}</li>
-            <li><strong>Booking ref:</strong> {extracted.bookingRef ?? "—"}</li>
-            <li><strong>Lead:</strong> {extracted.leadName ?? "—"}</li>
-            <li><strong>Pax:</strong> {extracted.pax ?? "—"}</li>
-            <li><strong>Meeting:</strong> {extracted.meetingPoint ?? "—"}</li>
-            <li><strong>Total:</strong> {extracted.totalPrice ?? "—"}</li>
-            {extracted.notes ? <li><strong>Notes:</strong> {extracted.notes}</li> : null}
-          </ul>
-          {created.trip ? (
-            <p className="mt-3 text-xs text-emerald-700">
-              ✓ Saved to <Link href="/trips" className="underline">My Trips</Link>{" "}
-              (#{created.trip})
-            </p>
-          ) : null}
-          {created.calendar ? (
-            <p className="mt-1 text-xs text-emerald-700">
-              ✓ Added to <Link href="/trips/calendar" className="underline">Trip Calendar</Link>{" "}
-              (#{created.calendar})
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-    </section>
-  );
-}

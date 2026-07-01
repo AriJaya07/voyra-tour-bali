@@ -7,6 +7,7 @@ import { useCurrency } from "@/utils/hooks/useCurrency";
 import { formatBookingPrice } from "@/utils/formatPrice";
 import { AI_ENDPOINT_COST } from "@/lib/config/aiCosts";
 import SpendConfirmDialog from "@/components/ai/SpendConfirmDialog";
+import BudgetOptimizer from "@/components/ai/BudgetOptimizer";
 
 interface PlanItem {
   day: number;
@@ -189,6 +190,9 @@ export default function ItineraryRefinePanel({ itineraryId }: { itineraryId: num
           Use <span className="font-semibold text-[#0071CE]">Cheaper options</span> below to fit a budget.
         </p>
       </div>
+
+      {/* AI budget optimizer — set a target, get swap/remove suggestions */}
+      <BudgetOptimizer itineraryId={itineraryId} />
 
       <div className="mt-3 space-y-4">
         {days.map(({ day, items: dayItems }) => (

@@ -57,7 +57,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (!booking) {
-      return NextResponse.json({ error: "No upcoming confirmed booking found" }, { status: 404 });
+      // Not an error — the request succeeded, there's simply nothing to brief yet.
+      // Return 200 with a flag so the UI shows a friendly empty state (no red 404).
+      return NextResponse.json({ noTrip: true }, { status: 200 });
     }
 
     // Cultural events overlapping the travel window (±3 days around travel date).

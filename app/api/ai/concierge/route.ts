@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import { VOYRA_KNOWLEDGE_BASE } from "@/lib/config/aiKnowledgeBase";
+import { semanticSearch, buildContextBlock } from "@/lib/services/ragService";
 import {
   cancelReservation,
   ensureFreeMonthlyGrant,
@@ -135,13 +136,16 @@ export async function POST(req: NextRequest) {
     reservationId = reserved.reservationId ?? null;
     billedUserId = userId;
 
-    // Pull memory + profile in parallel
-    const [memoryRow, user, prefs, loyalty] = await Promise.all([
+    // Pull memory + profile + grounded retrieval in parallel
+    const [memoryRow, user, prefs, loyalty, ragChunks] = await Promise.all([
       prisma.aiChatMemory.findUnique({ where: { userId } }),
       prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
       prisma.userPreferences.findUnique({ where: { userId } }),
       prisma.loyaltyAccount.findUnique({ where: { userId }, select: { tier: true } }),
+      semanticSearch(userMessage, 5).catch(() => []),
     ]);
+
+    const { contextText, sources } = buildContextBlock(ragChunks);
 
     const memory: MemoryShape = {
       messages: safeMessages(memoryRow?.messages),
@@ -167,12 +171,25 @@ export async function POST(req: NextRequest) {
       loyaltyTier: loyalty?.tier ?? null,
     });
 
+    // Ground the answer in Voyra's own content when we retrieved anything.
+    const groundedPrompt = contextText
+      ? `${systemPrompt}
+
+VOYRA SOURCES (retrieved from our own guides, catalog, cultural calendar, and community notes)
+${contextText}
+
+GROUNDING RULES
+- Prefer these sources when they are relevant. When a statement uses a source, cite it inline with its number in square brackets, e.g. [1].
+- Only cite a number that exists above. Do NOT invent sources or facts beyond them.
+- If the sources don't cover the question, answer from general Bali knowledge and add no citation.`
+      : systemPrompt;
+
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     const completion = await groq.chat.completions.create({
       model: MODEL,
       max_tokens: 600,
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: groundedPrompt },
         ...memory.messages.map((m) => ({ role: m.role, content: m.content }) as const),
         { role: "user", content: userMessage },
       ],
@@ -238,11 +255,15 @@ export async function POST(req: NextRequest) {
       }).catch(() => {});
     }
 
+    // Surface only the sources the assistant actually cited ([n] present in reply).
+    const citedSources = sources.filter((s) => reply.includes(`[${s.n}]`));
+
     return NextResponse.json({
       reply,
       remembered: !!newNote,
       noteAdded: newNote ?? null,
       memorySize: updatedMessages.length,
+      sources: citedSources,
     });
   } catch (error) {
     if (reservationId !== null) await cancelReservation(reservationId).catch(() => {});

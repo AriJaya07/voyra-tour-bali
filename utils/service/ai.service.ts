@@ -386,10 +386,12 @@ export interface AiTripBriefingEvent {
 }
 
 export interface AiTripBriefingResponse {
-  briefing: string;
-  checklist: string[];
-  booking: { id: number; productTitle: string; travelDate: string };
-  events: AiTripBriefingEvent[];
+  /** True when the user has no upcoming confirmed booking to brief. */
+  noTrip?: boolean;
+  briefing?: string;
+  checklist?: string[];
+  booking?: { id: number; productTitle: string; travelDate: string };
+  events?: AiTripBriefingEvent[];
 }
 
 export interface AiTranslateResponse {

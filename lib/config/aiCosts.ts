@@ -21,7 +21,11 @@ export type AiEndpoint =
   | "voucher_read"
   | "product_qa"
   | "trip_briefing"
-  | "translate";
+  | "translate"
+  | "agent"
+  | "budget"
+  | "voice"
+  | "consensus";
 
 /** Upfront cost reserved before invoking the LLM. Settle exact after. */
 export const AI_ENDPOINT_COST: Record<AiEndpoint, number> = {
@@ -36,6 +40,10 @@ export const AI_ENDPOINT_COST: Record<AiEndpoint, number> = {
   product_qa: 2,
   trip_briefing: 3,
   translate: 2,
+  agent: 5, // multi-hop tool-using booking agent
+  budget: 4, // itinerary IDR budget optimizer
+  voice: 1, // speech-to-text transcription (the chat turn bills separately)
+  consensus: 8, // group consensus itinerary generation
 };
 
 /** Variable surcharge for plan endpoint when days > 7. */

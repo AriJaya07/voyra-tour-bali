@@ -17,9 +17,16 @@ export default function TripBriefingCard() {
     setNoTrip(false);
     try {
       const res = await briefing.mutateAsync(undefined);
+      // Empty state now arrives as a normal 200 with { noTrip: true }.
+      if (res.noTrip || !res.booking) {
+        setData(null);
+        setNoTrip(true);
+        return;
+      }
       setData(res);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Briefing unavailable";
+      // Back-compat: older 404 path surfaced this message.
       if (/no upcoming/i.test(msg)) {
         setNoTrip(true);
         return;
@@ -58,7 +65,7 @@ export default function TripBriefingCard() {
         </p>
       )}
 
-      {data && (
+      {data && data.booking && (
         <div className="mt-4 space-y-4">
           <div className="rounded-xl bg-white p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-[#0071CE]">
@@ -67,11 +74,11 @@ export default function TripBriefingCard() {
             <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{data.briefing}</p>
           </div>
 
-          {data.events.length > 0 && (
+          {(data.events?.length ?? 0) > 0 && (
             <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
               <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Cultural events near your dates</p>
               <ul className="mt-2 space-y-1 text-sm text-amber-900">
-                {data.events.map((e) => (
+                {data.events!.map((e) => (
                   <li key={e.slug} className="flex flex-wrap items-center gap-x-2">
                     <span className="font-semibold">{e.name}</span>
                     <span className="text-xs text-amber-700">
@@ -85,11 +92,11 @@ export default function TripBriefingCard() {
             </div>
           )}
 
-          {data.checklist.length > 0 && (
+          {(data.checklist?.length ?? 0) > 0 && (
             <div className="rounded-xl bg-white p-4">
               <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Prep checklist</p>
               <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                {data.checklist.map((c, i) => (
+                {data.checklist!.map((c, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
                     <span className="mt-0.5 text-[#0071CE]">✓</span>
                     <span>{c}</span>
