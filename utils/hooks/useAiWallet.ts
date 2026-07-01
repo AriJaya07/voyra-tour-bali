@@ -170,6 +170,39 @@ export function useVoucherReadMutation() {
   });
 }
 
+export function useSearchParseMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (query: string) => aiService.searchParse(query),
+    onSettled: () => qc.invalidateQueries({ queryKey: AI_QUERY_KEYS.wallet }),
+  });
+}
+
+export function useProductQaMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { question: string; destinationId?: number; context?: string }) =>
+      aiService.productQa(params),
+    onSettled: () => qc.invalidateQueries({ queryKey: AI_QUERY_KEYS.wallet }),
+  });
+}
+
+export function useTripBriefingMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (bookingId?: number) => aiService.tripBriefing(bookingId),
+    onSettled: () => qc.invalidateQueries({ queryKey: AI_QUERY_KEYS.wallet }),
+  });
+}
+
+export function useTranslateMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { text: string; targetLang: string }) => aiService.translate(params),
+    onSettled: () => qc.invalidateQueries({ queryKey: AI_QUERY_KEYS.wallet }),
+  });
+}
+
 export function useLoyaltyRedeemMutation() {
   const qc = useQueryClient();
   return useMutation({

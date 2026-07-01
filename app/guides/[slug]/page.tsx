@@ -6,7 +6,7 @@ import Container from "@/components/Container";
 import { SITE_NAME, SITE_URL } from "@/lib/config";
 import { estimateReadingMinutes } from "@/lib/guides/readingTime";
 import { extractToc } from "@/lib/guides/toc";
-import GuideMarkdown from "@/components/guides/detail/GuideMarkdown";
+import GuideBodyWithTranslate from "@/components/guides/detail/GuideBodyWithTranslate";
 import GuideToc from "@/components/guides/detail/GuideToc";
 import RelatedGuides from "@/components/guides/detail/RelatedGuides";
 import AiPlanHandoff from "@/components/guides/detail/AiPlanHandoff";
@@ -171,7 +171,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           <div className="grid gap-10 lg:grid-cols-[220px_minmax(0,1fr)]">
             <GuideToc items={toc} />
             <div>
-              <GuideMarkdown body={guide.body} />
+              <GuideBodyWithTranslate body={guide.body} />
 
               {guide.tags.length > 0 && (
                 <div className="mt-8 flex flex-wrap gap-2">

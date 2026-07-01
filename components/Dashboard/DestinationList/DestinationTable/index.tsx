@@ -64,7 +64,7 @@ export default function DestinationTable({
             <p className="text-slate-500 text-sm truncate">{dest.description}</p>
 
             <span className="text-sm font-semibold text-slate-800">
-              {formatPrice(Number(dest.price))}
+              {formatPrice(Number(dest.price), "IDR")}
             </span>
 
             <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium w-fit">

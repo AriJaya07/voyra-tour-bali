@@ -5,6 +5,7 @@ import OptimizedImage from "@/components/common/OptimizedImage"
 import WishlistButton from "@/components/common/WishlistButton"
 import StyleMatchBadge from "@/components/common/StyleMatchBadge"
 import { formatPrice, CurrencyCode } from "@/utils/formatPrice"
+import { useCurrency } from "@/utils/hooks/useCurrency"
 import type { UnifiedActivity } from "@/types/tourism"
 import { ClockIcon, StarSolidIcon } from "@/components/assets/Icon/shared"
 import { buildViatorProductUrl } from "@/lib/config/viator"
@@ -20,6 +21,7 @@ interface ActivityCardProps {
 }
 
 export function ActivityCard({ item, currency }: ActivityCardProps) {
+  const { exchangeRates } = useCurrency()
   const isViator = item.source === "viator"
   const href = isViator
     ? buildViatorProductUrl(item.productCode!, item.title)
@@ -106,12 +108,12 @@ export function ActivityCard({ item, currency }: ActivityCardProps) {
 
                 {item.priceBeforeDiscount && (
                   <p className="text-[11px] text-gray-400 line-through leading-tight">
-                    {formatPrice(item.priceBeforeDiscount, currency, sourceCurrency)}
+                    {formatPrice(item.priceBeforeDiscount, currency, sourceCurrency, exchangeRates)}
                   </p>
                 )}
 
                 <p className={`text-sm sm:text-base font-black leading-tight ${item.priceBeforeDiscount ? "text-red-600" : "text-gray-900"}`}>
-                  {formatPrice(item.price, currency, sourceCurrency)}
+                  {formatPrice(item.price, currency, sourceCurrency, exchangeRates)}
                 </p>
               </>
             ) : (

@@ -18,7 +18,10 @@ export type AiEndpoint =
   | "concierge"
   | "day_of_trip"
   | "cultural"
-  | "voucher_read";
+  | "voucher_read"
+  | "product_qa"
+  | "trip_briefing"
+  | "translate";
 
 /** Upfront cost reserved before invoking the LLM. Settle exact after. */
 export const AI_ENDPOINT_COST: Record<AiEndpoint, number> = {
@@ -30,6 +33,9 @@ export const AI_ENDPOINT_COST: Record<AiEndpoint, number> = {
   day_of_trip: 3,
   cultural: 2,
   voucher_read: 5,
+  product_qa: 2,
+  trip_briefing: 3,
+  translate: 2,
 };
 
 /** Variable surcharge for plan endpoint when days > 7. */

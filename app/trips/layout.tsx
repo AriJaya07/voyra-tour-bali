@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export default function TripsLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
-      <div className="max-w-3xl mx-auto px-4 pt-10">
+      <div className="max-w-[1280px] mx-auto px-[15px] sm:px-[30px] 2xl:px-0 pt-10">
         <div className="flex flex-row items-center gap-4 mb-2 flex-wrap">
           <BackLink href="/profile" label="Back to profile" />
           <h1 className="text-2xl font-bold text-gray-900">My Trips</h1>

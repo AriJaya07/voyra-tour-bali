@@ -16,6 +16,7 @@ import SimilarTours from "@/components/DetailProduct/SimilarTours";
 import SocialProofBadge from "@/components/DetailProduct/SocialProofBadge";
 import TrustBadges from "@/components/DetailProduct/TrustBadges";
 import ExcpectDetail from "@/components/DetailProduct/ExpectDetail";
+import AskAboutTour from "@/components/DetailProduct/AskAboutTour";
 import ContentsSection from "@/components/DetailProduct/ContentsSection";
 import LocationSection from "@/components/DetailProduct/LocationSection";
 import PackagesSection from "@/components/DetailProduct/PackagesSection";
@@ -210,6 +211,10 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
                             destinationTitle={destination.title}
                         />
                         <ExcpectDetail images={destination.images} />
+                        <AskAboutTour
+                            destinationId={destination.id}
+                            productTitle={destination.title}
+                        />
                         <PublicNotesBlock
                             targetType="destination"
                             targetKey={slug}

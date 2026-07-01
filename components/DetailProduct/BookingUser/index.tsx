@@ -10,7 +10,6 @@ import { useCreatePayment } from '@/utils/hooks/usePayment'
 import { formatPrice } from '@/utils/formatPrice'
 import type { CurrencyCode } from '@/utils/formatPrice'
 import { useCurrency } from '@/utils/hooks/useCurrency'
-import CurrencySwitch from '@/components/common/CurrencySwitch'
 import {
   useViatorAvailability,
   extractPriceMap,
@@ -116,6 +115,7 @@ function TravelerRow({
 }) {
   const displayPrice = effectivePrice(traveler)
   const hasLivePrice = traveler.livePrice !== null
+  const { exchangeRates } = useCurrency()
 
   return (
     <div className="flex items-center justify-between py-2.5">
@@ -130,7 +130,7 @@ function TravelerRow({
               <span className="inline-block w-16 h-3 bg-gray-200 rounded animate-pulse" />
             ) : (
               <span className={hasLivePrice ? "text-green-600 font-medium" : ""}>
-                {formatPrice(displayPrice, currency, pricingCurrency as CurrencyCode)}
+                {formatPrice(displayPrice, currency, pricingCurrency as CurrencyCode, exchangeRates)}
               </span>
             )}
           </div>
@@ -177,7 +177,7 @@ export default function BookingUser({
 }: BookingUserProps) {
   const { data: session } = useSession()
   const router = useRouter()
-  const { currency } = useCurrency()
+  const { currency, exchangeRates } = useCurrency()
 
   const [date, setDate] = useState<Date | null>(null)
   const [travelers, setTravelers] = useState<TravelerCount[]>(() => buildTravelers(ageBands, price))
@@ -260,7 +260,7 @@ export default function BookingUser({
     const selectedDate = date ? fmtDate(date) : "—"
     const travelerLines = travelersWithPricing
       .filter((t) => t.count > 0)
-      .map((t) => `  ${t.label}: ${t.count} pax (${formatPrice(effectivePrice(t), currency, pricingCurrency as CurrencyCode)}/pp)`)
+      .map((t) => `  ${t.label}: ${t.count} pax (${formatPrice(effectivePrice(t), currency, pricingCurrency as CurrencyCode, exchangeRates)}/pp)`)
       .join("\n")
 
     const lines = [
@@ -271,7 +271,7 @@ export default function BookingUser({
       `Date: ${selectedDate}`,
       `Travelers:`,
       travelerLines || "  Not specified",
-      `Total: ${formatPrice(totalPrice, currency, pricingCurrency as CurrencyCode)}`,
+      `Total: ${formatPrice(totalPrice, currency, pricingCurrency as CurrencyCode, exchangeRates)}`,
       ``,
       `Please confirm, thank you!`,
     ]
@@ -332,7 +332,7 @@ export default function BookingUser({
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-gray-700">Starting from</span>
             <span className="text-lg font-black text-gray-900">
-              {formatPrice(price, currency, pricingCurrency as CurrencyCode)}
+              {formatPrice(price, currency, pricingCurrency as CurrencyCode, exchangeRates)}
             </span>
           </div>
           <p className="text-xs text-gray-400 mt-1">per person</p>
@@ -389,7 +389,6 @@ export default function BookingUser({
       <div className="flex items-center justify-between mb-1">
         <p className="text-base font-bold text-black truncate pr-2">Booking</p>
         <div className="flex items-center gap-2 shrink-0">
-          <CurrencySwitch size="sm" />
           {isNotAvailable ? (
             <span className="text-[10px] bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">
               Unavailable
@@ -479,7 +478,7 @@ export default function BookingUser({
               <span className="inline-block w-20 h-4 bg-gray-200 rounded animate-pulse" />
             ) : (
               <span className="text-gray-700 font-medium">
-                {formatPrice(t.count * effectivePrice(t), currency, pricingCurrency as CurrencyCode)}
+                {formatPrice(t.count * effectivePrice(t), currency, pricingCurrency as CurrencyCode, exchangeRates)}
               </span>
             )}
           </div>
@@ -499,7 +498,7 @@ export default function BookingUser({
           ) : (
             <span className="text-lg font-black text-gray-900">
               {totalTravelers > 0
-                ? formatPrice(totalPrice, currency, pricingCurrency as CurrencyCode)
+                ? formatPrice(totalPrice, currency, pricingCurrency as CurrencyCode, exchangeRates)
                 : formatPrice(0, currency)
               }
             </span>

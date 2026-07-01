@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useCreatePayment } from "@/utils/hooks/usePayment"
 import { formatPrice } from "@/utils/formatPrice"
+import { useCurrency } from "@/utils/hooks/useCurrency"
 import { toast } from "sonner"
 import WhatsAppIcon from "../../assets/sosmed/WhatsAppIcon"
 
@@ -23,14 +24,14 @@ interface PackagesSectionProps {
 
 const WA_NUMBER = "6281234567890"
 
-function buildWaUrl(pkgTitle: string, destTitle: string, price: number) {
+function buildWaUrl(pkgTitle: string, destTitle: string, priceLabel: string) {
   const lines = [
     `Hello Voyra Bali!`,
     `I'm interested in the following package:`,
     ``,
     `Package: ${pkgTitle}`,
     `Destination: ${destTitle}`,
-    `Price: ${formatPrice(price)}`,
+    `Price: ${priceLabel}`,
     ``,
     `Please provide more details, thank you!`,
   ]
@@ -40,8 +41,12 @@ function buildWaUrl(pkgTitle: string, destTitle: string, price: number) {
 export default function PackagesSection({ packages, destinationTitle }: PackagesSectionProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const { currency, exchangeRates } = useCurrency();
   const [bookingPkgId, setBookingPkgId] = useState<number | null>(null)
   const paymentMutation = useCreatePayment()
+
+  // Package.price is stored in IDR; convert to the user's display currency.
+  const priceLabelFor = (idr: number) => formatPrice(idr, currency, "IDR", exchangeRates);
 
   if (!packages || packages.length === 0) return null
 
@@ -136,7 +141,7 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
                 {/* Price */}
                 <div className="pt-2 mt-auto border-t border-gray-100">
                   <p className="text-xs text-gray-400">Starting from</p>
-                  <p className="text-lg font-black text-gray-900 mb-4">{formatPrice(pkg.price)}</p>
+                  <p className="text-lg font-black text-gray-900 mb-4">{priceLabelFor(pkg.price)}</p>
 
                   <div className="flex flex-col gap-2">
                     <button
@@ -149,7 +154,7 @@ export default function PackagesSection({ packages, destinationTitle }: Packages
                     </button>
 
                     <a
-                      href={buildWaUrl(pkg.title, destinationTitle, pkg.price)}
+                      href={buildWaUrl(pkg.title, destinationTitle, priceLabelFor(pkg.price))}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex justify-center items-center gap-2 py-2.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white text-sm font-bold rounded-xl transition-colors shadow-sm w-full"

@@ -33,7 +33,7 @@ export function DestinationDetailModal({
             <div className="bg-slate-50 rounded-xl p-4">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Price</p>
               <p className="text-lg font-bold text-slate-900">
-                {formatPrice(Number(destination.price))}
+                {formatPrice(Number(destination.price), "IDR")}
               </p>
             </div>
             <div className="bg-slate-50 rounded-xl p-4">

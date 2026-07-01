@@ -11,6 +11,7 @@ import DayPanel from "@/components/calendar/DayPanel";
 import EventFormDialog from "@/components/calendar/EventFormDialog";
 import EventViewDialog from "@/components/calendar/EventViewDialog";
 import { useConfirm } from "@/components/common/ConfirmDialog";
+import TripsSignedOut from "@/components/trips/TripsSignedOut";
 import { useCalendarEvents } from "@/utils/hooks/useCalendarEvents";
 import type { CalendarEventDTO, DayEntry } from "@/components/calendar/types";
 import PlusIcon from "@/components/assets/dashboard/PlusIcon";
@@ -399,19 +400,7 @@ export default function CalendarPage() {
   }
 
   if (status === "unauthenticated") {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20 px-4">
-        <div className="text-center">
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Sign in required</h1>
-          <Link
-            href="/login"
-            className="inline-block px-6 py-3 bg-[#0071CE] text-white font-bold rounded-full hover:bg-[#005ba6] transition"
-          >
-            Sign In
-          </Link>
-        </div>
-      </div>
-    );
+    return <TripsSignedOut variant="calendar" />;
   }
 
   const todayKey = isoDay(new Date());

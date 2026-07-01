@@ -48,7 +48,7 @@ export default function PackageList() {
     { label: "Total Packages", value: packages.length, color: "violet" as const },
     {
       label: "Total Value",
-      value: formatPrice(totalRevenue),
+      value: formatPrice(totalRevenue, "IDR"),
       color: "emerald" as const,
     },
     { label: "With Category", value: withCategory, color: "blue" as const },

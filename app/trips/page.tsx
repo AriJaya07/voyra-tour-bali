@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import TripsClient, { type Itinerary } from "./TripsClient";
+import TripsSignedOut from "@/components/trips/TripsSignedOut";
 
 export const dynamic = "force-dynamic";
 
@@ -11,19 +11,7 @@ export default async function ItinerariesListPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20 px-4">
-        <div className="text-center">
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Sign in required</h1>
-          <Link
-            href="/login"
-            className="inline-block px-6 py-3 bg-[#0071CE] text-white font-bold rounded-full hover:bg-[#005ba6] transition"
-          >
-            Sign In
-          </Link>
-        </div>
-      </div>
-    );
+    return <TripsSignedOut variant="trips" />;
   }
 
   const userId = parseInt(session.user.id);

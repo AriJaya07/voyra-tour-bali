@@ -204,9 +204,9 @@ export default function BookingViewModal({
               {booking.languageGuide && (
                 <InfoRow label="Language" value={booking.languageGuide} />
               )}
-              <InfoRow label="Total Price" value={formatPrice(booking.totalPrice)} highlight />
+              <InfoRow label="Total Price" value={formatPrice(booking.totalPrice, "IDR")} highlight />
               {booking.manualPrice && (
-                <InfoRow label="Admin Price" value={formatPrice(booking.manualPrice)} highlight />
+                <InfoRow label="Admin Price" value={formatPrice(booking.manualPrice, "IDR")} highlight />
               )}
               <InfoRow label="Booked At" value={fmtDateTime(booking.createdAt)} />
             </Section>

@@ -103,7 +103,7 @@ export default function BookingTable({
                   </td>
                   <td className="px-5 py-3">
                     <span className="text-white font-bold text-sm">
-                      {formatPrice(b.totalPrice)}
+                      {formatPrice(b.totalPrice, "IDR")}
                     </span>
                   </td>
                   <td className="px-5 py-3">

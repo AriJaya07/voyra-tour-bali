@@ -67,7 +67,7 @@ export default function PackageTable({ packages, onView, onEdit, onDelete }: Pro
             <p className="text-slate-500 text-sm truncate">{pkg.description}</p>
 
             <span className="text-sm font-bold text-slate-800">
-              {formatPrice(Number(pkg.price))}
+              {formatPrice(Number(pkg.price), "IDR")}
             </span>
 
             {pkg.category ? (

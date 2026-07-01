@@ -79,7 +79,7 @@ export default function BookingList() {
         <StatCard label="Confirmed" value={confirmedCount} icon="✅" />
         <StatCard
           label="Revenue"
-          value={formatPrice(revenue)}
+          value={formatPrice(revenue, "IDR")}
           icon="💰"
           isString
         />

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAiWallet, usePlanRefineMutation } from "@/utils/hooks/useAiWallet";
+import { useCurrency } from "@/utils/hooks/useCurrency";
+import { formatBookingPrice } from "@/utils/formatPrice";
 import { AI_ENDPOINT_COST } from "@/lib/config/aiCosts";
 import SpendConfirmDialog from "@/components/ai/SpendConfirmDialog";
 
@@ -34,6 +36,7 @@ const QUICK_CHIPS = [
 
 export default function ItineraryRefinePanel({ itineraryId }: { itineraryId: number }) {
   const wallet = useAiWallet({ enabled: true });
+  const { currency, exchangeRates } = useCurrency();
   const refine = usePlanRefineMutation();
 
   const [items, setItems] = useState<PlanItem[] | null>(null);
@@ -80,6 +83,22 @@ export default function ItineraryRefinePanel({ itineraryId }: { itineraryId: num
         day,
         items: [...list].sort((a, b) => (SLOT_ORDER[a.slot] ?? 9) - (SLOT_ORDER[b.slot] ?? 9)),
       }));
+  }, [items]);
+
+  // Budget snapshot (Proposal D): activity prices are Viator USD → shown in the user's currency.
+  const budget = useMemo(() => {
+    let totalUsd = 0;
+    let paidCount = 0;
+    let freeCount = 0;
+    for (const it of items ?? []) {
+      if (typeof it.price === "number" && it.price > 0) {
+        totalUsd += it.price;
+        paidCount += 1;
+      } else {
+        freeCount += 1;
+      }
+    }
+    return { totalUsd, paidCount, freeCount };
   }, [items]);
 
   const balance = wallet.data?.balance ?? 0;
@@ -153,6 +172,22 @@ export default function ItineraryRefinePanel({ itineraryId }: { itineraryId: num
         <span className="text-[11px] font-semibold text-gray-400">
           {REFINE_COST} credits / day · balance {balance}
         </span>
+      </div>
+
+      {/* Budget snapshot */}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white p-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Est. activities cost</p>
+          <p className="text-lg font-extrabold text-gray-900">
+            {budget.totalUsd > 0
+              ? formatBookingPrice({ price: budget.totalUsd, currency: "USD" }, currency, exchangeRates)
+              : "—"}
+          </p>
+        </div>
+        <p className="text-[11px] text-gray-400 text-right max-w-[55%]">
+          {budget.paidCount} paid · {budget.freeCount} free/tips. Excludes stay, food & transport.
+          Use <span className="font-semibold text-[#0071CE]">Cheaper options</span> below to fit a budget.
+        </p>
       </div>
 
       <div className="mt-3 space-y-4">

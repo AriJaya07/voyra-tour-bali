@@ -754,6 +754,9 @@ const ENDPOINT_LABELS: Record<AiEndpoint, string> = {
   day_of_trip: "Day-of-trip helper",
   cultural: "Cultural calendar question",
   voucher_read: "Read a booking voucher (vision)",
+  product_qa: "Ask about a specific tour",
+  trip_briefing: "Pre-trip briefing",
+  translate: "Translate travel content",
 };
 
 /**
@@ -784,6 +787,9 @@ export async function estimateCost(
       day_of_trip: 3,
       cultural: 2,
       voucher_read: 5,
+      product_qa: 2,
+      trip_briefing: 3,
+      translate: 2,
     };
     credits = STATIC[endpoint];
   }

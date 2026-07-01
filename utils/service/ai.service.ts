@@ -331,7 +331,71 @@ export const aiService = {
     const { data } = await api.post("/ai/preview-cost", { endpoint, params });
     return data;
   },
+
+  searchParse: async (query: string): Promise<AiSearchParseResponse> => {
+    const { data } = await api.post("/ai/search-parse", { query });
+    return data;
+  },
+
+  productQa: async (params: {
+    question: string;
+    destinationId?: number;
+    context?: string;
+  }): Promise<AiProductQaResponse> => {
+    const { data } = await api.post("/ai/product-qa", params);
+    return data;
+  },
+
+  tripBriefing: async (bookingId?: number): Promise<AiTripBriefingResponse> => {
+    const { data } = await api.post("/ai/trip-briefing", bookingId ? { bookingId } : {});
+    return data;
+  },
+
+  translate: async (params: { text: string; targetLang: string }): Promise<AiTranslateResponse> => {
+    const { data } = await api.post("/ai/translate", params);
+    return data;
+  },
 };
+
+export interface AiSearchFilters {
+  keywords: string;
+  region: string | null;
+  themes: string[];
+  budgetMaxIdr: number | null;
+  kidFriendly: boolean;
+  indoor: boolean | null;
+  summary: string;
+}
+
+export interface AiSearchParseResponse {
+  filters: AiSearchFilters;
+}
+
+export interface AiProductQaResponse {
+  reply: string;
+}
+
+export interface AiTripBriefingEvent {
+  slug: string;
+  name: string;
+  type: string;
+  date: string;
+  endDate: string | null;
+  region: string | null;
+  impact: string | null;
+}
+
+export interface AiTripBriefingResponse {
+  briefing: string;
+  checklist: string[];
+  booking: { id: number; productTitle: string; travelDate: string };
+  events: AiTripBriefingEvent[];
+}
+
+export interface AiTranslateResponse {
+  translated: string;
+  lang: string;
+}
 
 export interface AiCulturalEvent {
   slug: string;

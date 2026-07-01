@@ -113,6 +113,20 @@ const HOW_IT_WORKS = [
   },
 ];
 
+// Static teaser shown to logged-out visitors so they can see what the AI produces.
+const SAMPLE_DAY: { slot: PlanItem["slot"]; title: string; tag: string }[] = [
+  { slot: "morning", title: "Tegallalang Rice Terraces + jungle swing", tag: "Tour" },
+  { slot: "afternoon", title: "Balinese cooking class in Ubud", tag: "Tour" },
+  { slot: "evening", title: "Sunset at Campuhan Ridge, dinner on Jl. Monkey Forest", tag: "Local tip" },
+];
+
+const LANDING_BENEFITS = [
+  { icon: "🎟️", title: "Real bookable tours", body: "Live Viator inventory matched to your vibe — not generic suggestions." },
+  { icon: "🧭", title: "Local tips fill the gaps", body: "Free things, food spots and timing curated for each slot." },
+  { icon: "💾", title: "Save, share & book", body: "Keep plans in your profile, share a link, or book the bundle in one tap." },
+  { icon: "🔍", title: "Refine any day", body: "\"More food\", \"less driving\", \"cheaper\" — reshape a day with AI anytime." },
+];
+
 export default function PlanPage() {
   const { status } = useSession();
   const prefs = usePrefsStore((s) => s.prefs);
@@ -567,26 +581,146 @@ export default function PlanPage() {
   const totalPax = partyAdults + partyChildren + partySeniors + partyInfants;
   const insufficientCredits = costEstimate ? costEstimate.balance < costEstimate.cost : false;
 
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-[15px] sm:px-[30px] 2xl:px-0">
+        <div className="max-w-[1280px] mx-auto space-y-6">
+          <div className="h-56 rounded-2xl bg-gray-200 animate-pulse" />
+          <div className="h-40 rounded-2xl bg-gray-100 animate-pulse" />
+          <div className="h-72 rounded-2xl bg-gray-100 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
   if (status === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20 px-4">
-        <div className="text-center max-w-sm">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Trip Planner</h1>
-          <p className="text-gray-600 mb-6">Sign in to plan your perfect Bali itinerary.</p>
-          <Link
-            href="/login?callbackUrl=/ai/plan"
-            className="inline-block px-6 py-3 bg-[#0071CE] text-white font-bold rounded-full hover:bg-[#005ba6] transition"
-          >
-            Sign In
-          </Link>
+      <div className="min-h-screen bg-gray-50 pt-8 pb-16 px-[15px] sm:px-[30px] 2xl:px-0">
+        <div className="max-w-[1280px] mx-auto">
+          <div className="mb-4">
+            <BackLink href="/ai" label="Back to AI hub" />
+          </div>
+
+          {/* Hero */}
+          <div className="relative overflow-hidden rounded-2xl p-6 sm:p-12 text-white mb-6 shadow-lg">
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[url('/images/banner/banner-plan.png')] bg-cover bg-center pointer-events-none"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-br from-[#0071CE]/85 via-[#0071CE]/60 to-[#005ba6]/85 pointer-events-none"
+            />
+            <div className="relative z-10 max-w-xl">
+              <span className="inline-block bg-white/15 border border-white/25 text-blue-100 text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
+                AI Trip Planner
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-3 drop-shadow">
+                Your perfect Bali itinerary, built in 30 seconds
+              </h1>
+              <p className="text-blue-50 text-sm sm:text-base drop-shadow-sm mb-6">
+                Tell us your dates, budget and vibe. AI blends real bookable tours with local tips into a
+                day-by-day plan you can save, share, and book.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/login?callbackUrl=/ai/plan"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#0071CE] font-bold rounded-full hover:bg-blue-50 transition shadow-sm"
+                >
+                  Sign in to start
+                </Link>
+                <Link
+                  href="/register?callbackUrl=/ai/plan"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-white/15 border border-white/40 text-white font-bold rounded-full hover:bg-white/25 transition"
+                >
+                  Create free account
+                </Link>
+              </div>
+              <p className="text-blue-100/90 text-xs mt-3">Free monthly AI credits included — no card required.</p>
+            </div>
+          </div>
+
+          {/* Benefits */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            {LANDING_BENEFITS.map((b) => (
+              <div key={b.title} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex gap-3">
+                <span className="text-2xl shrink-0" aria-hidden>{b.icon}</span>
+                <div>
+                  <p className="font-bold text-sm text-gray-900">{b.title}</p>
+                  <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{b.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* How it works */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-6">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">How it works</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {HOW_IT_WORKS.map((s) => (
+                <div key={s.step} className="flex gap-3 sm:flex-col sm:gap-2">
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#0071CE] to-[#005ba6] text-white text-sm font-bold flex items-center justify-center shadow">
+                    {s.step}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-gray-900">{s.title}</p>
+                    <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{s.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Sample itinerary teaser */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-gray-500">Sample: Day 1 in Ubud</h2>
+              <span className="text-[10px] font-bold text-[#0071CE] bg-blue-50 px-2 py-0.5 rounded-full">Preview</span>
+            </div>
+            <div className="space-y-2">
+              {SAMPLE_DAY.map((it) => (
+                <div key={it.slot} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                  <span className="text-lg shrink-0" aria-hidden>{SLOT_EMOJI[it.slot]}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">{SLOT_LABEL[it.slot]}</p>
+                    <p className="text-sm font-semibold text-gray-800 truncate">{it.title}</p>
+                  </div>
+                  <span className="shrink-0 text-[10px] font-bold text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
+                    {it.tag}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-3">Your real plan adapts to your dates, party, budget and interests.</p>
+          </div>
+
+          {/* Final CTA */}
+          <div className="rounded-2xl bg-gradient-to-br from-[#0071CE] to-[#005ba6] p-6 text-center text-white shadow-lg">
+            <p className="font-bold text-lg mb-1">Ready to plan your trip?</p>
+            <p className="text-blue-100 text-sm mb-4">Sign in and get your first itinerary in under a minute.</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/login?callbackUrl=/ai/plan"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#0071CE] font-bold rounded-full hover:bg-blue-50 transition"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/explore"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white/15 border border-white/40 text-white font-bold rounded-full hover:bg-white/25 transition"
+              >
+                Explore Bali first
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-[15px] sm:px-[30px] 2xl:px-0">
+      <div className="max-w-[1280px] mx-auto">
         <div className="mb-4">
           <BackLink href="/ai" label="Back to AI hub" />
         </div>

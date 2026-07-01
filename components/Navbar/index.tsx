@@ -10,7 +10,6 @@ import SearchIcon from "../assets/Icon/SearchIcon"
 import { ProfileIcon, DashboardIcon, HomeIcon, SignOutIcon, ChevronDownIcon } from "../assets/Icon/NavIcons"
 import HeartIcon from "../assets/Icon/shared/HeartIcon"
 import NotificationBell from "../notifications/NotificationBell"
-import CurrencyDropdown from "@/components/common/CurrencyDropdown"
 import { useWishlistStore } from "@/utils/hooks/useWishlist"
 
 const NAV_ITEMS = [
@@ -173,9 +172,6 @@ export default function Navbar() {
             {/* Notifications – Desktop */}
             <NotificationBell variant="desktop" />
 
-            {/* Currency – Desktop */}
-            <CurrencyDropdown variant="desktop" />
-
             {session ? (
               <div className="relative">
                 {/* Avatar button */}
@@ -269,10 +265,9 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile: Notifications + Currency + Avatar (or Sign In). Primary nav lives in MobileBottomNav. */}
+          {/* Mobile: Notifications + Avatar (or Sign In). Primary nav lives in MobileBottomNav. */}
           <div className="flex lg:hidden items-center gap-2 flex-shrink-0">
             <NotificationBell variant="mobile" />
-            <CurrencyDropdown variant="mobile" />
 
             {session ? (
               <div className="relative">

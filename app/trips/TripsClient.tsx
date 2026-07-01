@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useConfirm } from "@/components/common/ConfirmDialog";
 import BookFromItineraryButton from "@/components/ai/BookFromItineraryButton";
 import ItineraryRefinePanel from "@/components/trips/ItineraryRefinePanel";
+import TripBriefingCard from "@/components/trips/TripBriefingCard";
 
 export interface Itinerary {
   id: number;
@@ -121,6 +122,8 @@ export default function TripsClient({ initialItems }: Props) {
 
   return (
     <>
+      <TripBriefingCard />
+
       <div className="flex justify-end mb-4">
         <Link
           href="/ai/plan"

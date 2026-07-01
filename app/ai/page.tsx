@@ -42,6 +42,13 @@ const TOOLS: {
     primary: true,
   },
   {
+    href: "/search",
+    emoji: "🔎",
+    title: "AI Search",
+    blurb: "Describe your ideal day — budget, who's coming, the vibe — and get matched.",
+    cost: "1 credit per search",
+  },
+  {
     href: "/ai/tools",
     emoji: "🛕",
     title: "Cultural co-pilot",

@@ -10,7 +10,6 @@ import { useCreatePayment } from "@/utils/hooks/usePayment"
 import { formatPrice } from "@/utils/formatPrice"
 import type { CurrencyCode } from "@/utils/formatPrice"
 import { useCurrency } from "@/utils/hooks/useCurrency"
-import CurrencySwitch from "@/components/common/CurrencySwitch"
 import { trackBeginCheckout } from "@/utils/analytics"
 import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon"
 import VoryaIcon from "../assets/Icon/VoyraIcon"
@@ -58,6 +57,7 @@ function TravelerRow({
   onIncrement: () => void
   onDecrement: () => void
 }) {
+  const { exchangeRates } = useCurrency()
   return (
     <div className="flex items-center justify-between py-3">
       <div className="flex items-center gap-2.5 min-w-0">
@@ -65,7 +65,7 @@ function TravelerRow({
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-800">{traveler.label}</p>
           <p className="text-xs text-gray-400">
-            {formatPrice(traveler.price, currency, pricingCurrency as CurrencyCode)} / person
+            {formatPrice(traveler.price, currency, pricingCurrency as CurrencyCode, exchangeRates)} / person
           </p>
         </div>
       </div>
@@ -107,7 +107,7 @@ export default function BookingLocalWidget({
 }: BookingLocalWidgetProps) {
   const { data: session } = useSession()
   const router = useRouter()
-  const { currency } = useCurrency()
+  const { currency, exchangeRates } = useCurrency()
   const paymentMutation = useCreatePayment()
 
   const [date, setDate] = useState<Date | null>(null)
@@ -134,7 +134,7 @@ export default function BookingLocalWidget({
     const selectedDate = date ? fmtDate(date) : "—"
     const travelerLines = travelers
       .filter((t) => t.count > 0)
-      .map((t) => `  ${t.label}: ${t.count} pax (${formatPrice(t.price, currency, pricingCurrency as CurrencyCode)}/pp)`)
+      .map((t) => `  ${t.label}: ${t.count} pax (${formatPrice(t.price, currency, pricingCurrency as CurrencyCode, exchangeRates)}/pp)`)
       .join("\n")
     const lines = [
       "Hello Voyra Bali!",
@@ -144,7 +144,7 @@ export default function BookingLocalWidget({
       `Date: ${selectedDate}`,
       "Travelers:",
       travelerLines || "  Not specified",
-      `Total: ${formatPrice(totalPrice, currency, pricingCurrency as CurrencyCode)}`,
+      `Total: ${formatPrice(totalPrice, currency, pricingCurrency as CurrencyCode, exchangeRates)}`,
       "",
       "Please confirm, thank you!",
     ]
@@ -231,7 +231,6 @@ export default function BookingLocalWidget({
               <p className="text-base font-bold text-black truncate pr-2">
                 {image ? "Select your trip" : "Booking"}
               </p>
-              <CurrencySwitch size="sm" />
             </div>
             <p className="text-gray-400 text-xs mb-5">Pick a date, add travelers, and book instantly.</p>
 
@@ -290,7 +289,7 @@ export default function BookingLocalWidget({
                 <div key={t.ageBand} className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">{t.label} x {t.count}</span>
                   <span className="text-gray-700 font-medium">
-                    {formatPrice(t.count * t.price, currency, pricingCurrency as CurrencyCode)}
+                    {formatPrice(t.count * t.price, currency, pricingCurrency as CurrencyCode, exchangeRates)}
                   </span>
                 </div>
               ))}
@@ -299,7 +298,7 @@ export default function BookingLocalWidget({
                 <span className="text-sm font-bold text-gray-900">Total</span>
                 <span className="text-lg font-black text-gray-900">
                   {totalTravelers > 0
-                    ? formatPrice(totalPrice, currency, pricingCurrency as CurrencyCode)
+                    ? formatPrice(totalPrice, currency, pricingCurrency as CurrencyCode, exchangeRates)
                     : formatPrice(0, currency)}
                 </span>
               </div>
