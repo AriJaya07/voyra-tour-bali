@@ -91,13 +91,31 @@ export async function getDestinationDetail(id: string | number): Promise<Destina
 
 /**
  * 4. Home highlight
- * GET /home/list?orderBy=createdAt&orderType=DESC
+ * GET /feed/home → { hero, trending, forYou, latest, ... } (FeedItem[])
+ * Falls back to recommended destinations if the feed is unavailable.
  */
 export async function getHomeHighlights(): Promise<Destination[]> {
-  const data = await fetchNewsApi<Destination[] | PaginatedResponse<Destination>>(
-    "/home/list?orderBy=createdAt&orderType=DESC"
-  );
-  return toList(data);
+  const feed = await fetchNewsApi<{
+    hero?: Destination[];
+    trending?: Destination[];
+    forYou?: Destination[];
+    latest?: Destination[];
+  }>("/feed/home");
+
+  const highlights =
+    feed?.hero?.length
+      ? feed.hero
+      : feed?.forYou?.length
+      ? feed.forYou
+      : feed?.latest || [];
+
+  if (highlights.length) return highlights;
+
+  // Fallback: recommended destinations, newest first
+  const all = await getAllDestinations();
+  return all
+    .filter((d) => d.recommend === 1 || d.recommend === undefined)
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 }
 
 /**
