@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getAllDestinations, getDestinationDetail, getImageUrl } from '@/lib/newsApi';
+import { getAllDestinations, getDestinationDetail, getImageUrl, getCardImage, getCategoryName, getLocationText, getSummary } from '@/lib/newsApi';
 import BlogCard from '@/components/Blog/BlogCard';
 import { CalendarIcon, MapPinIcon, ChevronLeftIcon } from "@/components/assets/Icon/shared";
 import PromotionApp from '@/components/Homepage/PromotionApp';
@@ -24,9 +24,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${destination.title} | Bali Travel Now`,
-    description: destination.description,
+    description: getSummary(destination),
     openGraph: {
-      images: [getImageUrl(destination.image)],
+      images: [getCardImage(destination)],
     },
   };
 }
@@ -44,9 +44,12 @@ export default async function BlogDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const categoryName = getCategoryName(destination);
+  const locationText = getLocationText(destination.location);
+
   // Find related posts (same category, exclude current)
   const relatedPosts = allDestinations
-    .filter(d => d.categoryId === destination.categoryId && String(d.id) !== p.id)
+    .filter(d => String(d.categoryId) === String(destination.categoryId) && String(d.id) !== p.id)
     .slice(0, 3); // top 3
 
   return (
@@ -54,7 +57,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
       {/* Banner / Hero */}
       <div className="relative h-[60vh] min-h-[400px] w-full bg-slate-900">
         <Image
-          src={getImageUrl(destination.image)}
+          src={getImageUrl(destination.imageBanner || destination.image)}
           alt={destination.title}
           fill
           className="object-cover opacity-80"
@@ -69,9 +72,9 @@ export default async function BlogDetailPage({ params }: PageProps) {
               Back to Blog
             </Link>
             
-            {destination.categoryName && (
+            {categoryName && (
               <div className="mb-4 inline-block bg-amber-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">
-                {destination.categoryName}
+                {categoryName}
               </div>
             )}
             
@@ -90,10 +93,10 @@ export default async function BlogDetailPage({ params }: PageProps) {
                   })}
                 </div>
               )}
-              {destination.location && (
+              {locationText && (
                 <div className="flex items-center">
                   <MapPinIcon className="w-5 h-5 mr-2" />
-                  {typeof destination.location === 'string' ? destination.location : destination.location.title || destination.location.address}
+                  {locationText}
                 </div>
               )}
             </div>
@@ -104,7 +107,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
       {/* Content */}
       <div className="container mx-auto px-4 max-w-4xl pt-16">
         <div className="text-xl text-gray-600 mb-10 font-medium leading-relaxed border-l-4 border-amber-500 pl-6 py-2">
-          {destination.description}
+          {getSummary(destination)}
         </div>
         
         <article 
@@ -116,7 +119,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
         <div className="mt-16 py-6 border-t border-b border-gray-100 flex justify-between items-center">
           <span className="text-gray-500 ">Share this article</span>
           <Link href="/blog" className="text-amber-500 font-semibold hover:underline">
-            Explore more in {destination.categoryName || 'our blog'}
+            Explore more in {categoryName || 'our blog'}
           </Link>
         </div>
       </div>

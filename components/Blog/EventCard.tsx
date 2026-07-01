@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { EventItem } from "@/types/blog";
-import { getImageUrl } from "@/lib/newsApi";
+import { getCardImage, getLocationText, getSummary } from "@/lib/newsApi";
 import { CalendarIcon, MapPinIcon } from "@/components/assets/Icon/shared";
 
 export default function EventCard({ event }: { event: EventItem }) {
+  const locationText = getLocationText(event.location);
+
   return (
     <Link
       href={`/events/${event.id}`}
@@ -12,7 +14,7 @@ export default function EventCard({ event }: { event: EventItem }) {
     >
       <div className="relative h-60 md:h-full w-full overflow-hidden col-span-1">
         <Image
-          src={getImageUrl(event.image)}
+          src={getCardImage(event)}
           alt={event.title}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -39,13 +41,13 @@ export default function EventCard({ event }: { event: EventItem }) {
         </h3>
         
         <p className="text-gray-600 mb-4 line-clamp-2 ">
-          {event.description}
+          {getSummary(event)}
         </p>
-        
-        {event.location && (
+
+        {locationText && (
           <div className="flex items-center text-sm text-gray-500 mt-auto ">
             <MapPinIcon className="w-5 h-5 mr-1.5" />
-            {typeof event.location === 'string' ? event.location : event.location.title || event.location.address}
+            {locationText}
           </div>
         )}
       </div>

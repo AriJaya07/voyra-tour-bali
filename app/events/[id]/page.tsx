@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getEventDetail, getImageUrl } from '@/lib/newsApi';
+import { getEventDetail, getImageUrl, getCardImage, getLocationText, getSummary } from '@/lib/newsApi';
 import { CalendarIcon, MapPinIcon, ChevronLeftIcon } from "@/components/assets/Icon/shared";
 
 interface PageProps {
@@ -21,9 +21,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${event.title} | Bali Events`,
-    description: event.description,
+    description: getSummary(event),
     openGraph: {
-      images: [getImageUrl(event.image)],
+      images: [getCardImage(event)],
     },
   };
 }
@@ -37,6 +37,8 @@ export default async function EventDetailPage({ params }: PageProps) {
   if (!event) {
     notFound();
   }
+
+  const locationText = getLocationText(event.location);
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20 pt-20">
@@ -52,7 +54,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           {/* Banner */}
           <div className="relative h-[400px] w-full">
             <Image
-              src={getImageUrl(event.image)}
+              src={getImageUrl(event.imageBanner || event.image)}
               alt={event.title}
               fill
               className="object-cover"
@@ -70,14 +72,14 @@ export default async function EventDetailPage({ params }: PageProps) {
             </h1>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-10 pb-10 border-b border-gray-100 ">
-              {event.location && (
+              {locationText && (
                 <div className="flex items-center text-gray-600 ">
                   <div className="bg-indigo-50 p-3 rounded-full mr-4">
                     <MapPinIcon className="w-6 h-6 text-indigo-600 " />
                   </div>
                   <div>
                     <div className="text-sm text-gray-400 font-medium">Location</div>
-                    <div className="font-semibold">{typeof event.location === 'string' ? event.location : event.location.title || event.location.address}</div>
+                    <div className="font-semibold">{locationText}</div>
                   </div>
                 </div>
               )}
@@ -96,7 +98,7 @@ export default async function EventDetailPage({ params }: PageProps) {
             </div>
 
             <div className="text-xl text-gray-600 mb-10 font-medium leading-relaxed">
-              {event.description}
+              {getSummary(event)}
             </div>
             
             <article 

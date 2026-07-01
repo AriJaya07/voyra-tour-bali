@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
-import { getAllDestinations, getCategories, getHomeHighlights, getImageUrl } from '@/lib/newsApi';
+import { getAllDestinations, getCategories, getHomeHighlights, getCardImage, getSummary } from '@/lib/newsApi';
 import BlogCard from '@/components/Blog/BlogCard';
 import CategoryFilter from '@/components/Blog/CategoryFilter';
 import SectionHeader from '@/components/Blog/SectionHeader';
@@ -77,7 +77,7 @@ export default async function BlogPage(props: {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100 ">
               <div className="relative h-72 md:h-96 w-full rounded-2xl overflow-hidden shadow-md">
                 <Image
-                  src={getImageUrl(featuredBlog.image)}
+                  src={getCardImage(featuredBlog)}
                   alt={featuredBlog.title}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -91,7 +91,7 @@ export default async function BlogPage(props: {
                   {featuredBlog.title}
                 </h3>
                 <p className="text-gray-600 text-lg mb-8 line-clamp-3">
-                  {featuredBlog.description}
+                  {getSummary(featuredBlog)}
                 </p>
                 <div>
                   <a href={`/blog/${featuredBlog.id}`} className="inline-flex items-center justify-center px-8 py-3.5 text-base font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-full shadow-lg shadow-amber-500/30 transition-all duration-300 transform hover:-translate-y-1">

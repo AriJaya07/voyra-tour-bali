@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Destination } from "@/types/blog";
-import { getImageUrl } from "@/lib/newsApi";
+import { getCardImage, getCategoryName, getLocationText, getSummary } from "@/lib/newsApi";
 import { CalendarIcon, MapPinIcon, ArrowRightIcon } from "@/components/assets/Icon/shared";
 
 export default function BlogCard({ blog }: { blog: Destination }) {
+  const categoryName = getCategoryName(blog);
+  const locationText = getLocationText(blog.location);
+
   return (
     <Link
       href={`/blog/${blog.id}`}
@@ -12,15 +15,15 @@ export default function BlogCard({ blog }: { blog: Destination }) {
     >
       <div className="relative h-64 w-full overflow-hidden">
         <Image
-          src={getImageUrl(blog.image)}
+          src={getCardImage(blog)}
           alt={blog.title}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
-        {blog.categoryName && (
+        {categoryName && (
           <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-blue-600 px-3 py-1 text-xs font-semibold rounded-full shadow-sm">
-            {blog.categoryName}
+            {categoryName}
           </div>
         )}
       </div>
@@ -37,10 +40,10 @@ export default function BlogCard({ blog }: { blog: Destination }) {
               })}
             </div>
           )}
-          {blog.location && (
+          {locationText && (
             <div className="flex items-center">
               <MapPinIcon className="w-4 h-4 mr-1" />
-              <span className="truncate max-w-[120px]">{typeof blog.location === 'string' ? blog.location : blog.location.title || blog.location.address}</span>
+              <span className="truncate max-w-[120px]">{locationText}</span>
             </div>
           )}
         </div>
@@ -50,7 +53,7 @@ export default function BlogCard({ blog }: { blog: Destination }) {
         </h3>
         
         <p className="text-gray-600 text-sm line-clamp-3 mb-4 flex-grow ">
-          {blog.description}
+          {getSummary(blog)}
         </p>
 
         <div className="mt-auto pt-4 border-t border-gray-100 flex items-center text-sm font-semibold text-amber-500 group-hover:text-amber-600 ">
