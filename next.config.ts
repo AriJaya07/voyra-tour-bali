@@ -53,6 +53,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'traveller-be.onrender.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'blog-turism.s3.ap-southeast-2.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'be.balitravelnow.com',
+      },
     ],
   },
 };
