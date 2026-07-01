@@ -68,24 +68,19 @@ export default function PromotionApp() {
             {/* ── App Promotion Card ─────────────────────────────────────── */}
             <div className="w-full max-w-[728px] bg-white rounded-b-2xl shadow-md p-6 md:p-10">
 
-                <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 items-center gap-6">
 
-                    {/* Images */}
-                    <div className="flex justify-center gap-4 shrink-0">
+                    {/* Image */}
+                    <div className="flex justify-center">
                         <img
-                            src="/images/iklan/balinews.png"
+                            src="/images/iklan/bali_news.png"
                             alt="Bali News App"
-                            className="w-20 sm:w-24 md:w-28 lg:w-32 rounded-xl object-cover"
-                        />
-                        <img
-                            src="/images/iklan/balinews-homepage.png"
-                            alt="Bali News App Preview"
-                            className="w-20 sm:w-24 md:w-28 lg:w-32 rounded-xl object-cover"
+                            className="w-full max-w-[220px] rounded-xl object-cover"
                         />
                     </div>
 
                     {/* Content */}
-                    <div className="flex flex-col items-center sm:items-start text-center sm:text-left flex-1 min-w-0">
+                    <div className="flex flex-col items-center text-center min-w-0">
 
                         <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900">
                             Download Bali News App
@@ -96,20 +91,20 @@ export default function PromotionApp() {
                         </p>
 
                         {/* Store buttons */}
-                        <div className="flex flex-row flex-wrap justify-center sm:justify-start gap-3 mt-4">
+                        <div className="flex flex-row flex-nowrap justify-center gap-2 mt-4">
                             <Link
                                 href="https://apps.apple.com/id/app/bali-news/id6504162210"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                <AppStoreIcon className="w-32 sm:w-36 md:w-40 cursor-pointer hover:opacity-80 transition" />
+                                <AppStoreIcon className="w-24 sm:w-28 md:w-32 cursor-pointer hover:opacity-80 transition" />
                             </Link>
                             <Link
                                 href="https://play.google.com/store/apps/details?id=com.arijaya.balinews"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                <PlayStoreIcon className="w-32 sm:w-36 md:w-40 cursor-pointer hover:opacity-80 transition" />
+                                <PlayStoreIcon className="w-24 sm:w-28 md:w-32 cursor-pointer hover:opacity-80 transition" />
                             </Link>
                         </div>
 

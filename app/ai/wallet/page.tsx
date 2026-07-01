@@ -106,16 +106,91 @@ export default function AiWalletPage() {
   }
 
   if (status === "unauthenticated") {
+    const WHAT_CREDITS_UNLOCK = [
+      { icon: "✨", label: "Trip planner", cost: "8 credits" },
+      { icon: "🔍", label: "Smart search", cost: "1 credit" },
+      { icon: "🛕", label: "Cultural co-pilot", cost: "2 credits" },
+      { icon: "🌧️", label: "Day-of-trip helper", cost: "Free for travelers" },
+      { icon: "💬", label: "Ask about a tour", cost: "2 credits" },
+      { icon: "📷", label: "Voucher reader", cost: "5 credits" },
+    ];
+    const BENEFITS = [
+      { icon: "🎁", title: "Free monthly credits", body: "Every account gets a free grant each month — no card needed." },
+      { icon: "⚡", title: "Top up anytime", body: "One-time packs when you need more. Credits never expire in their window." },
+      { icon: "🔎", title: "Transparent pricing", body: "Every action shows its exact credit cost before you spend." },
+      { icon: "👨‍👩‍👧", title: "Family seats", body: "Founder plan shares premium features with your travel party." },
+    ];
     return (
-      <main className="mx-auto max-w-5xl px-4 py-10 text-center">
+      <main className="mx-auto max-w-5xl px-4 py-8">
         <BackLink href="/profile" />
-        <h1 className="mt-6 text-xl font-bold text-slate-900">Sign in to view your AI wallet</h1>
-        <Link
-          href="/login"
-          className="mt-4 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white"
-        >
-          Sign in
-        </Link>
+
+        {/* Hero */}
+        <div className="mt-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0071CE] to-[#005ba6] p-6 sm:p-8 text-white shadow-lg">
+          <div className="relative z-10 max-w-lg">
+            <span className="text-3xl" aria-hidden>💳</span>
+            <h1 className="mt-2 text-xl sm:text-2xl font-black tracking-tight">Your AI wallet</h1>
+            <p className="mt-2 text-sm text-blue-50 leading-relaxed">
+              Credits power every Voyra AI tool — the trip planner, smart search, cultural co-pilot and more.
+              Sign in to see your balance, top up, and track usage.
+            </p>
+            <div className="mt-5 flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/login?callbackUrl=/ai/wallet"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#0071CE] font-bold rounded-full hover:bg-blue-50 transition shadow-sm"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/register?callbackUrl=/ai/wallet"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white/15 border border-white/40 text-white font-bold rounded-full hover:bg-white/25 transition"
+              >
+                Create free account
+              </Link>
+            </div>
+            <p className="mt-3 text-xs text-blue-100/90">Free monthly credits included.</p>
+          </div>
+        </div>
+
+        {/* Benefits */}
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {BENEFITS.map((b) => (
+            <div key={b.title} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <span className="shrink-0 text-2xl" aria-hidden>{b.icon}</span>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-900">{b.title}</p>
+                <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">{b.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* What credits unlock */}
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500">What credits unlock</h2>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {WHAT_CREDITS_UNLOCK.map((it) => (
+              <div key={it.label} className="flex items-center gap-2 rounded-xl bg-slate-50 p-3">
+                <span className="text-lg" aria-hidden>{it.icon}</span>
+                <span className="text-sm font-semibold text-slate-800">{it.label}</span>
+                <span className="ml-auto text-[11px] font-bold text-[#0071CE]">{it.cost}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-col sm:flex-row gap-2">
+            <Link
+              href="/ai/pricing"
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-[#0071CE] hover:text-[#0071CE]"
+            >
+              View pricing plans
+            </Link>
+            <Link
+              href="/ai/plan"
+              className="inline-flex items-center justify-center rounded-full bg-[#0071CE] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#005ba6]"
+            >
+              ✨ Try the AI planner
+            </Link>
+          </div>
+        </div>
       </main>
     );
   }
