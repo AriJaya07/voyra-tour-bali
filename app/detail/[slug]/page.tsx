@@ -26,6 +26,25 @@ import {
     buildTouristAttractionJsonLd,
 } from "@/lib/config";
 
+// ── ISR: cache the hottest SEO template; admin edits show within 10 min ──
+export const revalidate = 600;
+
+export async function generateStaticParams() {
+    try {
+        const destinations = await prisma.destination.findMany({
+            where: { slug: { not: null } },
+            select: { slug: true },
+            take: 500,
+        });
+        return destinations
+            .filter((d): d is { slug: string } => Boolean(d.slug))
+            .map((d) => ({ slug: d.slug }));
+    } catch {
+        // DB unreachable at build time — pages render on demand instead.
+        return [];
+    }
+}
+
 // ── SEO Metadata ────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
@@ -177,11 +196,38 @@ export default async function Detail({ params }: { params: Promise<{ slug: strin
         price,
     });
 
+    // JSON-LD: BreadcrumbList — Home → Category → Destination
+    const breadcrumbJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+            ...(destination.category
+                ? [{
+                    "@type": "ListItem",
+                    position: 2,
+                    name: destination.category.name,
+                    item: `${SITE_URL}/search?q=${encodeURIComponent(destination.category.name)}`,
+                }]
+                : []),
+            {
+                "@type": "ListItem",
+                position: destination.category ? 3 : 2,
+                name: destination.title,
+                item: `${SITE_URL}/detail/${slug}`,
+            },
+        ],
+    };
+
     return (
         <div>
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(touristAttractionJsonLd) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
             />
             {/* ── Banner ── */}
             <BannerDetail

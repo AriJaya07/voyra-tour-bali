@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { tryDb } from "@/lib/data/safeDb";
@@ -129,11 +130,13 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <header className="bg-gradient-to-br from-[#0071CE] via-[#005bb5] to-[#003d80] text-white relative overflow-hidden">
         {guide.coverImage && (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={guide.coverImage}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover opacity-50"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover opacity-50"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-[#0071CE]/70 to-[#003060]/85" />
           </>

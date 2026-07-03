@@ -119,6 +119,11 @@ model Image {
   location   Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+
+  @@index([destinationId])
+  @@index([packageId])
+  @@index([contentId])
+  @@index([locationId])
 }
 
 model User {
@@ -709,6 +714,10 @@ model Booking {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, travelDate])
+  @@index([viatorBookingStatus])
 }
 
 model BookingTraveler {

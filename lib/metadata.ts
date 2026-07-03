@@ -71,9 +71,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  alternates: {
-    canonical: SITE_URL,
-  },
+  // NOTE: no global `alternates.canonical` — a site-wide canonical would make
+  // every page without its own canonical point to the homepage. Each indexable
+  // page must set its own canonical (metadataBase resolves relative paths).
   // Google Search Console verification meta tag.
   // Using conditional spreader to avoid invalid empty verification tags.
   ...(GOOGLE_SITE_VERIFICATION

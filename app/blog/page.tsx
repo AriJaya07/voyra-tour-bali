@@ -12,6 +12,7 @@ import { NewspaperIcon } from '@/components/assets/Icon/shared';
 export const metadata: Metadata = {
   title: 'Blog & Travel Guide | Bali Travel Now',
   description: 'Discover the beauty of Bali through our curated travel guides, tips, and articles about destinations in Bali.',
+  alternates: { canonical: '/blog' },
 };
 
 export const revalidate = 60; // ISR Support

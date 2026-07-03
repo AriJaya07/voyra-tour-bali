@@ -12,7 +12,6 @@ import type { CurrencyCode } from "@/utils/formatPrice"
 import { useCurrency } from "@/utils/hooks/useCurrency"
 import { trackBeginCheckout } from "@/utils/analytics"
 import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon"
-import VoryaIcon from "../assets/Icon/VoyraIcon"
 import { CalendarIcon, CheckmarkIcon, SpinnerIcon, LockIcon } from "@/components/assets/Icon/shared"
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890"
@@ -189,25 +188,7 @@ export default function BookingLocalWidget({
   // ── Render ────────────────────────────────────────────────────────────
   return (
     <div className="border border-[#E6E6E6] rounded-2xl overflow-hidden shadow-sm bg-white">
-      {!session ? (
-        /* Clean Flow Login Prompt */
-        <div className="flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300 h-[350px]">
-          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-5">
-            <VoryaIcon className="w-12 h-12" />
-          </div>
-          <h3 className="text-lg font-bold text-gray-900 mb-3 text-center">Login Required</h3>
-          <p className="text-sm text-gray-500 mb-8 text-center italic max-w-[240px] mx-auto leading-relaxed">
-            Please login to check availability, see prices, and book your tour.
-          </p>
-          <button
-            onClick={() => router.push("/login")}
-            className="w-full max-w-[260px] py-4 bg-[#0071CE] hover:bg-[#005ba6] text-white font-bold rounded-xl transition shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
-          >
-            Login to Continue
-          </button>
-        </div>
-      ) : (
-        <>
+      <>
           {/* Header image */}
           {image && (
             <div className="relative h-32 overflow-hidden">
@@ -328,13 +309,24 @@ export default function BookingLocalWidget({
                     <SpinnerIcon className="w-4 h-4" />
                     Redirecting to payment...
                   </>
-                ) : (
+                ) : session ? (
                   <>
                     Book & Pay Now
                     <LockIcon className="w-4 h-4" />
                   </>
+                ) : (
+                  <>
+                    Sign in & Book
+                    <LockIcon className="w-4 h-4" />
+                  </>
                 )}
               </button>
+
+              {!session && (
+                <p className="text-[11px] text-gray-400 text-center leading-snug">
+                  Free account — you&apos;ll sign in at the payment step. Your selection is kept.
+                </p>
+              )}
 
               <div className="flex items-center gap-2">
                 <div className="h-px bg-gray-300 flex-1" />
@@ -353,8 +345,7 @@ export default function BookingLocalWidget({
               </a>
             </div>
           </div>
-        </>
-      )}
+      </>
     </div>
   )
 }

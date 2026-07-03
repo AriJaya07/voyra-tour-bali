@@ -54,6 +54,7 @@ const DAILY_TASKS: string[] = [
   "/api/cron/viator-daily-sync",
   "/api/cron/viator-sync",
   "/api/cron/viator-products-sync",
+  "/api/cron/viator-failed-recovery",
 
   // === Rollups (last) ===
   "/api/cron/ai-usage-rollup",

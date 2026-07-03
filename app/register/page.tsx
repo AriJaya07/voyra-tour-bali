@@ -5,7 +5,10 @@ import { useSearchParams } from "next/navigation";
 import { AuthLayout, RegisterForm } from "@/components/Auth";
 
 function RegisterPageContent() {
-  const callbackUrl = "/";
+  const searchParams = useSearchParams();
+  const rawCallback = searchParams.get("callbackUrl") || "/";
+  // Only allow same-site relative paths — never absolute URLs (open redirect).
+  const callbackUrl = rawCallback.startsWith("/") && !rawCallback.startsWith("//") ? rawCallback : "/";
 
   return (
     <AuthLayout

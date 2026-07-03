@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getCategories } from "@/lib/data";
 import Container from "@/components/Container";
 import BannerHome from "@/components/Homepage/BannerHome";
@@ -9,6 +10,13 @@ import ForYou from "@/components/Homepage/ForYou";
 import NextTripWidget from "@/components/Homepage/NextTripWidget";
 import TravelToolkit from "@/components/Homepage/TravelToolkit";
 import AiShowcase from "@/components/Homepage/AiShowcase";
+
+export const metadata: Metadata = {
+  title: "Bali Tours, Activities & AI Trip Planner",
+  description:
+    "Plan your Bali trip with AI in minutes — day-by-day itineraries, the Balinese ceremony calendar, and bookable tours and activities, all in one place.",
+  alternates: { canonical: "/" },
+};
 
 export default async function Home() {
   const categories = await getCategories();

@@ -17,7 +17,7 @@ export function GtmHead() {
   return (
     <Script
       id="gtm-head"
-      strategy="beforeInteractive"
+      strategy="afterInteractive"
       dangerouslySetInnerHTML={{
         __html: buildGtmInlineScript(GTM_ID),
       }}

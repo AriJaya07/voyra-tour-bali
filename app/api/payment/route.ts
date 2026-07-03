@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/common/auth";
 import { prisma } from "@/lib/prisma";
 import { getPaymentGateway } from "@/lib/services/paymentGateway";
+import { resolveServerPrice, PricingError } from "@/lib/services/pricingService";
 import crypto from "crypto";
 
 export async function POST(request: Request) {
@@ -46,6 +47,27 @@ export async function POST(request: Request) {
       );
     }
 
+    // Server-side price resolution — the client total is never trusted for
+    // DB-priced products; live Viator products are re-quoted and flagged on
+    // suspicious deviation.
+    const resolvedPrice = await resolveServerPrice({
+      source: safeSource,
+      productCode,
+      pax: Number(pax),
+      paxMix: paxMix || null,
+      travelDate,
+      productOptionCode: productOptionCode || null,
+      startTime: startTime || null,
+      clientTotal: Number(totalPrice),
+      currency: currency || "IDR",
+    });
+    const chargeTotal = Math.round(resolvedPrice.totalPrice);
+    if (resolvedPrice.suspicious) {
+      console.error(
+        `[PRICE-MISMATCH] user=${session.user.id} product=${productCode} client=${totalPrice} server=${chargeTotal} source=${resolvedPrice.priceSource}`
+      );
+    }
+
     // Generate idempotency key to prevent duplicate bookings
     const idempotencyKey = crypto
       .createHash("sha256")
@@ -65,8 +87,9 @@ export async function POST(request: Request) {
         productOptionCode: productOptionCode || null,
         tourGradeCode: tourGradeCode || null,
         startTime: startTime || null,
-        totalPrice: Math.round(Number(totalPrice)),
+        totalPrice: chargeTotal,
         currency: currency || "IDR",
+        isFraudFlagged: resolvedPrice.suspicious,
         travelDate: new Date(travelDate),
         pax: Number(pax),
         paxMixJson: paxMix || null,
@@ -99,9 +122,11 @@ export async function POST(request: Request) {
 
     const orderId = `VOYRA-${booking.id}-${Date.now()}`;
 
-    // IDR requires whole numbers
-    const perItemPrice = Math.round(Number(totalPrice) / Number(pax));
-    const grossAmount = perItemPrice * Number(pax);
+    // IDR requires whole numbers. Distribute the server-resolved total across
+    // pax so gross_amount always equals the charged total (no rounding drift).
+    const perItemPrice = Math.floor(chargeTotal / Number(pax));
+    const remainder = chargeTotal - perItemPrice * Number(pax);
+    const grossAmount = chargeTotal;
 
     // Guard: NEXTAUTH_URL must be set to build correct Midtrans callback URLs
     const siteUrl = process.env.NEXTAUTH_URL;
@@ -123,6 +148,10 @@ export async function POST(request: Request) {
           quantity: Number(pax),
           name: productTitle.substring(0, 50),
         },
+        // Keeps item_details sum equal to gross_amount after whole-IDR split
+        ...(remainder > 0
+          ? [{ id: `${productCode}-ADJ`, price: remainder, quantity: 1, name: "Rounding adjustment" }]
+          : []),
       ],
       customerDetails: {
         firstName: leadFirstName || session.user.name || "Guest",
@@ -160,6 +189,9 @@ export async function POST(request: Request) {
       redirectUrl: gatewayResult.redirectUrl,
     });
   } catch (error) {
+    if (error instanceof PricingError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error("Payment creation error:", error instanceof Error ? error.message : "Unknown");
 
     return NextResponse.json(

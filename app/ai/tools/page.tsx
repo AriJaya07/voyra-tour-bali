@@ -14,22 +14,113 @@ import type { AiCulturalEvent } from "@/utils/service/ai.service";
 const fmtDate = (d: string | null) =>
   d ? new Date(d).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
+const TOOL_PREVIEWS = [
+  {
+    icon: "🛕",
+    title: "Cultural co-pilot",
+    description:
+      "Ask about ceremonies, temple etiquette, and festivals — grounded in our real Bali ceremony calendar, including Nyepi and Galungan travel impact.",
+    example: "“What ceremony is happening near my dates?”",
+  },
+  {
+    icon: "🌧️",
+    title: "Day-of-Trip helper",
+    description:
+      "On-the-ground help while you travel: rain pivots, indoor plans, transport tips near you. Free for confirmed travelers during their trip window.",
+    example: "“Indoor things to do near Ubud right now?”",
+  },
+] as const;
+
+function SignedOutView() {
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-8">
+      <div className="flex flex-row items-center gap-4 flex-wrap">
+        <BackLink href="/ai" label="Back to AI hub" />
+        <h1 className="text-2xl font-bold text-slate-900">AI Tools</h1>
+      </div>
+
+      {/* Hero */}
+      <section className="mt-6 overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-[#0071CE] via-[#005bb5] to-[#003d80] p-6 sm:p-10 text-center text-white shadow-sm">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/15 text-2xl">
+          ✨
+        </div>
+        <h2 className="mt-4 text-xl sm:text-2xl font-bold">
+          Your pocket local guide for Bali
+        </h2>
+        <p className="mx-auto mt-2 max-w-md text-sm text-blue-100 leading-relaxed">
+          Sign in to ask the Cultural co-pilot and Day-of-Trip helper anything.
+          New accounts get free welcome AI credits — no plan required.
+        </p>
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            href={`/login?callbackUrl=${encodeURIComponent("/ai/tools")}`}
+            className="w-full sm:w-auto rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#0071CE] shadow-md transition hover:bg-blue-50 active:scale-[0.98]"
+          >
+            Sign in to continue
+          </Link>
+          <Link
+            href={`/register?callbackUrl=${encodeURIComponent("/ai/tools")}`}
+            className="w-full sm:w-auto rounded-xl border border-white/40 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+          >
+            Create free account
+          </Link>
+        </div>
+      </section>
+
+      {/* Tool previews */}
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        {TOOL_PREVIEWS.map((tool) => (
+          <section
+            key={tool.title}
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{tool.icon}</span>
+              <h3 className="text-base font-semibold text-slate-900">{tool.title}</h3>
+              <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                Sign in
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">{tool.description}</p>
+            <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs italic text-slate-500">
+              {tool.example}
+            </p>
+          </section>
+        ))}
+      </div>
+
+      <p className="mt-6 text-center text-xs text-slate-400">
+        Tools charge AI credits only — no subscription needed. See{" "}
+        <Link href="/ai/pricing" className="font-semibold text-[#0071CE] hover:underline">
+          plans &amp; credits
+        </Link>
+        .
+      </p>
+    </main>
+  );
+}
+
+function LoadingView() {
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-8">
+      <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-200" />
+      <div className="mt-6 grid gap-4">
+        <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
+        <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
+      </div>
+    </main>
+  );
+}
+
 export default function AiToolsPage() {
   const { status } = useSession();
 
+  if (status === "loading") {
+    return <LoadingView />;
+  }
+
   if (status === "unauthenticated") {
-    return (
-      <main className="mx-auto max-w-4xl px-4 py-10 text-center">
-        <BackLink href="/profile" />
-        <h1 className="mt-6 text-xl font-bold text-slate-900">Sign in to use AI tools</h1>
-        <Link
-          href="/login"
-          className="mt-4 inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
-        >
-          Sign in
-        </Link>
-      </main>
-    );
+    return <SignedOutView />;
   }
 
   return (
