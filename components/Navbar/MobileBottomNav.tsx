@@ -21,26 +21,6 @@ interface NavItem {
   match: (pathname: string) => boolean;
 }
 
-function MapExploreIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2.2 : 1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M9 18l-6 3V6l6-3 6 3 6-3v15l-6 3-6-3z" />
-      <path d="M9 3v15" />
-      <path d="M15 6v15" />
-    </svg>
-  );
-}
-
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -67,7 +47,6 @@ export default function MobileBottomNav() {
   const items: NavItem[] = [
     { href: "/", label: "Home", icon: (active) => <MobileHomeIcon active={active} />, match: (p) => p === "/" },
     { href: "/search", label: "Search", icon: () => <MobileSearchIcon />, match: (p) => p.startsWith("/search") },
-    { href: "/explore", label: "Map", icon: (active) => <MapExploreIcon active={active} />, match: (p) => p.startsWith("/explore") },
     { href: "/wishlist", label: "Wishlist", icon: (active) => <MobileHeartIcon active={active} />, match: (p) => p.startsWith("/wishlist") },
     { href: tripsHref, label: "Trips", icon: (active) => <MobileTripsIcon active={active} />, match: tripsActive },
     { href: profileHref, label: "Account", icon: (active) => <MobilePersonIcon active={active} />, match: profileActive },
@@ -80,7 +59,7 @@ export default function MobileBottomNav() {
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Bottom navigation"
       >
-        <div className="grid grid-cols-6 h-14">
+        <div className="grid grid-cols-5 h-14">
           {items.map((it) => {
             const active = it.match(pathname);
 

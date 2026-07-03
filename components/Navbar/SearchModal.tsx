@@ -312,15 +312,25 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             )}
           </div>
 
-          {/* AI Search footer CTA */}
-          <a
-            href="/search"
-            onClick={onClose}
-            className="flex items-center justify-center gap-1.5 border-t border-gray-100 px-4 py-3 text-xs font-semibold text-[#0071CE] hover:bg-blue-50 transition"
-          >
-            ✨ Try AI Search — describe your ideal day
-            <ChevronRightIcon className="w-3 h-3" />
-          </a>
+          {/* Footer CTAs: AI Search + Map explorer */}
+          <div className="grid grid-cols-2 divide-x divide-gray-100 border-t border-gray-100">
+            <a
+              href="/search"
+              onClick={onClose}
+              className="flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-semibold text-[#0071CE] hover:bg-blue-50 transition"
+            >
+              ✨ AI Search
+              <ChevronRightIcon className="w-3 h-3" />
+            </a>
+            <a
+              href="/explore"
+              onClick={onClose}
+              className="flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-semibold text-[#0071CE] hover:bg-blue-50 transition"
+            >
+              🗺️ Explore on Map
+              <ChevronRightIcon className="w-3 h-3" />
+            </a>
+          </div>
         </div>
       </div>
     </>
