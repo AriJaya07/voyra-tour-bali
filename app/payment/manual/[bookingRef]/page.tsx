@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { MIDTRANS_SNAP_URL, MIDTRANS_CLIENT_KEY } from "@/lib/config/midtrans";
 import { SpinnerIcon, AlertIcon } from "@/components/assets/Icon/shared";
 import PriceLabel from "@/components/common/PriceLabel";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 declare global {
   interface Window {
@@ -154,12 +155,15 @@ export default function ManualPaymentPage() {
         {/* Booking Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-[#F0F0F0] overflow-hidden mb-6">
           {booking.productImage && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={booking.productImage}
-              alt={booking.productTitle}
-              className="w-full h-48 object-cover"
-            />
+            <div className="relative w-full h-48">
+              <OptimizedImage
+                src={booking.productImage}
+                alt={booking.productTitle}
+                fill
+                sizes="(max-width: 640px) 100vw, 512px"
+                className="object-cover"
+              />
+            </div>
           )}
           <div className="p-6 space-y-4">
             <div>

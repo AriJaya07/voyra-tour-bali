@@ -34,12 +34,10 @@ const EXPLORE_LINKS: NavLink[] = [
 
 const PARTNER_URL = "https://agency.balitravelnow.com/";
 
+// Credit/wallet selling delinked — see lib/config/features.ts (focus reset)
 const AI_LINKS: NavLink[] = [
-  { label: "AI Tools (Hub)",    href: "/ai",          ready: true },
-  { label: "Plan a Trip",       href: "/ai/plan",     ready: true },
-  { label: "Pricing & Credits", href: "/ai/pricing",  ready: true },
-  { label: "AI Wallet",         href: "/ai/wallet",   ready: true },
-  { label: "My Trips",          href: "/trips",       ready: true },
+  { label: "Plan a Trip (Free)", href: "/ai/plan", ready: true },
+  { label: "My Trips",           href: "/trips",   ready: true },
 ];
 
 const LEGAL_LINKS: NavLink[] = [

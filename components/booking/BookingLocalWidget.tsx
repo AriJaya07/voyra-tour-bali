@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import Calendar from "react-calendar"
 import "react-calendar/dist/Calendar.css"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { useCreatePayment } from "@/utils/hooks/usePayment"
 import { formatPrice } from "@/utils/formatPrice"
 import type { CurrencyCode } from "@/utils/formatPrice"
@@ -105,7 +104,6 @@ export default function BookingLocalWidget({
   image,
 }: BookingLocalWidgetProps) {
   const { data: session } = useSession()
-  const router = useRouter()
   const { currency, exchangeRates } = useCurrency()
   const paymentMutation = useCreatePayment()
 
@@ -114,6 +112,10 @@ export default function BookingLocalWidget({
     { ageBand: "ADULT", label: "Adult", icon: "👤", count: 0, price },
     { ageBand: "CHILD", label: "Child", icon: "🧒", count: 0, price },
   ])
+  // Guest checkout — no account needed, ticket goes to this email
+  const [guestName, setGuestName] = useState("")
+  const [guestEmail, setGuestEmail] = useState("")
+  const [guestPhone, setGuestPhone] = useState("")
 
   useEffect(() => { setDate(new Date()) }, [])
   useEffect(() => { setTravelers((prev) => prev.map((t) => ({ ...t, price }))) }, [price])
@@ -126,7 +128,9 @@ export default function BookingLocalWidget({
 
   const totalTravelers = travelers.reduce((sum, t) => sum + t.count, 0)
   const totalPrice = travelers.reduce((sum, t) => sum + t.count * t.price, 0)
-  const canBook = !!date && totalTravelers > 0
+  const guestEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())
+  const guestReady = !!session || guestEmailValid
+  const canBook = !!date && totalTravelers > 0 && guestReady
 
   // ── WhatsApp ──────────────────────────────────────────────────────────
   const buildWaUrl = () => {
@@ -150,17 +154,13 @@ export default function BookingLocalWidget({
     return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`
   }
 
-  // ── Booking handler → Midtrans ────────────────────────────────────────
+  // ── Booking handler → Midtrans (guest checkout supported — no login wall) ──
   const handleBooking = () => {
-    if (!session) {
-      const currentUrl = typeof window !== "undefined" ? window.location.pathname : "/"
-      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`)
-      return
-    }
     if (!canBook) return
 
     trackBeginCheckout({ productCode, title, price: totalPrice, currency: pricingCurrency, travelers: totalTravelers })
 
+    const [firstName, ...rest] = guestName.trim().split(/\s+/)
     paymentMutation.mutate(
       {
         source: "local",
@@ -171,6 +171,14 @@ export default function BookingLocalWidget({
         pax: totalTravelers,
         totalPrice,
         currency: pricingCurrency,
+        ...(!session
+          ? {
+              leadFirstName: firstName || "Guest",
+              leadLastName: rest.join(" "),
+              leadEmail: guestEmail.trim(),
+              leadPhone: guestPhone.trim(),
+            }
+          : {}),
       },
       {
         onSuccess: (data) => {
@@ -192,7 +200,7 @@ export default function BookingLocalWidget({
           {/* Header image */}
           {image && (
             <div className="relative h-32 overflow-hidden">
-              <Image
+              <OptimizedImage
                 src={image}
                 alt={title}
                 fill
@@ -264,6 +272,38 @@ export default function BookingLocalWidget({
               </div>
             </div>
 
+            {/* Guest contact — shown when not signed in; ticket goes to this email */}
+            {!session && (
+              <div className="border border-[#E6E6E6] rounded-xl px-4 py-4 mb-4 flex flex-col gap-2.5">
+                <p className="text-sm font-semibold text-gray-700">Your details</p>
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  placeholder="Full name"
+                  autoComplete="name"
+                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#0071CE]"
+                />
+                <input
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  placeholder="Email (ticket is sent here)"
+                  autoComplete="email"
+                  required
+                  className={`w-full h-11 px-3 rounded-lg border text-sm focus:outline-none focus:border-[#0071CE] ${guestEmail && !guestEmailValid ? "border-red-300" : "border-gray-200"}`}
+                />
+                <input
+                  type="tel"
+                  value={guestPhone}
+                  onChange={(e) => setGuestPhone(e.target.value)}
+                  placeholder="WhatsApp number (optional)"
+                  autoComplete="tel"
+                  className="w-full h-11 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#0071CE]"
+                />
+              </div>
+            )}
+
             {/* Price breakdown & actions */}
             <div className="bg-[#F8F8F8] rounded-xl p-4 flex flex-col gap-2.5">
               {travelers.filter((t) => t.count > 0).map((t) => (
@@ -286,7 +326,11 @@ export default function BookingLocalWidget({
 
               {!canBook && (
                 <p className="text-xs text-amber-600 text-center">
-                  {!date ? "Please select a date" : "Add at least 1 traveler"}
+                  {!date
+                    ? "Please select a date"
+                    : totalTravelers === 0
+                      ? "Add at least 1 traveler"
+                      : "Enter your email so we can send your ticket"}
                 </p>
               )}
 
@@ -309,14 +353,9 @@ export default function BookingLocalWidget({
                     <SpinnerIcon className="w-4 h-4" />
                     Redirecting to payment...
                   </>
-                ) : session ? (
-                  <>
-                    Book & Pay Now
-                    <LockIcon className="w-4 h-4" />
-                  </>
                 ) : (
                   <>
-                    Sign in & Book
+                    Book & Pay Now
                     <LockIcon className="w-4 h-4" />
                   </>
                 )}
@@ -324,7 +363,7 @@ export default function BookingLocalWidget({
 
               {!session && (
                 <p className="text-[11px] text-gray-400 text-center leading-snug">
-                  Free account — you&apos;ll sign in at the payment step. Your selection is kept.
+                  No account needed — your ticket is sent straight to your email.
                 </p>
               )}
 

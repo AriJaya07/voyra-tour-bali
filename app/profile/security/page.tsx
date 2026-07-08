@@ -71,8 +71,8 @@ export default function SecurityPage() {
     <div className="min-h-screen bg-gray-50 pt-10 pb-16 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="flex flex-row items-center gap-4 mb-2 flex-wrap">
-          <BackLink href="/profile" label="Back to profile" />
-          <h1 className="text-2xl font-bold text-gray-900">Security</h1>
+          <BackLink href="/profile/settings" label="Back to settings" />
+          <h1 className="text-2xl font-bold text-gray-900">Security & 2FA</h1>
         </div>
         <p className="text-sm text-gray-500 mb-6">
           Manage password, two-factor authentication, and trusted devices.

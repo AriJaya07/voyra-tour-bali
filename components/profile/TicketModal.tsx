@@ -8,6 +8,7 @@ import type { Booking, BookingStatus } from "@/types/booking";
 import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import PayNowButton from "@/components/Global/booking/PayNowButton";
 import { CloseIcon } from "@/components/assets/Icon/shared";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 interface TicketModalProps {
   booking: Booking;
@@ -194,9 +195,11 @@ export default function TicketModal({ booking, onClose }: TicketModalProps) {
                   {booking.ticketImageUrl ? (
                     <div className="w-full space-y-4">
                       <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
-                        <img
+                        <OptimizedImage
                           src={booking.ticketImageUrl}
                           alt="Official Ticket"
+                          width={800}
+                          height={600}
                           className="w-full h-auto object-contain cursor-pointer"
                           onClick={handleViewVoucher}
                         />

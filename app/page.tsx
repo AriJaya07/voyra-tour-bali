@@ -10,6 +10,7 @@ import ForYou from "@/components/Homepage/ForYou";
 import NextTripWidget from "@/components/Homepage/NextTripWidget";
 import TravelToolkit from "@/components/Homepage/TravelToolkit";
 import AiShowcase from "@/components/Homepage/AiShowcase";
+import { FEATURES } from "@/lib/config/features";
 
 export const metadata: Metadata = {
   title: "Bali Tours, Activities & AI Trip Planner",
@@ -31,11 +32,13 @@ export default async function Home() {
         <ForYou />
         <Destionation categories={categories} />
         <TrendingActivity categories={categories} />
-        <div className="mt-10 sm:mt-14 space-y-4">
-          <TravelToolkit />
-          <AiShowcase />
-        </div>
-        <PromotionApp />
+        {(FEATURES.tripToolkit || FEATURES.aiMonetization) && (
+          <div className="mt-10 sm:mt-14 space-y-4">
+            {FEATURES.tripToolkit && <TravelToolkit />}
+            {FEATURES.aiMonetization && <AiShowcase />}
+          </div>
+        )}
+        {FEATURES.appPromotion && <PromotionApp />}
       </Container>
     </div>
   );

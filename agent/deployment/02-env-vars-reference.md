@@ -189,3 +189,18 @@ A grep tells you fast whether a stale value lingers:
 ```bash
 grep -rl '<old-password-fragment>' . | grep -v node_modules
 ```
+
+---
+
+## 8. Growth/instrumentation vars (added 2026-07-08)
+
+| Var | Scope | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_CLARITY_ID` | client | Microsoft Clarity project ID — session recordings/heatmaps. Script only loads when set. |
+| `N8N_ERROR_WEBHOOK_URL` | server | n8n webhook receiving client/server error reports from `/api/monitoring/error`. Unset = silent no-op. |
+| `N8N_ABANDONED_WEBHOOK_URL` | server | n8n webhook for abandoned-checkout recovery (`/api/cron/abandoned-checkout`). |
+| `N8N_POSTTRIP_WEBHOOK_URL` | server | n8n webhook for post-trip review/referral emails (`/api/cron/post-trip`). |
+| `N8N_WEBHOOK_TOKEN` | server | Shared secret sent as `x-webhook-token` header on all n8n webhook calls. Configure Header Auth on the n8n side. |
+| `NEXT_PUBLIC_WA_NUMBER` | client | WhatsApp number (`62…` no plus) for the sticky CTA + booking widgets. Pre-existing var, now also used by `WhatsAppFloatButton`. |
+
+See `docs/n8n-workflows.md` for the workflows these feed, and `lib/config/features.ts` for the feature-flag focus reset.

@@ -178,7 +178,7 @@ export default async function GuidesIndexPage() {
               </p>
             </div>
             <Link
-              href="/plan?from=guides"
+              href="/ai/plan?from=guides"
               className="inline-flex items-center gap-1.5 px-5 py-3 bg-[#0071CE] hover:bg-[#005ba6] text-white text-sm font-bold rounded-xl transition shadow-sm shrink-0"
             >
               ✨ Generate itinerary

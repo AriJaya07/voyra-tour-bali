@@ -33,6 +33,8 @@ const DAILY_TASKS: string[] = [
   "/api/cron/trip-reminders",
   "/api/cron/abandoned-wishlist",
   "/api/cron/trip-anniversary",
+  "/api/cron/abandoned-checkout",
+  "/api/cron/post-trip",
   "/api/cron/nyepi-reminder",
   "/api/cron/volcano-alert",
   "/api/cron/weather-alert",

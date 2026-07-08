@@ -8,6 +8,7 @@ import EyesShowIcon from "@/components/assets/login/EyesShowIcon";
 import { ActionButton } from "@/components/common/InputForm";
 import { Location } from "@/utils/service/location.service";
 import Link from "next/link";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 interface Props {
   locations: Location[];
@@ -64,12 +65,12 @@ export default function LocationTable({ locations, onView, onEdit, onDelete }: P
             {/* Avatar / Thumbnail */}
             <div className="flex-shrink-0">
               {loc.images?.[0]?.url ? (
-                <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-700">
-                  <img
+                <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-slate-700">
+                  <OptimizedImage
                     src={loc.images.find((img) => img.isMain)?.url || loc.images[0].url}
                     alt={loc.title}
+                    fill
                     className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.style.display = "none"; }}
                   />
                 </div>
               ) : (

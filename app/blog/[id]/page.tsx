@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { notFound } from 'next/navigation';
 import { getAllDestinations, getDestinationDetail, getImageUrl, getCardImage, getCategoryName, getLocationText, getSummary } from '@/lib/newsApi';
 import BlogCard from '@/components/Blog/BlogCard';
@@ -56,7 +56,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
     <main className="min-h-screen bg-white pb-20">
       {/* Banner / Hero */}
       <div className="relative min-h-[420px] h-[55vh] sm:h-[60vh] w-full bg-slate-900 overflow-hidden">
-        <Image
+        <OptimizedImage
           src={getImageUrl(destination.imageBanner || destination.image)}
           alt={destination.title}
           fill

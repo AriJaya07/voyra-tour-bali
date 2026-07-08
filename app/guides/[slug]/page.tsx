@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { prisma } from "@/lib/prisma";
 import { tryDb } from "@/lib/data/safeDb";
 import Container from "@/components/Container";
@@ -130,7 +130,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <header className="bg-gradient-to-br from-[#0071CE] via-[#005bb5] to-[#003d80] text-white relative overflow-hidden">
         {guide.coverImage && (
           <>
-            <Image
+            <OptimizedImage
               src={guide.coverImage}
               alt=""
               fill

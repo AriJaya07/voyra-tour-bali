@@ -1,4 +1,5 @@
 import Link from "next/link";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import type { GuideListItem } from "./types";
 
 interface Props {
@@ -14,11 +15,12 @@ export default function GuideCardFeatured({ guide }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2">
         <div className="relative h-56 md:h-full md:min-h-[320px] bg-gray-100">
           {guide.coverImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <OptimizedImage
               src={guide.coverImage}
               alt={guide.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-200 flex items-center justify-center text-5xl">

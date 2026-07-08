@@ -34,8 +34,11 @@ export async function GET(request: Request) {
       travelDate: booking.travelDate.toISOString().split('T')[0],
       pax: booking.pax,
       status: booking.status,
-      userName: booking.user.name,
-      userEmail: booking.user.email,
+      userName:
+        booking.user?.name ||
+        [booking.leadFirstName, booking.leadLastName].filter(Boolean).join(" ") ||
+        null,
+      userEmail: booking.user?.email || booking.leadEmail || null,
       paidAt: booking.paidAt?.toISOString() || null,
     },
   })

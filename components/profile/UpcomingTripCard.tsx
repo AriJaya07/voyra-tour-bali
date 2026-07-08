@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import type { Booking } from "@/types/booking";
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
@@ -65,9 +66,15 @@ export default function UpcomingTripCard({ bookings, onViewTicket }: Props) {
       </div>
 
       <div className="px-6 sm:px-8 pb-6 pt-2 flex flex-col sm:flex-row gap-5">
-        <div className="w-full sm:w-32 h-32 rounded-2xl overflow-hidden bg-white/10 shrink-0">
+        <div className="relative w-full sm:w-32 h-32 rounded-2xl overflow-hidden bg-white/10 shrink-0">
           {next.productImage ? (
-            <img src={next.productImage} alt={next.productTitle} className="w-full h-full object-cover" />
+            <OptimizedImage
+              src={next.productImage}
+              alt={next.productTitle}
+              fill
+              sizes="(max-width: 640px) 100vw, 128px"
+              className="object-cover"
+            />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-blue-400/30 to-blue-600/30" />
           )}

@@ -11,6 +11,8 @@ import {
   settleReservation,
 } from "@/lib/services/aiCreditService";
 import { planCost } from "@/lib/config/aiCosts";
+import { consumeGuest } from "@/lib/services/aiGuestQuota";
+import { FEATURES } from "@/lib/config/features";
 import {
   searchViatorProducts,
   type ViatorProductImage,
@@ -158,10 +160,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = session?.user?.id ? parseInt(session.user.id) : null;
+    if (!FEATURES.freeAiPlanner && !userId) {
       return NextResponse.json({ error: "Sign in to plan a trip" }, { status: 401 });
     }
-    const userId = parseInt(session.user.id);
 
     const body = await req.json().catch(() => ({}));
     const days = Math.max(1, Math.min(parseInt(body?.days || "5"), 14));
@@ -171,39 +173,61 @@ export async function POST(req: NextRequest) {
     const fromDate: string | null = typeof body?.fromDate === "string" ? body.fromDate : null;
     const toDate: string | null = typeof body?.toDate === "string" ? body.toDate : null;
 
-    // Free-tier auto-grant before quota check
-    await ensureFreeMonthlyGrant(userId).catch(() => {});
-
-    // Credit gate: reserve before any expensive work (Viator searches + LLM).
-    // Plan length differential (8 cr ≤7d, 12 cr 8–14d) preserved via planCost.
-    const cost = planCost(days);
-    const reserved = await reserveCredits(userId, "plan", cost);
-    if (!reserved.ok) {
-      await prisma.aiUsage.create({
-        data: {
-          userId,
-          endpoint: "plan",
-          creditsCost: 0,
-          status: "DENIED_QUOTA",
-          meta: { reason: reserved.reason, balance: reserved.remainingBalance, days },
-        },
-      });
-      return NextResponse.json(
-        {
-          error: "Out of AI credits",
-          reason: reserved.reason,
-          balance: reserved.remainingBalance,
-          upgradeUrl: "/ai/pricing",
-        },
-        { status: 402 }
-      );
+    if (FEATURES.freeAiPlanner) {
+      // Planner is free (lead-gen for bookings). Anonymous users still pass
+      // through the per-IP daily quota so the endpoint can't be farmed.
+      if (!userId) {
+        const guest = await consumeGuest(req, "plan");
+        if (!guest.ok) {
+          return NextResponse.json(
+            {
+              error: "Free plans for today are used up. Sign in to keep planning.",
+              reason: "QUOTA",
+              used: guest.used,
+              limit: guest.limit,
+              upgradeUrl: "/register",
+            },
+            { status: 402 }
+          );
+        }
+      }
+    } else {
+      // Credit gate: reserve before any expensive work (Viator searches + LLM).
+      // Plan length differential (8 cr ≤7d, 12 cr 8–14d) preserved via planCost.
+      await ensureFreeMonthlyGrant(userId!).catch(() => {});
+      const cost = planCost(days);
+      const reserved = await reserveCredits(userId!, "plan", cost);
+      if (!reserved.ok) {
+        await prisma.aiUsage.create({
+          data: {
+            userId: userId!,
+            endpoint: "plan",
+            creditsCost: 0,
+            status: "DENIED_QUOTA",
+            meta: { reason: reserved.reason, balance: reserved.remainingBalance, days },
+          },
+        });
+        return NextResponse.json(
+          {
+            error: "Out of AI credits",
+            reason: reserved.reason,
+            balance: reserved.remainingBalance,
+            upgradeUrl: "/ai/pricing",
+          },
+          { status: 402 }
+        );
+      }
+      reservationId = reserved.reservationId ?? null;
+      billedUserId = userId;
     }
-    reservationId = reserved.reservationId ?? null;
-    billedUserId = userId;
 
     const [user, prefs] = await Promise.all([
-      prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
-      prisma.userPreferences.findUnique({ where: { userId } }),
+      userId
+        ? prisma.user.findUnique({ where: { id: userId }, select: { name: true } })
+        : Promise.resolve(null),
+      userId
+        ? prisma.userPreferences.findUnique({ where: { userId } })
+        : Promise.resolve(null),
     ]);
 
     const [candidates, localDests] = await Promise.all([

@@ -5,6 +5,7 @@ import { Booking, bookingService } from "@/utils/service/booking.service";
 import { formatPrice } from "@/utils/formatPrice";
 import { toast } from "sonner";
 import { CopyIcon } from "@/components/assets/Icon/shared";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import BookingStatusBadge from "@/components/Global/booking/BookingStatusBadge";
 import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import { ADMIN_ALLOWED_TRANSITIONS } from "@/types/booking";
@@ -224,9 +225,11 @@ export default function BookingViewModal({
                     Payment Proof
                   </p>
                   <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-800 group">
-                    <img
+                    <OptimizedImage
                       src={(booking as any).paymentProofUrl}
                       alt="Payment proof"
+                      width={800}
+                      height={192}
                       className="w-full max-h-48 object-contain"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
@@ -387,9 +390,10 @@ export default function BookingViewModal({
                   <div className="flex items-center gap-4">
                     {booking.ticketImageUrl ? (
                       <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-700 bg-slate-800 shrink-0">
-                        <img
+                        <OptimizedImage
                           src={booking.ticketImageUrl}
                           alt="Ticket"
+                          fill
                           className="w-full h-full object-cover"
                         />
                         <button
@@ -442,9 +446,11 @@ export default function BookingViewModal({
             {booking.status === "COMPLETED" && booking.ticketImageUrl && (
               <Section title="Ticket">
                 <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-800 group">
-                  <img
+                  <OptimizedImage
                     src={booking.ticketImageUrl}
                     alt="Ticket"
+                    width={800}
+                    height={300}
                     className="w-full h-auto max-h-[300px] object-contain"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3">

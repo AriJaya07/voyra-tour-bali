@@ -1,5 +1,6 @@
 import { ImageItem } from "@/utils/service/image.service";
 import { CloseIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/assets/Icon/shared";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 export default function Lightbox({
     image,
@@ -52,9 +53,11 @@ export default function Lightbox({
   
         {/* Main image + info */}
         <div className="flex flex-col lg:flex-row items-center gap-6 max-w-5xl w-full mx-16 px-4">
-          <img
+          <OptimizedImage
             src={image.url}
             alt=""
+            width={1200}
+            height={800}
             className="max-h-[70vh] max-w-full lg:max-w-[65%] rounded-2xl object-contain shadow-2xl"
           />
   

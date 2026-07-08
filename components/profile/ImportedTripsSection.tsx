@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/common/ConfirmDialog";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { CloseIcon } from "@/components/assets/Icon/shared";
 import { buildViatorProductUrl } from "@/lib/config/viator";
 
@@ -266,16 +267,12 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
                 className="border border-gray-200 rounded-2xl overflow-hidden hover:border-[#0071CE]/40 hover:shadow-sm transition flex flex-col"
               >
                 <div className="relative h-32 bg-gray-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <OptimizedImage
                     src={t.productImage || "/images/banner/banner-travel.png"}
                     alt={t.productTitle}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const el = e.currentTarget;
-                      if (el.src.endsWith("/images/banner/banner-travel.png")) return;
-                      el.src = "/images/banner/banner-travel.png";
-                    }}
+                    fill
+                    sizes="(max-width: 640px) 100vw, 50vw"
+                    className="object-cover"
                   />
                   <div
                     aria-hidden
@@ -450,15 +447,13 @@ export default function ImportedTripsSection({ hasLocalBookings }: { hasLocalBoo
               </div>
 
               {productImage && (
-                <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                <div className="relative h-32 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                  <OptimizedImage
                     src={productImage}
                     alt="Preview"
-                    className="w-full h-32 object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
+                    fill
+                    sizes="(max-width: 640px) 100vw, 448px"
+                    className="object-cover"
                   />
                 </div>
               )}

@@ -54,9 +54,9 @@ export async function POST(request: Request) {
         },
       ],
       customerDetails: {
-        firstName: booking.leadFirstName || booking.user.name || "Guest",
+        firstName: booking.leadFirstName || booking.user?.name || "Guest",
         lastName: booking.leadLastName || "",
-        email: booking.leadEmail || booking.user.email || "",
+        email: booking.leadEmail || booking.user?.email || "",
         phone: "",
       },
       callbackUrls: {

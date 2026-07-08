@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { EventItem } from "@/types/blog";
 import { getCardImage, getLocationText, getSummary } from "@/lib/newsApi";
 import { CalendarIcon, MapPinIcon } from "@/components/assets/Icon/shared";
@@ -13,7 +13,7 @@ export default function EventCard({ event }: { event: EventItem }) {
       className="group grid grid-cols-1 md:grid-cols-3 bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 "
     >
       <div className="relative h-60 md:h-full w-full overflow-hidden col-span-1">
-        <Image
+        <OptimizedImage
           src={getCardImage(event)}
           alt={event.title}
           fill

@@ -2,15 +2,17 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { IoChatbubblesOutline, IoClose, IoSend, IoRefresh, IoMic, IoStop, IoVolumeHigh, IoVolumeMute } from "react-icons/io5";
+import { IoChatbubblesOutline, IoClose, IoSend, IoRefresh, IoLogoWhatsapp } from "react-icons/io5";
 import { HiSparkles } from "react-icons/hi2";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { buildViatorProductUrl } from "@/lib/config/viator";
 import AiUpgradeModal from "@/components/ai/AiUpgradeModal";
 import { useQueryClient } from "@tanstack/react-query";
-import { AI_QUERY_KEYS, useAiWallet } from "@/utils/hooks/useAiWallet";
+import { AI_QUERY_KEYS } from "@/utils/hooks/useAiWallet";
 import PriceLabel from "@/components/common/PriceLabel";
+
+const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || "6281234567890";
 
 interface ProductCard {
   productCode: string;
@@ -88,18 +90,10 @@ export default function AIChatWidget() {
     balance: number;
     reason?: string;
   }>({ open: false, variant: "user_quota", balance: 0 });
-  const [mode, setMode] = useState<"chat" | "concierge" | "agent">("chat");
-  const [recording, setRecording] = useState(false);
-  const [transcribing, setTranscribing] = useState(false);
-  const [voiceOut, setVoiceOut] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const qc = useQueryClient();
   const isAuthed = !!session?.user?.id;
-  const wallet = useAiWallet({ enabled: isAuthed });
-  const conciergeUnlocked = !!wallet.data?.planFeatures?.concierge;
 
   // Refresh welcome when session resolves (avoid stale "Hi!" for signed-in user)
   useEffect(() => {
@@ -140,70 +134,6 @@ export default function AIChatWidget() {
     setTimeout(() => inputRef.current?.focus(), 50);
   }
 
-  /** Read an assistant reply aloud (Web Speech — no external TTS provider). */
-  function speak(text: string) {
-    if (!voiceOut || typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    try {
-      const clean = text.replace(/\[\d+\]/g, "").replace(/https?:\/\/\S+/g, "").slice(0, 600);
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(clean);
-      u.rate = 1.02;
-      window.speechSynthesis.speak(u);
-    } catch {
-      /* TTS unavailable — silent */
-    }
-  }
-
-  async function transcribeBlob(blob: Blob) {
-    setTranscribing(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", blob, "voice.webm");
-      const res = await fetch("/api/ai/voice/transcribe", { method: "POST", body: fd });
-      if (res.status === 402) {
-        setUpgradeModal({ open: true, variant: "user_quota", balance: 0, reason: "QUOTA" });
-        return;
-      }
-      const json = await res.json().catch(() => ({}));
-      const text = typeof json?.text === "string" ? json.text.trim() : "";
-      if (text) {
-        setInputValue(text);
-        setTimeout(() => inputRef.current?.focus(), 50);
-      }
-    } catch {
-      /* transcription failed — user can type instead */
-    } finally {
-      setTranscribing(false);
-    }
-  }
-
-  async function toggleMic() {
-    if (recording) {
-      mediaRecorderRef.current?.stop();
-      return;
-    }
-    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-      mr.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data);
-      };
-      mr.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        setRecording(false);
-        const blob = new Blob(audioChunksRef.current, { type: mr.mimeType || "audio/webm" });
-        if (blob.size > 0) await transcribeBlob(blob);
-      };
-      mediaRecorderRef.current = mr;
-      mr.start();
-      setRecording(true);
-    } catch {
-      setRecording(false);
-    }
-  }
-
   async function sendMessage(overrideText?: string) {
     const text = (overrideText ?? inputValue).trim();
     if (!text || isStreaming) return;
@@ -218,12 +148,8 @@ export default function AIChatWidget() {
     setInputValue("");
     setIsStreaming(true);
 
-    const useConcierge = mode === "concierge" && conciergeUnlocked && isAuthed;
-    const useAgent = mode === "agent" && isAuthed;
-    const endpoint = useAgent ? "/api/ai/agent" : useConcierge ? "/api/ai/concierge" : "/api/ai/chat";
-
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -260,43 +186,6 @@ export default function AIChatWidget() {
       }
 
       if (!res.ok || !res.body) throw new Error("Request failed");
-
-      // Agent endpoint is JSON and can return a priced draft cart.
-      if (useAgent) {
-        const json = await res.json();
-        const reply = typeof json?.reply === "string" ? json.reply : "(no reply)";
-        const draft: DraftCart | null =
-          json?.draft && Array.isArray(json.draft.items) ? json.draft : null;
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
-            ...updated[updated.length - 1],
-            content: reply,
-            draft,
-          };
-          return updated;
-        });
-        speak(reply);
-        return;
-      }
-
-      // Concierge endpoint is JSON, not streaming — branch out.
-      if (useConcierge) {
-        const json = await res.json();
-        const reply = typeof json?.reply === "string" ? json.reply : "(no reply)";
-        const sources: SourceChip[] = Array.isArray(json?.sources) ? json.sources : [];
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
-            ...updated[updated.length - 1],
-            content: reply,
-            sources,
-          };
-          return updated;
-        });
-        speak(reply);
-        return;
-      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -421,54 +310,17 @@ export default function AIChatWidget() {
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                {isAuthed ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setVoiceOut((v) => {
-                        if (v && typeof window !== "undefined" && "speechSynthesis" in window) {
-                          window.speechSynthesis.cancel();
-                        }
-                        return !v;
-                      });
-                    }}
-                    title={voiceOut ? "Voice replies on" : "Read replies aloud"}
-                    className={`p-1 rounded-full transition ${
-                      voiceOut ? "bg-white text-blue-700" : "text-white hover:bg-white/20"
-                    }`}
-                    aria-label="Toggle voice replies"
-                  >
-                    {voiceOut ? <IoVolumeHigh size={16} /> : <IoVolumeMute size={16} />}
-                  </button>
-                ) : null}
-                {isAuthed ? (
-                  <button
-                    type="button"
-                    onClick={() => setMode((m) => (m === "agent" ? "chat" : "agent"))}
-                    title={mode === "agent" ? "Booking agent (builds a draft cart)" : "Switch to booking agent"}
-                    className={`text-[10px] font-bold px-2 py-1 rounded-full border transition ${
-                      mode === "agent"
-                        ? "bg-white text-amber-700 border-white"
-                        : "bg-white/10 text-white border-white/30 hover:bg-white/20"
-                    }`}
-                  >
-                    {mode === "agent" ? "🧭 BOOK" : "BOOK"}
-                  </button>
-                ) : null}
-                {conciergeUnlocked ? (
-                  <button
-                    type="button"
-                    onClick={() => setMode((m) => (m === "concierge" ? "chat" : "concierge"))}
-                    title={mode === "concierge" ? "Concierge mode (memory on)" : "Switch to concierge mode"}
-                    className={`text-[10px] font-bold px-2 py-1 rounded-full border transition ${
-                      mode === "concierge"
-                        ? "bg-white text-blue-700 border-white"
-                        : "bg-white/10 text-white border-white/30 hover:bg-white/20"
-                    }`}
-                  >
-                    {mode === "concierge" ? "★ MEM" : "MEM"}
-                  </button>
-                ) : null}
+                {/* Human escape hatch — WhatsApp beats any bot for trust */}
+                <a
+                  href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hello! I'm planning a Bali trip and have a question.")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Chat with a human on WhatsApp"
+                  aria-label="Ask us on WhatsApp"
+                  className="p-1 rounded-full text-white hover:bg-white/20 transition"
+                >
+                  <IoLogoWhatsapp size={17} />
+                </a>
                 <button
                   onClick={resetChat}
                   disabled={isStreaming || messages.length <= 1}
@@ -612,7 +464,7 @@ export default function AIChatWidget() {
                         >
                           <div className="relative h-20 sm:h-24 bg-gray-100">
                             {card.imageUrl ? (
-                              <Image
+                              <OptimizedImage
                                 src={card.imageUrl}
                                 alt={card.title}
                                 fill
@@ -658,25 +510,10 @@ export default function AIChatWidget() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={recording ? "Listening…" : transcribing ? "Transcribing…" : "Ask about Bali tours..."}
-                  disabled={isStreaming || transcribing}
+                  placeholder="Ask about Bali tours..."
+                  disabled={isStreaming}
                   className="flex-1 min-w-0 text-sm px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 bg-gray-50 disabled:opacity-60"
                 />
-                {isAuthed && (
-                  <button
-                    onClick={toggleMic}
-                    disabled={isStreaming || transcribing}
-                    className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all flex-shrink-0 disabled:opacity-40 ${
-                      recording
-                        ? "bg-red-500 text-white animate-pulse"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                    aria-label={recording ? "Stop recording" : "Record voice message"}
-                    title={recording ? "Stop" : "Speak"}
-                  >
-                    {recording ? <IoStop size={15} /> : <IoMic size={15} />}
-                  </button>
-                )}
                 <button
                   onClick={() => sendMessage()}
                   disabled={isStreaming || !inputValue.trim()}

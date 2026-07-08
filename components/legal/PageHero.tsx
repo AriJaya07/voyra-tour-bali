@@ -1,4 +1,4 @@
-import Image from "next/image";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 interface PageHeroProps {
   badge: string;
@@ -13,7 +13,7 @@ export default function PageHero({ badge, title, subtitle, lastUpdated, bannerIm
     <section className="relative bg-gradient-to-br from-[#0071CE] via-[#005bb5] to-[#003d80] text-white overflow-hidden">
       {/* Banner image */}
       {bannerImage && (
-        <Image
+        <OptimizedImage
           src={bannerImage}
           alt=""
           fill

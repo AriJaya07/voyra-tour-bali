@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import Container from "@/components/Container";
 import { SITE_NAME, SITE_URL } from "@/lib/config";
 import { buildViatorProductUrl } from "@/lib/config/viator";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 interface PlanItem {
   day: number;
@@ -116,10 +117,11 @@ export default async function SharedItineraryPage({ params }: { params: Promise<
                         <div key={i} className="flex gap-3 border-l-4 border-blue-100 pl-3">
                           <div className="text-xl">{SLOT_EMOJI[it.slot]}</div>
                           {it.imageUrl && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                            <OptimizedImage
                               src={it.imageUrl}
                               alt={it.title}
+                              width={80}
+                              height={64}
                               className="hidden sm:block w-20 h-16 rounded-lg object-cover shrink-0"
                             />
                           )}

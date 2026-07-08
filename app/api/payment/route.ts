@@ -8,11 +8,8 @@ import crypto from "crypto";
 
 export async function POST(request: Request) {
   try {
+    // Guest checkout allowed — session optional, guests must provide a lead email
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await request.json();
     const {
@@ -47,6 +44,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const userId = session?.user?.id ? Number(session.user.id) : null;
+    if (!userId && !leadEmail) {
+      return NextResponse.json(
+        { error: "Email is required for guest bookings" },
+        { status: 400 }
+      );
+    }
+
     // Server-side price resolution — the client total is never trusted for
     // DB-priced products; live Viator products are re-quoted and flagged on
     // suspicious deviation.
@@ -64,21 +69,21 @@ export async function POST(request: Request) {
     const chargeTotal = Math.round(resolvedPrice.totalPrice);
     if (resolvedPrice.suspicious) {
       console.error(
-        `[PRICE-MISMATCH] user=${session.user.id} product=${productCode} client=${totalPrice} server=${chargeTotal} source=${resolvedPrice.priceSource}`
+        `[PRICE-MISMATCH] user=${userId ?? "guest"} product=${productCode} client=${totalPrice} server=${chargeTotal} source=${resolvedPrice.priceSource}`
       );
     }
 
     // Generate idempotency key to prevent duplicate bookings
     const idempotencyKey = crypto
       .createHash("sha256")
-      .update(`${session.user.id}-${productCode}-${travelDate}-${Date.now()}`)
+      .update(`${userId ?? leadEmail}-${productCode}-${travelDate}-${Date.now()}`)
       .digest("hex")
       .substring(0, 32);
 
     // Create booking in DB with PENDING status + all booking data
     const booking = await prisma.booking.create({
       data: {
-        userId: Number(session.user.id),
+        userId,
         bookingRef: "", // Will be set after Midtrans order ID
         source: safeSource,
         productCode,
@@ -154,9 +159,9 @@ export async function POST(request: Request) {
           : []),
       ],
       customerDetails: {
-        firstName: leadFirstName || session.user.name || "Guest",
+        firstName: leadFirstName || session?.user?.name || "Guest",
         lastName: leadLastName || "",
-        email: leadEmail || session.user.email || "",
+        email: leadEmail || session?.user?.email || "",
         phone: leadPhone || "",
       },
       callbackUrls: {

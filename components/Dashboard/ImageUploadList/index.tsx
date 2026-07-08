@@ -13,6 +13,7 @@ import { FilterType, fmtDate, ViewMode } from "@/components/common/ListForm";
 import DashboardPageHeader from "@/components/Dashboard/common/DashboardPageHeader";
 import { ErrorBanner } from "@/components/Dashboard/common/LoadingState";
 import { EyeIcon, PlusIcon } from "@/components/assets/Icon/shared";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 export default function ImageUploadList() {
   const [filter, setFilter] = useState<FilterType>("all");
@@ -288,9 +289,11 @@ export default function ImageUploadList() {
           <div className="divide-y divide-slate-800">
             {filtered.map((img) => (
               <div key={img.id} className="grid grid-cols-[80px_1fr_1fr_1fr_auto] gap-4 px-5 py-3 items-center hover:bg-slate-800/30 transition-colors group">
-                <img
+                <OptimizedImage
                   src={img.url}
                   alt=""
+                  width={64}
+                  height={48}
                   className="w-16 h-12 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setLightboxImage(img)}
                 />

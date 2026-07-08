@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { notFound } from 'next/navigation';
 import { getEventDetail, getImageUrl, getCardImage, getLocationText, getSummary } from '@/lib/newsApi';
 import { CalendarIcon, MapPinIcon, ChevronLeftIcon } from "@/components/assets/Icon/shared";
@@ -53,7 +53,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           {/* Banner */}
           <div className="relative h-[400px] w-full">
-            <Image
+            <OptimizedImage
               src={getImageUrl(event.imageBanner || event.image)}
               alt={event.title}
               fill

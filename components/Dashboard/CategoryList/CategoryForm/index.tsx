@@ -6,6 +6,7 @@ import CloseIcon from "@/components/assets/dashboard/CloseIcon";
 import SpinnerIcon from "@/components/assets/dashboard/SpinnerIcon";
 import { Field, inputClass, slugify } from "@/components/common/InputForm";
 import { useImages } from "@/utils/hooks/useImages";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 interface FormData {
   name: string;
@@ -141,9 +142,11 @@ export default function CategoryForm({ mode, initialData, onSubmit, onCancel, is
             )}
             {formData.image && (
               <div className="flex items-center gap-3">
-                <img
+                <OptimizedImage
                   src={formData.image}
                   alt="Category preview"
+                  width={64}
+                  height={64}
                   className="w-16 h-16 rounded-lg object-cover border border-slate-200"
                 />
                 <div className="flex-1">

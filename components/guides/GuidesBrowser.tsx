@@ -63,7 +63,9 @@ export default function GuidesBrowser({ guides, fallbackNotes }: Props) {
   const filtered = useMemo(() => {
     const ql = q.trim().toLowerCase();
     return guides.filter((g) => {
-      if (region !== ALL_REGION && (g.region ?? "") !== region) return false;
+      // Case-insensitive — the map links here with title-case region names,
+      // which may differ from the DB's casing.
+      if (region !== ALL_REGION && (g.region ?? "").toLowerCase() !== region.toLowerCase()) return false;
       if (theme && !g.tags.some((t) => t.toLowerCase() === theme.toLowerCase())) return false;
       if (ql) {
         const hay = `${g.title} ${g.excerpt} ${g.tags.join(" ")} ${g.region ?? ""}`.toLowerCase();
@@ -128,7 +130,11 @@ export default function GuidesBrowser({ guides, fallbackNotes }: Props) {
             All regions <span className="opacity-60">({guides.length})</span>
           </Chip>
           {regions.map(([name, count]) => (
-            <Chip key={name} active={region === name} onClick={() => setRegion(name)}>
+            <Chip
+              key={name}
+              active={region.toLowerCase() === name.toLowerCase()}
+              onClick={() => setRegion(name)}
+            >
               {name} <span className="opacity-60">({count})</span>
             </Chip>
           ))}

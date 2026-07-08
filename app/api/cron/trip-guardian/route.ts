@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
     // One nearest trip per user, opted-in only.
     const nearest = new Map<number, { title: string; date: Date }>();
     for (const t of [...bookings, ...trips]) {
-      if (!t.travelDate || !optIds.has(t.userId)) continue;
+      if (!t.travelDate || t.userId == null || !optIds.has(t.userId)) continue;
       const cur = nearest.get(t.userId);
       if (!cur || t.travelDate < cur.date) nearest.set(t.userId, { title: t.productTitle, date: t.travelDate });
     }

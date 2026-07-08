@@ -193,3 +193,58 @@ export async function fetchProductReviews(
     return { totalCount: 0, averageRating: null };
   }
 }
+
+export interface ViatorReviewItem {
+  rating: number;
+  title: string | null;
+  text: string | null;
+  userName: string | null;
+  publishedDate: string | null;
+}
+
+/**
+ * Fetch full review content for one product — rating summary + recent review
+ * texts. Used by the public reviews endpoint to show social proof at checkout.
+ */
+export async function fetchProductReviewsFull(
+  productCode: string,
+  count = 5
+): Promise<{ totalCount: number; averageRating: number | null; reviews: ViatorReviewItem[] }> {
+  if (!VIATOR_API_KEY) return { totalCount: 0, averageRating: null, reviews: [] };
+
+  try {
+    const res = await axios.post(
+      `${VIATOR_API_URL}/reviews/product`,
+      {
+        productCode,
+        pagination: { start: 1, count: Math.min(Math.max(count, 1), 20) },
+        sorting: { sort: "MOST_RECENT_PER_LOCALE" },
+        provider: "ALL",
+        showMachineTranslated: true,
+      },
+      { headers: VIATOR_HEADERS, timeout: 120000 }
+    );
+
+    const reviews: ViatorReviewItem[] = (res.data?.reviews || []).map(
+      (r: Record<string, unknown>) => ({
+        rating: Number(r.rating) || 0,
+        title: typeof r.title === "string" ? r.title : null,
+        text: typeof r.text === "string" ? r.text : null,
+        userName: typeof r.userName === "string" ? r.userName : null,
+        publishedDate: typeof r.publishedDate === "string" ? r.publishedDate : null,
+      })
+    );
+
+    return {
+      totalCount: res.data?.totalCount || 0,
+      averageRating: res.data?.rating || null,
+      reviews,
+    };
+  } catch (error) {
+    console.error(
+      `[ViatorSync] Failed to fetch full reviews for ${productCode}:`,
+      error instanceof Error ? error.message : "Unknown"
+    );
+    return { totalCount: 0, averageRating: null, reviews: [] };
+  }
+}

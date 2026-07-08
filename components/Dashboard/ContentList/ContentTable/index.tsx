@@ -1,6 +1,7 @@
 "use client";
 
 import { Content } from "@/utils/service/content.service";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 interface Props {
   contents: Content[];
@@ -56,12 +57,12 @@ export default function ContentTable({ contents, onView, onEdit, onDelete }: Pro
             {/* Thumbnail / Avatar */}
             <div className="flex-shrink-0">
               {c.images.find((img) => img.isMain)?.url || c.images[0]?.url ? (
-                <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-700">
-                  <img
+                <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-slate-700">
+                  <OptimizedImage
                     src={c.images.find((img) => img.isMain)?.url || c.images[0]?.url}
                     alt={c.title}
+                    fill
                     className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.style.display = "none"; }}
                   />
                 </div>
               ) : (
@@ -103,8 +104,8 @@ export default function ContentTable({ contents, onView, onEdit, onDelete }: Pro
               {c.images.length > 0 ? (
                 <>
                   {c.images.slice(0, 3).map((img, idx) => (
-                    <div key={idx} className="w-6 h-6 rounded-md overflow-hidden border border-slate-700">
-                      <img src={img.url} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                    <div key={idx} className="relative w-6 h-6 rounded-md overflow-hidden border border-slate-700">
+                      <OptimizedImage src={img.url} alt="" fill className="w-full h-full object-cover" />
                     </div>
                   ))}
                   {c.images.length > 3 && (

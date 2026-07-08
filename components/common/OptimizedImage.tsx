@@ -14,6 +14,7 @@ const SKIP_OPTIMIZATION_DOMAINS = [
   'dynamic-media.tacdn.com',
   'viator.com',
   'cloudinary.com',
+  'googleusercontent.com', // Google avatars are already sized (=s96-c)
 ]
 
 function shouldSkipOptimization(src: string): boolean {

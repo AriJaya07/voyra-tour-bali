@@ -29,6 +29,7 @@ model Destination {
   slug        String? @unique
   description String
   price       Float?
+  costPrice   Float? // net rate paid to operator (IDR) — margin = price - costPrice
 
   categoryId Int?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -49,6 +50,7 @@ model Package {
   slug        String? @unique
   description String
   price       Float
+  costPrice   Float? // net rate paid to operator (IDR) — margin = price - costPrice
 
   categoryId Int?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -406,6 +408,13 @@ model Operator {
   status        String   @default("PENDING") // PENDING | APPROVED | SUSPENDED | REJECTED
   rejectReason  String?
 
+  // payout / unit economics
+  commissionPercent Float?  // our take, e.g. 25 = 25% of retail
+  payoutBankName    String?
+  payoutAccountNo   String?
+  payoutAccountName String?
+  payoutNotes       String?
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -707,8 +716,9 @@ model Booking {
   promoCode     String?
   documentsJson Json?
 
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Nullable for guest checkout — guest bookings identified by leadEmail + ticketToken
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   travelers BookingTraveler[]
 

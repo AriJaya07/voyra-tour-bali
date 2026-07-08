@@ -1,6 +1,7 @@
 import { ImageItem } from "@/utils/service/image.service";
 import { useState } from "react";
 import { CloseIcon } from "@/components/assets/Icon/shared";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 export default function LinkImageModal({
     image,
@@ -39,7 +40,7 @@ export default function LinkImageModal({
           <div className="p-6 space-y-4">
             {/* Preview */}
             <div className="flex items-center gap-4 p-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <img src={image.url} alt="" className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
+              <OptimizedImage src={image.url} alt="" width={64} height={64} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
               <div className="text-xs text-slate-400">
                 <p className="font-mono text-slate-300 mb-0.5">Gambar #{image.id}</p>
                 <p>Pilih destinasi atau package di bawah untuk menautkan gambar ini</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 interface Props {
   images: { url: string; alt?: string }[];
@@ -86,9 +87,11 @@ export default function PublicLightbox({ images, startIndex, onClose }: Props) {
         className="relative max-w-[95vw] max-h-[88vh] flex items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
+        <OptimizedImage
           src={current.url}
           alt={current.alt || ""}
+          width={1600}
+          height={1200}
           className="max-w-full max-h-[88vh] object-contain rounded-lg shadow-2xl"
         />
       </div>

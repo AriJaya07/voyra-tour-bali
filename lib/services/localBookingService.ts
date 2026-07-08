@@ -3,7 +3,7 @@ import { snap } from "@/lib/config/midtrans";
 import crypto from "crypto";
 
 export interface LocalBookingInput {
-  userId: number;
+  userId: number | null; // null = guest checkout (leadEmail required by the route)
   productCode: string;
   productTitle: string;
   productImage?: string;

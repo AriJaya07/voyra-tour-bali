@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { useSession } from "next-auth/react";
 
 interface ImportedTrip {
@@ -76,7 +76,7 @@ export default function NextTripWidget() {
         <div className="relative flex flex-col sm:flex-row gap-4 p-5 sm:p-6">
           {trip.productImage && (
             <div className="relative w-full sm:w-32 h-28 sm:h-24 rounded-xl overflow-hidden bg-white/10 flex-shrink-0">
-              <Image
+              <OptimizedImage
                 src={trip.productImage}
                 alt={trip.productTitle}
                 fill

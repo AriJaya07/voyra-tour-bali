@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { ViatorProductOption, ViatorLogistics, ViatorLanguageGuide } from "@/utils/hooks/useViator";
@@ -59,7 +58,6 @@ export default function BookingWidget({
   ageBands,
   productOptions,
 }: BookingWidgetProps) {
-  const { data: session } = useSession();
   const router = useRouter();
   const setProductSelection = useBookingStore((s) => s.setProductSelection);
 
@@ -112,12 +110,8 @@ export default function BookingWidget({
     setAvailabilityChecked(false);
   };
 
+  // Availability is public — guests can check and book without an account
   const handleCheckAvailability = async () => {
-    if (!session) {
-      const currentUrl = typeof window !== "undefined" ? window.location.pathname : "/";
-      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
-      return;
-    }
     if (!date || totalTravelers === 0) return;
     setIsChecking(true);
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import type { TourGuideRailItem } from "./types";
 
 interface Props {
@@ -23,10 +24,11 @@ export default function MeetGuidesRail({ guides }: Props) {
             className="group bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition text-center"
           >
             {g.photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <OptimizedImage
                 src={g.photo}
                 alt={g.name}
+                width={80}
+                height={80}
                 className="w-20 h-20 rounded-full object-cover mx-auto mb-3 ring-2 ring-blue-50"
               />
             ) : (

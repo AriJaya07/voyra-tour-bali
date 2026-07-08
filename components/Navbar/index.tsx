@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import VoryaIcon from "../assets/Icon/VoyraIcon"
 import SearchModal from "./SearchModal"
 import SearchIcon from "../assets/Icon/SearchIcon"
@@ -11,13 +12,14 @@ import { ProfileIcon, DashboardIcon, HomeIcon, SignOutIcon, ChevronDownIcon } fr
 import HeartIcon from "../assets/Icon/shared/HeartIcon"
 import NotificationBell from "../notifications/NotificationBell"
 import { useWishlistStore } from "@/utils/hooks/useWishlist"
+import { FEATURES } from "@/lib/config/features"
 
+// Focus reset: one job — find a tour, book it. See lib/config/features.ts.
 const NAV_ITEMS = [
   { label: "Home", id: "home" },
+  { label: "Tours", id: "destinasi" },
   { label: "Guides", id: "guides", href: "/guides" },
-  { label: "Map", id: "explore", href: "/explore" },
-  { label: "AI Tools", id: "ai", href: "/ai" },
-  { label: "My Trips", id: "trips", href: "/trips" },
+  { label: "Plan My Trip", id: "ai-plan", href: "/ai/plan" },
 ]
 
 const NAVBAR_HEIGHT = 64
@@ -32,8 +34,9 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState("home")
   const [scrolled, setScrolled] = useState(false)
   const wishlistCount = useWishlistStore((s) => s.items.length)
-  const userImage = (session?.user as any)?.image || "/images/people.png"
-  const userRole = (session?.user as any)?.role as string | undefined
+  const sessionUser = (session?.user ?? {}) as { image?: string | null; role?: string }
+  const userImage = sessionUser.image || "/images/people.png"
+  const userRole = sessionUser.role
 
   // Track scroll position for active section + navbar style
   useEffect(() => {
@@ -170,7 +173,7 @@ export default function Navbar() {
             </Link>
 
             {/* Notifications – Desktop */}
-            <NotificationBell variant="desktop" />
+            {FEATURES.notificationsInbox && <NotificationBell variant="desktop" />}
 
             {session ? (
               <div className="relative">
@@ -180,9 +183,13 @@ export default function Navbar() {
                   className="flex items-center gap-2 cursor-pointer group"
                   aria-label="My profile"
                 >
-                  <img
+                  <OptimizedImage
                     src={userImage}
                     alt={session.user?.name || "User"}
+                    width={40}
+                    height={40}
+                    unoptimized
+                    fallbackSrc={<VoryaIcon className="w-6 h-6 opacity-30" />}
                     className="h-10 w-10 rounded-full object-cover border-2 border-[#0071CE] shadow-sm group-hover:border-[#005ba6] transition"
                   />
                   <ChevronDownIcon className={`w-3 h-3 text-gray-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
@@ -196,9 +203,13 @@ export default function Navbar() {
                     <div className="absolute right-0 top-14 z-40 w-72 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
                       {/* Header */}
                       <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] p-5 flex items-center gap-4">
-                        <img
+                        <OptimizedImage
                           src={userImage}
                           alt={session.user?.name || "User"}
+                          width={56}
+                          height={56}
+                          unoptimized
+                          fallbackSrc={<VoryaIcon className="w-8 h-8 opacity-40" />}
                           className="h-14 w-14 rounded-full object-cover border-2 border-white shadow"
                         />
                         <div className="min-w-0">
@@ -230,14 +241,14 @@ export default function Navbar() {
                           <ProfileIcon className="w-4 h-4 text-gray-400" />
                           My Profile
                         </a>
-                        <a
+                        <Link
                           href="/"
                           onClick={() => setIsProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
                         >
                           <HomeIcon className="w-4 h-4 text-gray-400" />
                           Home
-                        </a>
+                        </Link>
 
                         <div className="border-t border-gray-100 mt-1 pt-1">
                           <button
@@ -267,7 +278,7 @@ export default function Navbar() {
 
           {/* Mobile: Notifications + Avatar (or Sign In). Primary nav lives in MobileBottomNav. */}
           <div className="flex lg:hidden items-center gap-2 flex-shrink-0">
-            <NotificationBell variant="mobile" />
+            {FEATURES.notificationsInbox && <NotificationBell variant="mobile" />}
 
             {session ? (
               <div className="relative">
@@ -277,9 +288,13 @@ export default function Navbar() {
                   aria-label="Account menu"
                   aria-expanded={isMobileProfileOpen}
                 >
-                  <img
+                  <OptimizedImage
                     src={userImage}
                     alt={session.user?.name || "User"}
+                    width={36}
+                    height={36}
+                    unoptimized
+                    fallbackSrc={<VoryaIcon className="w-5 h-5 opacity-30" />}
                     className="h-9 w-9 rounded-full object-cover border-2 border-[#0071CE] shadow-sm"
                   />
                 </button>
@@ -292,9 +307,13 @@ export default function Navbar() {
                     />
                     <div className="absolute right-0 top-12 z-40 w-64 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
                       <div className="bg-gradient-to-r from-[#0071CE] to-[#005ba6] p-4 flex items-center gap-3">
-                        <img
+                        <OptimizedImage
                           src={userImage}
                           alt={session.user?.name || "User"}
+                          width={44}
+                          height={44}
+                          unoptimized
+                          fallbackSrc={<VoryaIcon className="w-6 h-6 opacity-40" />}
                           className="h-11 w-11 rounded-full object-cover border-2 border-white shadow"
                         />
                         <div className="min-w-0">

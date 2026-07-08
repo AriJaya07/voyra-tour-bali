@@ -62,8 +62,26 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
         </div>
         <p className="text-sm text-gray-500 mb-6">
-          Manage your notifications or close your account.
+          Everything about your account in one place — security, notifications, and data.
         </p>
+
+        {/* Security */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-5">
+          <div className="flex items-center gap-2 mb-1">
+            <span aria-hidden>🔒</span>
+            <h2 className="font-bold text-gray-900">Security</h2>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            Change your password, turn on two-factor authentication (2FA), and review
+            trusted devices that skip the 2FA prompt.
+          </p>
+          <Link
+            href="/profile/security"
+            className="inline-block px-5 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-sm font-bold rounded-xl transition border border-emerald-100"
+          >
+            Manage security & 2FA →
+          </Link>
+        </div>
 
         {/* Notifications */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm mb-5">

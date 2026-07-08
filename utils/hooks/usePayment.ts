@@ -12,6 +12,11 @@ interface PaymentPayload {
   totalPrice: number;
   source?: "viator" | "local" | "tourcms";
   currency?: string;
+  // Guest checkout lead contact (required server-side when not signed in)
+  leadFirstName?: string;
+  leadLastName?: string;
+  leadEmail?: string;
+  leadPhone?: string;
 }
 
 interface PaymentResponse {

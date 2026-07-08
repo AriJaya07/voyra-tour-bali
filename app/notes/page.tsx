@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 interface Note {
   id: number;
@@ -141,10 +142,11 @@ export default function NotesIndexPage() {
                 </p>
                 <div className="flex items-center gap-2 mt-3 text-[11px] text-gray-500">
                   {n.user.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <OptimizedImage
                       src={n.user.image}
                       alt={n.user.name || ""}
+                      width={20}
+                      height={20}
                       className="w-5 h-5 rounded-full object-cover"
                     />
                   ) : (

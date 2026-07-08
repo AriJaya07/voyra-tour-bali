@@ -5,6 +5,7 @@ import Container from '@/components/Container'
 import Link from 'next/link'
 import CancelButtonClient from '@/components/ticket/CancelButtonClient'
 import PriceLabel from '@/components/common/PriceLabel'
+import OptimizedImage from "@/components/common/OptimizedImage"
 
 export async function generateMetadata({
   params,
@@ -92,12 +93,12 @@ export default async function TicketPage({
               {isValid && (
                 <div className="flex justify-center mb-6">
                   <div className="p-3 bg-white border-2 border-dashed border-gray-200 rounded-xl">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <OptimizedImage
                       src={qrDataUrl}
                       alt="Ticket QR Code"
                       width={220}
                       height={220}
+                      unoptimized
                       className="w-[220px] h-[220px]"
                     />
                   </div>
@@ -120,7 +121,12 @@ export default async function TicketPage({
                 <hr className="border-gray-100" />
                 <div className="flex justify-between">
                   <span className="text-gray-500">Guest</span>
-                  <span className="font-medium text-gray-900">{booking.user.name || booking.user.email}</span>
+                  <span className="font-medium text-gray-900">
+                    {booking.user?.name ||
+                      booking.user?.email ||
+                      [booking.leadFirstName, booking.leadLastName].filter(Boolean).join(" ") ||
+                      booking.leadEmail}
+                  </span>
                 </div>
                 <hr className="border-gray-100" />
                 <div className="flex justify-between">

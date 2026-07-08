@@ -1,4 +1,4 @@
-import Image from "next/image";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 interface AboutDetailProps {
     description: string;
@@ -21,7 +21,7 @@ export default function AboutDetail({ description, mainImage }: AboutDetailProps
                         </p>
                     </div>
                     <div className="w-full sm:w-[50%] relative h-[250px] sm:h-[350px] md:h-[400px]">
-                        <Image
+                        <OptimizedImage
                             src={mainImage || "/images/detail/main-detail.png"}
                             alt="Destination"
                             fill

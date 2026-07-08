@@ -70,6 +70,10 @@ export async function applyBookingRewards(booking: Booking): Promise<{
   newTier: TierKey;
   oldTier: TierKey;
 }> {
+  // Guest bookings have no account — nothing to reward
+  if (booking.userId == null) {
+    return { bookingCredits: 0, referralCredits: 0, thankyouCredits: 0, newTier: "BRONZE", oldTier: "BRONZE" };
+  }
   // Tier housekeeping (still drives the multiplier)
   const account = await prisma.loyaltyAccount.upsert({
     where: { userId: booking.userId },
@@ -134,6 +138,7 @@ export async function applyReferralPayout(booking: Booking): Promise<{
   referralCredits: number;
   thankyouCredits: number;
 }> {
+  if (booking.userId == null) return { referralCredits: 0, thankyouCredits: 0 };
   if (booking.isMockMode) return { referralCredits: 0, thankyouCredits: 0 };
   if (booking.totalPrice < REFERRAL_MIN_BOOKING_PRICE_IDR) {
     return { referralCredits: 0, thankyouCredits: 0 };
@@ -268,6 +273,8 @@ export async function clawbackBookingRewards(booking: Booking): Promise<{
   reclaimed: number;
   bookingDecremented: boolean;
 }> {
+  // Guest bookings never earned rewards
+  if (booking.userId == null) return { reclaimed: 0, bookingDecremented: false };
   const refIds = [`BOOKING_${booking.bookingRef}`, `REF_${booking.bookingRef}`, `REF_THANKYOU_${booking.bookingRef}`];
 
   let reclaimed = 0;

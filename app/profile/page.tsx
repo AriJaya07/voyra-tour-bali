@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -20,6 +19,7 @@ import BookingFlowSteps from "@/components/Global/booking/BookingFlowSteps";
 import PayNowButton from "@/components/Global/booking/PayNowButton";
 import { fetchProfile, updateProfile, uploadAvatar, fetchUserBookings } from "@/lib/api/profile";
 import VoryaIcon from "@/components/assets/Icon/VoyraIcon";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { formatBookingPrice } from "@/utils/formatPrice";
 import { useCurrency } from "@/utils/hooks/useCurrency";
 import type { Booking, BookingStatus } from "@/types/booking";
@@ -213,9 +213,11 @@ export default function ProfilePage() {
               <div className="flex flex-col sm:flex-row gap-6 items-start">
                 <div className="flex-shrink-0">
                   <div className="relative group">
-                    <img
+                    <OptimizedImage
                       src={avatarUrl}
                       alt="Avatar"
+                      width={96}
+                      height={96}
                       className="w-24 h-24 rounded-full object-cover border-4 border-[#0071CE]/20"
                     />
                     <button
@@ -348,7 +350,7 @@ export default function ProfilePage() {
                       <div className="flex flex-col md:flex-row">
                         <div className="w-full md:w-48 h-48 md:h-auto bg-gray-200 relative shrink-0">
                           {imageUrl ? (
-                            <Image
+                            <OptimizedImage
                               src={imageUrl}
                               alt={b.productTitle}
                               fill
@@ -481,29 +483,29 @@ export default function ProfilePage() {
         {/* Section: Trip + AI hubs — single click to enter integrated workspaces */}
         <section className="mt-8 grid gap-3 sm:grid-cols-2">
           <Link
-            href="/trips"
+            href="/explore"
             className="group rounded-2xl bg-gradient-to-br from-[#0071CE] to-[#005ba6] p-6 text-white shadow-sm hover:shadow-lg transition"
           >
             <div className="flex items-start justify-between">
               <span className="text-3xl" aria-hidden>🗺️</span>
               <span className="text-xs font-bold opacity-80 group-hover:opacity-100">Open →</span>
             </div>
-            <h2 className="mt-4 text-lg font-bold leading-tight">My Trips</h2>
+            <h2 className="mt-4 text-lg font-bold leading-tight">Explore Bali Map</h2>
             <p className="mt-1 text-xs text-blue-50/90 leading-relaxed">
-              Saved AI plans · trip calendar · imported bookings — one place for everything you have travelled or planned.
+              Browse Bali region by region — Ubud, Uluwatu, Nusa Penida and more — then jump straight into a plan.
             </p>
           </Link>
           <Link
-            href="/ai"
+            href="/ai/plan"
             className="group rounded-2xl bg-gradient-to-br from-violet-600 to-violet-800 p-6 text-white shadow-sm hover:shadow-lg transition"
           >
             <div className="flex items-start justify-between">
               <span className="text-3xl" aria-hidden>✨</span>
               <span className="text-xs font-bold opacity-80 group-hover:opacity-100">Open →</span>
             </div>
-            <h2 className="mt-4 text-lg font-bold leading-tight">AI Tools</h2>
+            <h2 className="mt-4 text-lg font-bold leading-tight">AI Trip Planner</h2>
             <p className="mt-1 text-xs text-violet-100/90 leading-relaxed">
-              Plan a trip · concierge chat · cultural co-pilot · voucher reader · wallet & pricing — all integrated.
+              Free — tell us your dates and budget, get a bookable day-by-day Bali itinerary in 30 seconds.
             </p>
           </Link>
         </section>
@@ -556,14 +558,14 @@ export default function ProfilePage() {
               <p className="text-xs text-gray-500 mt-0.5">Points + referrals</p>
             </Link>
             <Link
-              href="/profile/security"
+              href="/trips"
               className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#0071CE]/40 hover:shadow-md transition"
             >
               <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center mb-2">
-                <span className="text-lg">🔒</span>
+                <span className="text-lg">🧳</span>
               </div>
-              <p className="font-bold text-gray-900 text-sm leading-tight">Security</p>
-              <p className="text-xs text-gray-500 mt-0.5">Password + 2FA</p>
+              <p className="font-bold text-gray-900 text-sm leading-tight">My Trips</p>
+              <p className="text-xs text-gray-500 mt-0.5">Plans + calendar</p>
             </Link>
             <Link
               href="/profile/settings"
@@ -573,7 +575,7 @@ export default function ProfilePage() {
                 <span className="text-lg">⚙️</span>
               </div>
               <p className="font-bold text-gray-900 text-sm leading-tight">Settings</p>
-              <p className="text-xs text-gray-500 mt-0.5">Account + data</p>
+              <p className="text-xs text-gray-500 mt-0.5">Security · 2FA · data</p>
             </Link>
           </div>
         </section>

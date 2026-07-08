@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 interface Note {
   id: number;
@@ -103,10 +104,11 @@ export default function PublicNotesBlock({
           >
             <div className="flex items-center gap-2 mb-2">
               {n.user.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <OptimizedImage
                   src={n.user.image}
                   alt={n.user.name || "Traveler"}
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (

@@ -7,6 +7,7 @@ import type { BookingStatus } from "@/types/booking";
 import BookingStatusBadge from "./BookingStatusBadge";
 import BookingFlowSteps from "./BookingFlowSteps";
 import DashboardModal from "@/components/Dashboard/common/DashboardModal";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { toast } from "sonner";
 import {
   CloseIcon,
@@ -265,9 +266,11 @@ export default function BookingStatusChangeModal({
                   {uploadedUrl ? (
                     <div className="space-y-2">
                       <div className="relative rounded-xl overflow-hidden border border-slate-600 bg-slate-800 group">
-                        <img
+                        <OptimizedImage
                           src={uploadedUrl}
                           alt={needsProof ? "Payment proof" : "Ticket image"}
+                          width={480}
+                          height={192}
                           className="w-full max-h-48 object-contain"
                         />
                         <button

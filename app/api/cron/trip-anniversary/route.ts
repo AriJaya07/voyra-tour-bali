@@ -37,7 +37,9 @@ export async function GET(req: NextRequest) {
 
   // Dedupe by user
   const usersHit = new Map<number, { productTitle: string }>();
-  for (const b of bookings) usersHit.set(b.userId, { productTitle: b.productTitle });
+  for (const b of bookings) {
+    if (b.userId != null) usersHit.set(b.userId, { productTitle: b.productTitle });
+  }
   for (const i of importedTrips) {
     if (!usersHit.has(i.userId)) usersHit.set(i.userId, { productTitle: i.productTitle });
   }

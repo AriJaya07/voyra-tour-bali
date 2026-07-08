@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { Destination } from "@/types/blog";
 import { getCardImage, getCategoryName, getLocationText, getSummary } from "@/lib/newsApi";
 import { CalendarIcon, MapPinIcon, ArrowRightIcon } from "@/components/assets/Icon/shared";
@@ -14,7 +14,7 @@ export default function BlogCard({ blog }: { blog: Destination }) {
       className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 "
     >
       <div className="relative h-64 w-full overflow-hidden">
-        <Image
+        <OptimizedImage
           src={getCardImage(blog)}
           alt={blog.title}
           fill

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { tryDb } from "@/lib/data/safeDb";
 import Container from "@/components/Container";
 import { SITE_NAME, SITE_URL } from "@/lib/config";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 const TARGET_TYPES = ["tour", "destination", "place"] as const;
 type TargetType = (typeof TARGET_TYPES)[number];
@@ -147,10 +148,11 @@ export default async function NotesAggregatorPage({ params }: { params: Promise<
                 >
                   <div className="flex items-center gap-3 mb-2">
                     {n.user.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <OptimizedImage
                         src={n.user.image}
                         alt={n.user.name || "Traveler"}
+                        width={36}
+                        height={36}
                         className="w-9 h-9 rounded-full object-cover"
                       />
                     ) : (

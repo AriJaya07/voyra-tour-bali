@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { useRecentlyViewedStore } from "@/utils/hooks/useRecentlyViewed";
 import { useCurrency } from "@/utils/hooks/useCurrency";
 import { formatPrice, type CurrencyCode, isCurrencyCode } from "@/utils/formatPrice";
@@ -48,7 +48,7 @@ export default function RecentlyViewedStrip({
             <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition group h-full">
               <div className="relative aspect-[4/3] bg-gray-100">
                 {item.imageUrl ? (
-                  <Image
+                  <OptimizedImage
                     src={item.imageUrl}
                     alt={item.title}
                     fill

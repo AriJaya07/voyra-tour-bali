@@ -213,11 +213,18 @@ export async function handlePaymentSuccess(orderId: string): Promise<{
       }
     }
 
-    // Send confirmation email (non-blocking)
-    if (ticketToken) {
+    // Send confirmation email (non-blocking). Guest bookings have no user — fall back to lead contact.
+    const recipientEmail = booking.user?.email || booking.leadEmail;
+    const recipientName =
+      booking.user?.name ||
+      [booking.leadFirstName, booking.leadLastName].filter(Boolean).join(" ");
+    if (!recipientEmail) {
+      console.error(`[Email] No recipient for ${orderId} — guest booking without leadEmail`);
+    }
+    if (ticketToken && recipientEmail) {
       sendBookingConfirmation({
-        email: booking.user.email,
-        userName: booking.user.name || "",
+        email: recipientEmail,
+        userName: recipientName || "",
         bookingRef: booking.bookingRef,
         productTitle: booking.productTitle,
         travelDate: booking.travelDate.toLocaleDateString("en-US", {

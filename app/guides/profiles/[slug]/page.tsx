@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { tryDb } from "@/lib/data/safeDb";
 import Container from "@/components/Container";
 import { SITE_NAME, SITE_URL } from "@/lib/config";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 export const revalidate = 3600;
 
@@ -37,10 +38,11 @@ export default async function GuideProfilePage({ params }: { params: Promise<{ s
       <section className="bg-gradient-to-br from-[#0071CE] via-[#005bb5] to-[#003d80] text-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16 flex flex-col sm:flex-row items-center gap-6">
           {g.photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <OptimizedImage
               src={g.photo}
               alt={g.name}
+              width={128}
+              height={128}
               className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
             />
           ) : (

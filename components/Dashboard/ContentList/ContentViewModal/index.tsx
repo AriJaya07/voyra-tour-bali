@@ -1,5 +1,6 @@
 import { Content } from "@/utils/service/content.service";
 import { CloseIcon } from "@/components/assets/Icon/shared";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 
 export default function ContentViewModal({
@@ -16,7 +17,7 @@ export default function ContentViewModal({
         {/* Header image or gradient */}
         {mainImage ? (
           <div className="relative h-52 overflow-hidden">
-            <img src={mainImage.url} alt={content.title} className="w-full h-full object-cover" />
+            <OptimizedImage src={mainImage.url} alt={content.title} fill className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
             <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors">
               <CloseIcon className="w-4 h-4" />
@@ -74,8 +75,8 @@ export default function ContentViewModal({
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {content.images.map((img, i) => (
-                  <div key={img.id ?? i} className="aspect-square rounded-xl overflow-hidden border border-slate-700">
-                    <img src={img.url} alt={img.altText ?? ""} className="w-full h-full object-cover hover:scale-105 transition-transform duration-200" />
+                  <div key={img.id ?? i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-700">
+                    <OptimizedImage src={img.url} alt={img.altText ?? ""} fill className="w-full h-full object-cover hover:scale-105 transition-transform duration-200" />
                   </div>
                 ))}
               </div>

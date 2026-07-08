@@ -12,7 +12,9 @@ import WishlistProvider from "@/components/providers/WishlistProvider";
 import RecentlyViewedSync from "@/components/providers/RecentlyViewedSync";
 import PreferencesSync from "@/components/providers/PreferencesSync";
 import PWARegister from "@/components/providers/PWARegister";
+import ErrorReporter from "@/components/providers/ErrorReporter";
 import { ConfirmDialogProvider } from "@/components/common/ConfirmDialog";
+import { FEATURES } from "@/lib/config/features";
 
 const AIChatWidget = dynamic(() => import("@/components/AIChatWidget"), {
   ssr: false,
@@ -40,6 +42,7 @@ export default function AppProviders({ children, session }: AppProvidersProps) {
         <RecentlyViewedSync />
         <PreferencesSync />
         <PWARegister />
+        <ErrorReporter />
         <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
         <Toaster
           position="top-right"
@@ -53,7 +56,7 @@ export default function AppProviders({ children, session }: AppProvidersProps) {
           }}
         />
         <AIChatWidget />
-        <ExitIntentModal />
+        {FEATURES.exitIntentModal && <ExitIntentModal />}
       </ReactQueryProvider>
     </SessionProviderWrapper>
   );

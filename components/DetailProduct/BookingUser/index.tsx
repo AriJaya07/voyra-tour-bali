@@ -5,7 +5,6 @@ import { useState, useEffect, useMemo } from 'react'
 import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { useCreatePayment } from '@/utils/hooks/usePayment'
 import { formatPrice } from '@/utils/formatPrice'
 import type { CurrencyCode } from '@/utils/formatPrice'
@@ -176,11 +175,14 @@ export default function BookingUser({
   viatorUrl,
 }: BookingUserProps) {
   const { data: session } = useSession()
-  const router = useRouter()
   const { currency, exchangeRates } = useCurrency()
 
   const [date, setDate] = useState<Date | null>(null)
   const [travelers, setTravelers] = useState<TravelerCount[]>(() => buildTravelers(ageBands, price))
+  // Guest checkout — no account needed, ticket goes to this email
+  const [guestName, setGuestName] = useState("")
+  const [guestEmail, setGuestEmail] = useState("")
+  const [guestPhone, setGuestPhone] = useState("")
 
   const paymentMutation = useCreatePayment()
 
@@ -253,7 +255,9 @@ export default function BookingUser({
     availabilityData && availabilityData.available === false
   )
   const isPriceLoading = isLoadingAvailability && totalTravelers > 0
-  const canBook = !!date && totalTravelers > 0 && !isPriceLoading && !isNotAvailable
+  const guestEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())
+  const guestReady = !!session || guestEmailValid
+  const canBook = !!date && totalTravelers > 0 && !isPriceLoading && !isNotAvailable && guestReady
 
   // ── WhatsApp ─────────────────────────────────────────────────────────
   const buildWaUrl = () => {
@@ -278,13 +282,8 @@ export default function BookingUser({
     return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`
   }
 
-  // ── Booking handler ──────────────────────────────────────────────────
+  // ── Booking handler (guest checkout supported — no login wall) ────────
   const handleBooking = async () => {
-    if (!session) {
-      const currentUrl = typeof window !== "undefined" ? window.location.pathname : "/"
-      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`)
-      return
-    }
     if (!canBook) return
 
     // GA4: begin_checkout
@@ -296,6 +295,7 @@ export default function BookingUser({
       travelers: totalTravelers,
     })
 
+    const [guestFirstName, ...guestRest] = guestName.trim().split(/\s+/)
     paymentMutation.mutate(
       {
         productCode,
@@ -304,6 +304,14 @@ export default function BookingUser({
         travelDate: date!.toISOString().split('T')[0],
         pax: totalTravelers,
         totalPrice,
+        ...(!session
+          ? {
+              leadFirstName: guestFirstName || "Guest",
+              leadLastName: guestRest.join(" "),
+              leadEmail: guestEmail.trim(),
+              leadPhone: guestPhone.trim(),
+            }
+          : {}),
       },
       {
         onSuccess: (data) => {
@@ -505,9 +513,47 @@ export default function BookingUser({
           )}
         </div>
 
+        {/* Guest contact — shown when not signed in; ticket goes to this email */}
+        {!session && (
+          <div className="border border-[#E6E6E6] rounded-xl px-4 py-4 flex flex-col gap-2.5">
+            <p className="text-sm font-semibold text-gray-700">Your details</p>
+            <input
+              type="text"
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              placeholder="Full name"
+              autoComplete="name"
+              className="w-full h-11 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#0071CE]"
+            />
+            <input
+              type="email"
+              value={guestEmail}
+              onChange={(e) => setGuestEmail(e.target.value)}
+              placeholder="Email (ticket is sent here)"
+              autoComplete="email"
+              required
+              className={`w-full h-11 px-3 rounded-lg border text-sm focus:outline-none focus:border-[#0071CE] ${guestEmail && !guestEmailValid ? "border-red-300" : "border-gray-200"}`}
+            />
+            <input
+              type="tel"
+              value={guestPhone}
+              onChange={(e) => setGuestPhone(e.target.value)}
+              placeholder="WhatsApp number (optional)"
+              autoComplete="tel"
+              className="w-full h-11 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#0071CE]"
+            />
+          </div>
+        )}
+
         {!canBook && !isPriceLoading && !isNotAvailable && (
           <p className="text-xs text-amber-600 text-center">
-            {!date ? "Please select a date" : totalTravelers === 0 ? "Add at least 1 traveler" : ""}
+            {!date
+              ? "Please select a date"
+              : totalTravelers === 0
+                ? "Add at least 1 traveler"
+                : !guestReady
+                  ? "Enter your email so we can send your ticket"
+                  : ""}
           </p>
         )}
 

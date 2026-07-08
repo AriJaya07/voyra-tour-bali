@@ -8,7 +8,9 @@ import { toast } from "sonner";
 import { usePrefsStore } from "@/utils/hooks/useUserPreferences";
 import { buildViatorProductUrl } from "@/lib/config/viator";
 import BackLink from "@/components/common/BackLink";
+import { FEATURES } from "@/lib/config/features";
 import PriceLabel from "@/components/common/PriceLabel";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 const STYLE_TAGS = [
   "adventure",
@@ -261,6 +263,7 @@ export default function PlanPage() {
   }, [days]);
 
   useEffect(() => {
+    if (FEATURES.freeAiPlanner) return; // planner is free — no credit preview
     if (status !== "authenticated") return;
     const t = setTimeout(fetchCost, 300);
     return () => clearTimeout(t);
@@ -593,7 +596,8 @@ export default function PlanPage() {
     );
   }
 
-  if (status === "unauthenticated") {
+  // Planner is free for guests when FEATURES.freeAiPlanner — no login landing wall.
+  if (!FEATURES.freeAiPlanner && status === "unauthenticated") {
     return (
       <div className="min-h-screen bg-gray-50 pt-8 pb-16 px-[15px] sm:px-[30px] 2xl:px-0">
         <div className="max-w-[1280px] mx-auto">
@@ -1106,7 +1110,13 @@ export default function PlanPage() {
 
             {/* Cost + generate */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              {costEstimate && (
+              {FEATURES.freeAiPlanner && (
+                <div className="text-xs font-semibold flex items-center gap-1.5 text-gray-600">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                  Free — no account needed
+                </div>
+              )}
+              {!FEATURES.freeAiPlanner && costEstimate && (
                 <div className={`text-xs font-semibold flex items-center gap-1.5 ${insufficientCredits ? "text-amber-700" : "text-gray-600"}`}>
                   <span className={`inline-block w-2 h-2 rounded-full ${insufficientCredits ? "bg-amber-500" : "bg-emerald-500"}`} />
                   Cost: <span className="font-bold">{costEstimate.cost} credits</span>
@@ -1339,10 +1349,11 @@ export default function PlanPage() {
                               {SLOT_EMOJI[it.slot]}
                             </div>
                             {it.imageUrl && (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
+                              <OptimizedImage
                                 src={it.imageUrl}
                                 alt={it.title}
+                                width={80}
+                                height={64}
                                 className="hidden sm:block w-20 h-16 rounded-lg object-cover shrink-0"
                               />
                             )}

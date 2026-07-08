@@ -2,6 +2,7 @@ import { fmtDate } from "@/components/common/ListForm";
 import { Location } from "@/utils/service/location.service";
 import Link from "next/link";
 import { CloseIcon, MapPinIcon, ExternalLinkIcon } from "@/components/assets/Icon/shared";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 // ── View Modal ─────────────────────────────────────────────
 export default function LocationViewModal({
@@ -18,9 +19,10 @@ export default function LocationViewModal({
         {/* Header with image */}
         {location.images?.[0]?.url ? (
           <div className="relative h-48 overflow-hidden">
-            <img
+            <OptimizedImage
               src={location.images.find((img) => img.isMain)?.url || location.images[0].url}
               alt={location.title}
+              fill
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />

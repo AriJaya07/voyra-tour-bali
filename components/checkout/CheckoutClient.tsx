@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import OptimizedImage from "@/components/common/OptimizedImage";
 import { useSession } from "next-auth/react";
 import { formatBookingPrice } from "@/utils/formatPrice";
 import { useCurrency } from "@/utils/hooks/useCurrency";
@@ -16,6 +16,7 @@ import { holdBooking, getPaymentMethods, confirmBooking } from "@/lib/viator-che
 import type { BookingInput, ViatorPaymentAccount, ViatorFlowStep } from "@/types/bookingFlow";
 import PaymentSelector from "@/components/booking/PaymentSelector";
 import HoldTimer from "@/components/booking/HoldTimer";
+import ProductReviews from "@/components/viator/ProductReviews";
 import { CheckmarkIcon, CalendarIcon, ClockIcon, PeopleIcon, UserIcon, LockIcon, ClipboardIcon, ShieldIcon, LightningIcon, StarIcon, RefreshIcon, AlertIcon, SpinnerIcon } from "@/components/assets/Icon/shared";
 
 const STEPS = ["Contact", "Travelers", "Activity", "Review & Pay"];
@@ -709,7 +710,11 @@ function StepReview({
   // ── Viator: Hold booking ──────────────────────────────────────────
   const handleViatorHold = async () => {
     if (!termsAccepted) { toast.warning("Please accept the Terms of Use."); return; }
-    if (!session?.user?.id) { toast.error("Please login to continue."); return; }
+    // Guest checkout allowed — contact email stands in for an account
+    if (!session?.user?.id && !store.contactInfo.email) {
+      toast.error("Please fill in your contact details first.");
+      return;
+    }
 
     setViatorStep("holding");
     setViatorError("");
@@ -777,7 +782,11 @@ function StepReview({
   // ── Midtrans: Pay now ─────────────────────────────────────────────
   const handleMidtransPayment = async () => {
     if (!termsAccepted) { toast.warning("Please accept the Terms of Use."); return; }
-    if (!session?.user?.id) { toast.error("Please login to continue."); return; }
+    // Guest checkout allowed — contact email stands in for an account
+    if (!session?.user?.id && !store.contactInfo.email) {
+      toast.error("Please fill in your contact details first.");
+      return;
+    }
 
     setIsProcessing(true);
     setMidtransError("");
@@ -1059,7 +1068,7 @@ function BookingSidebar() {
         <div className="p-5 sm:p-6">
           {store.productImage && (
             <div className="relative mb-4 rounded-xl overflow-hidden h-32">
-              <Image
+              <OptimizedImage
                 src={store.productImage}
                 alt={store.productTitle}
                 fill
@@ -1107,6 +1116,11 @@ function BookingSidebar() {
           </div>
         </div>
       </div>
+
+      {/* Traveler reviews — social proof at the pay decision (Viator products) */}
+      {store.source === "VIATOR" && store.productCode && (
+        <ProductReviews productCode={store.productCode} />
+      )}
 
       {/* Trust Badges */}
       <div className="bg-white rounded-2xl shadow-sm border border-[#F0F0F0] p-4 sm:p-5">

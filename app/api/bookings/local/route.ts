@@ -6,11 +6,8 @@ import { resolveServerPrice, PricingError } from "@/lib/services/pricingService"
 
 export async function POST(request: Request) {
   try {
+    // Guest checkout allowed — session optional, guests must provide a lead email
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await request.json();
     const {
@@ -37,6 +34,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const userId = session?.user?.id ? Number(session.user.id) : null;
+    if (!userId && !leadEmail) {
+      return NextResponse.json(
+        { error: "Email is required for guest bookings" },
+        { status: 400 }
+      );
+    }
+
     // Never trust the client total — resolve from our own catalog.
     const resolvedPrice = await resolveServerPrice({
       source: "local",
@@ -48,7 +53,7 @@ export async function POST(request: Request) {
     });
 
     const result = await createLocalBooking({
-      userId: Number(session.user.id),
+      userId,
       productCode,
       productTitle,
       productImage,

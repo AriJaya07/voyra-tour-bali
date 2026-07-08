@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
         hostname: 'tourism-file.s3.ap-southeast-2.amazonaws.com',
       },
       {
+        // Google account avatars (OAuth sign-in)
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+      },
+      {
         protocol: 'https',
         hostname: '*.cloudinary.com',
       },

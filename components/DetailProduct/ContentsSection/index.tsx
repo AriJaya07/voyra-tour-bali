@@ -1,6 +1,7 @@
 "use client"
 
 import { Content, Image as PrismaImage } from "@prisma/client"
+import OptimizedImage from "@/components/common/OptimizedImage"
 
 type ContentWithImages = Content & { images: PrismaImage[] }
 
@@ -52,10 +53,12 @@ export default function ContentsSection({ contents }: ContentsSectionProps) {
               {/* Image */}
               {mainImage ? (
                 <div className="relative h-[200px] overflow-hidden">
-                  <img
+                  <OptimizedImage
                     src={mainImage}
                     alt={content.title}
-                    className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform hover:scale-105 duration-500"
                   />
                 </div>
               ) : (

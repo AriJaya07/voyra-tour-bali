@@ -29,14 +29,20 @@ function popupHtml(r: RegionWithCount): string {
   const region = encodeURIComponent(r.name);
   const guidesLabel =
     r.guideCount > 0 ? `${r.guideCount} guide${r.guideCount === 1 ? "" : "s"}` : "Guides coming soon";
+  // Only offer "View guides" when the region actually has guides — a link to an
+  // empty filtered list is a dead end. "Plan trip here" always works.
+  const guidesButton =
+    r.guideCount > 0
+      ? `<a href="/guides?region=${region}" style="font-size:12px;font-weight:600;color:#0071CE;text-decoration:none;border:1px solid #0071CE;padding:5px 10px;border-radius:9999px">View ${guidesLabel}</a>`
+      : "";
   return `
     <div style="min-width:200px">
       <div style="font-weight:700;font-size:15px;color:#111827">${r.emoji} ${r.name}</div>
       <div style="margin:4px 0 8px;font-size:12px;color:#4b5563;line-height:1.4">${r.blurb}</div>
-      <div style="font-size:11px;font-weight:600;color:#0071CE;margin-bottom:8px">${guidesLabel}</div>
+      ${r.guideCount === 0 ? `<div style="font-size:11px;font-weight:600;color:#9ca3af;margin-bottom:8px">${guidesLabel}</div>` : ""}
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <a href="/guides?region=${region}" style="font-size:12px;font-weight:600;color:#0071CE;text-decoration:none;border:1px solid #0071CE;padding:5px 10px;border-radius:9999px">View guides</a>
         <a href="/ai/plan?region=${region}" style="font-size:12px;font-weight:600;color:#fff;background:#0071CE;text-decoration:none;padding:5px 10px;border-radius:9999px">Plan trip here</a>
+        ${guidesButton}
       </div>
     </div>`;
 }

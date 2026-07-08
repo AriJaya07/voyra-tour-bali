@@ -1,6 +1,7 @@
 "use client"
 
 import { Location, Image as PrismaImage } from "@prisma/client"
+import OptimizedImage from "@/components/common/OptimizedImage"
 import { MapPinIcon } from "@/components/assets/Icon/shared"
 
 type LocationWithImages = Location & { images: PrismaImage[] }
@@ -33,12 +34,14 @@ export default function LocationSection({ locations }: LocationSectionProps) {
               className="flex flex-col sm:flex-row gap-0 bg-white rounded-2xl overflow-hidden border border-[#F0F0F0] shadow-sm hover:shadow-md transition-shadow"
             >
               {/* Image */}
-              <div className="sm:w-[200px] flex-shrink-0">
+              <div className="relative h-[180px] sm:h-auto sm:w-[200px] flex-shrink-0">
                 {mainImage ? (
-                  <img
+                  <OptimizedImage
                     src={mainImage}
                     alt={location.title}
-                    className="w-full h-[180px] sm:h-full object-cover"
+                    fill
+                    sizes="(max-width: 640px) 100vw, 200px"
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-[180px] sm:h-full bg-gradient-to-br from-teal-50 to-sky-100 flex items-center justify-center">
