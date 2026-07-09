@@ -1114,6 +1114,17 @@ export default function PlanPage() {
                 <div className="text-xs font-semibold flex items-center gap-1.5 text-gray-600">
                   <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
                   Free — no account needed
+                  {FEATURES.aiMonetization && (
+                    <>
+                      <span className="text-gray-400">·</span>
+                      <Link
+                        href="/ai/pricing"
+                        className="text-[#0071CE] underline-offset-2 hover:underline"
+                      >
+                        Want more AI? See plans
+                      </Link>
+                    </>
+                  )}
                 </div>
               )}
               {!FEATURES.freeAiPlanner && costEstimate && (

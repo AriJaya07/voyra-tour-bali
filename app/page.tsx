@@ -33,7 +33,7 @@ export default async function Home() {
         <Destionation categories={categories} />
         <TrendingActivity categories={categories} />
         {(FEATURES.tripToolkit || FEATURES.aiMonetization) && (
-          <div className="mt-10 sm:mt-14 space-y-4">
+          <div className="mt-10 sm:mt-14 pb-12 sm:pb-16 space-y-4">
             {FEATURES.tripToolkit && <TravelToolkit />}
             {FEATURES.aiMonetization && <AiShowcase />}
           </div>

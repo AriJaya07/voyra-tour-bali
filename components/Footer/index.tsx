@@ -11,6 +11,7 @@ import TwitterIcon from "../assets/sosmed/TwitterIcon";
 import WhatsAppIcon from "../assets/sosmed/WhatsAppIcon";
 import VoryaIcon from "../assets/Icon/VoyraIcon";
 import { SITE_NAME, buildWhatsAppUrl } from "@/lib/config";
+import { FEATURES } from "@/lib/config/features";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,9 +35,16 @@ const EXPLORE_LINKS: NavLink[] = [
 
 const PARTNER_URL = "https://agency.balitravelnow.com/";
 
-// Credit/wallet selling delinked — see lib/config/features.ts (focus reset)
+// Pricing/wallet links gated by FEATURES.aiMonetization — see lib/config/features.ts
 const AI_LINKS: NavLink[] = [
   { label: "Plan a Trip (Free)", href: "/ai/plan", ready: true },
+  ...(FEATURES.aiMonetization
+    ? [
+        { label: "AI Plans & Pricing", href: "/ai/pricing", ready: true },
+        { label: "My AI Wallet",       href: "/ai/wallet",  ready: true },
+        { label: "AI Tools",           href: "/ai/tools",   ready: true },
+      ]
+    : []),
   { label: "My Trips",           href: "/trips",   ready: true },
 ];
 

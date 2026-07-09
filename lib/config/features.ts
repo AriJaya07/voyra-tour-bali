@@ -9,8 +9,8 @@
  * See docs/growth-runbook.md for the strategy behind this.
  */
 export const FEATURES = {
-  /** AI subscription/credit selling: /ai/pricing + /ai/wallet links, upsell CTAs */
-  aiMonetization: false,
+  /** AI subscription/credit selling: /ai/pricing + /ai/wallet links, upsell CTAs (re-enabled 2026-07-09) */
+  aiMonetization: true,
   /** Loyalty tiers + rewards hub links */
   loyalty: false,
   /** Referral program surfaces */

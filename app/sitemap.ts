@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/config";
+import { FEATURES } from "@/lib/config/features";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages
@@ -12,6 +13,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/bali-events`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.85 },
     { url: `${SITE_URL}/events`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/ai/plan`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.85 },
+    ...(FEATURES.aiMonetization
+      ? ([
+          { url: `${SITE_URL}/ai`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.75 },
+          { url: `${SITE_URL}/ai/pricing`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
+        ] satisfies MetadataRoute.Sitemap)
+      : []),
     { url: `${SITE_URL}/explore`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/guides`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/help`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },

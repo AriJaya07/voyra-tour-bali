@@ -9,6 +9,7 @@ import VoryaIcon from "../assets/Icon/VoyraIcon"
 import SearchModal from "./SearchModal"
 import SearchIcon from "../assets/Icon/SearchIcon"
 import { ProfileIcon, DashboardIcon, HomeIcon, SignOutIcon, ChevronDownIcon } from "../assets/Icon/NavIcons"
+import { HiSparkles } from "react-icons/hi2"
 import HeartIcon from "../assets/Icon/shared/HeartIcon"
 import NotificationBell from "../notifications/NotificationBell"
 import { useWishlistStore } from "@/utils/hooks/useWishlist"
@@ -20,6 +21,9 @@ const NAV_ITEMS = [
   { label: "Tours", id: "destinasi" },
   { label: "Guides", id: "guides", href: "/guides" },
   { label: "Plan My Trip", id: "ai-plan", href: "/ai/plan" },
+  ...(FEATURES.aiMonetization
+    ? [{ label: "AI Plans", id: "ai-pricing", href: "/ai/pricing" }]
+    : []),
 ]
 
 const NAVBAR_HEIGHT = 64
@@ -241,6 +245,16 @@ export default function Navbar() {
                           <ProfileIcon className="w-4 h-4 text-gray-400" />
                           My Profile
                         </a>
+                        {FEATURES.aiMonetization && (
+                          <Link
+                            href="/ai/wallet"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
+                          >
+                            <HiSparkles className="w-4 h-4 text-amber-400" />
+                            AI Wallet & Plans
+                          </Link>
+                        )}
                         <Link
                           href="/"
                           onClick={() => setIsProfileOpen(false)}
@@ -344,6 +358,16 @@ export default function Navbar() {
                           <ProfileIcon className="w-4 h-4 text-gray-400" />
                           My Profile
                         </Link>
+                        {FEATURES.aiMonetization && (
+                          <Link
+                            href="/ai/wallet"
+                            onClick={() => setIsMobileProfileOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition"
+                          >
+                            <HiSparkles className="w-4 h-4 text-amber-400" />
+                            AI Wallet & Plans
+                          </Link>
+                        )}
                         <button
                           onClick={() => {
                             setIsMobileProfileOpen(false)

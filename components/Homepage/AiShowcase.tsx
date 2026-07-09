@@ -66,22 +66,28 @@ export default function AiShowcase() {
       aria-labelledby="ai-showcase-heading"
       className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2
-          id="ai-showcase-heading"
-          className="text-lg font-bold text-slate-900 sm:text-xl"
-        >
-          See AI in action
-        </h2>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2
+            id="ai-showcase-heading"
+            className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2"
+          >
+            <span aria-hidden className="text-blue-500">✨</span>
+            See AI in action
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Your personal Bali trip planner, concierge, and voucher reader.
+          </p>
+        </div>
         <Link
           href={tab.cta.href}
-          className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+          className="text-xs font-semibold text-blue-600 hover:text-blue-700 shrink-0 pt-1.5"
         >
           {tab.cta.label}
         </Link>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -99,7 +105,7 @@ export default function AiShowcase() {
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 lg:self-start">
           <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
             You
           </div>
@@ -119,10 +125,26 @@ export default function AiShowcase() {
         </div>
       </div>
 
-      <p className="mt-3 text-[11px] text-slate-500">
-        Examples shown for illustration. Real responses use live Bali tour
-        availability, weather, and your traveler profile.
-      </p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[11px] text-slate-500">
+          Examples shown for illustration. Real responses use live Bali tour
+          availability, weather, and your traveler profile.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/ai/pricing"
+            className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+          >
+            See plans & pricing
+          </Link>
+          <Link
+            href="/ai/plan"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+          >
+            Try it free →
+          </Link>
+        </div>
+      </div>
     </section>
   );
 }
