@@ -1,5 +1,5 @@
 # Voyra Tourism — Next.js + Prisma + PostgreSQL  
-  
+   
 A full-stack travel dashboard built with **Next.js 14 (App Router)**, **Prisma ORM**, and **PostgreSQL**.
 
 ---
