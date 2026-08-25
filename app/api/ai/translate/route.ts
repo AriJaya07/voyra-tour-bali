@@ -17,7 +17,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
  * (content, language) to avoid re-charging.
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 const LANGS: Record<string, string> = {
   id: "Indonesian",

@@ -29,7 +29,7 @@ import {
  * Body: { itineraryId, day: 1..N, instruction: "less driving" | "more food" | ... }
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 type ViatorImage = ViatorProductImage;
 type ViatorProduct = ViatorProductSummary;

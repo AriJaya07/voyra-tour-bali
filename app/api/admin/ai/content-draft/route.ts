@@ -11,7 +11,7 @@ import { authOptions } from "@/utils/common/auth";
  * Not credit-billed (internal ops tool). Uses Groq (existing provider).
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 interface Draft {
   title: string;

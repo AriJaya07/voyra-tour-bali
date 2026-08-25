@@ -114,7 +114,7 @@ Sandbox test cards: see Midtrans docs (`4811 1111 1111 1114` is the standard suc
 | Name | Example |
 |---|---|
 | `GROQ_API_KEY` | from console.groq.com |
-| `GROQ_MODEL` *(optional)* | defaults inside `app/api/ai/route.ts` (`llama-3.3-70b-versatile`) |
+| `GROQ_MODEL` *(optional)* | defaults to `openai/gpt-oss-120b` in `lib/config/aiModel.ts` — single source read by every `app/api/ai/**` route, `app/api/admin/ai/content-draft`, `app/api/cron/trip-guardian`, and `lib/services/aiToolRuntime.ts`. Change the model everywhere by setting this var — no code edit needed. |
 
 ### 3.10b Web Push (optional — push notifications)
 
@@ -228,6 +228,7 @@ SMTP_FROM="Voyra <noreply@yourdomain.com>"
 
 # === Groq ===
 GROQ_API_KEY=""
+GROQ_MODEL="openai/gpt-oss-120b"
 
 # === Web Push (optional) ===
 VAPID_PUBLIC_KEY=""
@@ -340,7 +341,8 @@ The repo's current `build` is plain `next build`. Adopt this when you have prod 
 | `app/api/payment/notification/route.ts` | `MIDTRANS_SERVER_KEY` (signature) |
 | `app/api/cron/**` | `CRON_SECRET` |
 | `lib/newsApi.ts` | `BALI_NEWS_API` |
-| `components/AIChatWidget.tsx` / `app/api/ai` | `GROQ_API_KEY` |
+| `components/AIChatWidget.tsx` / `app/api/ai/**` / `app/api/admin/ai/content-draft` / `app/api/cron/trip-guardian` / `lib/services/aiToolRuntime.ts` | `GROQ_API_KEY` |
+| `lib/config/aiModel.ts` (single source, imported everywhere Groq is called) | `GROQ_MODEL` *(optional)* |
 | `lib/services/pushService.ts` / `app/api/push/**` / `app/api/cron/calendar-event-reminders/**` / `app/api/cron/notification-broadcasts/**` | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` |
 | `lib/services/notificationService.ts` / `app/api/admin/notifications/**` / `app/api/notifications/**` | `VAPID_*` (push fan-out), `SMTP_*` (email fan-out) |
 | `lib/services/emailService.ts`, `app/api/email/**` | `NEXTAUTH_URL` (used to build absolute pixel + click URLs) |

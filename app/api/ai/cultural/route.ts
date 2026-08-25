@@ -17,7 +17,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
  * to ground the LLM. 2 credits/turn. Credit-gated only — any user with balance.
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 function parseDate(s: string | null | undefined): Date | null {
   if (!s) return null;

@@ -20,7 +20,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
  * PLANNING only.
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 interface Member {
   label: string;

@@ -19,7 +19,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
  * (DB + Viator); this endpoint only does intent → filters. 1 credit/query.
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 const REGIONS = [
   "Ubud", "Canggu", "Seminyak", "Kuta", "Sanur", "Nusa Dua",

@@ -25,7 +25,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
 
 const MAX_MEMORY_TURNS = 20;
 const MAX_NOTES = 12;
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 interface MemoryMessage {
   role: "user" | "assistant";

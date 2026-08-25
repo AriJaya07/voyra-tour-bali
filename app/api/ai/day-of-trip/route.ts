@@ -20,7 +20,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
  *  - Otherwise credit-gated, 3 credits/turn.
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();

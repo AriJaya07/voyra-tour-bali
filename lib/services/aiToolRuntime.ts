@@ -10,7 +10,7 @@
 import Groq from "groq-sdk";
 import { prisma } from "@/lib/prisma";
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 const MAX_HOPS = 4;
 
 export interface DraftItem {

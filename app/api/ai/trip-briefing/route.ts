@@ -17,7 +17,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
  * prep checklist. Grounded in real data (flags Nyepi/ceremony closures). 3 credits.
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();

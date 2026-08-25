@@ -23,7 +23,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
  * USD and an approximate IDR estimate (labelled), never a fabricated number.
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 // Mirrors the documented fallback in utils/formatPrice.ts (last update 2026-05).
 const USD_TO_IDR = 16450;
 

@@ -19,7 +19,7 @@ import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
  * pass `context` text from the already-loaded page. 2 credits/question.
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();

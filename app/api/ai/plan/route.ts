@@ -11,6 +11,7 @@ import {
   settleReservation,
 } from "@/lib/services/aiCreditService";
 import { planCost } from "@/lib/config/aiCosts";
+import { GROQ_MODEL } from "@/lib/config/aiModel";
 import { consumeGuest } from "@/lib/services/aiGuestQuota";
 import { FEATURES } from "@/lib/config/features";
 import {
@@ -321,7 +322,7 @@ Respond with the JSON object only.`;
 
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
       max_tokens: 3000,
       response_format: { type: "json_object" },
       messages: [
@@ -352,7 +353,7 @@ Respond with the JSON object only.`;
             endpoint: "plan",
             creditsCost: 0,
             durationMs: Date.now() - startedAt,
-            model: "llama-3.3-70b-versatile",
+            model: GROQ_MODEL,
             status: "ERROR",
             meta: { reason: "INVALID_JSON" },
           },
@@ -436,7 +437,7 @@ Respond with the JSON object only.`;
           tokensIn,
           tokensOut,
           durationMs,
-          model: "llama-3.3-70b-versatile",
+          model: GROQ_MODEL,
           status: "OK",
           meta: { days, budget, candidates: candidates.length },
         },

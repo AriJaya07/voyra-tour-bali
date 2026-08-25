@@ -19,7 +19,7 @@ import { runAgent } from "@/lib/services/aiToolRuntime";
  * writes a booking. 5 credits/turn (token-aware settlement).
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();

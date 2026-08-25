@@ -17,7 +17,7 @@ import { sendPushToUser } from "@/lib/services/pushService";
  * Runs daily. Idempotent: at most one Guardian alert per user per ~20h.
  */
 
-const MODEL = "llama-3.3-70b-versatile";
+import { GROQ_MODEL as MODEL } from "@/lib/config/aiModel";
 // Bali island centre — Destination rows have no lat/lng, so we use one
 // island-level forecast (documented approximation).
 const BALI_LAT = -8.4095;

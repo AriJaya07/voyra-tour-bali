@@ -11,6 +11,7 @@ import {
 } from "@/lib/services/aiCreditService";
 import { consumeGuest, logGuestUsage } from "@/lib/services/aiGuestQuota";
 import { AI_ENDPOINT_COST, settledChatCost } from "@/lib/config/aiCosts";
+import { GROQ_MODEL } from "@/lib/config/aiModel";
 import { VOYRA_KNOWLEDGE_BASE } from "@/lib/config/aiKnowledgeBase";
 import {
   searchViatorProducts,
@@ -232,7 +233,7 @@ RULES:
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     const stream = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
       stream: true,
       max_tokens: 500,
       messages: [
@@ -286,7 +287,7 @@ RULES:
                   tokensIn,
                   tokensOut,
                   durationMs,
-                  model: "llama-3.3-70b-versatile",
+                  model: GROQ_MODEL,
                   status: "ERROR",
                 },
               }).catch(() => {});
@@ -301,7 +302,7 @@ RULES:
                   tokensIn,
                   tokensOut,
                   durationMs,
-                  model: "llama-3.3-70b-versatile",
+                  model: GROQ_MODEL,
                   status: "OK",
                 },
               }).catch(() => {});
@@ -313,7 +314,7 @@ RULES:
               tokensIn,
               tokensOut,
               durationMs,
-              model: "llama-3.3-70b-versatile",
+              model: GROQ_MODEL,
               status: streamFailed ? "ERROR" : "OK",
             }).catch(() => {});
           }
